@@ -26,21 +26,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <RootProvider>
-      <ClerkProvider>
-        <html
-          lang="en"
-          className="dark"
-          style={{
-            colorScheme: "dark",
-          }}
-        >
-          <body className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+    lang="en"
+    className="dark"
+    style={{
+      colorScheme: "dark",
+    }}
+    >
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <ClerkProvider>
+          <RootProvider>
             <Toaster richColors position="bottom-right" />
             {children}
-          </body>
-        </html>
-      </ClerkProvider>
-    </RootProvider>
+          </RootProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
