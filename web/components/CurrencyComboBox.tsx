@@ -22,22 +22,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-
-type Currency = {
-  value: string
-  label: string
-}
-
-const currencies: Currency[] = [
-  {
-    value: "EUR",
-    label: "Euro",
-  },
-  {
-    value: "USD",
-    label: "US Dollar",
-  }
-]
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { UserSettings } from "@prisma/client"
+import { useCallback, useEffect } from "react"
+import { Currency } from "@/types/currency"
+import { CURRENCIES } from "@/constants/currencies"
+import { updateUserCurrency } from "@/app/wizard/_actions/userSettings"
+import { toast } from "sonner"
 
 export function CurrencyComboBox() {
   const [open, setOpen] = React.useState(false)
@@ -46,16 +37,65 @@ export function CurrencyComboBox() {
     null
   )
 
+  const userSettings = useQuery<UserSettings>({
+    queryKey: ["userSettings"],
+    queryFn: async () => {
+      const response = await fetch("/api/user-settings")
+      if (!response.ok) {
+        throw new Error("Network response was not ok")
+      }
+      return await response.json()
+    },
+  })
+  
+  useEffect(() => {
+    if (userSettings.data) {
+      const userCurrency = CURRENCIES.find(
+        (currency) => currency.value === userSettings.data.currency
+      )
+      setSelectedCurrency(userCurrency || null)
+    }
+  }, [userSettings.data]);
+
+  const mutation = useMutation({
+    mutationFn: updateUserCurrency,
+    onSuccess: (data: UserSettings) => {
+      toast.success("Currency updated successfully", {
+        id: "currency-update",
+      })
+      setSelectedCurrency(CURRENCIES.find((currency) => currency.value === data.currency) || null)
+    },
+    onError: (error) => {
+      toast.error("Error updating currency", {
+        id: "currency-update",
+      })
+      console.error("Error updating currency:", error)
+    }
+  });
+
+  const selectOption = useCallback((currency: Currency | null) => {
+    if (!currency) {
+      toast.error("Please select a currency");
+      return;
+    }
+
+    toast.loading("Updating currency...", {
+      id: "currency-update",
+    })
+
+    mutation.mutate(currency)
+  }, [mutation]);
+
   if (isDesktop) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="w-full justify-start">
+          <Button variant="outline" className="w-full justify-start" disabled={mutation.isPending}>
             {selectedCurrency ? <>{selectedCurrency.label}</> : <>+ Set currency</>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0" align="start">
-          <StatusList setOpen={setOpen} setSelectedCurrency={setSelectedCurrency} />
+          <StatusList setOpen={setOpen} setSelectedCurrency={selectOption} />
         </PopoverContent>
       </Popover>
     )
@@ -64,13 +104,13 @@ export function CurrencyComboBox() {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline" className="w-full justify-start">
+        <Button variant="outline" className="w-full justify-start" disabled={mutation.isPending}>
           {selectedCurrency ? <>{selectedCurrency.label}</> : <>+ Set currency</>}
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <div className="mt-4 border-t">
-          <StatusList setOpen={setOpen} setSelectedCurrency={setSelectedCurrency} />
+          <StatusList setOpen={setOpen} setSelectedCurrency={selectOption} />
         </div>
       </DrawerContent>
     </Drawer>
@@ -90,13 +130,13 @@ function StatusList({
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup>
-          {currencies.map((currency) => (
+          {CURRENCIES.map((currency) => (
             <CommandItem
               key={currency.value}
               value={currency.value}
               onSelect={(value) => {
                 setSelectedCurrency(
-                  currencies.find((priority) => priority.value === value) || null
+                  CURRENCIES.find((priority) => priority.value === value) || null
                 )
                 setOpen(false)
               }}
