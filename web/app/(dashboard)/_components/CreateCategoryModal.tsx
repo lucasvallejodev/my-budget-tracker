@@ -19,10 +19,11 @@ import { Category } from "@prisma/client";
 import { createCategory } from "../_actions/categories";
 
 type CreateCategoryModalProps = {
-  type: TransactionType
+  type: TransactionType;
+  onSuccessCallback?: (category: Category) => void;
 }
 
-function CreateCategoryModal({ type }: CreateCategoryModalProps) {
+function CreateCategoryModal({ type, onSuccessCallback }: CreateCategoryModalProps) {
   const [open, setOpen] = useState(false);
   const form = useForm<CreateCategorySchemaType>({
     resolver: zodResolver(createCategorySchema),
@@ -45,6 +46,7 @@ function CreateCategoryModal({ type }: CreateCategoryModalProps) {
       });
       
       form.reset();
+      onSuccessCallback?.(data);
       setOpen(false);
     },
     onError: (error) => {

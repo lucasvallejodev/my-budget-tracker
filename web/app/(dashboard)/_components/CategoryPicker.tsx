@@ -2,18 +2,20 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { TransactionType } from "./types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Category } from "@prisma/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import CreateCategoryModal from "./CreateCategoryModal";
+import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 
 type CategoryPickerProps = {
-  type: TransactionType
+  type: TransactionType;
+  onChange?: (category: string) => void;
 }
 
-function CategoryPicker({ type }: CategoryPickerProps) {
+function CategoryPicker({ type, onChange }: CategoryPickerProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string>("");
 
@@ -24,31 +26,48 @@ function CategoryPicker({ type }: CategoryPickerProps) {
 
   const selectedCategory = categoriesQuery.data?.find((category: Category) => category.name === value);
 
+  const categorySuccessCallback = (category: Category) => {
+    setValue(category.name);
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    onChange?.(value);
+  }, [value]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" aria-expanded={open} className="w-[200px] justify-between">
           {selectedCategory ?<CategoryRow category={selectedCategory} /> : "Select a category"}
+          <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
           <CommandInput placeholder="Search categories..." />
-          <CreateCategoryModal type={type} />
+          <CreateCategoryModal type={type} onSuccessCallback={categorySuccessCallback} />
           <CommandList>
             <CommandEmpty>No categories found.</CommandEmpty>
             <CommandGroup>
-              {categoriesQuery.data?.map((category: Category) => (
-                <CommandItem
-                  key={category.name}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue);
-                    setOpen(false);
-                  }}
-                >
-                  <CategoryRow category={category} />
-                </CommandItem>
-              ))}
+              <CommandList>
+                {categoriesQuery.data?.map((category: Category) => (
+                  <CommandItem
+                    key={category.name}
+                    onSelect={() => {
+                      setOpen(false);
+                      setValue(category.name);
+                    }}
+                  >
+                    <CategoryRow category={category} />
+                    {
+                      selectedCategory?.name === category.name && (
+                        <CheckIcon className="ml-1" />
+                      )
+                    }
+                  </CommandItem>
+                ))}
+              </CommandList>
             </CommandGroup>
           </CommandList>
         </Command>

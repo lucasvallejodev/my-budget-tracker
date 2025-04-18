@@ -88,6 +88,29 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                     <FormControl>
                       <CategoryPicker
                         type={type}
+                        onChange={(category) => {
+                          field.onChange(category)
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Select a category for the transaction.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <CategoryPicker
+                        type={type}
+                        onChange={(category) => {
+                          field.onChange(category)
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
