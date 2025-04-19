@@ -23,6 +23,7 @@
         day: cn(
           "size-8 p-0 text-center aria-selected:bg-primary aria-selected:rounded-md aria-selected:text-primary-foreground"
         ),
+        day_button: "w-full h-full",
         ...classNames,
        }}
        {...props}
