@@ -2,7 +2,7 @@
 
 import { ReactNode, useState } from "react"
 import { TransactionType } from "./types";
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 import { createTransactionSchema, createTransactionSchemaType } from "@/schema/transaction";
@@ -13,10 +13,13 @@ import { useForm } from "react-hook-form"
 import CategoryPicker from "./CategoryPicker";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { DatePicker } from "@/components/DatePicker";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createTransaction } from "../_actions/transactions";
+import { toast } from "sonner";
+import { dateToUTCDate } from "@/lib/helpers";
 
 type CreateTransactionModalProps = {
   trigger: ReactNode;
@@ -24,7 +27,9 @@ type CreateTransactionModalProps = {
 }
 
 function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) {
+  const [open, setOpen] = useState(false);
   const [openCalendar, setOpenCalendar] = useState(false);
+
   const form = useForm<createTransactionSchemaType>({
     resolver: zodResolver(createTransactionSchema),
     defaultValues: {
@@ -32,8 +37,42 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
       type,
     },
   });
+
+  const queryClient = useQueryClient();
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: createTransaction,
+    onSuccess: () => {
+      toast.success("Transaction created successfully!", {
+        id: "create-transaction",
+      });
+      form.reset();
+
+      queryClient.invalidateQueries({
+        queryKey: ["overview"], // TODO: create this query on the dashboard
+      });
+
+      setOpen(false);
+    },
+    onError: () => {
+      toast.error("Error creating transaction", {
+        id: "create-transaction",
+      });
+    }
+  })
+
+  const onSubmit = (values: createTransactionSchemaType) => {
+    toast.loading("Creating transaction...", {
+      id: "create-transaction",
+    });
+    mutate({
+      ...values,
+      date: dateToUTCDate(values.date),
+    });
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
@@ -46,7 +85,7 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="amount"
@@ -148,6 +187,26 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
             </div>
           </form>
         </Form>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                form.reset()
+              }}
+            >
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            type="submit"
+            disabled={isPending}
+            onClick={form.handleSubmit(onSubmit)}
+          >
+            {isPending ? <Loader2 className="animate-sping" /> : "Create"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
