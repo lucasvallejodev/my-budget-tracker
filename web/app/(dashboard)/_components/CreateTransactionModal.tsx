@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode } from "react"
+import { ReactNode, useState } from "react"
 import { TransactionType } from "./types";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
@@ -11,6 +11,12 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } fr
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form"
 import CategoryPicker from "./CategoryPicker";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { DatePicker } from "@/components/DatePicker";
 
 type CreateTransactionModalProps = {
   trigger: ReactNode;
@@ -18,6 +24,7 @@ type CreateTransactionModalProps = {
 }
 
 function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) {
+  const [openCalendar, setOpenCalendar] = useState(false);
   const form = useForm<createTransactionSchemaType>({
     resolver: zodResolver(createTransactionSchema),
     defaultValues: {
@@ -101,18 +108,37 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
               />
               <FormField
                 control={form.control}
-                name="category"
+                name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <CategoryPicker
-                        type={type}
-                        onChange={(category) => {
-                          field.onChange(category)
-                        }}
-                      />
-                    </FormControl>
+                    <FormLabel>Transaction date</FormLabel>
+                    <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={cn("w-[200px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                          >
+                            {
+                              field.value ? format(field.value, "PPP") : "Select a date"
+                            }
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            setOpenCalendar(false);
+                          }}
+                          autoFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormDescription>
                       Select a category for the transaction.
                     </FormDescription>
