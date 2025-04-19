@@ -21,9 +21,11 @@
         month_caption: "flex justify-center pt-1 relative items-center w-full",
         nav: "flex justify-between items-center w-full mb-2",
         day: cn(
-          "size-8 p-0 text-center aria-selected:bg-primary aria-selected:rounded-md aria-selected:text-primary-foreground"
+          "size-8 p-0 text-center"
         ),
-        day_button: "w-full h-full",
+        selected: "bg-primary text-primary-foreground rounded-md",
+        day_button: "w-full h-full rounded-md",
+        today: "bg-accent text-accent-foreground rounded-md",
         ...classNames,
        }}
        {...props}
