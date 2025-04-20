@@ -79,9 +79,7 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            Create a new {" "} <span className={cn(type === "income" ? "text-emerald-500" : "text-orange-500")}>
-              {type === "income" ? "income" : "expense"}
-            </span> transaction
+            Create a new {type === "income" ? "income" : "expense"} transaction
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>

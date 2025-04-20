@@ -1,8 +1,9 @@
-import { redirect } from 'next/navigation';
-import { currentUser } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
-import { Button } from '@/components/ui/button';
-import CreateTransactionModal from './_components/CreateTransactionModal';
+import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
+import { Button } from "@/components/ui/button";
+import CreateTransactionModal from "./_components/CreateTransactionModal";
+import { BanknoteArrowUp, ReceiptText } from "lucide-react";
 
 async function Dashboard() {
   const user  = await currentUser();
@@ -22,28 +23,32 @@ async function Dashboard() {
   }
 
   return (
-    <div className="h-full bg-background">
-      <div className="border-b bg-card">
-        <div className="container flex flex-wrap items-center justify-between gap-6 py-8">
-          <h1 className="text-3xl font-bold">Hello, {user.firstName}! 👋</h1>
-          <div className="flex items-center gap-4">
-            <CreateTransactionModal
-              trigger={
-                <Button className="border-1 border-emerald-500 bg-emerald-900 text-white hover:bg-emerald-700 hover:text-white">
-                  New income
-                </Button>
-              }
-              type="income"
-            />
-            <CreateTransactionModal
-              trigger={
-                <Button className="border-1 border-orange-500 bg-orange-900 text-white hover:bg-orange-700 hover:text-white">
-                  New Expense
-                </Button>
-              }
-              type="expense"
-            />
-          </div>
+    <div className="h-full p-8">
+      <h2 className="font-bold text-2xl">Hi, {user?.fullName}</h2>
+      <h3 className="text-gray-500">
+        Here's what happenning with your money. Lets Manage your expenses!
+      </h3>
+      <div className="flex gap-4 flex-col mt-4 p-7 border rounded-sm bg-gray-50">
+        <h2 className="text-xl">Manage your money</h2>
+        <div className="flex gap-2 flex-col md:flex-row">
+          <CreateTransactionModal
+            trigger={
+              <Button className="border border-gray-200 bg-white" variant="ghost">
+                <BanknoteArrowUp />
+                New income
+              </Button>
+            }
+            type="income"
+          />
+          <CreateTransactionModal
+            trigger={
+              <Button className="border border-gray-200 bg-white" variant="ghost">
+                <ReceiptText />
+                New Expense
+              </Button>
+            }
+            type="expense"
+          />
         </div>
       </div>
     </div>

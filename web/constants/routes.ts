@@ -43,7 +43,7 @@ export const MANAGEMENT_ROUTE_ITEMS: RouteItem[] = [
   },
   {
     id: 3,
-    name: "Dashboard",
+    name: "Settings",
     icon: Settings,
     path: "/settings",
   },
