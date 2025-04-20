@@ -1,5 +1,5 @@
-import Navbar from '@/components/Navbar';
-import React from 'react'
+import { SideNavbar, MobileNavbar } from './_components/navbar';
+import Header from './_components/header';
 
 function DashboardLayout({
   children,
@@ -7,9 +7,13 @@ function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="relative flex h-screen w-full flex-col">
-      <Navbar />
-      <div className="w-full">
+    <div>
+      <MobileNavbar />
+      <div className="fixed md:w-56 hidden md:block ">
+        <SideNavbar />
+      </div>
+      <div className="md:ml-56">
+        <Header />
         {children}
       </div>
     </div>
