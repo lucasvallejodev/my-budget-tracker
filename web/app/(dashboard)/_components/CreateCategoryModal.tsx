@@ -78,20 +78,18 @@ function CreateCategoryModal({ type, onSuccessCallback }: CreateCategoryModalPro
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            Create
-            <span className={cn(
-              "m-1",
-              type === "income" ? "text-emerald-500" : "text-orange-500",
-            )}>
-              {type === "income" ? "income" : "expense"}
-            </span> category
-          </DialogTitle>
-          <DialogDescription>
-            Categories are used to group your transactions. You can create a new category for your transactions.
-          </DialogDescription>
-        </DialogHeader>
+        <DialogTitle>
+          Create
+          <span className={cn(
+            "m-1",
+            type === "income" ? "text-emerald-500" : "text-orange-500",
+          )}>
+            {type === "income" ? "income" : "expense"}
+          </span> category
+        </DialogTitle>
+        <DialogDescription>
+          Categories are used to group your transactions. You can create a new category for your transactions.
+        </DialogDescription>
         <Form {...form}>
           <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField

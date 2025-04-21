@@ -77,11 +77,9 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
         {trigger}
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            Create a new {type === "income" ? "income" : "expense"} transaction
-          </DialogTitle>
-        </DialogHeader>
+        <DialogTitle>
+          Create a new {type === "income" ? "income" : "expense"} transaction
+        </DialogTitle>
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
