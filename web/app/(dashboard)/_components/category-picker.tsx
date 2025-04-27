@@ -7,7 +7,7 @@ import { Category } from "@prisma/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import CreateCategoryModal from "./CreateCategoryModal";
+import CreateCategoryModal from "./create-category-modal";
 import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 
 type CategoryPickerProps = {
@@ -38,12 +38,12 @@ function CategoryPicker({ type, onChange }: CategoryPickerProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" aria-expanded={open} className="w-[200px] justify-between">
+        <Button variant="outline" aria-expanded={open} className="w-full justify-between">
           {selectedCategory ?<CategoryRow category={selectedCategory} /> : "Select a category"}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-full md:w-[200px] p-0">
         <Command>
           <CommandInput placeholder="Search categories..." />
           <CreateCategoryModal type={type} onSuccessCallback={categorySuccessCallback} />

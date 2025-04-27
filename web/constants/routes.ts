@@ -12,19 +12,19 @@ export const MAIN_ROUTE_ITEMS: RouteItem[] = [
     id: 2,
     name: "Incomes",
     icon: BanknoteArrowUp,
-    path: "/dashboard/incomes",
+    path: "/incomes",
   },
   {
     id: 3,
     name: "Expenses",
     icon: ReceiptText,
-    path: "/dashboard/expenses",
+    path: "/expenses",
   },
   {
     id: 4,
     name: "Budgets",
     icon: ChartPie,
-    path: "/dashboard/budgets",
+    path: "/budgets",
   },
 ];
 

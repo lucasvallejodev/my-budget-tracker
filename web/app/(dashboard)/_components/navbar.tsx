@@ -6,7 +6,6 @@ import UserProfile from "./user-profile";
 import Logo from "@/components/logo";
 import { MAIN_ROUTE_ITEMS, MANAGEMENT_ROUTE_ITEMS } from "@/constants/routes";
 import { RouteItem } from "@/types/route-item";
-import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";

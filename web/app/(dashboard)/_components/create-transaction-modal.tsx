@@ -2,15 +2,14 @@
 
 import { ReactNode, useState } from "react"
 import { TransactionType } from "./types";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
-import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { createTransactionSchema, createTransactionSchemaType } from "@/schema/transaction";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form"
-import CategoryPicker from "./CategoryPicker";
+import CategoryPicker from "./category-picker";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
@@ -120,7 +119,7 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                 </FormItem>
               )}
             />
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 flex-col md:flex-row">
               <FormField
                 control={form.control}
                 name="category"
@@ -153,7 +152,7 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                           <Button
                             type="button"
                             variant="outline"
-                            className={cn("w-[200px] pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                           >
                             {
                               field.value ? format(field.value, "PPP") : "Select a date"
