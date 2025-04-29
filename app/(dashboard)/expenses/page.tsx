@@ -23,6 +23,26 @@ async function Dashboard() {
     redirect("/wizard");
   }
 
+  const transactions = await prisma.transaction.findMany({
+    select: {
+      id: true,
+      amount: true,
+      date: true,
+      type: true,
+      description: true,
+      category: true,
+      categoryIcon: true,
+    },
+    where: {
+      userId: user.id,
+      type: "expense",
+    },
+    orderBy: {
+      date: "desc",
+    },
+    take: 20,
+  });
+
   return (
     <div className="h-full p-5 flex gap-5 flex-col">
       <div className="flex gap-4 flex-col p-5 border rounded-sm bg-gray-50">
@@ -40,7 +60,8 @@ async function Dashboard() {
         </div>
       </div>
       <div className="flex gap-4 flex-col p-5 border rounded-sm">
-        <TransactionTable />
+        <h2 className="text-xl">Recent expense transactions</h2>
+        <TransactionTable transactions={transactions}  />
       </div>
     </div>
   )
