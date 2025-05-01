@@ -18,7 +18,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createTransaction } from "../_actions/transactions";
 import { toast } from "sonner";
-import { dateToUTCDate } from "@/lib/helpers";
+import { dateToUTCDate } from "@/lib/date-helpers";
 
 type CreateTransactionModalProps = {
   trigger: ReactNode;
