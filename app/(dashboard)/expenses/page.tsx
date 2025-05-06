@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import CreateTransactionModal from "../_components/create-transaction-modal";
 import { ReceiptText } from "lucide-react";
 import { TransactionTable } from "@/components/transaction-table";
+import { getStartAndEndOfMonth } from "@/lib/date-helpers";
 
 async function Dashboard() {
   const user  = await currentUser();
@@ -23,6 +24,8 @@ async function Dashboard() {
     redirect("/wizard");
   }
 
+  const { startDate, endDate } = getStartAndEndOfMonth();
+
   const transactions = await prisma.transaction.findMany({
     select: {
       id: true,
@@ -36,6 +39,10 @@ async function Dashboard() {
     where: {
       userId: user.id,
       type: "expense",
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
     },
     orderBy: {
       date: "desc",
