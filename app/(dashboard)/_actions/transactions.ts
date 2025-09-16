@@ -5,6 +5,67 @@ import { createTransactionSchema, createTransactionSchemaType } from "@/schema/t
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
+export async function deleteTransaction(transactionId: string) {
+  const user = await currentUser();
+  if (!user) {
+    redirect("/sign-in");
+  }
+  const transaction = await prisma.transaction.findUnique({
+    where: {
+      id: transactionId,
+    },
+  });
+  if (!transaction) {
+    throw new Error("Transaction not found");
+  }
+  if (transaction.userId !== user.id) {
+    throw new Error("You are not allowed to delete this transaction");
+  }
+  await prisma.$transaction([
+    prisma.transaction.delete({
+      where: {
+        id: transactionId,
+      },
+    }),
+    // Update the user's monthly transactions history
+    prisma.monthlyTransactionsHistory.update({
+      where: {
+        userId_day_month_year: {
+          userId: user.id,
+          day: transaction.date.getUTCDate(),
+          month: transaction.date.getUTCMonth(),
+          year: transaction.date.getUTCFullYear(),
+        }
+      },
+      data: {
+        expense: {
+          decrement: transaction.type === "expense" ? transaction.amount : 0,
+        },
+        income: {
+          decrement: transaction.type === "income" ? transaction.amount : 0,
+        },
+      },
+    }),
+    // Update the user's yearly transactions history
+    prisma.yearlyTransactionsHistory.update({
+      where: {
+        userId_month_year: {
+          userId: user.id,
+          month: transaction.date.getUTCMonth(),
+          year: transaction.date.getUTCFullYear(),
+        }
+      },
+      data: {
+        expense: {
+          decrement: transaction.type === "expense" ? transaction.amount : 0,
+        },
+        income: {
+          decrement: transaction.type === "income" ? transaction.amount : 0,
+        },
+      },
+    }),
+  ]);
+
 export async function createTransaction(transaction: createTransactionSchemaType) {
   const parsedData = createTransactionSchema.safeParse(transaction);
 
