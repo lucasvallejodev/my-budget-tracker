@@ -65,6 +65,7 @@ export async function deleteTransaction(transactionId: string) {
       },
     }),
   ]);
+}
 
 export async function createTransaction(transaction: createTransactionSchemaType) {
   const parsedData = createTransactionSchema.safeParse(transaction);
