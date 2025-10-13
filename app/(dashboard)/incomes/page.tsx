@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import CreateTransactionModal from "../_components/create-transaction-modal";
 import { BanknoteArrowUp } from "lucide-react";
 import { TransactionTable } from "@/components/transaction-table";
+import TransactionsPage from "../_components/transaction-page";
 
-async function Dashboard() {
+async function Incomes() {
   const user  = await currentUser();
 
   if (!user) {
@@ -23,48 +24,11 @@ async function Dashboard() {
     redirect("/wizard");
   }
 
-  const transactions = await prisma.transaction.findMany({
-    select: {
-      id: true,
-      amount: true,
-      date: true,
-      type: true,
-      description: true,
-      category: true,
-      categoryIcon: true,
-    },
-    where: {
-      userId: user.id,
-      type: "income",
-    },
-    orderBy: {
-      date: "desc",
-    },
-    take: 20,
-  });
-
   return (
     <div className="h-full p-5 flex gap-5 flex-col">
-      <div className="flex gap-4 flex-col p-5 border rounded-sm bg-gray-50">
-        <h2 className="text-xl">Manage your money</h2>
-        <div className="flex gap-2 flex-col md:flex-row">
-          <CreateTransactionModal
-            trigger={
-              <Button className="border border-gray-200 bg-white" variant="ghost">
-                <BanknoteArrowUp />
-                New income
-              </Button>
-            }
-            type="income"
-          />
-        </div>
-      </div>
-      <div className="flex gap-4 flex-col p-5 border rounded-sm">
-        <h2 className="text-xl">Recent income transactions</h2>
-        <TransactionTable transactions={transactions} />
-      </div>
+      <TransactionsPage type="income" />
     </div>
   )
 }
 
-export default Dashboard
+export default Incomes

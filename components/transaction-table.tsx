@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { CategoryIcon } from "./category-icon";
 import { format } from "date-fns";
 
-type Transaction = {
+export type Transaction = {
   id: string;
   category: string;
   type: string;

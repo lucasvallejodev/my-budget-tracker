@@ -90,7 +90,7 @@ export async function createTransaction(transaction: createTransactionSchemaType
   });
 
   if (!categoryResult) {
-    throw new Error("Category not found");
+    throw new Error("Category not found");  
   }
 
   await prisma.$transaction([

@@ -41,14 +41,14 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
 
   const { mutate, isPending } = useMutation({
     mutationFn: createTransaction,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Transaction created successfully!", {
         id: "create-transaction",
       });
       form.reset();
 
-      queryClient.invalidateQueries({
-        queryKey: ["overview"], // TODO: create this query on the dashboard
+      await queryClient.invalidateQueries({
+        queryKey: ["transactions", type], // TODO: create this query on the dashboard
       });
 
       setOpen(false);
