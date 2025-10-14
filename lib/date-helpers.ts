@@ -7,7 +7,7 @@ export function dateToUTCDate(date: Date) {
       date.getHours(),
       date.getMinutes(),
       date.getSeconds(),
-      date.getMilliseconds(),
+      date.getMilliseconds()
     )
   );
 }
@@ -19,11 +19,11 @@ function getValidMonth(month?: number): number {
   if (month === null || month === undefined || isNaN(month)) {
     return new Date().getMonth();
   }
-  
+
   if (month < MIN_MONTH || month > MAX_MONTH) {
     return new Date().getMonth();
   }
-  
+
   return month;
 }
 
@@ -34,18 +34,18 @@ function getValidYear(year?: number): number {
   if (year === null || year === undefined || isNaN(year)) {
     return new Date().getFullYear();
   }
-  
+
   if (year < MIN_YEAR || year > MAX_YEAR) {
     return new Date().getFullYear();
   }
-  
+
   return year;
 }
 
 export function getStartAndEndOfMonth(month?: number, year?: number) {
   const monthIndex = getValidMonth(month);
   const yearIndex = getValidYear(year);
-  
+
   const endMonthIndex = monthIndex + 1 > 11 ? 0 : monthIndex + 1;
   const endYearIndex = endMonthIndex === 0 ? yearIndex + 1 : yearIndex;
 
@@ -59,6 +59,6 @@ export function getStartAndEndOfMonth(month?: number, year?: number) {
 
   return {
     startDate,
-    endDate
-  }
+    endDate,
+  };
 }

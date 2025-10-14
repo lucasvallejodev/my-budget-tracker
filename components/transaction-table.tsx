@@ -5,10 +5,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/lib/utils";
-import { CategoryIcon } from "./category-icon";
-import { format } from "date-fns";
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
+import { CategoryIcon } from './category-icon';
+import { format } from 'date-fns';
 
 export type Transaction = {
   id: string;
@@ -36,18 +36,22 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody className="text-gray-500">
-        {transactions.map((transaction) => (
+        {transactions.map(transaction => (
           <TableRow key={transaction.id}>
             <TableCell className="font-medium flex items-center text-gray-800 gap-2">
               <CategoryIcon categoryIcon={transaction.categoryIcon} />
               {transaction.category}
             </TableCell>
-            <TableCell className={cn("text-center", transaction.type === "income" && "text-green-600")}>{transaction.type === "income" ? "+" : "-"} {transaction.amount}</TableCell>
-            <TableCell className="text-center">{format(transaction.date, "PPP")}</TableCell>
+            <TableCell
+              className={cn('text-center', transaction.type === 'income' && 'text-green-600')}
+            >
+              {transaction.type === 'income' ? '+' : '-'} {transaction.amount}
+            </TableCell>
+            <TableCell className="text-center">{format(transaction.date, 'PPP')}</TableCell>
             <TableCell className="text-center">{transaction.description}</TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }

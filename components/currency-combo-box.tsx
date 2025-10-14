@@ -1,9 +1,9 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 
-import { useMediaQuery } from "@/hooks/use-media-query"
-import { Button } from "@/components/ui/button"
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -11,80 +11,73 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { UserSettings } from "@prisma/client"
-import { useCallback, useEffect } from "react"
-import { Currency } from "@/types/currency"
-import { CURRENCIES } from "@/constants/currencies"
-import { updateUserCurrency } from "@/app/(management)/settings/_actions/userSettings"
-import { toast } from "sonner"
+} from '@/components/ui/command';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { UserSettings } from '@prisma/client';
+import { useCallback, useEffect } from 'react';
+import { Currency } from '@/types/currency';
+import { CURRENCIES } from '@/constants/currencies';
+import { updateUserCurrency } from '@/app/(management)/settings/_actions/userSettings';
+import { toast } from 'sonner';
 
 export function CurrencyComboBox() {
-  const [open, setOpen] = React.useState(false)
-  const isDesktop = useMediaQuery("(min-width: 768px)")
-  const [selectedCurrency, setSelectedCurrency] = React.useState<Currency | null>(
-    null
-  )
+  const [open, setOpen] = React.useState(false);
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const [selectedCurrency, setSelectedCurrency] = React.useState<Currency | null>(null);
 
   const userSettings = useQuery<UserSettings>({
-    queryKey: ["userSettings"],
+    queryKey: ['userSettings'],
     queryFn: async () => {
-      const response = await fetch("/api/user-settings")
+      const response = await fetch('/api/user-settings');
       if (!response.ok) {
-        throw new Error("Network response was not ok")
+        throw new Error('Network response was not ok');
       }
-      return await response.json()
+      return await response.json();
     },
-  })
-  
+  });
+
   useEffect(() => {
     if (userSettings.data) {
       const userCurrency = CURRENCIES.find(
-        (currency) => currency.value === userSettings.data.currency
-      )
-      setSelectedCurrency(userCurrency || null)
+        currency => currency.value === userSettings.data.currency
+      );
+      setSelectedCurrency(userCurrency || null);
     }
   }, [userSettings.data]);
 
   const mutation = useMutation({
     mutationFn: updateUserCurrency,
     onSuccess: (data: UserSettings) => {
-      toast.success("Currency updated successfully", {
-        id: "currency-update",
-      })
-      setSelectedCurrency(CURRENCIES.find((currency) => currency.value === data.currency) || null)
+      toast.success('Currency updated successfully', {
+        id: 'currency-update',
+      });
+      setSelectedCurrency(CURRENCIES.find(currency => currency.value === data.currency) || null);
     },
-    onError: (error) => {
-      toast.error("Error updating currency", {
-        id: "currency-update",
-      })
-      console.error("Error updating currency:", error)
-    }
+    onError: error => {
+      toast.error('Error updating currency', {
+        id: 'currency-update',
+      });
+      console.error('Error updating currency:', error);
+    },
   });
 
-  const selectOption = useCallback((currency: Currency | null) => {
-    if (!currency) {
-      toast.error("Please select a currency");
-      return;
-    }
+  const selectOption = useCallback(
+    (currency: Currency | null) => {
+      if (!currency) {
+        toast.error('Please select a currency');
+        return;
+      }
 
-    toast.loading("Updating currency...", {
-      id: "currency-update",
-    })
+      toast.loading('Updating currency...', {
+        id: 'currency-update',
+      });
 
-    mutation.mutate(currency)
-  }, [mutation]);
+      mutation.mutate(currency);
+    },
+    [mutation]
+  );
 
   if (isDesktop) {
     return (
@@ -98,7 +91,7 @@ export function CurrencyComboBox() {
           <StatusList setOpen={setOpen} setSelectedCurrency={selectOption} />
         </PopoverContent>
       </Popover>
-    )
+    );
   }
 
   return (
@@ -114,15 +107,15 @@ export function CurrencyComboBox() {
         </div>
       </DrawerContent>
     </Drawer>
-  )
+  );
 }
 
 function StatusList({
   setOpen,
   setSelectedCurrency,
 }: {
-  setOpen: (open: boolean) => void
-  setSelectedCurrency: (currency: Currency | null) => void
+  setOpen: (open: boolean) => void;
+  setSelectedCurrency: (currency: Currency | null) => void;
 }) {
   return (
     <Command>
@@ -130,15 +123,13 @@ function StatusList({
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup>
-          {CURRENCIES.map((currency) => (
+          {CURRENCIES.map(currency => (
             <CommandItem
               key={currency.value}
               value={currency.value}
-              onSelect={(value) => {
-                setSelectedCurrency(
-                  CURRENCIES.find((priority) => priority.value === value) || null
-                )
-                setOpen(false)
+              onSelect={value => {
+                setSelectedCurrency(CURRENCIES.find(priority => priority.value === value) || null);
+                setOpen(false);
               }}
             >
               {currency.label}
@@ -147,5 +138,5 @@ function StatusList({
         </CommandGroup>
       </CommandList>
     </Command>
-  )
+  );
 }

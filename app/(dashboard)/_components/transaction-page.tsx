@@ -1,23 +1,21 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import CreateTransactionModal from "../_components/create-transaction-modal";
-import { ReceiptText } from "lucide-react";
-import { Transaction, TransactionTable } from "@/components/transaction-table";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from '@/components/ui/button';
+import CreateTransactionModal from '../_components/create-transaction-modal';
+import { ReceiptText } from 'lucide-react';
+import { Transaction, TransactionTable } from '@/components/transaction-table';
+import { useQuery } from '@tanstack/react-query';
 
 type TransactionsPageProps = {
   type: 'expense' | 'income';
-}
+};
 
 function TransactionsPage({ type }: TransactionsPageProps) {
   const transactionsQuery = useQuery<Transaction[]>({
-    queryKey: ["transactions", type],
-    queryFn: () => fetch(`/api/transactions?type=${type}`).then((res) => res.json()),
+    queryKey: ['transactions', type],
+    queryFn: () => fetch(`/api/transactions?type=${type}`).then(res => res.json()),
     initialData: [],
   });
-
-  console.log(transactionsQuery.data);
 
   return (
     <>
@@ -37,10 +35,10 @@ function TransactionsPage({ type }: TransactionsPageProps) {
       </div>
       <div className="flex gap-4 flex-col p-5 border rounded-sm">
         <h2 className="text-xl">Recent {type} transactions</h2>
-        <TransactionTable transactions={transactionsQuery.data || []}  />
+        <TransactionTable transactions={transactionsQuery.data || []} />
       </div>
     </>
-  )
+  );
 }
 
-export default TransactionsPage
+export default TransactionsPage;

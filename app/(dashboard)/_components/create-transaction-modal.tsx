@@ -1,29 +1,43 @@
-"use client"
+'use client';
 
-import { ReactNode, useState } from "react"
-import { TransactionType } from "./types";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import { createTransactionSchema, createTransactionSchemaType } from "@/schema/transaction";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form"
-import CategoryPicker from "./category-picker";
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTransaction } from "../_actions/transactions";
-import { toast } from "sonner";
-import { dateToUTCDate } from "@/lib/date-helpers";
+import { ReactNode, useState } from 'react';
+import { TransactionType } from './types';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
+import { createTransactionSchema, createTransactionSchemaType } from '@/schema/transaction';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import CategoryPicker from './category-picker';
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import { CalendarIcon, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createTransaction } from '../_actions/transactions';
+import { toast } from 'sonner';
+import { dateToUTCDate } from '@/lib/date-helpers';
 
 type CreateTransactionModalProps = {
   trigger: ReactNode;
   type: TransactionType;
-}
+};
 
 function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) {
   const [open, setOpen] = useState(false);
@@ -42,42 +56,40 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
   const { mutate, isPending } = useMutation({
     mutationFn: createTransaction,
     onSuccess: async () => {
-      toast.success("Transaction created successfully!", {
-        id: "create-transaction",
+      toast.success('Transaction created successfully!', {
+        id: 'create-transaction',
       });
       form.reset();
 
       await queryClient.invalidateQueries({
-        queryKey: ["transactions", type], // TODO: create this query on the dashboard
+        queryKey: ['transactions', type], // TODO: create this query on the dashboard
       });
 
       setOpen(false);
     },
     onError: () => {
-      toast.error("Error creating transaction", {
-        id: "create-transaction",
+      toast.error('Error creating transaction', {
+        id: 'create-transaction',
       });
-    }
-  })
+    },
+  });
 
   const onSubmit = (values: createTransactionSchemaType) => {
-    toast.loading("Creating transaction...", {
-      id: "create-transaction",
+    toast.loading('Creating transaction...', {
+      id: 'create-transaction',
     });
     mutate({
       ...values,
       date: dateToUTCDate(values.date),
     });
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogTitle>
-          Create a new {type === "income" ? "income" : "expense"} transaction
+          Create a new {type === 'income' ? 'income' : 'expense'} transaction
         </DialogTitle>
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
@@ -88,12 +100,7 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                 <FormItem>
                   <FormLabel>Amount*</FormLabel>
                   <FormControl>
-                    <Input
-                      defaultValue={0}
-                      type="number"
-                      placeholder="0.00"
-                      {...field}
-                    />
+                    <Input defaultValue={0} type="number" placeholder="0.00" {...field} />
                   </FormControl>
                   <FormDescription>
                     The amount of money you want to add or remove from your account.
@@ -108,14 +115,9 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input
-                      defaultValue=""
-                      {...field}
-                    />
+                    <Input defaultValue="" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    A short description of the transaction.
-                  </FormDescription>
+                  <FormDescription>A short description of the transaction.</FormDescription>
                 </FormItem>
               )}
             />
@@ -129,14 +131,12 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                     <FormControl>
                       <CategoryPicker
                         type={type}
-                        onChange={(category) => {
-                          field.onChange(category)
+                        onChange={category => {
+                          field.onChange(category);
                         }}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Select a category for the transaction.
-                    </FormDescription>
+                    <FormDescription>Select a category for the transaction.</FormDescription>
                   </FormItem>
                 )}
               />
@@ -152,11 +152,12 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                           <Button
                             type="button"
                             variant="outline"
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn(
+                              'w-full pl-3 text-left font-normal',
+                              !field.value && 'text-muted-foreground'
+                            )}
                           >
-                            {
-                              field.value ? format(field.value, "PPP") : "Select a date"
-                            }
+                            {field.value ? format(field.value, 'PPP') : 'Select a date'}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -165,7 +166,7 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                         <Calendar
                           mode="single"
                           selected={field.value}
-                          onSelect={(date) => {
+                          onSelect={date => {
                             field.onChange(date);
                             setOpenCalendar(false);
                           }}
@@ -173,9 +174,7 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                         />
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>
-                      Select a category for the transaction.
-                    </FormDescription>
+                    <FormDescription>Select a category for the transaction.</FormDescription>
                   </FormItem>
                 )}
               />
@@ -188,23 +187,19 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
               type="button"
               variant="secondary"
               onClick={() => {
-                form.reset()
+                form.reset();
               }}
             >
               Cancel
             </Button>
           </DialogClose>
-          <Button
-            type="submit"
-            disabled={isPending}
-            onClick={form.handleSubmit(onSubmit)}
-          >
-            {isPending ? <Loader2 className="animate-sping" /> : "Create"}
+          <Button type="submit" disabled={isPending} onClick={form.handleSubmit(onSubmit)}>
+            {isPending ? <Loader2 className="animate-sping" /> : 'Create'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
-export default CreateTransactionModal
+export default CreateTransactionModal;

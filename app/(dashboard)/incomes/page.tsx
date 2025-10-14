@@ -1,17 +1,13 @@
-import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
-import CreateTransactionModal from "../_components/create-transaction-modal";
-import { BanknoteArrowUp } from "lucide-react";
-import { TransactionTable } from "@/components/transaction-table";
-import TransactionsPage from "../_components/transaction-page";
+import { redirect } from 'next/navigation';
+import { currentUser } from '@clerk/nextjs/server';
+import { prisma } from '@/lib/prisma';
+import TransactionsPage from '../_components/transaction-page';
 
 async function Incomes() {
-  const user  = await currentUser();
+  const user = await currentUser();
 
   if (!user) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   const userSettings = await prisma.userSettings.findUnique({
@@ -21,14 +17,14 @@ async function Incomes() {
   });
 
   if (!userSettings) {
-    redirect("/wizard");
+    redirect('/wizard');
   }
 
   return (
     <div className="h-full p-5 flex gap-5 flex-col">
       <TransactionsPage type="income" />
     </div>
-  )
+  );
 }
 
-export default Incomes
+export default Incomes;

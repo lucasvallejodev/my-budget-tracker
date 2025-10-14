@@ -1,9 +1,9 @@
-import { CURRENCIES } from "@/constants/currencies";
-import { z } from "zod";
+import { CURRENCIES } from '@/constants/currencies';
+import { z } from 'zod';
 
 export const userSettingsSchema = z.object({
   currency: z.custom((value: string) => {
-    const found = CURRENCIES.find((currency) => currency.value === value);
+    const found = CURRENCIES.find(currency => currency.value === value);
     if (!found) {
       throw new Error(`Invalid currency: ${value}}`);
     }

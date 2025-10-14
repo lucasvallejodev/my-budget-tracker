@@ -1,14 +1,14 @@
-"use server"
+'use server';
 
-import { prisma } from "@/lib/prisma";
-import { createTransactionSchema, createTransactionSchemaType } from "@/schema/transaction";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { prisma } from '@/lib/prisma';
+import { createTransactionSchema, createTransactionSchemaType } from '@/schema/transaction';
+import { currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 
 export async function deleteTransaction(transactionId: string) {
   const user = await currentUser();
   if (!user) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
   const transaction = await prisma.transaction.findUnique({
     where: {
@@ -16,10 +16,10 @@ export async function deleteTransaction(transactionId: string) {
     },
   });
   if (!transaction) {
-    throw new Error("Transaction not found");
+    throw new Error('Transaction not found');
   }
   if (transaction.userId !== user.id) {
-    throw new Error("You are not allowed to delete this transaction");
+    throw new Error('You are not allowed to delete this transaction');
   }
   await prisma.$transaction([
     prisma.transaction.delete({
@@ -35,14 +35,14 @@ export async function deleteTransaction(transactionId: string) {
           day: transaction.date.getUTCDate(),
           month: transaction.date.getUTCMonth(),
           year: transaction.date.getUTCFullYear(),
-        }
+        },
       },
       data: {
         expense: {
-          decrement: transaction.type === "expense" ? transaction.amount : 0,
+          decrement: transaction.type === 'expense' ? transaction.amount : 0,
         },
         income: {
-          decrement: transaction.type === "income" ? transaction.amount : 0,
+          decrement: transaction.type === 'income' ? transaction.amount : 0,
         },
       },
     }),
@@ -53,14 +53,14 @@ export async function deleteTransaction(transactionId: string) {
           userId: user.id,
           month: transaction.date.getUTCMonth(),
           year: transaction.date.getUTCFullYear(),
-        }
+        },
       },
       data: {
         expense: {
-          decrement: transaction.type === "expense" ? transaction.amount : 0,
+          decrement: transaction.type === 'expense' ? transaction.amount : 0,
         },
         income: {
-          decrement: transaction.type === "income" ? transaction.amount : 0,
+          decrement: transaction.type === 'income' ? transaction.amount : 0,
         },
       },
     }),
@@ -77,7 +77,7 @@ export async function createTransaction(transaction: createTransactionSchemaType
   const user = await currentUser();
 
   if (!user) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   const { amount, date, type, category, description } = parsedData.data;
@@ -90,7 +90,7 @@ export async function createTransaction(transaction: createTransactionSchemaType
   });
 
   if (!categoryResult) {
-    throw new Error("Category not found");  
+    throw new Error('Category not found');
   }
 
   await prisma.$transaction([
@@ -101,7 +101,7 @@ export async function createTransaction(transaction: createTransactionSchemaType
         type,
         category: categoryResult.name,
         categoryIcon: categoryResult.icon,
-        description: description || "",
+        description: description || '',
         userId: user.id,
       },
     }),
@@ -113,22 +113,22 @@ export async function createTransaction(transaction: createTransactionSchemaType
           day: date.getUTCDate(),
           month: date.getUTCMonth(),
           year: date.getUTCFullYear(),
-        }
+        },
       },
       create: {
         userId: user.id,
         day: date.getUTCDate(),
         month: date.getUTCMonth(),
         year: date.getUTCFullYear(),
-        expense: type === "expense" ? amount : 0,
-        income: type === "income" ? amount : 0,
+        expense: type === 'expense' ? amount : 0,
+        income: type === 'income' ? amount : 0,
       },
       update: {
         expense: {
-          increment: type === "expense" ? amount : 0,
+          increment: type === 'expense' ? amount : 0,
         },
         income: {
-          increment: type === "income" ? amount : 0,
+          increment: type === 'income' ? amount : 0,
         },
       },
     }),
@@ -139,21 +139,21 @@ export async function createTransaction(transaction: createTransactionSchemaType
           userId: user.id,
           month: date.getUTCMonth(),
           year: date.getUTCFullYear(),
-        }
+        },
       },
       create: {
         userId: user.id,
         month: date.getUTCMonth(),
         year: date.getUTCFullYear(),
-        expense: type === "expense" ? amount : 0,
-        income: type === "income" ? amount : 0,
+        expense: type === 'expense' ? amount : 0,
+        income: type === 'income' ? amount : 0,
       },
       update: {
         expense: {
-          increment: type === "expense" ? amount : 0,
+          increment: type === 'expense' ? amount : 0,
         },
         income: {
-          increment: type === "income" ? amount : 0,
+          increment: type === 'income' ? amount : 0,
         },
       },
     }),

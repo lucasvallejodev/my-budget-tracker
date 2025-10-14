@@ -17,7 +17,7 @@ function DashboardLayout({
         {children}
       </div>
     </div>
-  )
+  );
 }
 
-export default DashboardLayout
+export default DashboardLayout;

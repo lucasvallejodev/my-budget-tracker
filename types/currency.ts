@@ -1,4 +1,4 @@
 export type Currency = {
-  value: string
-  label: string
-}
+  value: string;
+  label: string;
+};
