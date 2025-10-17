@@ -30,7 +30,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createTransaction } from '../_actions/transactions';
+import { createTransaction } from '../../../server/actions/transactions';
 import { toast } from 'sonner';
 import { dateToUTCDate } from '@/lib/date-helpers';
 

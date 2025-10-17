@@ -31,7 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Category } from '@prisma/client';
-import { createCategory } from '../_actions/categories';
+import { createCategory } from '../../../server/actions/categories';
 
 type CreateCategoryModalProps = {
   type: TransactionType;
