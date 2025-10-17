@@ -14,7 +14,7 @@ export const MAIN_ROUTE_ITEMS: RouteItem[] = [
     id: 1,
     name: 'Dashboard',
     icon: House,
-    path: '/',
+    path: '/dashboard',
   },
   {
     id: 2,
@@ -47,7 +47,7 @@ export const MANAGEMENT_ROUTE_ITEMS: RouteItem[] = [
     id: 2,
     name: 'Support',
     icon: LifeBuoy,
-    path: '/help',
+    path: '/support',
   },
   {
     id: 3,

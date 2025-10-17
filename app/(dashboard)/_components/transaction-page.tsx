@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import CreateTransactionModal from '../_components/create-transaction-modal';
+import CreateTransactionModal from './create-transaction-modal';
 import { ReceiptText } from 'lucide-react';
 import { Transaction, TransactionTable } from '@/components/transaction-table';
 import { useQuery } from '@tanstack/react-query';

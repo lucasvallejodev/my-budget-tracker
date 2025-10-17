@@ -19,7 +19,7 @@ import { UserSettings } from '@prisma/client';
 import { useCallback, useEffect } from 'react';
 import { Currency } from '@/types/currency';
 import { CURRENCIES } from '@/constants/currencies';
-import { updateUserCurrency } from '@/app/(management)/settings/_actions/userSettings';
+import { updateUserCurrency } from '@/app/(dashboard)/settings/_actions/userSettings';
 import { toast } from 'sonner';
 
 export function CurrencyComboBox() {

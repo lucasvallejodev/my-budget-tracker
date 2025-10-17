@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
-import CreateTransactionModal from './_components/create-transaction-modal';
+import CreateTransactionModal from '../_components/create-transaction-modal';
 import { BanknoteArrowUp, ReceiptText } from 'lucide-react';
 
 async function Dashboard() {
