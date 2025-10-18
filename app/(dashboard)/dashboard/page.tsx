@@ -19,7 +19,7 @@ async function Dashboard() {
   });
 
   if (!userSettings) {
-    redirect('/wizard');
+    redirect('/settings');
   }
 
   return (

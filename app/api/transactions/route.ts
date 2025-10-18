@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       type: true,
       description: true,
       category: true,
-      categoryIcon: true,
+      icon: true,
     },
     where: {
       userId: user.id,

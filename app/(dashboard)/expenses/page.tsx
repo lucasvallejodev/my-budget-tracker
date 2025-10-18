@@ -17,7 +17,7 @@ async function Expenses() {
   });
 
   if (!userSettings) {
-    redirect('/wizard');
+    redirect('/settings');
   }
 
   return (

@@ -17,7 +17,7 @@ async function Incomes() {
   });
 
   if (!userSettings) {
-    redirect('/wizard');
+    redirect('/settings');
   }
 
   return (

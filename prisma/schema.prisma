@@ -13,51 +13,143 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// User Settings
 model UserSettings {
-  userId String @id
-  currency String
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  currency  String   @default("USD")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
+// Category Groups (Bills, Food, Entertainment, etc.)
+model CategoryGroup {
+  id        String     @id @default(uuid())
+  userId    String
+  name      String
+  icon      String?
+  sortOrder Int        @default(0)
+  isDeleted Boolean    @default(false)
+  deletedAt DateTime?
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  categories Category[]
+  
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([userId, isDeleted])
+}
+
+// Categories within groups
 model Category {
-  createdAt DateTime @default(now())
-  name String
-  userId String
-  icon String
-  type String @default("income")
-
-  @@unique([name, userId, type])
+  id        String        @id @default(uuid())
+  userId    String
+  groupId   String
+  group     CategoryGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  name      String
+  icon      String
+  type      String        @default("expense") // "income" or "expense"
+  isDeleted Boolean       @default(false)
+  deletedAt DateTime?
+  
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  
+  transactions Transaction[]
+  
+  @@unique([userId, groupId, name, type])
+  @@index([userId])
+  @@index([groupId])
+  @@index([userId, isDeleted])
 }
 
+// Transactions
 model Transaction {
-  id String @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  userId String
-  type String @default("income")
-  amount Float
+  id          String    @id @default(uuid())
+  userId      String
+  
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  
+  amount      Float
   description String
-  date DateTime
-  category String
-  categoryIcon String
+  date        DateTime
+  type        String    @default("expense") // "income" or "expense"
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([categoryId])
+  @@index([userId, date])
+  @@index([date])
+  @@index([userId, isDeleted])
 }
 
-model MonthlyTransactionsHistory {
-  userId String
-  day Int
-  month Int
-  year Int
-  income Float
-  expense Float
-
-  @@id([userId, day, month, year])
+// Monthly aggregated history (overall)
+model MonthlyHistory {
+  id       String @id @default(uuid())
+  userId   String
+  day      Int
+  month    Int
+  year     Int
+  
+  income   Float  @default(0)
+  expense  Float  @default(0)
+  
+  @@unique([userId, day, month, year])
+  @@index([userId, year, month])
 }
 
-model YearlyTransactionsHistory {
-  userId String
-  month Int
-  year Int
-  income Float
-  expense Float
+// Monthly history per category group
+model MonthlyCategoryGroupHistory {
+  id              String @id @default(uuid())
+  userId          String
+  categoryGroupId String
+  
+  month           Int
+  year            Int
+  
+  income          Float  @default(0)
+  expense         Float  @default(0)
+  
+  @@unique([userId, categoryGroupId, month, year])
+  @@index([userId, year, month])
+  @@index([categoryGroupId])
+}
 
-  @@id([userId, month, year])
+// Yearly aggregated history
+model YearlyHistory {
+  id       String @id @default(uuid())
+  userId   String
+  month    Int
+  year     Int
+  
+  income   Float  @default(0)
+  expense  Float  @default(0)
+  
+  @@unique([userId, month, year])
+  @@index([userId, year])
+}
+
+// Net worth snapshots
+model NetWorthSnapshot {
+  id        String   @id @default(uuid())
+  userId    String
+  
+  date      DateTime
+  netWorth  Float
+  
+  // Optional: store breakdown as JSON if needed
+  breakdown Json?    // { "checking": 5000, "savings": 10000, "creditCard": -2000 }
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId, date])
 }
