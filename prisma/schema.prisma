@@ -23,6 +23,44 @@ model UserSettings {
   updatedAt DateTime @updatedAt
 }
 
+// Account types (checking, savings, credit cards, etc.)
+model Account {
+  id            String      @id @default(uuid())
+  userId        String
+  name          String
+  type          AccountType
+  balance       Float       @default(0)
+  
+  // Optional fields
+  institution   String?     // Bank name
+  accountNumber String?     // Last 4 digits
+  color         String?     // For UI customization
+  icon          String?
+  notes         String?
+  
+  isDeleted     Boolean     @default(false)
+  deletedAt     DateTime?
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  transactions        Transaction[]
+  linkedTransactions  Transaction[] @relation("TransferLinkedAccount")
+  
+  @@index([userId])
+  @@index([userId, isDeleted])
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  CASH
+  INVESTMENT
+  LOAN
+  OTHER
+}
+
 // Category Groups (Bills, Food, Entertainment, etc.)
 model CategoryGroup {
   id        String     @id @default(uuid())
@@ -72,13 +110,25 @@ model Transaction {
   id          String    @id @default(uuid())
   userId      String
   
-  categoryId  String
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  accountId   String
+  account     Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
   
-  amount      Float
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  
+  amount      Float     // Positive for income/credits, negative for expenses/debits
   description String
   date        DateTime
-  type        String    @default("expense") // "income" or "expense"
+  type        String    @default("expense") // "income", "expense", or "transfer"
+  
+  // For transfers between accounts
+  isTransfer       Boolean      @default(false)
+  transferId       String?      @unique // Links the two sides of a transfer
+  linkedAccountId  String?      // The other account involved in transfer
+  linkedAccount    Account?     @relation("TransferLinkedAccount", fields: [linkedAccountId], references: [id], onDelete: SetNull)
+  transferPair     Transaction? @relation("TransferPair", fields: [transferId], references: [id])
+  transferLinked   Transaction? @relation("TransferPair")
+  
   isDeleted   Boolean   @default(false)
   deletedAt   DateTime?
   
@@ -86,10 +136,12 @@ model Transaction {
   updatedAt   DateTime  @updatedAt
   
   @@index([userId])
+  @@index([accountId])
   @@index([categoryId])
   @@index([userId, date])
   @@index([date])
   @@index([userId, isDeleted])
+  @@index([transferId])
 }
 
 // Monthly aggregated history (overall)

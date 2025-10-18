@@ -18,7 +18,7 @@ export async function createCategory(form: CreateCategorySchemaType) {
     redirect('/sign-in');
   }
 
-  const { name, icon, type } = parsedData.data;
+  const { name, icon, type, groupId } = parsedData.data;
 
   return await prisma.category.create({
     data: {
@@ -26,6 +26,7 @@ export async function createCategory(form: CreateCategorySchemaType) {
       icon,
       type,
       userId: user.id,
+      groupId,
     },
   });
 }

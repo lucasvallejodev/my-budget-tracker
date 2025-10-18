@@ -10,30 +10,40 @@ export async function deleteTransaction(transactionId: string) {
   if (!user) {
     redirect('/sign-in');
   }
+
   const transaction = await prisma.transaction.findUnique({
     where: {
       id: transactionId,
+      isDeleted: false, // Only find non-deleted transactions
     },
   });
+
   if (!transaction) {
     throw new Error('Transaction not found');
   }
+
   if (transaction.userId !== user.id) {
     throw new Error('You are not allowed to delete this transaction');
   }
+
   await prisma.$transaction([
-    prisma.transaction.delete({
+    // Soft delete the transaction
+    prisma.transaction.update({
       where: {
         id: transactionId,
       },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
     }),
-    // Update the user's monthly transactions history
-    prisma.monthlyTransactionsHistory.update({
+    // Update the user's monthly history
+    prisma.monthlyHistory.update({
       where: {
         userId_day_month_year: {
           userId: user.id,
           day: transaction.date.getUTCDate(),
-          month: transaction.date.getUTCMonth(),
+          month: transaction.date.getUTCMonth() + 1, // Prisma uses 0-indexed, our schema uses 1-12
           year: transaction.date.getUTCFullYear(),
         },
       },
@@ -46,12 +56,12 @@ export async function deleteTransaction(transactionId: string) {
         },
       },
     }),
-    // Update the user's yearly transactions history
-    prisma.yearlyTransactionsHistory.update({
+    // Update the user's yearly history
+    prisma.yearlyHistory.update({
       where: {
         userId_month_year: {
           userId: user.id,
-          month: transaction.date.getUTCMonth(),
+          month: transaction.date.getUTCMonth() + 1,
           year: transaction.date.getUTCFullYear(),
         },
       },
@@ -80,12 +90,14 @@ export async function createTransaction(transaction: createTransactionSchemaType
     redirect('/sign-in');
   }
 
-  const { amount, date, type, category, description } = parsedData.data;
+  const { amount, date, type, categoryId, accountId, description } = parsedData.data;
 
+  // Verify category exists and belongs to user
   const categoryResult = await prisma.category.findFirst({
     where: {
-      name: category,
+      id: categoryId,
       userId: user.id,
+      isDeleted: false,
     },
   });
 
@@ -93,33 +105,51 @@ export async function createTransaction(transaction: createTransactionSchemaType
     throw new Error('Category not found');
   }
 
+  // Verify account exists and belongs to user
+  const accountResult = await prisma.account.findFirst({
+    where: {
+      id: accountId,
+      userId: user.id,
+      isDeleted: false,
+    },
+  });
+
+  if (!accountResult) {
+    throw new Error('Account not found');
+  }
+
+  const month = date.getUTCMonth() + 1; // Convert to 1-12
+  const year = date.getUTCFullYear();
+  const day = date.getUTCDate();
+
   await prisma.$transaction([
+    // Create the transaction
     prisma.transaction.create({
       data: {
         amount,
         date,
         type,
-        category: categoryResult.name,
-        categoryIcon: categoryResult.icon,
+        categoryId: categoryResult.id,
+        accountId: accountResult.id,
         description: description || '',
         userId: user.id,
       },
     }),
-    // Update the user's monthly transactions history
-    prisma.monthlyTransactionsHistory.upsert({
+    // Update the user's monthly history
+    prisma.monthlyHistory.upsert({
       where: {
         userId_day_month_year: {
           userId: user.id,
-          day: date.getUTCDate(),
-          month: date.getUTCMonth(),
-          year: date.getUTCFullYear(),
+          day,
+          month,
+          year,
         },
       },
       create: {
         userId: user.id,
-        day: date.getUTCDate(),
-        month: date.getUTCMonth(),
-        year: date.getUTCFullYear(),
+        day,
+        month,
+        year,
         expense: type === 'expense' ? amount : 0,
         income: type === 'income' ? amount : 0,
       },
@@ -132,19 +162,19 @@ export async function createTransaction(transaction: createTransactionSchemaType
         },
       },
     }),
-    // Update the user's yearly transactions history
-    prisma.yearlyTransactionsHistory.upsert({
+    // Update the user's yearly history
+    prisma.yearlyHistory.upsert({
       where: {
         userId_month_year: {
           userId: user.id,
-          month: date.getUTCMonth(),
-          year: date.getUTCFullYear(),
+          month,
+          year,
         },
       },
       create: {
         userId: user.id,
-        month: date.getUTCMonth(),
-        year: date.getUTCFullYear(),
+        month,
+        year,
         expense: type === 'expense' ? amount : 0,
         income: type === 'income' ? amount : 0,
       },
