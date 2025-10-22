@@ -97,12 +97,33 @@ model Category {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   
+  payees Payee[]
   transactions Transaction[]
   
   @@unique([userId, groupId, name, type])
   @@index([userId])
   @@index([groupId])
   @@index([userId, isDeleted])
+}
+
+model Payee {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
+
+  transactions Transaction[]
+  
+  @@unique([userId, name])
+  @@index([userId])
 }
 
 // Transactions
@@ -115,16 +136,19 @@ model Transaction {
   
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  
-  amount      Float     // Positive for income/credits, negative for expenses/debits
+
+  payeeId  String?
+  payee    Payee? @relation(fields: [payeeId], references: [id], onDelete: Restrict)
+
+  amount      Float
   description String
   date        DateTime
-  type        String    @default("expense") // "income", "expense", or "transfer"
+  type        String    @default("expense")
   
   // For transfers between accounts
   isTransfer       Boolean      @default(false)
-  transferId       String?      @unique // Links the two sides of a transfer
-  linkedAccountId  String?      // The other account involved in transfer
+  transferId       String?      @unique
+  linkedAccountId  String?
   linkedAccount    Account?     @relation("TransferLinkedAccount", fields: [linkedAccountId], references: [id], onDelete: SetNull)
   transferPair     Transaction? @relation("TransferPair", fields: [transferId], references: [id])
   transferLinked   Transaction? @relation("TransferPair")
@@ -198,7 +222,6 @@ model NetWorthSnapshot {
   date      DateTime
   netWorth  Float
   
-  // Optional: store breakdown as JSON if needed
   breakdown Json?    // { "checking": 5000, "savings": 10000, "creditCard": -2000 }
   
   createdAt DateTime @default(now())
