@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { TransactionType } from './types';
 import { useEffect, useState } from 'react';
-import { Category } from '@prisma/client';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +15,8 @@ import {
 } from '@/components/ui/command';
 import CreateCategoryModal from './create-category-modal';
 import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
+import { CATEGORIES_BY_GROUP, CATEGORY } from '@/constants/categories';
+import { CategoryIcon } from '@/components/category-icon';
 
 type CategoryPickerProps = {
   type: TransactionType;
@@ -26,16 +27,9 @@ function CategoryPicker({ type, onChange }: CategoryPickerProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string>('');
 
-  const categoriesQuery = useQuery({
-    queryKey: ['categories', type],
-    queryFn: () => fetch(`/api/categories?type=${type}`).then(res => res.json()),
-  });
+  const selectedCategory = Object.values(CATEGORY).find((cat: any) => cat.name === value);
 
-  const selectedCategory = categoriesQuery.data?.find(
-    (category: Category) => category.name === value
-  );
-
-  const categorySuccessCallback = (category: Category) => {
+  const categorySuccessCallback = (category: any) => {
     setValue(category.name);
     setOpen(false);
   };
@@ -61,17 +55,28 @@ function CategoryPicker({ type, onChange }: CategoryPickerProps) {
             <CommandEmpty>No categories found.</CommandEmpty>
             <CommandGroup>
               <CommandList>
-                {categoriesQuery.data?.map((category: Category) => (
-                  <CommandItem
-                    key={category.name}
-                    onSelect={() => {
-                      setOpen(false);
-                      setValue(category.name);
-                    }}
-                  >
-                    <CategoryRow category={category} />
-                    {selectedCategory?.name === category.name && <CheckIcon className="ml-1" />}
-                  </CommandItem>
+                {CATEGORIES_BY_GROUP.map((categoryGroup: any) => (
+                  <>
+                    <CommandItem
+                          key={categoryGroup.id}
+                          disabled
+                        >
+                      <span key={categoryGroup.name}>{categoryGroup.name}</span>
+                    </CommandItem>
+                    {
+                      categoryGroup.categories.map((category: any) => (
+                        <CommandItem
+                          key={category.id}
+                          onSelect={() => {
+                            setOpen(false);
+                            setValue(category.name);
+                         }}
+                        >
+                          <CategoryRow category={category} />
+                          {selectedCategory?.name === category.name && <CheckIcon className="ml-1" />}
+                        </CommandItem>
+                    ))}
+                  </>
                 ))}
               </CommandList>
             </CommandGroup>
@@ -82,10 +87,10 @@ function CategoryPicker({ type, onChange }: CategoryPickerProps) {
   );
 }
 
-function CategoryRow({ category }: { category: Category }) {
+function CategoryRow({ category }: { category: any }) {
   return (
     <div className="flex items-center gap-2">
-      <span role="img">{category.icon}</span>
+      <CategoryIcon icon={category.icon} color={category.color} size={4} />
       <span>{category.name}</span>
     </div>
   );
