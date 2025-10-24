@@ -13,7 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User Settings
 model UserSettings {
   id        String   @id @default(uuid())
   userId    String   @unique
@@ -23,15 +22,13 @@ model UserSettings {
   updatedAt DateTime @updatedAt
 }
 
-// Account types (checking, savings, credit cards, etc.)
 model Account {
   id            String      @id @default(uuid())
   userId        String
   name          String
   type          AccountType
   balance       Float       @default(0)
-  
-  // Optional fields
+
   institution   String?     // Bank name
   accountNumber String?     // Last 4 digits
   color         String?     // For UI customization
@@ -61,51 +58,6 @@ enum AccountType {
   OTHER
 }
 
-// Category Groups (Bills, Food, Entertainment, etc.)
-model CategoryGroup {
-  id        String     @id @default(uuid())
-  userId    String
-  name      String
-  icon      String?
-  sortOrder Int        @default(0)
-  isDeleted Boolean    @default(false)
-  deletedAt DateTime?
-  
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  
-  categories Category[]
-  
-  @@unique([userId, name])
-  @@index([userId])
-  @@index([userId, isDeleted])
-}
-
-// Categories within groups
-model Category {
-  id        String        @id @default(uuid())
-  userId    String
-  groupId   String
-  group     CategoryGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  
-  name      String
-  icon      String
-  type      String        @default("expense") // "income" or "expense"
-  isDeleted Boolean       @default(false)
-  deletedAt DateTime?
-  
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  
-  payees Payee[]
-  transactions Transaction[]
-  
-  @@unique([userId, groupId, name, type])
-  @@index([userId])
-  @@index([groupId])
-  @@index([userId, isDeleted])
-}
-
 model Payee {
   id        String   @id @default(uuid())
   userId    String
@@ -115,7 +67,6 @@ model Payee {
   updatedAt DateTime @updatedAt
 
   categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   isDeleted   Boolean   @default(false)
   deletedAt   DateTime?
@@ -126,7 +77,6 @@ model Payee {
   @@index([userId])
 }
 
-// Transactions
 model Transaction {
   id          String    @id @default(uuid())
   userId      String
@@ -135,7 +85,6 @@ model Transaction {
   account     Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
   
   categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   payeeId  String?
   payee    Payee? @relation(fields: [payeeId], references: [id], onDelete: Restrict)
@@ -145,7 +94,6 @@ model Transaction {
   date        DateTime
   type        String    @default("expense")
   
-  // For transfers between accounts
   isTransfer       Boolean      @default(false)
   transferId       String?      @unique
   linkedAccountId  String?
@@ -168,7 +116,6 @@ model Transaction {
   @@index([transferId])
 }
 
-// Monthly aggregated history (overall)
 model MonthlyHistory {
   id       String @id @default(uuid())
   userId   String
@@ -183,7 +130,6 @@ model MonthlyHistory {
   @@index([userId, year, month])
 }
 
-// Monthly history per category group
 model MonthlyCategoryGroupHistory {
   id              String @id @default(uuid())
   userId          String
@@ -200,7 +146,6 @@ model MonthlyCategoryGroupHistory {
   @@index([categoryGroupId])
 }
 
-// Yearly aggregated history
 model YearlyHistory {
   id       String @id @default(uuid())
   userId   String
@@ -214,7 +159,6 @@ model YearlyHistory {
   @@index([userId, year])
 }
 
-// Net worth snapshots
 model NetWorthSnapshot {
   id        String   @id @default(uuid())
   userId    String
