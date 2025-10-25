@@ -23,16 +23,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
-import CategoryPicker from './category-picker';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, CircleOffIcon, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createTransaction } from '../../../server/actions/transactions';
 import { toast } from 'sonner';
 import { dateToUTCDate } from '@/lib/date-helpers';
+import CategoryPicker from '@/components/category-picker';
 
 type CreateTransactionModalProps = {
   trigger: ReactNode;
@@ -121,25 +121,39 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <CategoryPicker
+                      trigger={
+                        <Button variant="outline" className="h-[100px] w-full">
+                          {!!field.value ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <span className="text-2xl" role="img">
+                                {field.value}
+                              </span>
+                              <span className="text-xs text-muted-foreground">Click to change</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2">
+                              <CircleOffIcon className="h-[48px] w-[48px]" />
+                              <span className="text-xs text-muted-foreground">Click to select</span>
+                            </div>
+                          )}
+                        </Button>
+                      }
+                      onChange={category => field.onChange(category)}
+                    />
+                  </FormControl>
+                  <FormDescription>Select a category for the transaction.</FormDescription>
+                </FormItem>
+              )}
+            />
             <div className="flex items-center justify-between gap-2 flex-col md:flex-row">
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <CategoryPicker
-                        type={type}
-                        onChange={category => {
-                          field.onChange(category);
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>Select a category for the transaction.</FormDescription>
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="date"

@@ -26,16 +26,14 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Category } from '@prisma/client';
 import { createCategory } from '../../../server/actions/categories';
 
 type CreateCategoryModalProps = {
   type: TransactionType;
-  onSuccessCallback?: (category: Category) => void;
+  onSuccessCallback?: (category: any) => void;
 };
 
 function CreateCategoryModal({ type, onSuccessCallback }: CreateCategoryModalProps) {
@@ -51,7 +49,7 @@ function CreateCategoryModal({ type, onSuccessCallback }: CreateCategoryModalPro
 
   const { mutate, isPending } = useMutation({
     mutationFn: createCategory,
-    onSuccess: async (data: Category) => {
+    onSuccess: async (data: any) => {
       toast.success(`Category ${data.name} created successfully`, {
         id: 'create-category',
       });
@@ -147,14 +145,7 @@ function CreateCategoryModal({ type, onSuccessCallback }: CreateCategoryModalPro
                           )}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full">
-                        <EmojiPicker
-                          theme={Theme.AUTO}
-                          onEmojiClick={emojiEvent => {
-                            field.onChange(emojiEvent.emoji);
-                          }}
-                        />
-                      </PopoverContent>
+                      <PopoverContent className="w-full"></PopoverContent>
                     </Popover>
                   </FormControl>
                 </FormItem>

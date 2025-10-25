@@ -3,7 +3,7 @@ import { LucideIcon } from 'lucide-react';
 
 interface CategoryIconProps {
   icon: string;
-  color: string;
+  color?: string;
   size?: number;
   className?: string;
   strokeWidth?: number;
@@ -12,7 +12,7 @@ interface CategoryIconProps {
 
 export const CategoryIcon: React.FC<CategoryIconProps> = ({
   icon,
-  color,
+  color = 'black',
   size = 20,
   className = '',
   strokeWidth = 2,
