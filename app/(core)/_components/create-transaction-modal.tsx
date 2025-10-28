@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import { TransactionType } from './types';
+import { TransactionType } from '../../../types/transaction';
 import {
   Dialog,
   DialogClose,
@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/styles';
 import { createTransactionSchema, createTransactionSchemaType } from '@/schema/transaction';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -29,10 +29,10 @@ import { CalendarIcon, CircleOffIcon, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createTransaction } from '../../../server/actions/transactions';
 import { toast } from 'sonner';
 import { dateToUTCDate } from '@/lib/date-helpers';
 import CategoryPicker from '@/components/category-picker';
+import { createTransaction } from '@/server/actions/transactions';
 
 type CreateTransactionModalProps = {
   trigger: ReactNode;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { TransactionType } from './types';
+import { TransactionType } from '../../../types/transaction';
 import { createCategorySchema, CreateCategorySchemaType } from '@/schema/categories';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/styles';
 import {
   Form,
   FormControl,

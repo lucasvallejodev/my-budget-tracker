@@ -1,3 +1,3 @@
 export default function Page() {
-  return <h1>Lading Page</h1>;
+  return <h1>Budgets Page</h1>;
 }

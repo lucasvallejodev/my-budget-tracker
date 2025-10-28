@@ -2,9 +2,9 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import UserProfile from './user-profile';
+import UserProfile from '../../app/(core)/_components/user-profile';
 import Logo from '@/components/logo';
-import { MAIN_ROUTE_ITEMS, MANAGEMENT_ROUTE_ITEMS } from '@/constants/routes';
+import { MAIN_ROUTE_ITEMS } from '@/constants/routes';
 import { RouteItem } from '@/types/route-item';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -45,9 +45,6 @@ function NavContent() {
       <Logo />
       <div className="mt-6">
         <SideNavbarLinks title="Main Menu" links={MAIN_ROUTE_ITEMS} />
-      </div>
-      <div className="mt-6">
-        <SideNavbarLinks title="Management" links={MANAGEMENT_ROUTE_ITEMS} />
       </div>
     </>
   );

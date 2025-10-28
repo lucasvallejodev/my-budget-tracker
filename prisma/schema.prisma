@@ -13,15 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model UserSettings {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  currency  String   @default("USD")
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model Account {
   id            String      @id @default(uuid())
   userId        String

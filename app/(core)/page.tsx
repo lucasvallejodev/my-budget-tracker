@@ -1,8 +1,5 @@
-import { redirect } from 'next/navigation';
-import { currentUser } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
-import CreateTransactionModal from '../_components/create-transaction-modal';
+import CreateTransactionModal from './_components/create-transaction-modal';
 import { BanknoteArrowUp, ReceiptText } from 'lucide-react';
 import ExpenseCategory from '@/components/expense/expense-category';
 import ExpenseItem from '@/components/expense/expense-item';
@@ -58,28 +55,8 @@ const subscriptions = [
 ];
 
 async function Dashboard() {
-  const user = await currentUser();
-
-  if (!user) {
-    redirect('/sign-in');
-  }
-
-  const userSettings = await prisma.userSettings.findUnique({
-    where: {
-      userId: user.id,
-    },
-  });
-
-  if (!userSettings) {
-    redirect('/settings');
-  }
-
   return (
     <div className="h-full p-5 flex gap-5 flex-col">
-      <h2 className="font-bold text-2xl">Hi, {user?.fullName}</h2>
-      <h3 className="text-gray-500">
-        Here&apos;s what happenning with your money. Lets Manage your expenses!
-      </h3>
       <div className="flex gap-4 flex-col p-5 border rounded-sm bg-gray-50">
         <h2 className="text-xl">Manage your money</h2>
         <div className="flex gap-2 flex-col md:flex-row">
@@ -128,11 +105,16 @@ async function Dashboard() {
             <span className="text-sm text-neutral-800 leading-5">Expenses per month</span>
           </div>
         </div>
-        <div className="flex gap-4 h-[300px]">
-          <div className="w-[20px] h-full h-2 bg-neutral-200 rounded-md relative overflow-hidden">
-            <div className="absolute bottom-0 w-full h-[17%] bg-violet-500 rounded-b-md" />
-            <div className="absolute bottom-[15.4%] w-full h-[22%] bg-amber-500" />
-            <div className="absolute bottom-[33.6%] w-full h-[38%] bg-emerald-500 rounded-t-md" />
+        <div className="flex gap-2 h-[300px]">
+          <div className="w-[40px] h-full h-2 relative text-sm text-neutral-800">
+            <span className="absolute bottom-[0%] w-full">$749</span>
+            <span className="absolute bottom-[16%] w-full">$1289</span>
+            <span className="absolute bottom-[40%] w-full">$1738</span>
+          </div>
+          <div className="w-[20px] h-full mr-2 h-2 bg-neutral-200 rounded-md relative overflow-hidden">
+            <div className="absolute bottom-0 w-full h-[16%] bg-violet-500 rounded-b-md" />
+            <div className="absolute bottom-[16%] w-full h-[24%] bg-amber-500" />
+            <div className="absolute bottom-[40%] w-full h-[44%] bg-emerald-500 rounded-t-md" />
           </div>
 
           <div className="w-[20px] h-full h-2 bg-neutral-200 rounded-md relative overflow-hidden">

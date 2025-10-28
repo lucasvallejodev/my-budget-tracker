@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/styles';
 import { CategoryIcon } from './category-icon';
 import { format } from 'date-fns';
 

@@ -30,7 +30,6 @@ export async function GET(request: Request) {
       date: true,
       type: true,
       description: true,
-      category: true,
     },
     where: {
       userId: user.id,

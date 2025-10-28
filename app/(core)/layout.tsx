@@ -1,7 +1,7 @@
-import { SideNavbar, MobileNavbar } from './_components/navbar';
-import Header from './_components/header';
+import { SideNavbar, MobileNavbar } from '../../components/navbar/navbar';
+import Header from '../../components/header/header';
 
-function DashboardLayout({
+async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
