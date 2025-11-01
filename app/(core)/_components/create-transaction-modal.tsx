@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import { dateToUTCDate } from '@/lib/date-helpers';
 import CategoryPicker from '@/components/category-picker';
 import { createTransaction } from '@/server/actions/transactions';
+import AccountPicker from '@/components/accounts/account-picker';
 
 type CreateTransactionModalProps = {
   trigger: ReactNode;
@@ -118,6 +119,24 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                     <Input defaultValue="" {...field} />
                   </FormControl>
                   <FormDescription>A short description of the transaction.</FormDescription>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="accountId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account</FormLabel>
+                  <FormControl>
+                    <AccountPicker
+                      type={type}
+                      onChange={account => {
+                        field.onChange(account);
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>Select a account for the transaction.</FormDescription>
                 </FormItem>
               )}
             />
