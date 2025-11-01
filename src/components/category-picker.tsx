@@ -2,8 +2,8 @@
 
 import { ReactNode, useState } from 'react';
 import { Button } from './ui/button';
-import { CATEGORIES_BY_GROUP } from '@/constants/categories';
-import { CategoryIcon } from './category-icon';
+import { CATEGORIES_BY_GROUP } from '@/constants/category';
+import { Icon } from './icon';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
 
 type CategoryPickerProps = {
@@ -39,7 +39,7 @@ const CategoryPicker = ({ trigger, value, onChange }: CategoryPickerProps) => {
                   className="flex items-center justify-center gap-2 flex-col h-full my-4"
                 >
                   <div className={`rounded-lg p-2 bg-${category.color}`}>
-                    <CategoryIcon icon={category.icon} color="white" size={80} />
+                    <Icon icon={category.icon} color="white" size={80} />
                   </div>
                   <div>{category.name}</div>
                 </Button>

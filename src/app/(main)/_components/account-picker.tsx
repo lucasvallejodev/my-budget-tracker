@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { TransactionType } from './types';
 import { useEffect, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -14,31 +13,31 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
-import { CategoryIcon } from '@/components/category-icon';
-import CreateCategoryModal from '@/app/(core)/_components/create-category-modal';
+import { Icon } from '@/components/icon';
+import CreateAccountModal from '@/app/(main)/_components/create-account-dialog';
+import { AccountResponseType } from '../_types/accounts';
 
 type AccountPickerProps = {
-  type: TransactionType;
   onChange?: (category: string) => void;
 };
 
-function AccountPicker({ type, onChange }: AccountPickerProps) {
+function AccountPicker({ onChange }: AccountPickerProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string>('');
 
-  // const selectedCategory = Object.values(CATEGORY).find((cat: any) => cat.name === value);
-
   const categoriesQuery = useQuery({
-    queryKey: ['categories', type],
-    queryFn: () => fetch(`/api/categories?type=${type}`).then(res => res.json()),
+    queryKey: ['accounts'],
+    queryFn: () => fetch(`/api/accounts`).then(res => res.json()),
   });
 
-  const selectedCategory = categoriesQuery.data?.find(
-    (category: any) => category.name === value
+  console.log(categoriesQuery.data, 'accounts');
+
+  const selectedAccount = categoriesQuery.data?.find(
+    (account: AccountResponseType) => account.name === value
   );
 
-  const categorySuccessCallback = (category: any) => {
-    setValue(category.name);
+  const accountSuccessCallback = (account: AccountResponseType) => {
+    setValue(account.name);
     setOpen(false);
   };
 
@@ -51,19 +50,19 @@ function AccountPicker({ type, onChange }: AccountPickerProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" aria-expanded={open} className="w-full justify-between">
-          {selectedCategory ? <CategoryRow category={selectedCategory} /> : 'Select a category'}
+          {selectedAccount ? <AccountRow category={selectedAccount} /> : 'Select an account'}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full md:w-[200px] p-0">
+      <PopoverContent className="w-full sm:max-w-[300px] md:w-[400px] p-0">
         <Command>
-          <CommandInput placeholder="Search categories..." />
-          <CreateCategoryModal type={type} onSuccessCallback={categorySuccessCallback} />
+          <CommandInput placeholder="Search accounts..." />
+          <CreateAccountModal onSuccessCallback={accountSuccessCallback} />
           <CommandList>
-            <CommandEmpty>No categories found.</CommandEmpty>
+            <CommandEmpty>No accounts found.</CommandEmpty>
             <CommandGroup>
               <CommandList>
-                {categoriesQuery.data?.map((category: Category) => (
+                {categoriesQuery.data?.map((category: any) => (
                   <CommandItem
                     key={category.name}
                     onSelect={() => {
@@ -71,8 +70,8 @@ function AccountPicker({ type, onChange }: AccountPickerProps) {
                       setValue(category.name);
                     }}
                   >
-                    <CategoryRow category={category} />
-                    {selectedCategory?.name === category.name && <CheckIcon className="ml-1" />}
+                    <AccountRow category={category} />
+                    {selectedAccount?.name === category.name && <CheckIcon className="ml-1" />}
                   </CommandItem>
                 ))}
               </CommandList>
@@ -84,11 +83,14 @@ function AccountPicker({ type, onChange }: AccountPickerProps) {
   );
 }
 
-function CategoryRow({ category }: { category: any }) {
+function AccountRow({ category }: { category: any }) {
   return (
     <div className="flex items-center gap-2">
-      <CategoryIcon icon={category.icon} color={category.color} size={4} />
-      <span>{category.name}</span>
+      <Icon icon={category.icon} size={80} />
+      <span>
+        {category.name}{' '}
+        <span className="text-sm text-muted-foreground">({category.institution || ''})</span>
+      </span>
     </div>
   );
 }

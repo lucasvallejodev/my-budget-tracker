@@ -1,7 +1,7 @@
 import * as LucideIcons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
-interface CategoryIconProps {
+interface IconProps {
   icon: string;
   color?: string;
   size?: number;
@@ -10,7 +10,7 @@ interface CategoryIconProps {
   fallbackIcon?: string;
 }
 
-export const CategoryIcon: React.FC<CategoryIconProps> = ({
+export const Icon: React.FC<IconProps> = ({
   icon,
   color = 'black',
   size = 20,
@@ -19,7 +19,7 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
 }) => {
   const IconComponent: LucideIcon = LucideIcons[icon as keyof typeof LucideIcons] as LucideIcon;
 
-  if (!IconComponent) {
+  if (!icon || !IconComponent) {
     return (
       <LucideIcons.HelpCircle
         size={size}

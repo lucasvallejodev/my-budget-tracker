@@ -10,7 +10,11 @@
     "lint": "next lint",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+    
   },
   "dependencies": {
     "@clerk/nextjs": "^6.14.3",

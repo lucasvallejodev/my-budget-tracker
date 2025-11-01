@@ -1,5 +1,5 @@
 'use client';
-import { MAIN_ROUTE_ITEMS } from '@/constants/routes';
+import { MAIN_ROUTE_ITEMS } from '@/app/(main)/routes';
 import { usePathname } from 'next/navigation';
 
 function Header() {

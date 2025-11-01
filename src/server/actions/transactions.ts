@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/prisma';
 import { createTransactionSchema, createTransactionSchemaType } from '@/schema/transaction';
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
@@ -49,10 +49,10 @@ export async function deleteTransaction(transactionId: string) {
       },
       data: {
         expense: {
-          decrement: transaction.type === 'expense' ? transaction.amount : 0,
+          decrement: transaction.type === 'EXPENSE' ? transaction.amount : 0,
         },
         income: {
-          decrement: transaction.type === 'income' ? transaction.amount : 0,
+          decrement: transaction.type === 'INCOME' ? transaction.amount : 0,
         },
       },
     }),
@@ -67,10 +67,10 @@ export async function deleteTransaction(transactionId: string) {
       },
       data: {
         expense: {
-          decrement: transaction.type === 'expense' ? transaction.amount : 0,
+          decrement: transaction.type === 'EXPENSE' ? transaction.amount : 0,
         },
         income: {
-          decrement: transaction.type === 'income' ? transaction.amount : 0,
+          decrement: transaction.type === 'INCOME' ? transaction.amount : 0,
         },
       },
     }),
@@ -91,19 +91,6 @@ export async function createTransaction(transaction: createTransactionSchemaType
   }
 
   const { amount, date, type, categoryId, accountId, description } = parsedData.data;
-
-  // Verify category exists and belongs to user
-  const categoryResult = await prisma.category.findFirst({
-    where: {
-      id: categoryId,
-      userId: user.id,
-      isDeleted: false,
-    },
-  });
-
-  if (!categoryResult) {
-    throw new Error('Category not found');
-  }
 
   // Verify account exists and belongs to user
   const accountResult = await prisma.account.findFirst({
@@ -129,7 +116,7 @@ export async function createTransaction(transaction: createTransactionSchemaType
         amount,
         date,
         type,
-        categoryId: categoryResult.id,
+        categoryId: categoryId,
         accountId: accountResult.id,
         description: description || '',
         userId: user.id,
@@ -150,15 +137,15 @@ export async function createTransaction(transaction: createTransactionSchemaType
         day,
         month,
         year,
-        expense: type === 'expense' ? amount : 0,
-        income: type === 'income' ? amount : 0,
+        expense: type === 'EXPENSE' ? amount : 0,
+        income: type === 'INCOME' ? amount : 0,
       },
       update: {
         expense: {
-          increment: type === 'expense' ? amount : 0,
+          increment: type === 'EXPENSE' ? amount : 0,
         },
         income: {
-          increment: type === 'income' ? amount : 0,
+          increment: type === 'INCOME' ? amount : 0,
         },
       },
     }),
@@ -175,15 +162,15 @@ export async function createTransaction(transaction: createTransactionSchemaType
         userId: user.id,
         month,
         year,
-        expense: type === 'expense' ? amount : 0,
-        income: type === 'income' ? amount : 0,
+        expense: type === 'EXPENSE' ? amount : 0,
+        income: type === 'INCOME' ? amount : 0,
       },
       update: {
         expense: {
-          increment: type === 'expense' ? amount : 0,
+          increment: type === 'EXPENSE' ? amount : 0,
         },
         income: {
-          increment: type === 'income' ? amount : 0,
+          increment: type === 'INCOME' ? amount : 0,
         },
       },
     }),

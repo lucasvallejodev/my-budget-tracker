@@ -1,13 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import CreateTransactionModal from './create-transaction-modal';
+import CreateTransactionModal from './create-transaction-dialog';
 import { ReceiptText } from 'lucide-react';
 import { Transaction, TransactionTable } from '@/components/transaction-table';
 import { useQuery } from '@tanstack/react-query';
+import { TransactionType } from '@/types/transaction';
 
 type TransactionsPageProps = {
-  type: 'expense' | 'income';
+  type: TransactionType;
 };
 
 function TransactionsPage({ type }: TransactionsPageProps) {
@@ -26,7 +27,7 @@ function TransactionsPage({ type }: TransactionsPageProps) {
             trigger={
               <Button className="border border-gray-200 bg-white" variant="ghost">
                 <ReceiptText />
-                New {type === 'expense' ? 'Expense' : 'Income'}
+                New {type === 'EXPENSE' ? 'EXPENSE' : 'INCOME'}
               </Button>
             }
             type={type}

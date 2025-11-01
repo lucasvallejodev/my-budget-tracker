@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import CreateTransactionModal from './_components/create-transaction-modal';
+import CreateTransactionModal from '../_components/create-transaction-dialog';
 import { BanknoteArrowUp, ReceiptText } from 'lucide-react';
 import ExpenseCategory from '@/components/expense/expense-category';
 import ExpenseItem from '@/components/expense/expense-item';
@@ -67,7 +67,7 @@ async function Dashboard() {
                 New income
               </Button>
             }
-            type="income"
+            type="INCOME"
           />
           <CreateTransactionModal
             trigger={
@@ -76,7 +76,7 @@ async function Dashboard() {
                 New Expense
               </Button>
             }
-            type="expense"
+            type="EXPENSE"
           />
         </div>
       </div>

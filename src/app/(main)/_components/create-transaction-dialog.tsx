@@ -33,14 +33,14 @@ import { toast } from 'sonner';
 import { dateToUTCDate } from '@/lib/date-helpers';
 import CategoryPicker from '@/components/category-picker';
 import { createTransaction } from '@/server/actions/transactions';
-import AccountPicker from '@/components/accounts/account-picker';
+import AccountPicker from './account-picker';
 
-type CreateTransactionModalProps = {
+type CreateTransactionDialogProps = {
   trigger: ReactNode;
   type: TransactionType;
 };
 
-function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) {
+function CreateTransactionDialog({ trigger, type }: CreateTransactionDialogProps) {
   const [open, setOpen] = useState(false);
   const [openCalendar, setOpenCalendar] = useState(false);
 
@@ -90,7 +90,7 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogTitle>
-          Create a new {type === 'income' ? 'income' : 'expense'} transaction
+          Create a new {type === 'INCOME' ? 'INCOME' : 'EXPENSE'} transaction
         </DialogTitle>
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
@@ -130,7 +130,6 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
                   <FormLabel>Account</FormLabel>
                   <FormControl>
                     <AccountPicker
-                      type={type}
                       onChange={account => {
                         field.onChange(account);
                       }}
@@ -235,4 +234,4 @@ function CreateTransactionModal({ trigger, type }: CreateTransactionModalProps) 
   );
 }
 
-export default CreateTransactionModal;
+export default CreateTransactionDialog;

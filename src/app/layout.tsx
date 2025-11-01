@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
-import RootProvider from '@/components/providers/RootProvider';
+import RootProvider from '@/providers/root-provider';
 import { Toaster } from 'sonner';
 
 const dmSans = DM_Sans({

@@ -1,5 +1,5 @@
-import { SideNavbar, MobileNavbar } from '../../components/navbar/navbar';
-import Header from '../../components/header/header';
+import Header from '@/components/header';
+import { SideNavbar, MobileNavbar } from '../../components/navbar';
 
 async function DashboardLayout({
   children,

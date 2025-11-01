@@ -2,9 +2,9 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import UserProfile from '../../app/(core)/_components/user-profile';
+import UserProfile from '../app/(main)/_components/user-profile';
 import Logo from '@/components/logo';
-import { MAIN_ROUTE_ITEMS } from '@/constants/routes';
+import { MAIN_ROUTE_ITEMS } from '@/app/(main)/routes';
 import { RouteItem } from '@/types/route-item';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';

@@ -45,7 +45,6 @@ enum AccountType {
   CREDIT_CARD
   CASH
   INVESTMENT
-  LOAN
   OTHER
 }
 
@@ -68,6 +67,11 @@ model Payee {
   @@index([userId])
 }
 
+enum TransactionType {
+  EXPENSE
+  INCOME
+}
+
 model Transaction {
   id          String    @id @default(uuid())
   userId      String
@@ -83,7 +87,7 @@ model Transaction {
   amount      Float
   description String
   date        DateTime
-  type        String    @default("expense")
+  type        TransactionType
   
   isTransfer       Boolean      @default(false)
   transferId       String?      @unique

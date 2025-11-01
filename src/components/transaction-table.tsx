@@ -7,7 +7,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/styles';
-import { CategoryIcon } from './category-icon';
+import { Icon } from './icon';
 import { format } from 'date-fns';
 
 export type Transaction = {
@@ -36,16 +36,16 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody className="text-gray-500">
-        {transactions.map(transaction => (
+        {transactions?.map(transaction => (
           <TableRow key={transaction.id}>
             <TableCell className="font-medium flex items-center text-gray-800 gap-2">
-              <CategoryIcon categoryIcon={transaction.categoryIcon} />
+              <Icon icon={transaction.categoryIcon} />
               {transaction.category}
             </TableCell>
             <TableCell
-              className={cn('text-center', transaction.type === 'income' && 'text-green-600')}
+              className={cn('text-center', transaction.type === 'INCOME' && 'text-green-600')}
             >
-              {transaction.type === 'income' ? '+' : '-'} {transaction.amount}
+              {transaction.type === 'INCOME' ? '+' : '-'} {transaction.amount}
             </TableCell>
             <TableCell className="text-center">{format(transaction.date, 'PPP')}</TableCell>
             <TableCell className="text-center">{transaction.description}</TableCell>
