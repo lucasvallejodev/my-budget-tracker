@@ -2,7 +2,7 @@ import * as LucideIcons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
 interface IconProps {
-  icon: string;
+  icon?: string;
   color?: string;
   size?: number;
   className?: string;

@@ -25,14 +25,12 @@ function AccountPicker({ onChange }: AccountPickerProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string>('');
 
-  const categoriesQuery = useQuery({
+  const accountsQuery = useQuery({
     queryKey: ['accounts'],
     queryFn: () => fetch(`/api/accounts`).then(res => res.json()),
   });
 
-  console.log(categoriesQuery.data, 'accounts');
-
-  const selectedAccount = categoriesQuery.data?.find(
+  const selectedAccount = accountsQuery.data?.find(
     (account: AccountResponseType) => account.name === value
   );
 
@@ -50,7 +48,7 @@ function AccountPicker({ onChange }: AccountPickerProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" aria-expanded={open} className="w-full justify-between">
-          {selectedAccount ? <AccountRow category={selectedAccount} /> : 'Select an account'}
+          {selectedAccount ? <AccountRow account={selectedAccount} /> : 'Select an account'}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -62,16 +60,16 @@ function AccountPicker({ onChange }: AccountPickerProps) {
             <CommandEmpty>No accounts found.</CommandEmpty>
             <CommandGroup>
               <CommandList>
-                {categoriesQuery.data?.map((category: any) => (
+                {accountsQuery.data?.map((account: any) => (
                   <CommandItem
-                    key={category.name}
+                    key={account.name}
                     onSelect={() => {
                       setOpen(false);
-                      setValue(category.name);
+                      setValue(account.name);
                     }}
                   >
-                    <AccountRow category={category} />
-                    {selectedAccount?.name === category.name && <CheckIcon className="ml-1" />}
+                    <AccountRow account={account} />
+                    {selectedAccount?.name === account.name && <CheckIcon className="ml-1" />}
                   </CommandItem>
                 ))}
               </CommandList>
@@ -83,13 +81,13 @@ function AccountPicker({ onChange }: AccountPickerProps) {
   );
 }
 
-function AccountRow({ category }: { category: any }) {
+function AccountRow({ account }: { account: any }) {
   return (
     <div className="flex items-center gap-2">
-      <Icon icon={category.icon} size={80} />
+      <Icon icon={account.icon} size={80} />
       <span>
-        {category.name}{' '}
-        <span className="text-sm text-muted-foreground">({category.institution || ''})</span>
+        {account.name}{' '}
+        <span className="text-sm text-muted-foreground">({account.institution || ''})</span>
       </span>
     </div>
   );
