@@ -1,30 +1,61 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
-import { CATEGORIES_BY_GROUP } from '@/constants/category';
+import { CATEGORIES_BY_GROUP, CATEGORY } from '@/constants/category';
 import { Icon } from './icon';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
+import { CircleOffIcon } from 'lucide-react';
+import { CategoryType } from '@/types/category';
 
 type CategoryPickerProps = {
-  trigger: ReactNode;
   value?: string;
   onChange: (category: string | null) => void;
 };
 
-const CategoryPicker = ({ trigger, value, onChange }: CategoryPickerProps) => {
-  const [open, setOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(value);
+const getCategory = (categoryId: string): CategoryType => {
+  const category = CATEGORY[categoryId as keyof typeof CATEGORY];
 
-  const handleOnCategorySelect = (category: string) => {
-    setSelectedCategory(category);
-    onChange(category);
+  if (!category) {
+    return CATEGORY['uncategorized'];
+  }
+
+  return category;
+};
+
+const CategoryPicker = ({ value, onChange }: CategoryPickerProps) => {
+  const [open, setOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>();
+
+  useEffect(() => {
+    if (value) {
+      setSelectedCategory(getCategory(value));
+    }
+  }, [value]);
+
+  const handleOnCategorySelect = (categoryId: string) => {
+    setSelectedCategory(getCategory(categoryId));
+    onChange(categoryId);
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="h-[120px] w-full">
+          {!!selectedCategory ? (
+            <div className="flex flex-col items-center gap-2 p-4">
+              <CategoryItem category={selectedCategory} />
+              <span className="text-xs text-muted-foreground">Click to change</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <CircleOffIcon className="h-[48px] w-[48px]" />
+              <span className="text-xs text-muted-foreground">Click to select</span>
+            </div>
+          )}
+        </Button>
+      </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogTitle>Select a category</DialogTitle>
         {CATEGORIES_BY_GROUP.map((group: any) => (
@@ -33,15 +64,12 @@ const CategoryPicker = ({ trigger, value, onChange }: CategoryPickerProps) => {
             <div className="grid grid-cols-2 gap-2">
               {group.categories.map((category: any) => (
                 <Button
-                  key={category.name}
-                  variant={selectedCategory === category.name ? 'default' : 'outline'}
-                  onClick={() => handleOnCategorySelect(category.name)}
+                  key={category.id}
+                  variant={value === category.id ? 'default' : 'outline'}
+                  onClick={() => handleOnCategorySelect(category.id)}
                   className="flex items-center justify-center gap-2 flex-col h-full my-4"
                 >
-                  <div className={`rounded-lg p-2 bg-${category.color}`}>
-                    <Icon icon={category.icon} color="white" size={80} />
-                  </div>
-                  <div>{category.name}</div>
+                  <CategoryItem category={category} />
                 </Button>
               ))}
             </div>
@@ -51,5 +79,14 @@ const CategoryPicker = ({ trigger, value, onChange }: CategoryPickerProps) => {
     </Dialog>
   );
 };
+
+const CategoryItem = ({ category }: { category: any }) => (
+  <>
+    <div className={`rounded-lg p-2 bg-${category.color}`}>
+      <Icon icon={category.icon} color="white" size={80} />
+    </div>
+    <div>{category.name}</div>
+  </>
+);
 
 export default CategoryPicker;

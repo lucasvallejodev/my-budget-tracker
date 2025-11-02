@@ -13,29 +13,26 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
-import { Icon } from '@/components/icon';
-import CreateAccountDialog from '@/app/(main)/_components/create-account-dialog';
-import { AccountResponseType } from '../_types/accounts';
+import { PayeeResponseType } from '../_types/payees';
+import CreatePayeeDialog from './create-payee-dialog';
 
-type AccountPickerProps = {
+type PayeePickerProps = {
   onChange?: (category: string) => void;
 };
 
-function AccountPicker({ onChange }: AccountPickerProps) {
+function PayeePicker({ onChange }: PayeePickerProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string>('');
 
-  const accountsQuery = useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => fetch(`/api/accounts`).then(res => res.json()),
+  const payeesQuery = useQuery({
+    queryKey: ['payees'],
+    queryFn: () => fetch(`/api/payees`).then(res => res.json()),
   });
 
-  const selectedAccount = accountsQuery.data?.find(
-    (account: AccountResponseType) => account.id === value
-  );
+  const selectedPayee = payeesQuery.data?.find((payee: PayeeResponseType) => payee.id === value);
 
-  const accountSuccessCallback = (account: AccountResponseType) => {
-    setValue(account.name);
+  const payeeSuccessCallback = (payee: PayeeResponseType) => {
+    setValue(payee.id);
     setOpen(false);
   };
 
@@ -48,28 +45,28 @@ function AccountPicker({ onChange }: AccountPickerProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" aria-expanded={open} className="w-full justify-between">
-          {selectedAccount ? <AccountRow account={selectedAccount} /> : 'Select an account'}
+          {selectedPayee ? <PayeeRow payee={selectedPayee} /> : 'Select a payee'}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full sm:max-w-[300px] md:w-[400px] p-0">
         <Command>
           <CommandInput placeholder="Search accounts..." />
-          <CreateAccountDialog onSuccessCallback={accountSuccessCallback} />
+          <CreatePayeeDialog onSuccessCallback={payeeSuccessCallback} />
           <CommandList>
             <CommandEmpty>No accounts found.</CommandEmpty>
             <CommandGroup>
               <CommandList>
-                {accountsQuery.data?.map((account: any) => (
+                {payeesQuery.data?.map((payee: any) => (
                   <CommandItem
-                    key={account.id}
+                    key={payee.id}
                     onSelect={() => {
                       setOpen(false);
-                      setValue(account.id);
+                      setValue(payee.id);
                     }}
                   >
-                    <AccountRow account={account} />
-                    {selectedAccount?.id === account.id && <CheckIcon className="ml-1" />}
+                    <PayeeRow payee={payee} />
+                    {selectedPayee?.id === payee.id && <CheckIcon className="ml-1" />}
                   </CommandItem>
                 ))}
               </CommandList>
@@ -81,16 +78,8 @@ function AccountPicker({ onChange }: AccountPickerProps) {
   );
 }
 
-function AccountRow({ account }: { account: any }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Icon icon={account.icon} size={80} />
-      <span>
-        {account.name}{' '}
-        <span className="text-sm text-muted-foreground">({account.institution || ''})</span>
-      </span>
-    </div>
-  );
+function PayeeRow({ payee }: { payee: any }) {
+  return <div className="flex items-center gap-2">{payee.name}</div>;
 }
 
-export default AccountPicker;
+export default PayeePicker;

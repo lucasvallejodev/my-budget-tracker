@@ -5,19 +5,19 @@ import { z } from 'zod';
 export async function GET(request: Request) {
   const user = await getUserOrRedirect();
 
-  const { searchParams } = new URL(request.url);
-  const paramType = searchParams.get('type');
+  // const { searchParams } = new URL(request.url);
+  // const paramType = searchParams.get('type');
 
-  const validator = z.enum(['INCOME', 'EXPENSE']).nullable();
-  const queryParams = validator.safeParse(paramType);
+  // const validator = z.enum(['INCOME', 'EXPENSE']).nullable();
+  // const queryParams = validator.safeParse(paramType);
 
-  if (!queryParams.success) {
-    return Response.json(queryParams.error, {
-      status: 400,
-    });
-  }
+  // if (!queryParams.success) {
+  //   return Response.json(queryParams.error, {
+  //     status: 400,
+  //   });
+  // }
 
-  const type = queryParams.data;
+  // const type = queryParams.data;
   const transactions = await prisma.transaction.findMany({
     select: {
       id: true,
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     },
     where: {
       userId: user.id,
-      type: type || undefined,
+      // type: type || undefined,
     },
     orderBy: {
       date: 'desc',

@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import { TransactionType } from '../../../types/transaction';
 import {
   Dialog,
   DialogClose,
@@ -25,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { CalendarIcon, CircleOffIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -34,13 +33,22 @@ import { dateToUTCDate } from '@/lib/date-helpers';
 import CategoryPicker from '@/components/category-picker';
 import { createTransaction } from '@/server/actions/transactions';
 import AccountPicker from './account-picker';
+import PayeePicker from './payee-picker';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type CreateTransactionDialogProps = {
   trigger: ReactNode;
-  type: TransactionType;
 };
 
-function CreateTransactionDialog({ trigger, type }: CreateTransactionDialogProps) {
+function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
   const [open, setOpen] = useState(false);
   const [openCalendar, setOpenCalendar] = useState(false);
 
@@ -48,7 +56,7 @@ function CreateTransactionDialog({ trigger, type }: CreateTransactionDialogProps
     resolver: zodResolver(createTransactionSchema),
     defaultValues: {
       date: new Date(),
-      type,
+      type: 'EXPENSE',
     },
   });
 
@@ -63,7 +71,7 @@ function CreateTransactionDialog({ trigger, type }: CreateTransactionDialogProps
       form.reset();
 
       await queryClient.invalidateQueries({
-        queryKey: ['transactions', type], // TODO: create this query on the dashboard
+        queryKey: ['transactions'],
       });
 
       setOpen(false);
@@ -89,36 +97,35 @@ function CreateTransactionDialog({ trigger, type }: CreateTransactionDialogProps
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
-        <DialogTitle>
-          Create a new {type === 'INCOME' ? 'INCOME' : 'EXPENSE'} transaction
-        </DialogTitle>
+        <DialogTitle>Create a new transaction</DialogTitle>
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
-              name="amount"
+              name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount*</FormLabel>
+                  <FormLabel>Transaction Type</FormLabel>
                   <FormControl>
-                    <Input defaultValue={0} type="number" placeholder="0.00" {...field} />
+                    <Select
+                      {...field}
+                      onValueChange={(value: createTransactionSchemaType['type']) =>
+                        form.setValue('type', value)
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Transaction Types</SelectLabel>
+                          <SelectItem value="EXPENSE">Expense</SelectItem>
+                          <SelectItem value="INCOME">Income</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
-                  <FormDescription>
-                    The amount of money you want to add or remove from your account.
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Input defaultValue="" {...field} />
-                  </FormControl>
-                  <FormDescription>A short description of the transaction.</FormDescription>
+                  <FormDescription>The type of the transaction.</FormDescription>
                 </FormItem>
               )}
             />
@@ -141,33 +148,59 @@ function CreateTransactionDialog({ trigger, type }: CreateTransactionDialogProps
             />
             <FormField
               control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Amount*</FormLabel>
+                  <FormControl>
+                    <Input defaultValue={0} type="number" placeholder="0.00" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    The amount of money you want to add or remove from your account.
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="payeeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payee</FormLabel>
+                  <FormControl>
+                    <PayeePicker
+                      onChange={payee => {
+                        field.onChange(payee);
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>Select a payee for the transaction.</FormDescription>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="categoryId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <CategoryPicker
-                      trigger={
-                        <Button variant="outline" className="h-[100px] w-full">
-                          {!!field.value ? (
-                            <div className="flex flex-col items-center gap-2">
-                              <span className="text-2xl" role="img">
-                                {field.value}
-                              </span>
-                              <span className="text-xs text-muted-foreground">Click to change</span>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center gap-2">
-                              <CircleOffIcon className="h-[48px] w-[48px]" />
-                              <span className="text-xs text-muted-foreground">Click to select</span>
-                            </div>
-                          )}
-                        </Button>
-                      }
-                      onChange={category => field.onChange(category)}
-                    />
+                    <CategoryPicker onChange={category => field.onChange(category)} />
                   </FormControl>
                   <FormDescription>Select a category for the transaction.</FormDescription>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input defaultValue="" {...field} />
+                  </FormControl>
+                  <FormDescription>A short description of the transaction.</FormDescription>
                 </FormItem>
               )}
             />
