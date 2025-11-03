@@ -80,6 +80,7 @@ model Transaction {
   account     Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
   
   categoryId  String?
+  categoryGroupId  String?
 
   payeeId  String?
   payee    Payee? @relation(fields: [payeeId], references: [id], onDelete: Restrict)
@@ -114,14 +115,13 @@ model Transaction {
 model MonthlyHistory {
   id       String @id @default(uuid())
   userId   String
-  day      Int
   month    Int
   year     Int
-  
+
   income   Float  @default(0)
   expense  Float  @default(0)
-  
-  @@unique([userId, day, month, year])
+
+  @@unique([userId, month, year])
   @@index([userId, year, month])
 }
 
@@ -129,41 +129,14 @@ model MonthlyCategoryGroupHistory {
   id              String @id @default(uuid())
   userId          String
   categoryGroupId String
-  
+
   month           Int
   year            Int
-  
+
   income          Float  @default(0)
   expense         Float  @default(0)
-  
+
   @@unique([userId, categoryGroupId, month, year])
   @@index([userId, year, month])
   @@index([categoryGroupId])
-}
-
-model YearlyHistory {
-  id       String @id @default(uuid())
-  userId   String
-  month    Int
-  year     Int
-  
-  income   Float  @default(0)
-  expense  Float  @default(0)
-  
-  @@unique([userId, month, year])
-  @@index([userId, year])
-}
-
-model NetWorthSnapshot {
-  id        String   @id @default(uuid())
-  userId    String
-  
-  date      DateTime
-  netWorth  Float
-  
-  breakdown Json?    // { "checking": 5000, "savings": 10000, "creditCard": -2000 }
-  
-  createdAt DateTime @default(now())
-  
-  @@index([userId, date])
 }

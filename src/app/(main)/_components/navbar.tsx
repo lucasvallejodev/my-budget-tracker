@@ -29,7 +29,7 @@ function SideNavbarLinks({ title, links }: SideNavbarLinksProps) {
           <li key={index}>
             <Link
               href={menu.path}
-              className={`flex gap-2 items-center text-gray-500 font-medium p-2 my-2 cursor-pointer rounded-sm hover:text-primary hover:bg-gray-100 ${path == menu.path && 'text-primary bg-white border border-gray-100'}`}
+              className={`flex gap-2 items-center text-gray-500 font-medium text-sm p-2 my-2 cursor-pointer rounded-sm hover:text-primary hover:bg-gray-100 ${path == menu.path && 'text-primary bg-white border border-gray-100'}`}
               aria-label={menu.name}
             >
               <menu.icon className="h-5" />
@@ -57,7 +57,7 @@ function SideAccountLinks() {
           <li key={account.id}>
             <Link
               href={'/accounts/' + account.id}
-              className={`flex gap-2 items-center text-gray-500 font-medium p-2 my-2 cursor-pointer rounded-sm hover:text-primary hover:bg-gray-100 ${path == account.path && 'text-primary bg-white border border-gray-100'}`}
+              className={`flex gap-2 items-center text-gray-500 font-medium text-sm p-2 my-2 cursor-pointer rounded-sm hover:text-primary hover:bg-gray-100 ${path == '/accounts/' + account.id && 'text-primary bg-white border border-gray-100'}`}
               aria-label={account.name}
             >
               <Icon icon={account.icon} />

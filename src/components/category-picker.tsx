@@ -8,9 +8,15 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './ui/dialog';
 import { CircleOffIcon } from 'lucide-react';
 import { CategoryType } from '@/types/category';
 
+type OnChangeCategoryProps = {
+  categoryId: string;
+  categoryGroupId: string;
+};
+
 type CategoryPickerProps = {
   value?: string;
-  onChange: (category: string | null) => void;
+  invalid?: boolean;
+  onChange: (values: OnChangeCategoryProps) => void;
 };
 
 const getCategory = (categoryId: string): CategoryType => {
@@ -23,7 +29,7 @@ const getCategory = (categoryId: string): CategoryType => {
   return category;
 };
 
-const CategoryPicker = ({ value, onChange }: CategoryPickerProps) => {
+const CategoryPicker = ({ value, invalid, onChange }: CategoryPickerProps) => {
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>();
 
@@ -33,16 +39,16 @@ const CategoryPicker = ({ value, onChange }: CategoryPickerProps) => {
     }
   }, [value]);
 
-  const handleOnCategorySelect = (categoryId: string) => {
-    setSelectedCategory(getCategory(categoryId));
-    onChange(categoryId);
+  const handleOnCategorySelect = (category: CategoryType, categoryGroupId: string) => {
+    setSelectedCategory(category);
+    onChange({ categoryId: category.id, categoryGroupId });
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="h-[120px] w-full">
+        <Button variant="outline" className="h-[120px] w-full" aria-invalid={invalid}>
           {!!selectedCategory ? (
             <div className="flex flex-col items-center gap-2 p-4">
               <CategoryItem category={selectedCategory} />
@@ -62,11 +68,11 @@ const CategoryPicker = ({ value, onChange }: CategoryPickerProps) => {
           <div key={group.name} className="mb-4">
             <h3 className="font-semibold mb-2">{group.name}</h3>
             <div className="grid grid-cols-2 gap-2">
-              {group.categories.map((category: any) => (
+              {group.categories.map((category: CategoryType) => (
                 <Button
                   key={category.id}
                   variant={value === category.id ? 'default' : 'outline'}
-                  onClick={() => handleOnCategorySelect(category.id)}
+                  onClick={() => handleOnCategorySelect(category, group.id)}
                   className="flex items-center justify-center gap-2 flex-col h-full my-4"
                 >
                   <CategoryItem category={category} />

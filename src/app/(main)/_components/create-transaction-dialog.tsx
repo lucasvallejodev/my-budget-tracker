@@ -31,7 +31,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { dateToUTCDate } from '@/lib/date-helpers';
 import CategoryPicker from '@/components/category-picker';
-import { createTransaction } from '@/server/actions/transactions';
 import AccountPicker from './account-picker';
 import PayeePicker from './payee-picker';
 import {
@@ -43,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { createTransactionAction } from '../actions';
 
 type CreateTransactionDialogProps = {
   trigger: ReactNode;
@@ -63,7 +63,7 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
   const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
-    mutationFn: createTransaction,
+    mutationFn: createTransactionAction,
     onSuccess: async () => {
       toast.success('Transaction created successfully!', {
         id: 'create-transaction',
@@ -137,6 +137,7 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                   <FormLabel>Account</FormLabel>
                   <FormControl>
                     <AccountPicker
+                      invalid={!!form.formState.errors.accountId}
                       onChange={account => {
                         field.onChange(account);
                       }}
@@ -151,7 +152,7 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount*</FormLabel>
+                  <FormLabel>Amount</FormLabel>
                   <FormControl>
                     <Input defaultValue={0} type="number" placeholder="0.00" {...field} />
                   </FormControl>
@@ -185,7 +186,16 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <CategoryPicker onChange={category => field.onChange(category)} />
+                    <CategoryPicker
+                      onChange={values => {
+                        field.onChange(values.categoryId);
+                        form.setValue('categoryGroupId', values.categoryGroupId);
+                      }}
+                      invalid={
+                        !!form.formState.errors.categoryId ||
+                        !!form.formState.errors.categoryGroupId
+                      }
+                    />
                   </FormControl>
                   <FormDescription>Select a category for the transaction.</FormDescription>
                 </FormItem>

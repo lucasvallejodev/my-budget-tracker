@@ -18,10 +18,11 @@ import CreateAccountDialog from '@/app/(main)/_components/create-account-dialog'
 import { AccountResponseType } from '../_types/accounts';
 
 type AccountPickerProps = {
+  invalid?: boolean;
   onChange?: (category: string) => void;
 };
 
-function AccountPicker({ onChange }: AccountPickerProps) {
+function AccountPicker({ onChange, invalid }: AccountPickerProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string>('');
 
@@ -47,7 +48,12 @@ function AccountPicker({ onChange }: AccountPickerProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" aria-expanded={open} className="w-full justify-between">
+        <Button
+          variant="outline"
+          aria-expanded={open}
+          aria-invalid={invalid}
+          className="w-full justify-between"
+        >
           {selectedAccount ? <AccountRow account={selectedAccount} /> : 'Select an account'}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
