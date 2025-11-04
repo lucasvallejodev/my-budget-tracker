@@ -2,7 +2,17 @@ import { prisma } from '@/prisma';
 import { createTransactionWithUserSchemaType } from '@/schema/transaction';
 
 export async function createTransaction(data: createTransactionWithUserSchemaType) {
-  const { amount, date, type, categoryId, categoryGroupId, accountId, description, userId } = data;
+  const {
+    amount,
+    date,
+    type,
+    categoryId,
+    payeeId,
+    categoryGroupId,
+    accountId,
+    description,
+    userId,
+  } = data;
 
   const accountResult = await prisma.account.findFirst({
     where: {
@@ -27,11 +37,22 @@ export async function createTransaction(data: createTransactionWithUserSchemaTyp
         amount,
         date,
         type,
-        categoryId: categoryId,
+        categoryId,
         categoryGroupId,
         accountId: accountResult.id,
         description: description || '',
+        payeeId,
         userId,
+      },
+    }),
+    prisma.account.update({
+      where: {
+        id: accountId,
+      },
+      data: {
+        balance: {
+          increment: !isExpense ? amount : amount * -1,
+        },
       },
     }),
     prisma.monthlyHistory.upsert({

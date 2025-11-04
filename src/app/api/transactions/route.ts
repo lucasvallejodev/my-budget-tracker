@@ -25,6 +25,12 @@ export async function GET(request: Request) {
       date: true,
       type: true,
       description: true,
+      // payee: true,
+      payeeId: true,
+      // account: true,
+      accountId: true,
+      categoryId: true,
+      categoryGroupId: true,
     },
     where: {
       userId: user.id,
