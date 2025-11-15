@@ -15,7 +15,6 @@ async function Dashboard() {
                 New income
               </Button>
             }
-            type="INCOME"
           />
           <CreateTransactionModal
             trigger={
@@ -24,7 +23,6 @@ async function Dashboard() {
                 New Expense
               </Button>
             }
-            type="EXPENSE"
           />
         </div>
       </div>
