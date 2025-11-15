@@ -1,8 +1,8 @@
 import { getUserOrRedirect } from '@/lib/auth';
 import { prisma } from '@/prisma';
-import { z } from 'zod';
+// import { z } from 'zod';
 
-export async function GET(request: Request) {
+export async function GET() {
   const user = await getUserOrRedirect();
 
   // const { searchParams } = new URL(request.url);

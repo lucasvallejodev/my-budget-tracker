@@ -43,8 +43,8 @@ export default [
     rules: {
       'prettier/prettier': 'error',
       'react/react-in-jsx-scope': 'off',
+      '@typescript-eslint/no-explicit-any': 'off', // TODO: Remove later, Temporary
       '@typescript-eslint/no-unused-vars': ['error'],
-      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
     },
 

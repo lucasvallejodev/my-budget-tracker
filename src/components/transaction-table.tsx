@@ -1,14 +1,5 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/styles';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Icon } from './icon';
-import { format } from 'date-fns';
 
 export type Transaction = {
   id: string;
@@ -45,8 +36,20 @@ const TransactionCell = ({ transaction }: TransactionCellProps) => {
           </div>
         </div>
       </div>
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M7.49988 3.33331L14.1665 9.99998L7.49988 16.6666" stroke="#9999A3" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M7.49988 3.33331L14.1665 9.99998L7.49988 16.6666"
+          stroke="#9999A3"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     </div>
   );
@@ -68,7 +71,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <TableRow key={transaction.id}>
             <TableCell className="font-medium flex items-center text-gray-800 gap-2">
               <TransactionCell transaction={transaction} />
-              
+
               {transaction.category}
             </TableCell>
             {/* <TableCell

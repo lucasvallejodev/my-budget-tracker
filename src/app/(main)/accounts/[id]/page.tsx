@@ -33,9 +33,7 @@ export default async function Accounts({ params }: AccountsProps) {
         <div className="w-full text-sm text-neutral-800 text-center leading-5">
           Your monthly payment for subcriptions
         </div>
-        <h2 className="text-5xl font-bold text-neutral-1000 leading-[58px]">
-          $ {account.balance}
-        </h2>
+        <h2 className="text-5xl font-bold text-neutral-1000 leading-[58px]">$ {account.balance}</h2>
       </div>
 
       {/* <div className="flex flex-col gap-5 max-w-[600px]">

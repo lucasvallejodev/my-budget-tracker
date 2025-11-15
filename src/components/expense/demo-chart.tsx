@@ -34,12 +34,12 @@ const Tooltip: React.FC<TooltipProps> = ({ content, position }) => {
   if (!content) return null;
 
   return (
-    <div 
+    <div
       className="absolute px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-lg whitespace-nowrap pointer-events-none"
       style={{
         left: `${position.x}px`,
         top: `${position.y - 40}px`,
-        transform: 'translateX(-50%)'
+        transform: 'translateX(-50%)',
       }}
     >
       {content}
@@ -49,28 +49,40 @@ const Tooltip: React.FC<TooltipProps> = ({ content, position }) => {
 };
 
 const ExpenseChart: React.FC = () => {
-  const [tooltip, setTooltip] = useState<TooltipState>({ 
-    content: '', 
-    position: { x: 0, y: 0 } 
+  const [tooltip, setTooltip] = useState<TooltipState>({
+    content: '',
+    position: { x: 0, y: 0 },
   });
 
   const expenseData: MonthData[] = [
     {
       month: 1,
       categories: [
-        { id: 'transport', label: 'Transportation', value: 320, height: 17, color: 'bg-violet-500' },
+        {
+          id: 'transport',
+          label: 'Transportation',
+          value: 320,
+          height: 17,
+          color: 'bg-violet-500',
+        },
         { id: 'food', label: 'Food', value: 450, height: 22, color: 'bg-amber-500' },
-        { id: 'housing', label: 'Housing', value: 780, height: 38, color: 'bg-emerald-500' }
-      ]
+        { id: 'housing', label: 'Housing', value: 780, height: 38, color: 'bg-emerald-500' },
+      ],
     },
     {
       month: 2,
       categories: [
-        { id: 'transport', label: 'Transportation', value: 580, height: 30, color: 'bg-violet-500' },
+        {
+          id: 'transport',
+          label: 'Transportation',
+          value: 580,
+          height: 30,
+          color: 'bg-violet-500',
+        },
         { id: 'food', label: 'Food', value: 540, height: 28, color: 'bg-amber-500' },
-        { id: 'housing', label: 'Housing', value: 350, height: 18, color: 'bg-emerald-500' }
-      ]
-    }
+        { id: 'housing', label: 'Housing', value: 350, height: 18, color: 'bg-emerald-500' },
+      ],
+    },
   ];
 
   const handleMouseEnter = (
@@ -102,7 +114,10 @@ const ExpenseChart: React.FC = () => {
         </div>
         <div className="flex gap-4 h-[300px]">
           {expenseData.map((monthData, idx) => (
-            <div key={idx} className="w-[20px] h-full bg-neutral-200 rounded-md relative overflow-hidden">
+            <div
+              key={idx}
+              className="w-[20px] h-full bg-neutral-200 rounded-md relative overflow-hidden"
+            >
               {monthData.categories.map((category, catIdx) => {
                 const bottomPosition = monthData.categories
                   .slice(0, catIdx)
@@ -117,9 +132,9 @@ const ExpenseChart: React.FC = () => {
                     } ${isLast ? 'rounded-t-md' : ''}`}
                     style={{
                       bottom: `${bottomPosition}%`,
-                      height: `${category.height}%`
+                      height: `${category.height}%`,
                     }}
-                    onMouseEnter={(e) => handleMouseEnter(e, category.label, category.value)}
+                    onMouseEnter={e => handleMouseEnter(e, category.label, category.value)}
                     onMouseLeave={handleMouseLeave}
                   />
                 );
