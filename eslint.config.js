@@ -1,57 +1,31 @@
-import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import typescriptParser from '@typescript-eslint/parser';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTypescript from 'eslint-config-next/typescript';
+import prettierConfig from 'eslint-config-prettier';
 import prettier from 'eslint-plugin-prettier';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-});
-
-export default [
-  // Ignore patterns
+const config = [
   {
-    ignores: ['node_modules/', 'build/', 'dist/', '.next/', 'public/'],
+    ignores: [
+      'node_modules/**',
+      'build/**',
+      'dist/**',
+      '.next/**',
+      'public/**',
+      'src/generated/**',
+      'next-env.d.ts',
+    ],
   },
-
-  // Global configuration
-  ...compat.extends('next/core-web-vitals', 'plugin:@typescript-eslint/recommended', 'prettier'),
-
-  // Main configuration
+  ...nextVitals,
+  ...nextTypescript,
+  prettierConfig,
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
-
-    languageOptions: {
-      parser: typescriptParser,
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
-    },
-
-    plugins: {
-      '@typescript-eslint': typescriptEslint,
-      prettier: prettier,
-    },
-
+    plugins: { prettier },
     rules: {
-      'prettier/prettier': 'error',
-      'react/react-in-jsx-scope': 'off',
-      '@typescript-eslint/no-explicit-any': 'off', // TODO: Remove later, Temporary
-      '@typescript-eslint/no-unused-vars': ['error'],
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-    },
-
-    settings: {
-      react: {
-        version: 'detect',
-      },
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'error',
     },
   },
 ];
+
+export default config;

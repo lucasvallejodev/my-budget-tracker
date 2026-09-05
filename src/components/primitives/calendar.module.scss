@@ -1,0 +1,65 @@
+.root {
+  padding: 12px;
+  position: relative;
+}
+.months {
+  position: relative;
+}
+.month_caption {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+.nav {
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  gap: 8px;
+}
+.button_previous,
+.button_next {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  width: 32px;
+  height: 32px;
+}
+.chevron {
+  fill: var(--accent);
+  width: 16px;
+}
+.month_grid {
+  border-collapse: collapse;
+}
+.weekday {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.day_button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  &:hover {
+    background: var(--accent-soft);
+  }
+}
+.selected .day_button {
+  background: var(--accent);
+  color: white;
+}
+.today .day_button {
+  border: 1px solid var(--accent);
+}
+.outside {
+  opacity: 0.4;
+}
+.disabled {
+  opacity: 0.3;
+}

@@ -1,3 +1,4 @@
+import { AccountsOverview } from '@/components/finance/overview';
 export default function Page() {
-  return <h1>Budgets Page</h1>;
+  return <AccountsOverview />;
 }

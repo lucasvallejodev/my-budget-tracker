@@ -39,7 +39,6 @@ export async function GET() {
     orderBy: {
       date: 'desc',
     },
-    take: 20,
   });
 
   return Response.json(transactions, {

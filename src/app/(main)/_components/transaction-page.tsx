@@ -1,39 +1,39 @@
 'use client';
-
-import { Button } from '@/components/ui/button';
-import CreateTransactionModal from './create-transaction-dialog';
-import { ReceiptText } from 'lucide-react';
-import { Transaction, TransactionTable } from '@/components/transaction-table';
-import { useQuery } from '@tanstack/react-query';
-
-function TransactionsPage() {
-  const transactionsQuery = useQuery<Transaction[]>({
-    queryKey: ['transactions'],
-    queryFn: () => fetch(`/api/transactions`).then(res => res.json()),
-    initialData: [],
-  });
-
+import { Button } from '@/components/primitives/button';
+import CreateTransactionDialog from './create-transaction-dialog';
+import { Plus } from 'lucide-react';
+import { useFinanceData } from '@/components/finance/use-finance-data';
+import { PageHeading, EmptyState } from '@/components/finance/blocks';
+import { TransactionExplorer } from '@/components/finance/transaction-explorer';
+import s from '@/components/finance/finance.module.scss';
+export default function TransactionsPage({ initialSearch = '' }: { initialSearch?: string }) {
+  const { transactions } = useFinanceData();
   return (
-    <>
-      <div className="flex gap-4 flex-col p-5 border rounded-sm bg-gray-50">
-        <h2 className="text-xl">Manage your money</h2>
-        <div className="flex gap-2 flex-col md:flex-row">
-          <CreateTransactionModal
+    <div className={s.page}>
+      <PageHeading
+        title="Transactions"
+        description="View, filter, and manage your financial activity in one place."
+        actions={
+          <CreateTransactionDialog
             trigger={
-              <Button className="border border-gray-200 bg-white" variant="ghost">
-                <ReceiptText />
+              <Button>
+                <Plus />
                 New transaction
               </Button>
             }
           />
-        </div>
-      </div>
-      <div className="flex gap-4 flex-col p-5 border rounded-sm">
-        <h2 className="text-xl">Recent transactions</h2>
-        <TransactionTable transactions={transactionsQuery.data || []} />
-      </div>
-    </>
+        }
+      />
+      {transactions.isPending ? (
+        <p role="status">Loading transactions…</p>
+      ) : transactions.isError ? (
+        <EmptyState
+          title="Could not load transactions"
+          action={<Button onClick={() => void transactions.refetch()}>Try again</Button>}
+        />
+      ) : (
+        <TransactionExplorer transactions={transactions.data || []} initialSearch={initialSearch} />
+      )}
+    </div>
   );
 }
-
-export default TransactionsPage;

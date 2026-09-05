@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
-import './globals.css';
+import './globals.scss';
 import { ClerkProvider } from '@clerk/nextjs';
 import RootProvider from '@/providers/root-provider';
 import { Toaster } from 'sonner';

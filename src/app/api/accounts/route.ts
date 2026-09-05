@@ -17,6 +17,7 @@ export async function GET() {
     },
     where: {
       userId: user.id,
+      isDeleted: false,
     },
     orderBy: {
       createdAt: 'asc',

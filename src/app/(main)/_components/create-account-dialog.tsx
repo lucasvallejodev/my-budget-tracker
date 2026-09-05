@@ -1,9 +1,10 @@
 'use client';
+import s from '@/components/forms.module.scss';
 
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/primitives/button';
 import { Loader2, PlusSquareIcon } from 'lucide-react';
 import {
   Dialog,
@@ -13,7 +14,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from '@/components/primitives/dialog';
 import {
   Form,
   FormControl,
@@ -21,8 +22,8 @@ import {
   FormField,
   FormItem,
   FormLabel,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from '@/components/primitives/form';
+import { Input } from '@/components/primitives/input';
 import { createAccountSchema, CreateAccountSchemaType } from '@/schema/accounts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -36,7 +37,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/primitives/select';
 import { accountTypes } from '@/constants/account';
 
 type CreateAccountDialogProps = {
@@ -49,6 +50,10 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
       type: 'CHECKING',
+      name: '',
+      accountNumber: '',
+      institution: '',
+      notes: '',
     },
   });
 
@@ -90,12 +95,8 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex border-separate items-center justify-start rounded-none border-b px-3 py-3 text-muted-foreground"
-          onClick={() => setOpen(true)}
-        >
-          <PlusSquareIcon className="mr-2 h-4 w-4" />
+        <Button variant="ghost" className={s.create} onClick={() => setOpen(true)}>
+          <PlusSquareIcon className={s.smallIcon} />
           Create new
         </Button>
       </DialogTrigger>
@@ -106,35 +107,35 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
           transactions.
         </DialogDescription>
         <Form {...form}>
-          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <form className={s.form} onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="type"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Account Type</FormLabel>
-                  <FormControl>
-                    <Select
-                      {...field}
-                      onValueChange={(value: CreateAccountSchemaType['type']) =>
-                        form.setValue('type', value)
-                      }
-                    >
-                      <SelectTrigger className="w-full">
+                  <Select
+                    {...field}
+                    onValueChange={(value: CreateAccountSchemaType['type']) =>
+                      form.setValue('type', value)
+                    }
+                  >
+                    <FormControl>
+                      <SelectTrigger className={s.full}>
                         <SelectValue placeholder="Select a type" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Account Types</SelectLabel>
-                          {accountTypes.map(accountType => (
-                            <SelectItem key={accountType.value} value={accountType.value}>
-                              {accountType.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Account Types</SelectLabel>
+                        {accountTypes.map(accountType => (
+                          <SelectItem key={accountType.value} value={accountType.value}>
+                            {accountType.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                   <FormDescription>The type of the account.</FormDescription>
                 </FormItem>
               )}
@@ -146,7 +147,7 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input defaultValue={''} type="text" placeholder="Account name" {...field} />
+                    <Input type="text" placeholder="Account name" {...field} />
                   </FormControl>
                   <FormDescription>The name of the account.</FormDescription>
                 </FormItem>
@@ -159,7 +160,7 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
                 <FormItem>
                   <FormLabel>Account Number</FormLabel>
                   <FormControl>
-                    <Input defaultValue={''} type="text" placeholder="Account number" {...field} />
+                    <Input type="text" placeholder="Account number" {...field} />
                   </FormControl>
                   <FormDescription>The account number could be the last 4 digits.</FormDescription>
                 </FormItem>
@@ -172,12 +173,7 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
                 <FormItem>
                   <FormLabel>Institution</FormLabel>
                   <FormControl>
-                    <Input
-                      defaultValue={''}
-                      type="text"
-                      placeholder="Institution name"
-                      {...field}
-                    />
+                    <Input type="text" placeholder="Institution name" {...field} />
                   </FormControl>
                   <FormDescription>The name of the institution.</FormDescription>
                 </FormItem>
@@ -190,7 +186,7 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Input defaultValue={''} type="text" placeholder="Account notes" {...field} />
+                    <Input type="text" placeholder="Account notes" {...field} />
                   </FormControl>
                   <FormDescription>
                     Any information you want to remember about this account.
@@ -213,7 +209,7 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
             </Button>
           </DialogClose>
           <Button type="submit" disabled={isPending} onClick={form.handleSubmit(onSubmit)}>
-            {isPending ? <Loader2 className="animate-sping" /> : 'Create'}
+            {isPending ? <Loader2 className={s.spinner} /> : 'Create'}
           </Button>
         </DialogFooter>
       </DialogContent>

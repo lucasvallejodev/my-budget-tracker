@@ -1,89 +1,96 @@
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Icon } from './icon';
-
+import { CATEGORY } from '@/constants/category';
+import { money, StatusBadge, EmptyState } from './finance/blocks';
+import { TransactionActions } from './finance/transaction-explorer';
+import s from './finance/finance.module.scss';
 export type Transaction = {
   id: string;
-  category: string;
+  category?: string;
+  categoryId?: string;
+  accountId?: string;
   type: string;
   amount: number;
   description: string;
-  date: Date;
-  categoryIcon: string;
+  date: Date | string;
+  categoryIcon?: string;
+  status?: string;
 };
-
-type TransactionTableProps = {
+export function TransactionTable({
+  transactions,
+  showActions = false,
+}: {
   transactions: Transaction[];
-};
-
-type TransactionCellProps = {
-  transaction: any;
-};
-
-const TransactionCell = ({ transaction }: TransactionCellProps) => {
-  console.log(transaction);
+  showActions?: boolean;
+}) {
+  if (!transactions.length) return <EmptyState title="No transactions yet" />;
   return (
-    <div className="flex justify-between items-center w-full py-1">
-      <div className="flex items-center gap-2">
-        <div className="flex w-9 h-9 justify-center items-center rounded-[30px] border border-neutral-300">
-          <Icon icon={transaction.categoryIcon} />
-        </div>
-        <div className="flex flex-col p-2.5">
-          <div className={`text-sm text-neutral-800 leading-5 bg-red`}>
-            {transaction.categoryId}
-          </div>
-          <div className="text-base font-bold text-neutral-1000 leading-7">
-            ${transaction.amount}
-          </div>
-        </div>
-      </div>
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 20 20"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M7.49988 3.33331L14.1665 9.99998L7.49988 16.6666"
-          stroke="#9999A3"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+    <div className={s.tableWrap}>
+      <table className={s.table}>
+        <thead>
+          <tr>
+            <th scope="col">Description</th>
+            <th scope="col">Category</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Date</th>
+            {transactions.some(t => t.status) && <th scope="col">Status</th>}
+            {showActions && <th scope="col">Action</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map(t => {
+            const category = CATEGORY[t.categoryId as keyof typeof CATEGORY];
+            return (
+              <tr key={t.id}>
+                <td>
+                  <div className={s.description}>
+                    <span className={s.metricIcon}>
+                      <Icon icon={t.categoryIcon || category?.icon} />
+                    </span>
+                    {t.description || category?.name || 'Transaction'}
+                  </div>
+                </td>
+                <td>{category?.name || t.category || 'Uncategorized'}</td>
+                <td>
+                  <span className={t.type === 'INCOME' ? s.positive : undefined}>
+                    {t.type === 'INCOME' ? '+' : '−'}
+                    {money(Number(t.amount))}
+                  </span>
+                </td>
+                <td>
+                  {new Date(t.date).toLocaleDateString('en-US', {
+                    timeZone: 'UTC',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </td>
+                {transactions.some(row => row.status) && (
+                  <td>
+                    {t.status && (
+                      <StatusBadge
+                        tone={
+                          t.status === 'Failed'
+                            ? 'danger'
+                            : t.status === 'Pending'
+                              ? 'warning'
+                              : 'success'
+                        }
+                      >
+                        {t.status}
+                      </StatusBadge>
+                    )}
+                  </td>
+                )}
+                {showActions && (
+                  <td>
+                    <TransactionActions transaction={t} />
+                  </td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
-  );
-};
-
-export function TransactionTable({ transactions }: TransactionTableProps) {
-  return (
-    <Table>
-      {/* <TableHeader>
-        <TableRow className="font-semibold">
-          <TableHead className="text-center">Category</TableHead>
-          <TableHead className="text-center">Amount</TableHead>
-          <TableHead className="text-center">Date</TableHead>
-          <TableHead className="text-center">Description</TableHead>
-        </TableRow>
-      </TableHeader> */}
-      <TableBody className="text-gray-500">
-        {transactions?.map(transaction => (
-          <TableRow key={transaction.id}>
-            <TableCell className="font-medium flex items-center text-gray-800 gap-2">
-              <TransactionCell transaction={transaction} />
-
-              {transaction.category}
-            </TableCell>
-            {/* <TableCell
-              className={cn('text-center', transaction.type === 'INCOME' && 'text-green-600')}
-            >
-              {transaction.type === 'INCOME' ? '+' : '-'} {transaction.amount}
-            </TableCell>
-            <TableCell className="text-center">{format(transaction.date, 'PPP')}</TableCell>
-            <TableCell className="text-center">{transaction.description}</TableCell> */}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
   );
 }

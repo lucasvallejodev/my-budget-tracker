@@ -1,13 +1,10 @@
 import Logo from '@/components/logo';
-import { ReactNode } from 'react';
-
-function Layout({ children }: { children: ReactNode }) {
+import s from '@/components/shell/shell.module.scss';
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex h-screen w-full flex-col items-center justify-center">
+    <main className={s.auth}>
       <Logo />
-      <div className="m-12">{children}</div>
-    </div>
+      {children}
+    </main>
   );
 }
-
-export default Layout;

@@ -2,77 +2,77 @@ export const CATEGORY_GROUP = {
   income: {
     id: 'income',
     name: 'Income',
-    color: 'emerald-500',
+    color: '#10b981',
   },
   housing: {
     id: 'housing',
     name: 'Housing',
-    color: 'blue-500',
+    color: '#3b82f6',
   },
   transportation: {
     id: 'transportation',
     name: 'Transportation',
-    color: 'orange-500',
+    color: '#f97316',
   },
   foodAndDining: {
     id: 'foodAndDining',
     name: 'Food & Dining',
-    color: 'red-500',
+    color: '#ef4444',
   },
   utilities: {
     id: 'utilities',
     name: 'Utilities',
-    color: 'violet-500',
+    color: '#8b5cf6',
   },
   healthcare: {
     id: 'healthcare',
     name: 'Healthcare',
-    color: 'pink-500',
+    color: '#ec4899',
   },
   entertainment: {
     id: 'entertainment',
     name: 'Entertainment',
-    color: 'amber-500',
+    color: '#f59e0b',
   },
   shopping: {
     id: 'shopping',
     name: 'Shopping',
-    color: 'cyan-500',
+    color: '#06b6d4',
   },
   personalCare: {
     id: 'personalCare',
     name: 'Personal Care',
-    color: 'purple-500',
+    color: '#a855f7',
   },
   education: {
     id: 'education',
     name: 'Education',
-    color: 'sky-500',
+    color: '#0ea5e9',
   },
   financialServices: {
     id: 'financialServices',
     name: 'Financial Services',
-    color: 'lime-500',
+    color: '#84cc16',
   },
   giftsAndDonations: {
     id: 'giftsAndDonations',
     name: 'Gifts & Donations',
-    color: 'rose-500',
+    color: '#f43f5e',
   },
   savingsAndInvestments: {
     id: 'savingsAndInvestments',
     name: 'Savings & Investments',
-    color: 'teal-500',
+    color: '#14b8a6',
   },
   pets: {
     id: 'pets',
     name: 'Pets',
-    color: 'orange-400',
+    color: '#fb923c',
   },
   miscellaneous: {
     id: 'miscellaneous',
     name: 'Miscellaneous',
-    color: 'gray-400',
+    color: '#9ca3af',
   },
 };
 

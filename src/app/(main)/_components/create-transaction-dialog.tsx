@@ -1,6 +1,8 @@
 'use client';
+import s from '@/components/forms.module.scss';
 
 import { ReactNode, useState } from 'react';
+import { z } from 'zod';
 import {
   Dialog,
   DialogClose,
@@ -8,8 +10,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { cn } from '@/lib/styles';
+} from '@/components/primitives/dialog';
 import { createTransactionSchema, createTransactionSchemaType } from '@/schema/transaction';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -19,14 +20,14 @@ import {
   FormField,
   FormItem,
   FormLabel,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from '@/components/primitives/form';
+import { Input } from '@/components/primitives/input';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/primitives/button';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { Calendar } from '@/components/primitives/calendar';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { dateToUTCDate } from '@/lib/date-helpers';
@@ -41,7 +42,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/primitives/select';
 import { createTransactionAction } from '../actions';
 
 type CreateTransactionDialogProps = {
@@ -52,11 +53,20 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
   const [open, setOpen] = useState(false);
   const [openCalendar, setOpenCalendar] = useState(false);
 
-  const form = useForm<createTransactionSchemaType>({
+  const form = useForm<
+    z.input<typeof createTransactionSchema>,
+    unknown,
+    createTransactionSchemaType
+  >({
     resolver: zodResolver(createTransactionSchema),
     defaultValues: {
       date: new Date(),
       type: 'EXPENSE',
+      accountId: '',
+      categoryId: '',
+      categoryGroupId: '',
+      payeeId: '',
+      description: '',
     },
   });
 
@@ -99,32 +109,32 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
       <DialogContent>
         <DialogTitle>Create a new transaction</DialogTitle>
         <Form {...form}>
-          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <form className={s.form} onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="type"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Transaction Type</FormLabel>
-                  <FormControl>
-                    <Select
-                      {...field}
-                      onValueChange={(value: createTransactionSchemaType['type']) =>
-                        form.setValue('type', value)
-                      }
-                    >
-                      <SelectTrigger className="w-full">
+                  <Select
+                    {...field}
+                    onValueChange={(value: createTransactionSchemaType['type']) =>
+                      form.setValue('type', value)
+                    }
+                  >
+                    <FormControl>
+                      <SelectTrigger className={s.full}>
                         <SelectValue placeholder="Select a type" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Transaction Types</SelectLabel>
-                          <SelectItem value="EXPENSE">Expense</SelectItem>
-                          <SelectItem value="INCOME">Income</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Transaction Types</SelectLabel>
+                        <SelectItem value="EXPENSE">Expense</SelectItem>
+                        <SelectItem value="INCOME">Income</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                   <FormDescription>The type of the transaction.</FormDescription>
                 </FormItem>
               )}
@@ -137,13 +147,14 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                   <FormLabel>Account</FormLabel>
                   <FormControl>
                     <AccountPicker
+                      value={field.value}
                       invalid={!!form.formState.errors.accountId}
                       onChange={account => {
                         field.onChange(account);
                       }}
                     />
                   </FormControl>
-                  <FormDescription>Select a account for the transaction.</FormDescription>
+                  <FormDescription>Select an account for the transaction.</FormDescription>
                 </FormItem>
               )}
             />
@@ -154,7 +165,14 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                 <FormItem>
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
-                    <Input defaultValue={0} type="number" placeholder="0.00" {...field} />
+                    <Input
+                      step="0.01"
+                      min="0.01"
+                      type="number"
+                      placeholder="0.00"
+                      {...field}
+                      value={Number(field.value) || 0}
+                    />
                   </FormControl>
                   <FormDescription>
                     The amount of money you want to add or remove from your account.
@@ -170,6 +188,7 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                   <FormLabel>Payee</FormLabel>
                   <FormControl>
                     <PayeePicker
+                      value={field.value}
                       onChange={payee => {
                         field.onChange(payee);
                       }}
@@ -187,6 +206,7 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                   <FormLabel>Category</FormLabel>
                   <FormControl>
                     <CategoryPicker
+                      value={field.value}
                       onChange={values => {
                         field.onChange(values.categoryId);
                         form.setValue('categoryGroupId', values.categoryGroupId);
@@ -208,13 +228,13 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input defaultValue="" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormDescription>A short description of the transaction.</FormDescription>
                 </FormItem>
               )}
             />
-            <div className="flex items-center justify-between gap-2 flex-col md:flex-row">
+            <div className={s.row}>
               <FormField
                 control={form.control}
                 name="date"
@@ -224,23 +244,16 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                     <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
                       <PopoverTrigger asChild>
                         <FormControl>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className={cn(
-                              'w-full pl-3 text-left font-normal',
-                              !field.value && 'text-muted-foreground'
-                            )}
-                          >
-                            {field.value ? format(field.value, 'PPP') : 'Select a date'}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          <Button type="button" variant="outline" className={s.dateButton}>
+                            {field.value ? format(field.value as Date, 'PPP') : 'Select a date'}
+                            <CalendarIcon className={s.pickerIcon} />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
+                      <PopoverContent className={s.datePopover}>
                         <Calendar
                           mode="single"
-                          selected={field.value}
+                          selected={field.value as Date}
                           onSelect={date => {
                             field.onChange(date);
                             setOpenCalendar(false);
@@ -249,7 +262,7 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
                         />
                       </PopoverContent>
                     </Popover>
-                    <FormDescription>Select a category for the transaction.</FormDescription>
+                    <FormDescription>Choose when this transaction occurred.</FormDescription>
                   </FormItem>
                 )}
               />
@@ -269,7 +282,7 @@ function CreateTransactionDialog({ trigger }: CreateTransactionDialogProps) {
             </Button>
           </DialogClose>
           <Button type="submit" disabled={isPending} onClick={form.handleSubmit(onSubmit)}>
-            {isPending ? <Loader2 className="animate-sping" /> : 'Create'}
+            {isPending ? <Loader2 className={s.spinner} /> : 'Create'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,14 +1,11 @@
-import { HandCoins } from 'lucide-react';
+import { ChartPie } from 'lucide-react';
 import Link from 'next/link';
-import React from 'react';
-
-function Logo() {
+import s from './shell/shell.module.scss';
+export default function Logo() {
   return (
-    <Link href="/" className="flex flex-row gap-1 items-center h-14" aria-label="Home">
-      <HandCoins className="text-blue-800" />
-      <span className="text-primary font-bold text-xl">CoinKeeper</span>
+    <Link href="/" className={s.logo} aria-label="CoinKeeper home">
+      <ChartPie />
+      CoinKeeper
     </Link>
   );
 }
-
-export default Logo;

@@ -12,7 +12,7 @@ interface IconProps {
 
 export const Icon: React.FC<IconProps> = ({
   icon,
-  color = 'black',
+  color = 'currentColor',
   size = 20,
   className = '',
   strokeWidth = 2,
