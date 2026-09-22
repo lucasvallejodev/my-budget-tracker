@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireUser } from '@/server/auth/require-user';
 import { ServiceError } from '@/server/db';
+import type { ColumnMapping, Preview } from '@/server/import/service';
 import { parseAmountInput } from '@/lib/money';
 import {
   accountFormSchema,
@@ -365,5 +366,82 @@ export async function deleteExchangeRateAction(key: { base: string; quote: strin
     const { userId, services } = await requireUser();
     await services.fx.remove(userId, key);
     refresh();
+  });
+}
+
+// Rules ----------------------------------------------------------------------------------
+
+export async function createRuleAction(data: {
+  name?: string;
+  pattern: string;
+  categoryId: string;
+}) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    const parsed = parse(
+      z.object({
+        name: z.string().max(80).optional(),
+        pattern: z.string().trim().min(1, 'Pattern is required').max(120),
+        categoryId: z.string().min(1, 'Choose a category'),
+      }),
+      data
+    );
+    return services.rules.create(userId, parsed);
+  });
+}
+
+export async function deleteRuleAction(id: string) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    await services.rules.remove(userId, id);
+  });
+}
+
+export async function applyRulesAction() {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    const updated = await services.rules.applyToUncategorized(userId);
+    refresh();
+    return { updated };
+  });
+}
+
+// Import ---------------------------------------------------------------------------------
+
+export async function previewImportAction(input: {
+  accountId: string;
+  csv: string;
+  mapping: ColumnMapping;
+}) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    if (input.csv.length > 2_000_000) throw new ServiceError('File is too large (2 MB max)');
+    return services.imports.preview(userId, input);
+  });
+}
+
+export async function commitImportAction(preview: Preview) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    const result = await services.imports.commit(userId, preview);
+    const suggestions = await services.imports.transferSuggestions(userId, result.insertedIds);
+    refresh();
+    return { ...result, suggestions };
+  });
+}
+
+export async function transferSuggestionsAction() {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    return services.imports.transferSuggestions(userId);
+  });
+}
+
+export async function linkTransferAction(outId: string, inId: string) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    const result = await services.ledger.linkAsTransfer(userId, outId, inId);
+    refresh();
+    return result;
   });
 }

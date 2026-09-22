@@ -550,4 +550,115 @@ describe('accounts and ledger', () => {
     await services.fx.remove(owner, { base: 'EUR', quote: 'USD', date: '2026-09-15' });
     expect((await services.fx.getRate(owner, 'EUR', 'USD', '2026-09-20'))?.rate).toBe(1.1);
   });
+
+  it('imports a CSV once: dedupes, matches manual entries, applies rules and suggests transfers', async () => {
+    const checking = await services.accounts.create(owner, {
+      name: 'Checking',
+      type: 'checking',
+      currency: 'EUR',
+    });
+    const savings = await services.accounts.create(owner, {
+      name: 'Savings',
+      type: 'savings',
+      currency: 'EUR',
+    });
+    const groceries = await categoryByName(owner, 'Groceries');
+    const coffee = await categoryByName(owner, 'Coffee');
+    await services.rules.create(owner, { pattern: 'mercadona', categoryId: groceries.id });
+    const payee = await services.payees.create(owner, {
+      name: 'Starbucks',
+      defaultCategoryId: coffee.id,
+    });
+    // A manual entry the bank file will also contain
+    const manual = await services.ledger.createStandard(owner, {
+      accountId: checking.id,
+      amountMinor: -4500,
+      date: '2026-09-09',
+      payeeId: payee.id,
+      categoryId: coffee.id,
+      memo: 'Coffee beans',
+    });
+    // The other leg of a transfer, already in savings
+    await services.ledger.createStandard(owner, {
+      accountId: savings.id,
+      amountMinor: 20000,
+      date: '2026-09-12',
+    });
+    const csv = [
+      'Fecha;Concepto;Importe',
+      '01/09/2026;MERCADONA SUPERMERCADO;-62,30',
+      '10/09/2026;Starbucks;-45,00',
+      '11/09/2026;TRASPASO A AHORRO;-200,00',
+      '11/09/2026;TRASPASO A AHORRO;-200,00',
+      '12/09/2026;;0',
+      '13/09/2026;Unknown shop;-10,00',
+    ].join('\n');
+    const mapping = {
+      date: 'Fecha',
+      amount: 'Importe',
+      payee: 'Concepto',
+      dateFormat: 'DD/MM/YYYY' as const,
+    };
+    const preview = await services.imports.preview(owner, { accountId: checking.id, csv, mapping });
+    expect(preview.counts).toEqual({ new: 4, duplicate: 0, matched: 1, invalid: 1 });
+    expect(preview.rows[0]).toMatchObject({
+      date: '2026-09-01',
+      amountMinor: -6230,
+      suggestedCategoryId: groceries.id,
+      suggestedBy: 'rule',
+    });
+    expect(preview.rows[1]).toMatchObject({
+      status: 'matched',
+      matchedTransactionId: manual.id,
+      suggestedCategoryId: coffee.id,
+      suggestedBy: 'payee',
+    });
+    expect(preview.rows[2].importId).not.toBe(preview.rows[3].importId);
+    expect(preview.rows[4].status).toBe('invalid');
+
+    const result = await services.imports.commit(owner, preview);
+    expect(result).toMatchObject({ inserted: 4, matched: 1 });
+    const rows = await services.ledger.list(owner, { accountId: checking.id });
+    expect(rows).toHaveLength(5);
+    const merc = rows.find(r => r.originalPayee === 'MERCADONA SUPERMERCADO')!;
+    expect(merc).toMatchObject({
+      categoryId: groceries.id,
+      status: 'pending',
+      needsReview: true,
+      payeeName: 'MERCADONA SUPERMERCADO',
+    });
+    expect(rows.find(r => r.id === manual.id)?.importId).toBe(preview.rows[1].importId);
+    expect(await services.ledger.needsReviewCount(owner)).toBe(5);
+
+    // Re-importing the same file is a no-op
+    const again = await services.imports.preview(owner, { accountId: checking.id, csv, mapping });
+    expect(again.counts).toEqual({ new: 0, duplicate: 5, matched: 0, invalid: 1 });
+    expect((await services.imports.commit(owner, again)).inserted).toBe(0);
+
+    const suggestions = await services.imports.transferSuggestions(owner, result.insertedIds);
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0]).toMatchObject({
+      outAccount: 'Checking',
+      inAccount: 'Savings',
+      amountMinor: 20000,
+    });
+    await services.ledger.linkAsTransfer(owner, suggestions[0].outId, suggestions[0].inId);
+    const legs = await services.ledger.list(owner, { kind: 'transfer' });
+    expect(legs).toHaveLength(2);
+    expect(legs.every(l => l.transferId === legs[0].transferId && l.categoryId === null)).toBe(
+      true
+    );
+    expect(await services.imports.transferSuggestions(owner)).toEqual([]);
+
+    // Rules can be applied to what is still uncategorised
+    await services.rules.create(owner, { pattern: 'unknown', categoryId: coffee.id });
+    expect(await services.rules.applyToUncategorized(owner)).toBe(1);
+    expect(await services.rules.list(owner)).toHaveLength(2);
+    await expect(
+      services.rules.create(other, { pattern: 'x', categoryId: coffee.id })
+    ).rejects.toThrow('not found');
+    await expect(
+      services.imports.preview(owner, { accountId: checking.id, csv, mapping: { date: 'Nope' } })
+    ).rejects.toThrow(/date column/);
+  });
 });

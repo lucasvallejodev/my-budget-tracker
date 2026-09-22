@@ -9,6 +9,8 @@ import { createPayeeService } from './payees/service';
 import { createReportService } from './reports/service';
 import { ensureUserBootstrap } from './categories/seed';
 import { createFxService, ManualRateProvider } from './fx/service';
+import { createImportService } from './import/service';
+import { createRuleService } from './rules/service';
 
 export function createServices(db: Db) {
   return {
@@ -20,6 +22,8 @@ export function createServices(db: Db) {
     reports: createReportService(db),
     // Register additional RateProvider implementations here to automate rates later.
     fx: createFxService(db, [new ManualRateProvider(db)]),
+    rules: createRuleService(db),
+    imports: createImportService(db),
     bootstrap: (userId: string, primaryCurrency?: string) =>
       ensureUserBootstrap(db, userId, primaryCurrency),
     async listCurrencies() {

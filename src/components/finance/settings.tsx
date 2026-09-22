@@ -301,6 +301,7 @@ const sections = [
   'Profile',
   'Categories',
   'Currencies',
+  'Rules & Import',
   'Cards & Accounts',
   'Security',
   'Notifications',
@@ -359,6 +360,21 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
               <Button asChild variant="outline">
                 <Link href="/settings/currencies">Open currency settings</Link>
               </Button>
+            </Panel>
+          </Tabs.Content>
+          <Tabs.Content value="Rules & Import">
+            <Panel title="Rules & Import">
+              <p className={s.muted}>
+                Import bank CSV exports and keep rules that categorise entries automatically.
+              </p>
+              <div className={s.actions}>
+                <Button asChild variant="outline">
+                  <Link href="/import">Import transactions</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/settings/rules">Manage rules</Link>
+                </Button>
+              </div>
             </Panel>
           </Tabs.Content>
           <Tabs.Content value="Cards & Accounts">

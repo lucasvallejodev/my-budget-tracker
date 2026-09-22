@@ -89,6 +89,17 @@ export function useSettings() {
     queryFn: () => fetchFinance<UserSettings>('/api/settings'),
   });
 }
+export type RuleRow = {
+  id: string;
+  name: string;
+  pattern: string;
+  categoryId: string;
+  categoryName: string | null;
+  priority: number;
+};
+export function useRules() {
+  return useQuery({ queryKey: ['rules'], queryFn: () => fetchFinance<RuleRow[]>('/api/rules') });
+}
 export function useExchangeRates() {
   return useQuery({
     queryKey: queryKeys.exchangeRates,
