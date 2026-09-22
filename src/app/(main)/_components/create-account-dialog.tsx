@@ -1,7 +1,7 @@
 'use client';
 import s from '@/components/forms.module.scss';
 
-import { useCallback, useState } from 'react';
+import { ComponentProps, useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/primitives/button';
@@ -41,11 +41,24 @@ import {
 import { accountTypes } from '@/constants/account';
 
 type CreateAccountDialogProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onCloseAutoFocus?: ComponentProps<typeof DialogContent>['onCloseAutoFocus'];
   onSuccessCallback?: (account: AccountResponseType) => void;
 };
 
-function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
-  const [open, setOpen] = useState(false);
+function CreateAccountDialog({
+  onSuccessCallback,
+  open: controlledOpen,
+  onOpenChange,
+  onCloseAutoFocus,
+}: CreateAccountDialogProps) {
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = (value: boolean) => {
+    setLocalOpen(value);
+    onOpenChange?.(value);
+  };
   const form = useForm<CreateAccountSchemaType>({
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
@@ -94,13 +107,15 @@ function CreateAccountDialog({ onSuccessCallback }: CreateAccountDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className={s.create} onClick={() => setOpen(true)}>
-          <PlusSquareIcon className={s.smallIcon} />
-          Create new
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+      {controlledOpen === undefined && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" className={s.create} onClick={() => setOpen(true)}>
+            <PlusSquareIcon className={s.smallIcon} />
+            Create new
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <DialogTitle>Create new Account</DialogTitle>
         <DialogDescription>
           Accounts are used to manage your finances. You can create a new account for your

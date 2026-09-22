@@ -101,6 +101,15 @@ The three styling migration steps are complete. The runtime limitations below re
 1. Review `/test` while signed in to compare component states without relying on the database.
 2. Change shared colors in `src/styles/tokens.scss`; change block layouts in their adjacent SCSS modules.
 3. Compose finance blocks with actual data through props; keep sample fixtures in `sample-data.ts`.
-4. Restore the Prisma Accelerate configuration before validating real account/transaction submissions.
+4. Follow `DRIZZLE_MIGRATION.md` to start local PostgreSQL and apply migrations before validating real account/transaction submissions.
 5. Add budget/preference/card services separately, then replace preview state with those integrations.
 6. Run lint, tests and the production build after extending the component system.
+
+### Follow-up: modal handoff and calendar (2026-09-05)
+
+- [x] Hide parent dialogs while a nested dialog is open, preserving their form state.
+- [x] Close account/payee picker popovers before opening creation dialogs; restore focus to the picker when dismissed.
+- [x] Keep nested select and popover menus above their owning dialog.
+- [x] Replace native From/To date inputs with the shared Radix popover and SCSS calendar, including Clear, Today, and minimum-date restrictions.
+- [x] Verify draft preservation, focus restoration, picker dismissal, date filtering, and Escape dismissal: 5 interaction tests passed. TypeScript, lint, and production build passed.
+- These follow-up checks were automated; authenticated browser creation/submission was not repeated.

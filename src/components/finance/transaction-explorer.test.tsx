@@ -1,10 +1,13 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TransactionExplorer } from './transaction-explorer';
 import { sampleTransactions } from './sample-data';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../primitives/dialog';
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 describe('Finance controls', () => {
   it('filters transactions and resets pagination', () => {
     render(<TransactionExplorer transactions={sampleTransactions} />);
@@ -18,8 +21,11 @@ describe('Finance controls', () => {
     expect(screen.getByText('No transactions found')).toBeTruthy();
   });
   it('combines date and status filters', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 5));
     render(<TransactionExplorer transactions={sampleTransactions} />);
-    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-27' } });
+    fireEvent.click(screen.getByLabelText('From'));
+    fireEvent.click(screen.getByRole('button', { name: /Sunday, September 27th, 2026/ }));
     fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'Completed' } });
     expect(screen.getByText('Groceries')).toBeTruthy();
     expect(screen.queryByText('Salary Payment')).toBeNull();

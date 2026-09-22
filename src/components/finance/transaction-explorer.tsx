@@ -1,4 +1,5 @@
 'use client';
+import { DatePicker } from '../primitives/date-picker';
 import { useState } from 'react';
 import * as Menu from '@radix-ui/react-dropdown-menu';
 import { Download, MoreHorizontal } from 'lucide-react';
@@ -160,25 +161,8 @@ export function TransactionExplorer({
             onChange={e => update(setSearch, e.target.value)}
           />
         </label>
-        <label>
-          From
-          <input
-            type="date"
-            className={s.filter}
-            value={from}
-            onChange={e => update(setFrom, e.target.value)}
-          />
-        </label>
-        <label>
-          To
-          <input
-            type="date"
-            className={s.filter}
-            value={to}
-            min={from}
-            onChange={e => update(setTo, e.target.value)}
-          />
-        </label>
+        <DatePicker label="From" value={from} onChange={value => update(setFrom, value)} />
+        <DatePicker label="To" value={to} min={from} onChange={value => update(setTo, value)} />
         <label>
           Category
           <select

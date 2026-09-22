@@ -16,7 +16,9 @@ export default function AccountPicker(props: EntityPickerProps) {
       items={query.data || []}
       pending={query.isPending}
       error={query.isError}
-      create={onCreated => <CreateAccountDialog onSuccessCallback={onCreated} />}
+      create={(onCreated, dialogProps) => (
+        <CreateAccountDialog {...dialogProps} onSuccessCallback={onCreated} />
+      )}
     />
   );
 }

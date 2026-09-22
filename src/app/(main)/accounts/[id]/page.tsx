@@ -1,4 +1,4 @@
-import { prisma } from '@/prisma';
+import { getRepository } from '@/db/queries';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { getUserOrRedirect } from '@/lib/auth';
@@ -11,9 +11,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     .uuid()
     .safeParse((await params).id);
   if (!parsed.success) redirect('/accounts');
-  const account = await prisma.account.findFirst({
-    where: { id: parsed.data, userId: user.id, isDeleted: false },
-  });
+  const account = await getRepository().findAccount(user.id, parsed.data);
   if (!account) redirect('/accounts');
   return (
     <div className={s.page}>

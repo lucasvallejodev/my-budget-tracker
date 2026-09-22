@@ -4,6 +4,7 @@ import { ComponentProps } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/styles';
 import s from './controls.module.scss';
+import { useDialogDepth } from './dialog';
 export const Select = R.Root;
 export const SelectValue = R.Value;
 export const SelectGroup = R.Group;
@@ -20,13 +21,20 @@ export function SelectTrigger({ className, children, ...props }: ComponentProps<
     </R.Trigger>
   );
 }
-export function SelectContent({ children, className, ...props }: ComponentProps<typeof R.Content>) {
+export function SelectContent({
+  children,
+  className,
+  style,
+  ...props
+}: ComponentProps<typeof R.Content>) {
+  const depth = useDialogDepth();
   return (
     <R.Portal>
       <R.Content
         className={cn(s.selectContent, className)}
         position="popper"
         sideOffset={5}
+        style={{ ...style, zIndex: 90 + depth * 20 }}
         {...props}
       >
         <R.Viewport>{children}</R.Viewport>

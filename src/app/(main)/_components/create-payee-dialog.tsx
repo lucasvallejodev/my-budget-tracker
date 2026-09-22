@@ -1,7 +1,7 @@
 'use client';
 import s from '@/components/forms.module.scss';
 
-import { useCallback, useState } from 'react';
+import { ComponentProps, useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/primitives/button';
@@ -31,11 +31,24 @@ import { PayeeResponseType } from '../_types/payees';
 import { createPayeeSchema, CreatePayeeSchemaType } from '@/schema/payees';
 
 type CreatePayeeDialogProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onCloseAutoFocus?: ComponentProps<typeof DialogContent>['onCloseAutoFocus'];
   onSuccessCallback?: (payee: PayeeResponseType) => void;
 };
 
-function CreatePayeeDialog({ onSuccessCallback }: CreatePayeeDialogProps) {
-  const [open, setOpen] = useState(false);
+function CreatePayeeDialog({
+  onSuccessCallback,
+  open: controlledOpen,
+  onOpenChange,
+  onCloseAutoFocus,
+}: CreatePayeeDialogProps) {
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = (value: boolean) => {
+    setLocalOpen(value);
+    onOpenChange?.(value);
+  };
   const form = useForm<CreatePayeeSchemaType>({
     resolver: zodResolver(createPayeeSchema),
     defaultValues: { name: '' },
@@ -78,13 +91,15 @@ function CreatePayeeDialog({ onSuccessCallback }: CreatePayeeDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className={s.create} onClick={() => setOpen(true)}>
-          <PlusSquareIcon className={s.smallIcon} />
-          Create new
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+      {controlledOpen === undefined && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" className={s.create} onClick={() => setOpen(true)}>
+            <PlusSquareIcon className={s.smallIcon} />
+            Create new
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <DialogTitle>Create new Payee</DialogTitle>
         <DialogDescription>
           Payee are used to manage your finances. You can create a new account for your

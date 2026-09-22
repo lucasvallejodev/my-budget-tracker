@@ -16,7 +16,9 @@ export default function PayeePicker(props: EntityPickerProps) {
       items={query.data || []}
       pending={query.isPending}
       error={query.isError}
-      create={onCreated => <CreatePayeeDialog onSuccessCallback={onCreated} />}
+      create={(onCreated, dialogProps) => (
+        <CreatePayeeDialog {...dialogProps} onSuccessCallback={onCreated} />
+      )}
     />
   );
 }
