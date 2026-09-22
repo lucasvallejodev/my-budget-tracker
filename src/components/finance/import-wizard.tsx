@@ -35,6 +35,44 @@ function guess(headers: string[], candidates: string[]) {
   return '';
 }
 
+function ColumnSelect({
+  field,
+  label,
+  mapping,
+  headers,
+  onChange,
+}: {
+  field: keyof ColumnMapping;
+  label: string;
+  mapping: ColumnMapping;
+  headers: string[];
+  onChange: (field: keyof ColumnMapping, value: string) => void;
+}) {
+  return (
+    <label className={s.field}>
+      {label}
+      <Select
+        value={(mapping[field] as string) || NONE}
+        onValueChange={value => onChange(field, value === NONE ? '' : value)}
+      >
+        <SelectTrigger className={f.full} aria-label={label}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value={NONE}>—</SelectItem>
+            {headers.map(header => (
+              <SelectItem key={header} value={header}>
+                {header}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </label>
+  );
+}
+
 export function ImportWizard() {
   const queryClient = useQueryClient();
   const categories = useCategories();
@@ -50,6 +88,8 @@ export function ImportWizard() {
     suggestions: TransferSuggestion[];
   } | null>(null);
   const headers = useMemo(() => (csv ? parseCsv(csv).headers : []), [csv]);
+  const setColumn = (field: keyof ColumnMapping, value: string) =>
+    setMapping(current => ({ ...current, [field]: value }));
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
@@ -107,32 +147,6 @@ export function ImportWizard() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const ColumnSelect = ({ field, label }: { field: keyof ColumnMapping; label: string }) => (
-    <label className={s.field}>
-      {label}
-      <Select
-        value={(mapping[field] as string) || NONE}
-        onValueChange={value =>
-          setMapping(current => ({ ...current, [field]: value === NONE ? '' : value }))
-        }
-      >
-        <SelectTrigger className={f.full} aria-label={label}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value={NONE}>—</SelectItem>
-            {headers.map(header => (
-              <SelectItem key={header} value={header}>
-                {header}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </label>
-  );
-
   return (
     <div className={s.page}>
       <PageHeading
@@ -166,7 +180,13 @@ export function ImportWizard() {
           description="Pick which column holds what. Either one signed amount column, or separate debit and credit columns."
         >
           <div className={s.filters}>
-            <ColumnSelect field="date" label="Date column" />
+            <ColumnSelect
+              field="date"
+              label="Date column"
+              mapping={mapping}
+              headers={headers}
+              onChange={setColumn}
+            />
             <label className={s.field}>
               Date format
               <Select
@@ -191,12 +211,48 @@ export function ImportWizard() {
                 </SelectContent>
               </Select>
             </label>
-            <ColumnSelect field="amount" label="Amount column" />
-            <ColumnSelect field="debit" label="Debit column" />
-            <ColumnSelect field="credit" label="Credit column" />
-            <ColumnSelect field="payee" label="Payee column" />
-            <ColumnSelect field="memo" label="Memo column" />
-            <ColumnSelect field="externalId" label="Reference / id column" />
+            <ColumnSelect
+              field="amount"
+              label="Amount column"
+              mapping={mapping}
+              headers={headers}
+              onChange={setColumn}
+            />
+            <ColumnSelect
+              field="debit"
+              label="Debit column"
+              mapping={mapping}
+              headers={headers}
+              onChange={setColumn}
+            />
+            <ColumnSelect
+              field="credit"
+              label="Credit column"
+              mapping={mapping}
+              headers={headers}
+              onChange={setColumn}
+            />
+            <ColumnSelect
+              field="payee"
+              label="Payee column"
+              mapping={mapping}
+              headers={headers}
+              onChange={setColumn}
+            />
+            <ColumnSelect
+              field="memo"
+              label="Memo column"
+              mapping={mapping}
+              headers={headers}
+              onChange={setColumn}
+            />
+            <ColumnSelect
+              field="externalId"
+              label="Reference / id column"
+              mapping={mapping}
+              headers={headers}
+              onChange={setColumn}
+            />
             <label className={s.field}>
               <span>
                 <input
