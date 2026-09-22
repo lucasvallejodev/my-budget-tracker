@@ -1,6 +1,6 @@
 # CoinKeeper redesign proposal — spending tracker foundations
 
-_Date: 2026-09-22 · Branch: `redesign` · Status: approved with amendments (group-only colours, `currencies` table, manual FX rates behind a provider interface); implementation in progress_
+_Date: 2026-09-22 · Branch: `redesign` · Status: implemented in phases 0–5 (commits "Phase 0…" to "Phase 5…"); amendments applied: group-only colours, `currencies` table, manual FX rates behind a `RateProvider` interface_
 
 This document analyses the current state of the app, summarises what YNAB, Actual Budget, Firefly III, Maybe/Sure, Lunch Money, Monarch and Copilot do for the same problems, and proposes a concrete data model, architecture, product behaviour and phased roadmap for:
 
@@ -424,6 +424,8 @@ Ideas that fall out of this model cheaply and make the app nicer to live in. Non
 ---
 
 ## 12. Phased roadmap
+
+All six phases below are implemented on the `redesign` branch, one commit each. Notable implementation choices: reordering uses up/down buttons rather than drag-and-drop; rules are "text contains → category"; import matching is exact amount within ±7 days; transfer suggestions look for the opposite leg within ±4 days; the transaction list is fetched per month (up to 2,000 rows) and filtered client-side.
 
 | Phase | Scope | Done when |
 | --- | --- | --- |
