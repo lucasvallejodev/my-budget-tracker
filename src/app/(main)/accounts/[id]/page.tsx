@@ -1,28 +1,5 @@
-import { getRepository } from '@/db/queries';
-import { redirect } from 'next/navigation';
-import { z } from 'zod';
-import { getUserOrRedirect } from '@/lib/auth';
-import { PageHeading, BalanceCard, Panel } from '@/components/finance/blocks';
-import s from '@/components/finance/finance.module.scss';
+import { AccountDetail } from '@/components/finance/account-detail';
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const user = await getUserOrRedirect();
-  const parsed = z
-    .string()
-    .uuid()
-    .safeParse((await params).id);
-  if (!parsed.success) redirect('/accounts');
-  const account = await getRepository().findAccount(user.id, parsed.data);
-  if (!account) redirect('/accounts');
-  return (
-    <div className={s.page}>
-      <PageHeading title={account.name} description={account.institution || account.type} />
-      <div className={s.grid}>
-        <BalanceCard amount={Number(account.balance)} />
-        <Panel title="Account details">
-          <p className={s.muted}>Account ending in {account.accountNumber?.slice(-4) || '—'}</p>
-          <p>{account.notes || 'No notes added.'}</p>
-        </Panel>
-      </div>
-    </div>
-  );
+  const { id } = await params;
+  return <AccountDetail accountId={id} />;
 }

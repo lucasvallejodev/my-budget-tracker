@@ -30,7 +30,7 @@
 
     <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ledger-er-title ledger-er-desc">
       <title id="ledger-er-title">Budget tracker · target data model</title>
-      <desc id="ledger-er-desc">Entity-relationship diagram showing accounts, payees and user-managed categories feeding a signed multi-currency transaction ledger, with category groups, monthly budgets, exchange rates and per-user settings; every table also carries the owning user id.</desc>
+      <desc id="ledger-er-desc">Entity-relationship diagram showing accounts, payees and user-managed categories feeding a signed multi-currency transaction ledger, with category groups, monthly budgets, a global currency reference and per-user settings; every table also carries the owning user id.</desc>
       <defs>
         <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
         <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
@@ -153,30 +153,30 @@
       <text x="840" y="164" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text</text>
       <text x="672" y="184" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">icon</text>
       <text x="840" y="184" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">lucide name</text>
-      <text x="672" y="204" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">color</text>
-      <text x="840" y="204" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">hex · null→group</text>
+      <text x="672" y="204" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">user_id</text>
+      <text x="840" y="204" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text</text>
       <text x="672" y="224" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">sort_order</text>
       <text x="840" y="224" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">int</text>
       <text x="672" y="244" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">archived_at</text>
       <text x="840" y="244" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">timestamptz</text>
 
-      <!-- Entity: ExchangeRate (later phase) -->
+      <!-- Entity: Currency (reference) -->
       <rect x="944" y="64" width="200" height="152" rx="6" fill="rgba(45,49,66,0.04)" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3"/>
       <rect x="944" y="64" width="200" height="40" rx="6" fill="rgba(45,49,66,0.06)" stroke="none"/>
       <rect x="944" y="96" width="200" height="8" fill="rgba(45,49,66,0.06)"/>
       <line x1="944" y1="104" x2="1144" y2="104" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
-      <text x="960" y="80" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">REFERENCE · PHASE 3</text>
-      <text x="960" y="96" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">ExchangeRate</text>
-      <text x="960" y="124" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># base</text>
-      <text x="1128" y="124" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">char(3)</text>
-      <text x="960" y="144" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># quote</text>
-      <text x="1128" y="144" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">char(3)</text>
-      <text x="960" y="164" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># date</text>
-      <text x="1128" y="164" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">date</text>
-      <text x="960" y="184" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">rate</text>
-      <text x="1128" y="184" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">numeric(18,8)</text>
-      <text x="960" y="204" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">source</text>
-      <text x="1128" y="204" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text</text>
+      <text x="960" y="80" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">REFERENCE · GLOBAL</text>
+      <text x="960" y="96" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Currency</text>
+      <text x="960" y="124" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># code</text>
+      <text x="1128" y="124" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">char(3) · ISO</text>
+      <text x="960" y="144" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">name</text>
+      <text x="1128" y="144" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text</text>
+      <text x="960" y="164" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">symbol</text>
+      <text x="1128" y="164" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text</text>
+      <text x="960" y="184" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">minor_units</text>
+      <text x="1128" y="184" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">int · JPY 0</text>
+      <text x="960" y="204" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">is_active</text>
+      <text x="1128" y="204" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">bool</text>
 
       <!-- Entity: Account -->
       <rect x="40" y="300" width="200" height="192" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
@@ -281,7 +281,7 @@
       <text x="200" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Entity</text>
 
       <rect x="268" y="676" width="14" height="10" rx="2" fill="rgba(45,49,66,0.04)" stroke="#4f5d75" stroke-width="1" stroke-dasharray="3,2"/>
-      <text x="288" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Later phase</text>
+      <text x="288" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Reference / later phase</text>
 
       <text x="380" y="684" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">#</text>
       <text x="396" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Primary key</text>

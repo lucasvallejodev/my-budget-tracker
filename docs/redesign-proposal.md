@@ -1,6 +1,6 @@
 # CoinKeeper redesign proposal — spending tracker foundations
 
-_Date: 2026-09-22 · Branch: `redesign` · Status: proposal for discussion_
+_Date: 2026-09-22 · Branch: `redesign` · Status: approved with amendments (group-only colours, `currencies` table, manual FX rates behind a provider interface); implementation in progress_
 
 This document analyses the current state of the app, summarises what YNAB, Actual Budget, Firefly III, Maybe/Sure, Lunch Money, Monarch and Copilot do for the same problems, and proposes a concrete data model, architecture, product behaviour and phased roadmap for:
 
@@ -22,8 +22,8 @@ Supporting material lives next to this file:
 
 - **Store money as signed integer minor units plus a currency code.** Today every amount is a `double precision`; that has to change before anything else. Balances become `SUM(amount_minor)` per account, so the cached `balance` column and the two hand-maintained monthly history tables go away.
 - **One ledger row per account movement, with a `kind`.** `standard` rows are income/expense; `transfer` rows come in linked pairs (one per account, opposite signs, no category). Paying a credit card is a transfer. Every spending report is `WHERE kind = 'standard'`; every balance and net-worth figure includes all kinds. That single rule delivers the credit-card requirement without special cases.
-- **Currency lives on the account and is copied onto each transaction.** A cross-currency transfer is just a pair whose two legs carry different currencies and amounts. Reports and net worth are grouped by currency; a converted total is an optional, clearly labelled extra (phase 3) backed by an `exchange_rates` table fed from the ECB via frankfurter.dev.
-- **Categories become user data:** `category_groups` (colour, income/expense kind, order) and `categories` (icon from a curated lucide registry, optional colour override). A versioned default taxonomy is seeded on first sign-in. `category_id` is nullable; uncategorised rows are flagged `needs_review` and surface in a review inbox and a dashboard alert.
+- **Currency lives on the account and is copied onto each transaction.** A cross-currency transfer is just a pair whose two legs carry different currencies and amounts. Reports and net worth are grouped by currency; a converted total is an optional, clearly labelled extra (phase 3) backed by a `currencies` reference table and an `exchange_rates` table that the user maintains by hand; rate providers are a pluggable interface so an automatic source can be added later.
+- **Categories become user data:** `category_groups` (colour, income/expense kind, order) and `categories` (icon from a curated lucide registry; the colour always comes from the group). A versioned default taxonomy is seeded on first sign-in. `category_id` is nullable; uncategorised rows are flagged `needs_review` and surface in a review inbox and a dashboard alert.
 - **Ship it in five phases** in this order: money & ledger foundations → categories → transfers & credit cards → multi-currency polish → import & rules. Budgets come after, on top of the same tables.
 
 ---
@@ -152,7 +152,6 @@ No stored balance. Balance is `SUM(amount_minor)` of non-deleted transactions; a
 | `group_id` | uuid FK → category_groups | |
 | `name` | text, unique per group among non-archived | |
 | `icon` | text | a key of the curated lucide registry (validated server-side) |
-| `color` | text hex null | optional override; null means "use the group colour" |
 | `sort_order` | int | |
 | `archived_at`, `deleted_at` | timestamptz | archived categories stay resolvable for history |
 
@@ -191,7 +190,9 @@ CHECK (amount_minor <> 0)
 
 A deferred trigger (or the service layer, at minimum) guarantees each `transfer_id` has exactly two live rows in two different accounts of the same user.
 
-**`exchange_rates`** (phase 3): `base char(3)`, `quote char(3)`, `date date`, `rate numeric(18,8)`, `source text`; PK `(base, quote, date)`. Rates are only used for the optional converted totals, keyed by the transaction date, never by `now()` (Firefly shipped exactly that bug).
+**`currencies`** — a global reference table seeded by migration: `code char(3) PK`, `name`, `symbol`, `minor_units` (JPY 0, KWD 3), `is_active`. Accounts, transactions, settings and budgets reference it, and the UI reads names and symbols from it instead of a constant.
+
+**`exchange_rates`** (phase 3): `base char(3)`, `quote char(3)`, `date date`, `rate numeric(18,8)`, `source text` (`manual` for now); PK `(base, quote, date)`. Rates are only used for the optional converted totals, keyed by the transaction date, never by `now()` (Firefly shipped exactly that bug).
 
 **`budgets`** (phase 5): `category_id`, `month date` (first of month), `currency`, `amount_minor`; unique `(category_id, month, currency)`. Budgets per currency because spending is per currency.
 
@@ -256,13 +257,13 @@ _Editable source: [diagrams/money-movement-flow.html](diagrams/money-movement-fl
 
 ### 6.2 Rates
 
-`exchange_rates(base, quote, date, rate, source)`. A daily job (or lazy fetch on first need, then cached) pulls `https://api.frankfurter.dev/v1/<date>?base=EUR` for the currencies the user has. Weekends and holidays fall back to the nearest earlier date. Frankfurter is free, key-less, ECB-sourced and covers about 30 major currencies, which matches the app's `CURRENCIES` list; provider choice is isolated behind `fx/provider.ts` so it can be swapped.
+`exchange_rates(base, quote, date, rate, source)`. Rates are entered **manually** in Settings → Currencies (base currency, quote currency, date, rate); the lookup uses the most recent rate on or before the requested date. Automatic sources (frankfurter is paid, ECB feeds need parsing) are out of scope for now, so the FX module exposes a small `RateProvider` interface (`getRate(base, quote, date)`) with a `ManualRateProvider` backed by the table; a future plugin can register another provider that fills the table on a schedule without touching the reports.
 
 ### 6.3 UI
 
 - Amounts always show the currency (code or symbol per locale); mixed-currency lists show the code on every row.
 - Dashboard: one "Net worth · EUR" card per currency, each with assets / liabilities / net, and a secondary converted line when enabled. Spending donut and cash-flow chart get a currency selector when the user has more than one.
-- Settings → Currencies: primary currency, list of enabled currencies for pickers (existing accounts keep theirs), converted-total toggle.
+- Settings → Currencies: primary currency, the currencies available in pickers (from the `currencies` table), manual exchange-rate entry, converted-total toggle.
 
 ---
 
@@ -270,7 +271,7 @@ _Editable source: [diagrams/money-movement-flow.html](diagrams/money-movement-fl
 
 ### 7.1 Model and rules
 
-- Two levels only: **group** (colour, kind income/expense, order) → **category** (icon, optional colour override, order). Children inherit the group's colour and kind, which is what keeps the breakdown donut coherent (one colour per group, shades or icons per category).
+- Two levels only: **group** (colour, kind income/expense, order) → **category** (icon, order). Categories have no colour of their own; they always render with the group colour, which is what keeps the breakdown donut coherent (one colour per group, icons per category).
 - **Seeding on first sign-in**: `ensureUserBootstrap(userId)` runs inside the request that first touches the DB for a new user, wrapped in a transaction with a per-user advisory lock, inserts `user_settings` and the default taxonomy from `src/server/categories/default-taxonomy.ts`, and records `seeded_version`. This works locally without webhooks; a Clerk `user.created` webhook can call the same function later for eagerness. Bumping the taxonomy version never rewrites existing users' data; it only affects new sign-ups (an opt-in "add missing defaults" button can come later).
 - **Icons** come from a curated registry `src/components/icons/registry.ts` — explicit named imports (`Home, Car, ShoppingCart, …`) exported as a map; its keys become both the picker's list and a Zod enum for validation. This replaces the `import * as LucideIcons` wildcard and fixes the invalid/deprecated names (`Spray → SprayCan`, `Palmtree → TreePalm`, `ParkingCircle → CircleParking`, `MoreHorizontal → Ellipsis`, `HelpCircle → CircleHelp`). Every icon name in the seed list below was verified against the installed lucide-react 1.41.
 - **Colours**: groups pick from a curated palette of ~16 hues (the picker offers swatches; hex is stored so custom values remain possible).
@@ -301,7 +302,7 @@ The current constants map onto this list one-to-one for the data migration (e.g.
 
 ### 7.3 Category manager (Settings → Categories)
 
-Groups as collapsible sections with a colour dot, drag-to-reorder, rename inline, "Add category" per group, "Add group". Category row: icon picker (registry grid with search), name, optional colour override, transaction count, archive/move actions. Archived section at the bottom with restore. The same picker component (grouped, searchable, keyboard-navigable) is reused in the transaction form and the review inbox.
+Groups as collapsible sections with a colour dot, drag-to-reorder, rename inline, "Add category" per group, "Add group". Category row: icon picker (registry grid with search), name, transaction count, archive/move actions. Archived section at the bottom with restore. The same picker component (grouped, searchable, keyboard-navigable) is reused in the transaction form and the review inbox.
 
 ---
 
@@ -369,7 +370,7 @@ src/server/
   payees/
   ledger/                       transactions.ts · transfers.ts · balances.ts (the "Ledger service")
   reports/                      monthly.ts · breakdown.ts · net-worth.ts (SQL above)
-  fx/                           rates.ts · provider.ts (frankfurter)
+  fx/                           rates.ts · provider.ts (RateProvider interface, ManualRateProvider)
 src/db/schema/                  one file per table group, re-exported from schema.ts
 ```
 
@@ -429,7 +430,7 @@ Ideas that fall out of this model cheaply and make the app nicer to live in. Non
 | **0 · Ledger foundations** | New schema + migration (§4, §10); Money module; signed `amount_minor` + `currency`; opening-balance rows; balances and reports as queries; drop history tables; transaction edit/delete UI; paginated transactions endpoint; account edit/archive. | All existing screens work on the new tables with one currency; PGlite tests cover balances, edit, delete, ownership. |
 | **1 · Categories as data** | `category_groups`/`categories`, seeding + `ensureUserBootstrap`, icon registry, category manager, new picker, optional category + `needs_review`, dashboard alert, review inbox (categorise only), payee default-category memory. | User can create/rename/reorder/archive/move groups and categories; breakdown donut uses group colours; uncategorised count visible and clearable. |
 | **2 · Transfers & credit cards** | Transfer creation/edit/delete as a pair, transaction dialog transfer mode, Pay-card flow, liability display, net-worth card (assets/liabilities), account groups in sidebar. | Card settlement never appears in spending; account ledgers show both legs with the counterpart name; deleting one leg removes both. |
-| **3 · Multi-currency** | Currency on accounts (immutable after use), per-currency cards/charts/tabs, cross-currency transfers with two amounts, `exchange_rates` + frankfurter job, optional converted totals with "as of" label, currency settings. | A user with EUR and USD accounts sees separate figures everywhere, and an optional converted total that states its rate date. |
+| **3 · Multi-currency** | Currency on accounts (immutable after use), per-currency cards/charts/tabs, cross-currency transfers with two amounts, `currencies` reference table, manual `exchange_rates` behind a `RateProvider` interface, optional converted totals with "as of" label, currency settings. | A user with EUR and USD accounts sees separate figures everywhere, and an optional converted total that states its rate date. |
 | **4 · Import & review** | CSV import wizard (column mapping, sign convention), `import_id` dedupe, pending status, three-pass matching against manual rows, transfer-pair suggestions, rules (`payee contains → category`), review inbox completeness. | Re-importing the same file is a no-op; imported rows land in the inbox and can be categorised in bulk. |
 | **5 · Budgets** | `budgets` table, monthly limits per category/group per currency, progress on the budgets page, insights. | Budgets page persists and reflects the same spending numbers as the breakdown. |
 
@@ -465,7 +466,7 @@ Phase 0 is the prerequisite for everything and is also the riskiest change to ex
 - Maybe schema — https://github.com/maybe-finance/maybe/blob/main/db/schema.rb · `Transaction.kind` — https://github.com/maybe-finance/maybe/blob/main/app/models/transaction.rb · Sure default categories — https://github.com/we-promise/sure/blob/main/app/models/category.rb
 - Lunch Money API (transactions, categories, assets) — https://lunchmoney.dev/ · Monarch default categories — https://help.monarch.com/hc/en-us/articles/360048883851-Default-Categories · Copilot credit-card payments — https://help.copilot.money/en/articles/10671434-credit-card-payment-transactions
 - Money pattern — https://martinfowler.com/eaaCatalog/money.html · PostgreSQL numeric types — https://www.postgresql.org/docs/current/datatype-numeric.html · Crunchy Data on money in Postgres — https://www.crunchydata.com/blog/working-with-money-in-postgres
-- Frankfurter (ECB rates, free, no key) — https://frankfurter.dev/ · Plaid personal-finance category taxonomy — https://plaid.com/documents/transactions-personal-finance-category-taxonomy.csv · Lucide icons — https://lucide.dev/icons/
+- Plaid personal-finance category taxonomy — https://plaid.com/documents/transactions-personal-finance-category-taxonomy.csv · Lucide icons — https://lucide.dev/icons/
 
 **Diagrams**
 

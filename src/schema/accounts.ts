@@ -1,18 +1,32 @@
 import { z } from 'zod';
 
-export const createAccountSchema = z.object({
-  name: z.string().min(1).max(50),
-  type: z.enum(['CHECKING', 'SAVINGS', 'CREDIT_CARD', 'CASH', 'INVESTMENT', 'OTHER']),
+export const accountTypeValues = [
+  'checking',
+  'savings',
+  'cash',
+  'credit_card',
+  'loan',
+  'investment',
+  'other',
+] as const;
+
+export const accountFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(50),
+  type: z.enum(accountTypeValues),
+  currency: z.string().length(3, 'Choose a currency'),
   institution: z.string().max(50).optional(),
   accountNumber: z.string().max(20).optional(),
-  color: z.string().max(20).optional(),
-  icon: z.string().max(20).optional(),
   notes: z.string().max(500).optional(),
+  /** Decimal string in the account currency, e.g. "1250.00". Empty means zero. */
+  openingBalance: z.string().max(30).optional(),
+  countsInSpending: z.boolean().optional(),
 });
+export type AccountFormValues = z.infer<typeof accountFormSchema>;
 
-export const createAccountWithUserSchema = createAccountSchema.extend({
-  userId: z.string().uuid(),
-});
-
-export type CreateAccountSchemaType = z.infer<typeof createAccountSchema>;
-export type CreateAccountWithUserSchemaType = z.infer<typeof createAccountWithUserSchema>;
+export const updateAccountSchema = accountFormSchema
+  .omit({ openingBalance: true })
+  .partial()
+  .extend({
+    id: z.string().min(1),
+  });
+export type UpdateAccountValues = z.infer<typeof updateAccountSchema>;

@@ -12,7 +12,7 @@ import { Input } from '../primitives/input';
 import { ToggleSwitch } from '../primitives/preferences';
 import { Button } from '../primitives/button';
 import { exportTransactions } from './transaction-explorer';
-import { Transaction } from '../transaction-table';
+import { TransactionRow } from './use-finance-data';
 import { applyTheme } from '../shell/theme-toggle';
 import s from './finance.module.scss';
 export function PreferenceRow({
@@ -202,7 +202,7 @@ export function DataSettings({ demo }: { demo: boolean }) {
       if (demo) return exportTransactions(sampleTransactions);
       const response = await fetch('/api/transactions');
       if (!response.ok) throw new Error();
-      exportTransactions((await response.json()) as Transaction[]);
+      exportTransactions((await response.json()) as TransactionRow[]);
     } catch {
       toast.error('Unable to export transactions. Please try again.');
     }

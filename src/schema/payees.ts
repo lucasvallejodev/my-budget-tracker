@@ -1,13 +1,9 @@
 import { z } from 'zod';
 
-export const createPayeeSchema = z.object({
-  name: z.string().min(1).max(50),
-  categoryId: z.string().max(50).optional(),
+export const payeeFormSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(80),
+  defaultCategoryId: z.string().optional(),
 });
+export type PayeeFormValues = z.infer<typeof payeeFormSchema>;
 
-export const createPayeeWithUserSchema = createPayeeSchema.extend({
-  userId: z.string().uuid(),
-});
-
-export type CreatePayeeSchemaType = z.infer<typeof createPayeeSchema>;
-export type CreatePayeeWithUserSchemaType = z.infer<typeof createPayeeWithUserSchema>;
+export const updatePayeeSchema = payeeFormSchema.partial().extend({ id: z.string().min(1) });

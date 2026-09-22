@@ -1,27 +1,46 @@
 'use client';
+import { useState } from 'react';
 import { Button } from '@/components/primitives/button';
-import CreateTransactionDialog from './create-transaction-dialog';
+import TransactionDialog from './transaction-dialog';
 import { Plus } from 'lucide-react';
-import { useFinanceData } from '@/components/finance/use-finance-data';
+import { currentMonth, useTransactions } from '@/components/finance/use-finance-data';
 import { PageHeading, EmptyState } from '@/components/finance/blocks';
 import { TransactionExplorer } from '@/components/finance/transaction-explorer';
+import { MonthPicker } from '@/components/finance/overview';
 import s from '@/components/finance/finance.module.scss';
 export default function TransactionsPage({ initialSearch = '' }: { initialSearch?: string }) {
-  const { transactions } = useFinanceData();
+  const [month, setMonth] = useState<string | undefined>(
+    initialSearch ? undefined : currentMonth()
+  );
+  const transactions = useTransactions({ month, limit: '2000' });
   return (
     <div className={s.page}>
       <PageHeading
         title="Transactions"
         description="View, filter, and manage your financial activity in one place."
         actions={
-          <CreateTransactionDialog
-            trigger={
-              <Button>
-                <Plus />
-                New transaction
+          <>
+            {month ? (
+              <MonthPicker month={month} onChange={setMonth} />
+            ) : (
+              <Button variant="outline" onClick={() => setMonth(currentMonth())}>
+                Filter by month
               </Button>
-            }
-          />
+            )}
+            {month && (
+              <Button variant="ghost" onClick={() => setMonth(undefined)}>
+                All months
+              </Button>
+            )}
+            <TransactionDialog
+              trigger={
+                <Button>
+                  <Plus />
+                  New transaction
+                </Button>
+              }
+            />
+          </>
         }
       />
       {transactions.isPending ? (

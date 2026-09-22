@@ -1,13 +1,11 @@
-import * as LucideIcons from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { ICONS, isIconName } from './icons/registry';
 
 interface IconProps {
-  icon?: string;
+  icon?: string | null;
   color?: string;
   size?: number;
   className?: string;
   strokeWidth?: number;
-  fallbackIcon?: string;
 }
 
 export const Icon: React.FC<IconProps> = ({
@@ -17,19 +15,7 @@ export const Icon: React.FC<IconProps> = ({
   className = '',
   strokeWidth = 2,
 }) => {
-  const IconComponent: LucideIcon = LucideIcons[icon as keyof typeof LucideIcons] as LucideIcon;
-
-  if (!icon || !IconComponent) {
-    return (
-      <LucideIcons.HelpCircle
-        size={size}
-        color={color}
-        className={className}
-        strokeWidth={strokeWidth}
-      />
-    );
-  }
-
+  const IconComponent = icon && isIconName(icon) ? ICONS[icon] : ICONS.CircleHelp;
   return (
     <IconComponent size={size} color={color} className={className} strokeWidth={strokeWidth} />
   );

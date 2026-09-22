@@ -2,36 +2,58 @@
 import { DatePicker } from '../primitives/date-picker';
 import { useState } from 'react';
 import * as Menu from '@radix-ui/react-dropdown-menu';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Download, MoreHorizontal } from 'lucide-react';
-import { Transaction, TransactionTable } from '../transaction-table';
+import { categoryLabel, describeTransaction, TransactionTable } from '../transaction-table';
 import { Panel, EmptyState } from './blocks';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
-import { CATEGORY } from '@/constants/category';
+import { FINANCE_KEYS, TransactionRow } from './use-finance-data';
+import { formatMoney, minorToDecimalString } from '@/lib/money';
+import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
+import { deleteTransactionAction } from '@/app/(main)/actions';
 import s from './finance.module.scss';
 import c from '../primitives/controls.module.scss';
-export function categoryName(t: Transaction) {
-  return CATEGORY[t.categoryId as keyof typeof CATEGORY]?.name || t.category || 'Uncategorized';
-}
-export function exportTransactions(rows: Transaction[]) {
+
+export function exportTransactions(rows: TransactionRow[]) {
   const cell = (v: unknown) =>
     `"${String(v ?? '')
       .replace(/^[=+@\-\t\r]/, "'$&")
       .replaceAll('"', '""')}"`;
   const csv = [
-    ['Description', 'Category', 'ID', 'Amount', 'Type', 'Date'],
+    [
+      'Date',
+      'Description',
+      'Payee',
+      'Category',
+      'Group',
+      'Account',
+      'Amount',
+      'Currency',
+      'Kind',
+      'Status',
+      'Memo',
+      'ID',
+    ],
     ...rows.map(t => [
-      t.description,
-      categoryName(t),
+      t.date,
+      describeTransaction(t),
+      t.payeeName ?? '',
+      categoryLabel(t),
+      t.groupName ?? '',
+      t.accountName,
+      minorToDecimalString(t.amountMinor, t.currency),
+      t.currency,
+      t.kind,
+      t.status,
+      t.memo,
       t.id,
-      t.amount,
-      t.type,
-      new Date(t.date).toISOString().slice(0, 10),
     ]),
   ]
     .map(row => row.map(cell).join(','))
     .join('\r\n');
-  const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+  const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }));
   const a = document.createElement('a');
   a.href = url;
   a.download = 'transactions.csv';
@@ -61,8 +83,22 @@ export function Pagination({
     </nav>
   );
 }
-export function TransactionActions({ transaction }: { transaction: Transaction }) {
-  const [open, setOpen] = useState(false);
+export function TransactionActions({ transaction }: { transaction: TransactionRow }) {
+  const [details, setDetails] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const queryClient = useQueryClient();
+  const remove = useMutation({
+    mutationFn: () => deleteTransactionAction(transaction.id),
+    onSuccess: async () => {
+      toast.success(transaction.kind === 'transfer' ? 'Transfer deleted' : 'Transaction deleted');
+      await Promise.all(
+        FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
+      );
+      setDeleting(false);
+    },
+    onError: (error: Error) => toast.error(error.message || 'Could not delete'),
+  });
   return (
     <>
       <Menu.Root>
@@ -70,29 +106,43 @@ export function TransactionActions({ transaction }: { transaction: Transaction }
           <Button
             variant="ghost"
             size="icon"
-            aria-label={`Actions for ${transaction.description || transaction.id}`}
+            aria-label={`Actions for ${describeTransaction(transaction)}`}
           >
             <MoreHorizontal />
           </Button>
         </Menu.Trigger>
         <Menu.Portal>
           <Menu.Content className={c.popover} align="end">
-            <Menu.Item className={c.selectItem} onSelect={() => setOpen(true)}>
+            <Menu.Item className={c.selectItem} onSelect={() => setDetails(true)}>
               View details
+            </Menu.Item>
+            {transaction.kind !== 'opening' && (
+              <Menu.Item className={c.selectItem} onSelect={() => setEditing(true)}>
+                Edit
+              </Menu.Item>
+            )}
+            <Menu.Item className={c.selectItem} onSelect={() => setDeleting(true)}>
+              Delete
             </Menu.Item>
           </Menu.Content>
         </Menu.Portal>
       </Menu.Root>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={details} onOpenChange={setDetails}>
         <DialogContent>
           <DialogTitle>Transaction details</DialogTitle>
           <dl>
             {Object.entries({
-              Description: transaction.description || '—',
-              Category: categoryName(transaction),
-              Amount: transaction.amount,
-              Type: transaction.type,
-              Date: new Date(transaction.date).toLocaleDateString(),
+              Description: describeTransaction(transaction),
+              Payee: transaction.payeeName || '—',
+              Category: categoryLabel(transaction),
+              Account: transaction.accountName,
+              Amount: formatMoney(transaction.amountMinor, transaction.currency, {
+                signDisplay: 'exceptZero',
+              }),
+              Kind: transaction.kind,
+              Status: transaction.status,
+              Date: transaction.date,
+              Memo: transaction.memo || '—',
               ID: transaction.id,
             }).map(([key, value]) => (
               <div className={s.row} key={key}>
@@ -103,15 +153,44 @@ export function TransactionActions({ transaction }: { transaction: Transaction }
           </dl>
         </DialogContent>
       </Dialog>
+      {editing && (
+        <TransactionDialog open={editing} onOpenChange={setEditing} transaction={transaction} />
+      )}
+      <Dialog open={deleting} onOpenChange={setDeleting}>
+        <DialogContent>
+          <DialogTitle>
+            Delete this {transaction.kind === 'transfer' ? 'transfer' : 'transaction'}?
+          </DialogTitle>
+          <p>
+            {transaction.kind === 'transfer'
+              ? 'Both legs of the transfer are removed and both account balances update.'
+              : 'The account balance and reports update immediately. This cannot be undone.'}
+          </p>
+          <div className={s.actions}>
+            <Button variant="outline" onClick={() => setDeleting(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate()}
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
 export function TransactionExplorer({
   transactions,
   initialSearch = '',
+  showAccount = true,
 }: {
-  transactions: Transaction[];
+  transactions: TransactionRow[];
   initialSearch?: string;
+  showAccount?: boolean;
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState('');
@@ -120,25 +199,35 @@ export function TransactionExplorer({
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+  const typeOf = (t: TransactionRow) =>
+    t.kind === 'transfer'
+      ? 'TRANSFER'
+      : t.kind === 'opening'
+        ? 'OPENING'
+        : t.amountMinor < 0
+          ? 'EXPENSE'
+          : 'INCOME';
+  const statusOf = (t: TransactionRow) => (t.needsReview ? 'Needs review' : t.status);
   const filtered = transactions.filter(
     t =>
-      `${t.id} ${t.description} ${categoryName(t)}`.toLowerCase().includes(search.toLowerCase()) &&
-      (!category || categoryName(t) === category) &&
-      (!type || t.type === type) &&
-      (!status || t.status === status) &&
-      (!from || new Date(t.date).toISOString().slice(0, 10) >= from) &&
-      (!to || new Date(t.date).toISOString().slice(0, 10) <= to)
+      `${t.id} ${describeTransaction(t)} ${t.memo} ${categoryLabel(t)} ${t.accountName}`
+        .toLowerCase()
+        .includes(search.toLowerCase()) &&
+      (!category || categoryLabel(t) === category) &&
+      (!type || typeOf(t) === type) &&
+      (!status || statusOf(t) === status) &&
+      (!from || t.date >= from) &&
+      (!to || t.date <= to)
   );
-  const pages = Math.max(1, Math.ceil(filtered.length / 7));
+  const pages = Math.max(1, Math.ceil(filtered.length / 10));
   const current = Math.min(page, pages);
   const update = (setter: (v: string) => void, value: string) => {
     setter(value);
     setPage(1);
   };
-  const statuses = [...new Set(transactions.map(t => t.status).filter(Boolean))];
   return (
     <Panel
-      title="Recent Transactions"
+      title="Transactions"
       action={
         <div className={s.actions}>
           <Button variant="outline" size="sm" onClick={() => exportTransactions(filtered)}>
@@ -156,7 +245,7 @@ export function TransactionExplorer({
           Search
           <input
             className={s.filter}
-            placeholder="Search by ID or description…"
+            placeholder="Search by payee, memo, category…"
             value={search}
             onChange={e => update(setSearch, e.target.value)}
           />
@@ -171,7 +260,7 @@ export function TransactionExplorer({
             onChange={e => update(setCategory, e.target.value)}
           >
             <option value="">All categories</option>
-            {[...new Set(transactions.map(categoryName))].map(c => (
+            {[...new Set(transactions.map(categoryLabel))].sort().map(c => (
               <option key={c}>{c}</option>
             ))}
           </select>
@@ -182,28 +271,31 @@ export function TransactionExplorer({
             <option value="">All types</option>
             <option value="INCOME">Income</option>
             <option value="EXPENSE">Expense</option>
+            <option value="TRANSFER">Transfer</option>
+            <option value="OPENING">Opening balance</option>
           </select>
         </label>
-        {statuses.length > 0 && (
-          <label>
-            Status
-            <select
-              className={s.filter}
-              value={status}
-              onChange={e => update(setStatus, e.target.value)}
-            >
-              <option value="">All statuses</option>
-              {statuses.map(v => (
-                <option key={v}>{v}</option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label>
+          Status
+          <select
+            className={s.filter}
+            value={status}
+            onChange={e => update(setStatus, e.target.value)}
+          >
+            <option value="">All statuses</option>
+            {['Needs review', 'pending', 'cleared', 'reconciled'].map(v => (
+              <option key={v} value={v}>
+                {v[0].toUpperCase() + v.slice(1)}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       {filtered.length ? (
         <TransactionTable
-          transactions={filtered.slice((current - 1) * 7, current * 7)}
+          transactions={filtered.slice((current - 1) * 10, current * 10)}
           showActions
+          showAccount={showAccount}
         />
       ) : (
         <EmptyState

@@ -1,19 +1,17 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
 import { EntityPicker, EntityPickerProps } from '@/components/primitives/entity-picker';
-import { fetchFinance } from '@/components/finance/use-finance-data';
+import { useAccounts } from '@/components/finance/use-finance-data';
 import CreateAccountDialog from './create-account-dialog';
-import { AccountResponseType } from '../_types/accounts';
 export default function AccountPicker(props: EntityPickerProps) {
-  const query = useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => fetchFinance<AccountResponseType[]>('/api/accounts'),
-  });
+  const query = useAccounts();
   return (
     <EntityPicker
       {...props}
       label="accounts"
-      items={query.data || []}
+      items={(query.data || []).map(account => ({
+        id: account.id,
+        name: `${account.name} · ${account.currency}`,
+      }))}
       pending={query.isPending}
       error={query.isError}
       create={(onCreated, dialogProps) => (

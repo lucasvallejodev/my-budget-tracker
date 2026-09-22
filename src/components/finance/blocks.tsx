@@ -4,6 +4,7 @@ import { Button } from '../primitives/button';
 import { cn } from '@/lib/styles';
 import s from './finance.module.scss';
 
+/** Formats a major-unit number (sample data, budget previews). Ledger amounts use `Amount`. */
 export const money = (amount: number, currency = 'USD') =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 2 }).format(
     amount

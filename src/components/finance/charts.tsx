@@ -15,12 +15,22 @@ import {
 import { Panel, money, EmptyState } from './blocks';
 import s from './finance.module.scss';
 export type CashPoint = { label: string; income: number; expense: number };
-export type Segment = { name: string; value: number };
+export type Segment = { name: string; value: number; color?: string };
 const colors = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#e5e7eb'];
-export function CashFlowChart({ data, action }: { data: CashPoint[]; action?: React.ReactNode }) {
+export function CashFlowChart({
+  data,
+  action,
+  format = money,
+  description = 'Income vs Expenses',
+}: {
+  data: CashPoint[];
+  action?: React.ReactNode;
+  format?: (value: number) => string;
+  description?: string;
+}) {
   const id = useId().replace(/:/g, '');
   return (
-    <Panel title="Cash Flow" description="Income vs Expenses" action={action}>
+    <Panel title="Cash Flow" description={description} action={action}>
       <div className={s.chart}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} accessibilityLayer>
@@ -38,12 +48,13 @@ export function CashFlowChart({ data, action }: { data: CashPoint[]; action?: Re
               tick={{ fill: 'var(--muted)', fontSize: 11 }}
             />
             <YAxis
-              width={50}
+              width={60}
               axisLine={false}
               tickLine={false}
               tick={{ fill: 'var(--muted)', fontSize: 11 }}
             />
             <Tooltip
+              formatter={value => format(Number(value))}
               contentStyle={{
                 background: 'var(--surface)',
                 color: 'var(--ink)',
@@ -78,12 +89,15 @@ export function DistributionChart({
   title = 'Top Expenses',
   data,
   action,
+  format = money,
 }: {
   title?: string;
   data: Segment[];
   action?: React.ReactNode;
+  format?: (value: number) => string;
 }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
+  const fill = (d: Segment, i: number) => d.color ?? colors[i % colors.length];
   return (
     <Panel title={title} action={action}>
       {total <= 0 ? (
@@ -93,7 +107,7 @@ export function DistributionChart({
           <div
             className={s.chart}
             role="img"
-            aria-label={data.map(d => `${d.name}: ${money(d.value)}`).join(', ')}
+            aria-label={data.map(d => `${d.name}: ${format(d.value)}`).join(', ')}
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -108,10 +122,11 @@ export function DistributionChart({
                   stroke="none"
                 >
                   {data.map((d, i) => (
-                    <Cell key={d.name} fill={colors[i % colors.length]} />
+                    <Cell key={d.name} fill={fill(d, i)} />
                   ))}
                 </Pie>
                 <Tooltip
+                  formatter={value => format(Number(value))}
                   contentStyle={{
                     background: 'var(--surface)',
                     borderRadius: 10,
@@ -124,9 +139,9 @@ export function DistributionChart({
           <div className={s.legend}>
             {data.map((d, i) => (
               <div key={d.name} className={s.legendRow}>
-                <span className={s.swatch} style={{ background: colors[i % colors.length] }} />
+                <span className={s.swatch} style={{ background: fill(d, i) }} />
                 {d.name}
-                <strong>{money(d.value)}</strong>
+                <strong>{format(d.value)}</strong>
               </div>
             ))}
           </div>

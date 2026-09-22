@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { Bell, Menu, Search } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { MAIN_ROUTE_ITEMS } from '@/app/(main)/routes';
-import { useQuery } from '@tanstack/react-query';
-import { AccountResponseType } from '@/app/(main)/_types/accounts';
+import { useAccounts } from '../finance/use-finance-data';
 import Logo from '../logo';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../primitives/dialog';
@@ -16,14 +15,7 @@ import { ThemeToggle } from './theme-toggle';
 import s from './shell.module.scss';
 export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
-  const { data: accounts = [] } = useQuery<AccountResponseType[]>({
-    queryKey: ['accounts'],
-    queryFn: async () => {
-      const r = await fetch('/api/accounts');
-      if (!r.ok) throw new Error('Could not load accounts');
-      return r.json();
-    },
-  });
+  const { data: accounts = [] } = useAccounts();
   return (
     <nav aria-label="Main navigation">
       <div className={s.links}>

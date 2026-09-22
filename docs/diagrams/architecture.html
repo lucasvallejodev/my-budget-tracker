@@ -22,7 +22,7 @@
 
     <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="app-arch-title app-arch-desc">
       <title id="app-arch-title">Budget tracker · application architecture</title>
-      <desc id="app-arch-desc">Architecture diagram showing the Next.js client calling server actions and route handlers, which delegate to a ledger service, a catalog service and a reports service backed by PostgreSQL through Drizzle, with Clerk for authentication and an external exchange-rate provider.</desc>
+      <desc id="app-arch-desc">Architecture diagram showing the Next.js client calling server actions and route handlers, which delegate to a ledger service, a catalog service and a reports service backed by PostgreSQL through Drizzle, with Clerk for authentication and a pluggable exchange-rate provider.</desc>
       <defs>
         <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
         <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
@@ -63,8 +63,8 @@
       <rect x="664" y="318" width="60" height="12" rx="2" fill="#f5f5f5"/>
       <text x="694" y="327" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GROUP BY</text>
 
-      <rect x="664" y="358" width="68" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="698" y="367" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DAILY RATES</text>
+      <rect x="676" y="358" width="44" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="698" y="367" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RATES</text>
 
       <rect x="328" y="170" width="32" height="12" rx="2" fill="#f5f5f5"/>
       <text x="344" y="179" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AUTH</text>
@@ -130,8 +130,8 @@
       <rect x="696" y="408" width="144" height="56" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
       <rect x="704" y="416" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
       <text x="718" y="425" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
-      <text x="768" y="440" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">FX rates</text>
-      <text x="768" y="454" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">frankfurter.app · ECB</text>
+      <text x="768" y="440" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Rate provider</text>
+      <text x="768" y="454" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">manual today · plugin later</text>
 
       <!-- Legend strip -->
       <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
