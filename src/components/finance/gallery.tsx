@@ -11,7 +11,6 @@ import {
 import { CashFlowChart, DistributionChart, TargetCard } from './charts';
 import { PaymentCards } from './payment-cards';
 import { TransactionExplorer } from './transaction-explorer';
-import { BudgetOverview } from './budgets';
 import { SettingsView } from './settings';
 import { sampleCards, sampleCashFlow, sampleExpenses, sampleTransactions } from './sample-data';
 import { Button } from '../primitives/button';
@@ -132,7 +131,12 @@ export function ComponentGallery() {
           </div>
         </TabPanel>
         <TabPanel value="Budgets">
-          <BudgetOverview demo />
+          <Panel title="Category budget (sample)">
+            <BudgetProgress spent={2224} limit={5000} label="Food & Dining budget" />
+            <p className={s.notice}>
+              Sample values. Real budgets live on the Budgets page and are compared with the ledger.
+            </p>
+          </Panel>
         </TabPanel>
         <TabPanel value="Settings">
           <SettingsView demo />

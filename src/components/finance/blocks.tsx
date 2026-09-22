@@ -128,17 +128,19 @@ export function BudgetProgress({
   spent,
   limit,
   label = 'Budget progress',
+  format = money,
 }: {
   spent: number;
   limit: number;
   label?: string;
+  format?: (value: number) => string;
 }) {
   const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0;
   return (
     <div>
       <div className={s.budgetMeta}>
         <span>{percent}% used</span>
-        <span>{money(Math.max(0, limit - spent))} remaining</span>
+        <span>{format(Math.max(0, limit - spent))} remaining</span>
       </div>
       <progress
         className={s.progress}

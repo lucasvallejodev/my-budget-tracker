@@ -1,201 +1,235 @@
 'use client';
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Copy, Plus } from 'lucide-react';
 import {
   PageHeading,
   MetricCard,
   Panel,
-  CategoryBudget,
+  BudgetProgress,
   BudgetInsights,
   EmptyState,
-  money,
+  StatusBadge,
 } from './blocks';
 import { DistributionChart } from './charts';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
 import { Input } from '../primitives/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../primitives/select';
+import CategoryPicker from '../category-picker';
+import { Icon } from '../icon';
+import { MonthPicker } from './overview';
+import {
+  BudgetRow,
+  currentMonth,
+  FINANCE_KEYS,
+  monthLabel,
+  useAccounts,
+  useBudgets,
+  useSettings,
+} from './use-finance-data';
+import { copyBudgetsAction, deleteBudgetAction, upsertBudgetAction } from '@/app/(main)/actions';
+import { formatMoney, minorToDecimalString } from '@/lib/money';
 import s from './finance.module.scss';
-type Budget = { id: string; name: string; limit: number; spent: number };
-export const sampleBudgets: Budget[] = [
-  { id: 'food', name: 'Food & Dining', limit: 5000, spent: 2224 },
-  { id: 'transport', name: 'Transport', limit: 1000, spent: 820 },
-  { id: 'rent', name: 'House Rent', limit: 1500, spent: 2300 },
-];
-export function BudgetOverview({ demo = false }: { demo?: boolean }) {
-  const [budgets, setBudgets] = useState<Budget[]>(demo ? sampleBudgets : []);
-  const [editing, setEditing] = useState<Budget | null>(null);
-  const [deleting, setDeleting] = useState<Budget | null>(null);
-  const limit = budgets.reduce((n, b) => n + b.limit, 0);
-  const spent = budgets.reduce((n, b) => n + b.spent, 0);
+import f from '../forms.module.scss';
+
+export function BudgetOverview() {
+  const queryClient = useQueryClient();
+  const [month, setMonth] = useState(currentMonth());
+  const budgets = useBudgets(month);
+  const accounts = useAccounts();
+  const settings = useSettings();
+  const [editing, setEditing] = useState<Partial<BudgetRow> | null>(null);
+  const [deleting, setDeleting] = useState<BudgetRow | null>(null);
+  const refresh = () =>
+    Promise.all(FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+  const currencies = useMemo(
+    () => [
+      ...new Set([
+        ...(accounts.data ?? []).map(a => a.currency),
+        settings.data?.primaryCurrency ?? 'EUR',
+      ]),
+    ],
+    [accounts.data, settings.data]
+  );
+  const remove = useMutation({
+    mutationFn: deleteBudgetAction,
+    onSuccess: async () => {
+      toast.success('Budget removed');
+      setDeleting(null);
+      await refresh();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const copy = useMutation({
+    mutationFn: () => copyBudgetsAction(month),
+    onSuccess: async ({ copied }) => {
+      toast.success(`Copied ${copied} budget${copied === 1 ? '' : 's'} from last month`);
+      await refresh();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const rows = budgets.data ?? [];
+  const byCurrency = currencies
+    .map(currency => ({ currency, rows: rows.filter(r => r.currency === currency) }))
+    .filter(b => b.rows.length);
   return (
     <div className={s.page}>
       <PageHeading
         title="Budgets"
-        description="Plan your spending and keep your goals in sight."
+        description="Monthly limits per category, compared with what the ledger says you spent. Budgets are per currency, like everything else."
         actions={
-          <Button onClick={() => setEditing({ id: '', name: '', limit: 0, spent: 0 })}>
-            <Plus />
-            Add Budget
-          </Button>
+          <>
+            <MonthPicker month={month} onChange={setMonth} />
+            <Button variant="outline" onClick={() => copy.mutate()} disabled={copy.isPending}>
+              <Copy size={16} /> Copy last month
+            </Button>
+            <Button onClick={() => setEditing({ currency: currencies[0] })}>
+              <Plus />
+              Add budget
+            </Button>
+          </>
         }
       />
-      <p className={s.notice}>
-        {demo
-          ? 'Component preview — sample budgets.'
-          : 'Budget planner preview. Changes last for this visit only; budget storage is not connected yet.'}
-      </p>
-      <div className={s.grid}>
-        <MetricCard label="Total Monthly Budget" value={money(limit)} />
-        <MetricCard label="Spent So Far" value={money(spent)} />
-        <MetricCard label="Remaining" value={money(limit - spent)} />
-        <MetricCard
-          label="Budget Status"
-          value={limit ? `${Math.round((spent / limit) * 100)}% used` : '—'}
+      {budgets.isPending ? (
+        <p role="status">Loading budgets…</p>
+      ) : !rows.length ? (
+        <EmptyState
+          title={`No budgets for ${monthLabel(month)}`}
+          description="Add a category limit, or copy last month's budgets."
         />
-      </div>
-      <div className={s.columns}>
-        <Panel title="Category Budgets">
-          <div className={s.stack}>
-            {budgets.length ? (
-              budgets.map(b => (
-                <CategoryBudget
-                  key={b.id}
-                  {...b}
-                  actions={
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => setEditing({ ...b })}>
-                        Edit
-                      </Button>
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/transactions?q=${encodeURIComponent(b.name)}`}>
-                          View Transactions
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setBudgets(all =>
-                            all.map(row => (row.id === b.id ? { ...row, spent: 0 } : row))
-                          )
-                        }
-                      >
-                        Reset
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => setDeleting(b)}>
-                        Delete
-                      </Button>
-                    </>
-                  }
+      ) : (
+        byCurrency.map(({ currency, rows: list }) => {
+          const limit = list.reduce((n, b) => n + b.amountMinor, 0);
+          const spent = list.reduce((n, b) => n + b.spentMinor, 0);
+          const format = (value: number) => formatMoney(value, currency);
+          return (
+            <div className={s.stack} key={currency}>
+              <div className={s.grid}>
+                <MetricCard label={`Total budget · ${currency}`} value={format(limit)} />
+                <MetricCard label="Spent so far" value={format(spent)} />
+                <MetricCard
+                  label="Remaining"
+                  value={format(limit - spent)}
+                  negative={spent > limit}
                 />
-              ))
-            ) : (
-              <EmptyState
-                title="Plan your first budget"
-                description="Add a category and a monthly spending limit."
-              />
-            )}
-          </div>
-        </Panel>
-        <div className={s.stack}>
-          <DistributionChart
-            title="Monthly Budget Progress"
-            data={[
-              { name: 'Spent', value: spent },
-              { name: 'Available', value: Math.max(0, limit - spent) },
-            ]}
-          />
-          <BudgetInsights
-            insights={
-              budgets.length
-                ? [
-                    `${budgets.filter(b => b.spent <= b.limit).length} of ${budgets.length} categories are within limits`,
-                    ...budgets
-                      .filter(b => b.spent > b.limit)
-                      .map(b => `${b.name} exceeded its budget by ${money(b.spent - b.limit)}`),
-                  ]
-                : ['Add a budget to start exploring your plan.']
-            }
-          />
-        </div>
-      </div>
-      <Dialog
-        open={!!editing}
-        onOpenChange={open => {
-          if (!open) setEditing(null);
-        }}
-      >
+                <MetricCard
+                  label="Budget status"
+                  value={limit ? `${Math.round((spent / limit) * 100)}% used` : '—'}
+                />
+              </div>
+              <div className={s.columns}>
+                <Panel title={`Category budgets · ${currency}`}>
+                  <div className={s.stack}>
+                    {list.map(b => {
+                      const ratio = b.amountMinor > 0 ? b.spentMinor / b.amountMinor : 0;
+                      return (
+                        <article key={b.id} className={s.budget}>
+                          <div className={s.balanceTitle}>
+                            <div className={s.actions}>
+                              <span
+                                className={s.metricIcon}
+                                style={{ background: b.color, color: 'white' }}
+                              >
+                                <Icon icon={b.icon} />
+                              </span>
+                              <div>
+                                <h3>{b.categoryName}</h3>
+                                <p className={s.muted}>
+                                  {b.groupName} · Budget {format(b.amountMinor)} · Spent{' '}
+                                  {format(b.spentMinor)}
+                                </p>
+                              </div>
+                            </div>
+                            <StatusBadge
+                              tone={ratio >= 1 ? 'danger' : ratio >= 0.8 ? 'warning' : 'success'}
+                            >
+                              {ratio >= 1 ? 'Exceeded' : ratio >= 0.8 ? 'Near limit' : 'On track'}
+                            </StatusBadge>
+                          </div>
+                          <BudgetProgress
+                            spent={b.spentMinor}
+                            limit={b.amountMinor}
+                            label={`${b.categoryName} budget`}
+                            format={format}
+                          />
+                          <div className={s.budgetActions}>
+                            <Button variant="outline" size="sm" onClick={() => setEditing(b)}>
+                              Edit
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                              <Link href={`/transactions?q=${encodeURIComponent(b.categoryName)}`}>
+                                View transactions
+                              </Link>
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => setDeleting(b)}>
+                              Delete
+                            </Button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </Panel>
+                <div className={s.stack}>
+                  <DistributionChart
+                    title={`Budget progress · ${currency}`}
+                    format={format}
+                    data={[
+                      { name: 'Spent', value: Math.min(spent, limit), color: '#8b5cf6' },
+                      { name: 'Available', value: Math.max(0, limit - spent), color: '#ddd6fe' },
+                    ]}
+                  />
+                  <BudgetInsights
+                    insights={[
+                      `${list.filter(b => b.spentMinor <= b.amountMinor).length} of ${list.length} categories are within limits`,
+                      ...list
+                        .filter(b => b.spentMinor > b.amountMinor)
+                        .map(
+                          b =>
+                            `${b.categoryName} exceeded its budget by ${format(b.spentMinor - b.amountMinor)}`
+                        ),
+                    ]}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })
+      )}
+      {editing && (
+        <BudgetDialog
+          month={month}
+          budget={editing}
+          currencies={currencies}
+          onClose={() => setEditing(null)}
+          onSaved={async () => {
+            await refresh();
+            setEditing(null);
+          }}
+        />
+      )}
+      <Dialog open={!!deleting} onOpenChange={open => !open && setDeleting(null)}>
         <DialogContent>
-          <DialogTitle>{editing?.id ? 'Edit budget' : 'Add budget'}</DialogTitle>
-          {editing && (
-            <form
-              className={s.form}
-              onSubmit={e => {
-                e.preventDefault();
-                if (!editing.name.trim() || editing.limit <= 0) return;
-                const budget = { ...editing, id: editing.id || crypto.randomUUID() };
-                setBudgets(all =>
-                  all.some(b => b.id === budget.id)
-                    ? all.map(b => (b.id === budget.id ? budget : b))
-                    : [...all, budget]
-                );
-                setEditing(null);
-              }}
-            >
-              <label className={s.field}>
-                Category name
-                <Input
-                  required
-                  value={editing.name}
-                  onChange={e => setEditing({ ...editing, name: e.target.value })}
-                />
-              </label>
-              <label className={s.field}>
-                Monthly limit
-                <Input
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={editing.limit || ''}
-                  onChange={e => setEditing({ ...editing, limit: Number(e.target.value) })}
-                />
-              </label>
-              <label className={s.field}>
-                Spent (planning estimate)
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={editing.spent}
-                  onChange={e => setEditing({ ...editing, spent: Number(e.target.value) })}
-                />
-              </label>
-              <Button type="submit">Save budget</Button>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={!!deleting}
-        onOpenChange={open => {
-          if (!open) setDeleting(null);
-        }}
-      >
-        <DialogContent>
-          <DialogTitle>Delete {deleting?.name}?</DialogTitle>
-          <p>This removes this budget from the current planning session.</p>
+          <DialogTitle>Delete the {deleting?.categoryName} budget?</DialogTitle>
+          <p>Only the limit for {monthLabel(month)} is removed; transactions are untouched.</p>
           <div className={s.actions}>
             <Button variant="outline" onClick={() => setDeleting(null)}>
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
-                setBudgets(all => all.filter(b => b.id !== deleting?.id));
-                setDeleting(null);
-              }}
+              disabled={remove.isPending}
+              onClick={() => deleting && remove.mutate(deleting.id)}
             >
               Delete budget
             </Button>
@@ -203,5 +237,89 @@ export function BudgetOverview({ demo = false }: { demo?: boolean }) {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function BudgetDialog({
+  month,
+  budget,
+  currencies,
+  onClose,
+  onSaved,
+}: {
+  month: string;
+  budget: Partial<BudgetRow>;
+  currencies: string[];
+  onClose: () => void;
+  onSaved: () => Promise<void>;
+}) {
+  const [categoryId, setCategoryId] = useState<string | undefined>(budget.categoryId);
+  const [currency, setCurrency] = useState(budget.currency ?? currencies[0] ?? 'EUR');
+  const [amount, setAmount] = useState(
+    budget.amountMinor ? minorToDecimalString(budget.amountMinor, budget.currency ?? 'EUR') : ''
+  );
+  const save = useMutation({
+    mutationFn: () => upsertBudgetAction({ categoryId: categoryId!, month, currency, amount }),
+    onSuccess: async () => {
+      toast.success('Budget saved');
+      await onSaved();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  return (
+    <Dialog open onOpenChange={open => !open && onClose()}>
+      <DialogContent>
+        <DialogTitle>
+          {budget.id ? 'Edit budget' : 'Add budget'} · {monthLabel(month)}
+        </DialogTitle>
+        <form
+          className={f.form}
+          onSubmit={event => {
+            event.preventDefault();
+            save.mutate();
+          }}
+        >
+          <div className={s.field}>
+            Category
+            <CategoryPicker
+              value={categoryId}
+              kind="expense"
+              onChange={setCategoryId}
+              disabled={!!budget.id}
+            />
+          </div>
+          <label className={s.field}>
+            Currency
+            <Select value={currency} disabled={!!budget.id} onValueChange={setCurrency}>
+              <SelectTrigger className={f.full}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {currencies.map(code => (
+                    <SelectItem key={code} value={code}>
+                      {code}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </label>
+          <label className={s.field}>
+            Monthly limit
+            <Input
+              inputMode="decimal"
+              placeholder="0.00"
+              value={amount}
+              onChange={event => setAmount(event.target.value)}
+              required
+            />
+          </label>
+          <Button type="submit" disabled={save.isPending || !categoryId || !amount.trim()}>
+            Save budget
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

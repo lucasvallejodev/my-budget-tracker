@@ -11,6 +11,7 @@ import { ensureUserBootstrap } from './categories/seed';
 import { createFxService, ManualRateProvider } from './fx/service';
 import { createImportService } from './import/service';
 import { createRuleService } from './rules/service';
+import { createBudgetService } from './budgets/service';
 
 export function createServices(db: Db) {
   return {
@@ -24,6 +25,7 @@ export function createServices(db: Db) {
     fx: createFxService(db, [new ManualRateProvider(db)]),
     rules: createRuleService(db),
     imports: createImportService(db),
+    budgets: createBudgetService(db),
     bootstrap: (userId: string, primaryCurrency?: string) =>
       ensureUserBootstrap(db, userId, primaryCurrency),
     async listCurrencies() {

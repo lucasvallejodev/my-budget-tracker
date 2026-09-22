@@ -97,6 +97,25 @@ export type RuleRow = {
   categoryName: string | null;
   priority: number;
 };
+export type BudgetRow = {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  icon: string;
+  groupId: string;
+  groupName: string;
+  color: string;
+  month: string;
+  currency: string;
+  amountMinor: number;
+  spentMinor: number;
+};
+export function useBudgets(month: string) {
+  return useQuery({
+    queryKey: ['budgets', month],
+    queryFn: () => fetchFinance<BudgetRow[]>(`/api/budgets?month=${month}`),
+  });
+}
 export function useRules() {
   return useQuery({ queryKey: ['rules'], queryFn: () => fetchFinance<RuleRow[]>('/api/rules') });
 }

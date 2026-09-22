@@ -661,4 +661,102 @@ describe('accounts and ledger', () => {
       services.imports.preview(owner, { accountId: checking.id, csv, mapping: { date: 'Nope' } })
     ).rejects.toThrow(/date column/);
   });
+
+  it('keeps monthly budgets per category and currency and compares them with the ledger', async () => {
+    const eur = await services.accounts.create(owner, {
+      name: 'EUR',
+      type: 'checking',
+      currency: 'EUR',
+    });
+    const usd = await services.accounts.create(owner, {
+      name: 'USD',
+      type: 'checking',
+      currency: 'USD',
+    });
+    const groceries = await categoryByName(owner, 'Groceries');
+    const coffee = await categoryByName(owner, 'Coffee');
+    await services.budgets.upsert(owner, {
+      categoryId: groceries.id,
+      month: '2026-08',
+      currency: 'EUR',
+      amountMinor: 30000,
+    });
+    await services.budgets.upsert(owner, {
+      categoryId: groceries.id,
+      month: '2026-09',
+      currency: 'EUR',
+      amountMinor: 25000,
+    });
+    await services.budgets.upsert(owner, {
+      categoryId: groceries.id,
+      month: '2026-09',
+      currency: 'EUR',
+      amountMinor: 26000,
+    });
+    await services.budgets.upsert(owner, {
+      categoryId: groceries.id,
+      month: '2026-09',
+      currency: 'USD',
+      amountMinor: 10000,
+    });
+    await services.ledger.createStandard(owner, {
+      accountId: eur.id,
+      amountMinor: -6000,
+      date: '2026-09-03',
+      categoryId: groceries.id,
+    });
+    await services.ledger.createStandard(owner, {
+      accountId: eur.id,
+      amountMinor: 1000,
+      date: '2026-09-04',
+      categoryId: groceries.id,
+    });
+    await services.ledger.createStandard(owner, {
+      accountId: usd.id,
+      amountMinor: -12000,
+      date: '2026-09-05',
+      categoryId: groceries.id,
+    });
+    await services.ledger.createStandard(owner, {
+      accountId: eur.id,
+      amountMinor: -900,
+      date: '2026-09-05',
+      categoryId: coffee.id,
+    });
+    const september = await services.budgets.list(owner, '2026-09');
+    expect(september).toHaveLength(2);
+    expect(september.find(b => b.currency === 'EUR')).toMatchObject({
+      amountMinor: 26000,
+      spentMinor: 5000,
+      categoryName: 'Groceries',
+    });
+    expect(september.find(b => b.currency === 'USD')).toMatchObject({
+      amountMinor: 10000,
+      spentMinor: 12000,
+    });
+    expect(await services.budgets.list(owner, '2026-10')).toEqual([]);
+    expect(await services.budgets.copyFromPreviousMonth(owner, '2026-10')).toBe(2);
+    expect(await services.budgets.copyFromPreviousMonth(owner, '2026-10')).toBe(0);
+    const october = await services.budgets.list(owner, '2026-10');
+    expect(october.map(b => b.spentMinor)).toEqual([0, 0]);
+    await services.budgets.remove(owner, october[0].id);
+    expect(await services.budgets.list(owner, '2026-10')).toHaveLength(1);
+    await expect(services.budgets.remove(other, october[1].id)).rejects.toThrow('not found');
+    await expect(
+      services.budgets.upsert(owner, {
+        categoryId: groceries.id,
+        month: '2026-09',
+        currency: 'EUR',
+        amountMinor: 0,
+      })
+    ).rejects.toThrow(/positive/);
+    await expect(
+      services.budgets.upsert(other, {
+        categoryId: groceries.id,
+        month: '2026-09',
+        currency: 'EUR',
+        amountMinor: 100,
+      })
+    ).rejects.toThrow('not found');
+  });
 });

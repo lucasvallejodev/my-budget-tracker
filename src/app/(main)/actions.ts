@@ -445,3 +445,46 @@ export async function linkTransferAction(outId: string, inId: string) {
     return result;
   });
 }
+
+// Budgets --------------------------------------------------------------------------------
+
+export async function upsertBudgetAction(data: {
+  categoryId: string;
+  month: string;
+  currency: string;
+  amount: string;
+}) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    const parsed = parse(
+      z.object({
+        categoryId: z.string().min(1, 'Choose a category'),
+        month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be YYYY-MM'),
+        currency: z.string().length(3),
+        amount: z.string().trim().min(1, 'Amount is required'),
+      }),
+      data
+    );
+    const amountMinor = Math.abs(parseAmountInput(parsed.amount, parsed.currency));
+    const row = await services.budgets.upsert(userId, { ...parsed, amountMinor });
+    refresh();
+    return row;
+  });
+}
+
+export async function deleteBudgetAction(id: string) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    await services.budgets.remove(userId, id);
+    refresh();
+  });
+}
+
+export async function copyBudgetsAction(month: string) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    const copied = await services.budgets.copyFromPreviousMonth(userId, month);
+    refresh();
+    return { copied };
+  });
+}
