@@ -111,6 +111,40 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
           <Link href="/review">Review them</Link>
         </p>
       )}
+      {data.converted && (
+        <Panel
+          title={`≈ Converted totals · ${data.converted.currency}`}
+          description={`Approximate, using your manual rates as of ${data.converted.asOf}${
+            data.converted.rates.length
+              ? ` (${data.converted.rates.map(r => `1 ${r.currency} = ${r.rate} ${data.converted!.currency} from ${r.date}`).join(', ')})`
+              : ''
+          }`}
+        >
+          <div className={s.grid}>
+            <MetricCard
+              label="Net worth"
+              value={formatMoney(data.converted.netWorthMinor, data.converted.currency)}
+              detail="All currencies converted"
+            />
+            <MetricCard
+              label="Income"
+              value={formatMoney(data.converted.incomeMinor, data.converted.currency)}
+              detail={monthLabel(month)}
+            />
+            <MetricCard
+              label="Spending"
+              value={formatMoney(data.converted.spendingMinor, data.converted.currency)}
+              detail={monthLabel(month)}
+            />
+          </div>
+          {data.converted.missing.length > 0 && (
+            <p className={s.notice} role="status">
+              No rate to {data.converted.currency} for {data.converted.missing.join(', ')}; those
+              amounts are left out. <Link href="/settings/currencies">Add rates</Link>
+            </p>
+          )}
+        </Panel>
+      )}
       {!currencies.length && (
         <EmptyState
           title="No activity yet"

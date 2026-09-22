@@ -331,3 +331,39 @@ export async function updateSettingsAction(data: {
     return settings;
   });
 }
+
+// Exchange rates ---------------------------------------------------------------------------
+
+export async function upsertExchangeRateAction(data: {
+  base: string;
+  quote: string;
+  date: string;
+  rate: string;
+}) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    const parsed = parse(
+      z.object({
+        base: z.string().length(3),
+        quote: z.string().length(3),
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a date'),
+        rate: z.string().trim().min(1, 'Rate is required'),
+      }),
+      data
+    );
+    const rate = Number(parsed.rate.replace(',', '.'));
+    if (!Number.isFinite(rate) || rate <= 0)
+      throw new ServiceError('The rate must be a positive number');
+    const row = await services.fx.upsert(userId, { ...parsed, rate });
+    refresh();
+    return row;
+  });
+}
+
+export async function deleteExchangeRateAction(key: { base: string; quote: string; date: string }) {
+  return run(async () => {
+    const { userId, services } = await requireUser();
+    await services.fx.remove(userId, key);
+    refresh();
+  });
+}

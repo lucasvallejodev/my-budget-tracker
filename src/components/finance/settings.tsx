@@ -300,6 +300,7 @@ export function SupportLinks() {
 const sections = [
   'Profile',
   'Categories',
+  'Currencies',
   'Cards & Accounts',
   'Security',
   'Notifications',
@@ -346,6 +347,17 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
               </p>
               <Button asChild variant="outline">
                 <Link href="/settings/categories">Open the category manager</Link>
+              </Button>
+            </Panel>
+          </Tabs.Content>
+          <Tabs.Content value="Currencies">
+            <Panel title="Currencies">
+              <p className={s.muted}>
+                Set your primary currency, toggle converted totals and maintain exchange rates by
+                hand.
+              </p>
+              <Button asChild variant="outline">
+                <Link href="/settings/currencies">Open currency settings</Link>
               </Button>
             </Panel>
           </Tabs.Content>

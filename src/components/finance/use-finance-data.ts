@@ -5,6 +5,7 @@ import type { CategoryTree } from '@/server/categories/service';
 import type { TransactionRow } from '@/server/ledger/service';
 import type {
   CashPoint,
+  ConvertedTotals,
   CurrencyTotals,
   GroupSlice,
   NetWorthBucket,
@@ -21,6 +22,14 @@ export type Summary = {
   cashFlow: CashPoint[];
   needsReviewCount: number;
   accounts: AccountSummary[];
+  converted: ConvertedTotals | null;
+};
+export type ExchangeRateRow = {
+  base: string;
+  quote: string;
+  date: string;
+  rate: number;
+  source: string;
 };
 
 export async function fetchFinance<T>(url: string): Promise<T> {
@@ -41,6 +50,7 @@ export const queryKeys = {
   categories: ['categories'] as const,
   currencies: ['currencies'] as const,
   settings: ['settings'] as const,
+  exchangeRates: ['exchange-rates'] as const,
   transactions: (params: Record<string, string | undefined> = {}) =>
     ['transactions', params] as const,
   summary: (month?: string) => ['summary', month ?? 'current'] as const,
@@ -77,6 +87,12 @@ export function useSettings() {
   return useQuery({
     queryKey: queryKeys.settings,
     queryFn: () => fetchFinance<UserSettings>('/api/settings'),
+  });
+}
+export function useExchangeRates() {
+  return useQuery({
+    queryKey: queryKeys.exchangeRates,
+    queryFn: () => fetchFinance<ExchangeRateRow[]>('/api/exchange-rates'),
   });
 }
 export function useTransactions(params: Record<string, string | undefined> = {}) {

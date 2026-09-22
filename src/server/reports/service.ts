@@ -1,6 +1,8 @@
 import { sql, SQL } from 'drizzle-orm';
+import { convertMinor } from '@/lib/money';
 import { Db } from '../db';
 import { monthRange } from '../ledger/service';
+import { createFxService } from '../fx/service';
 
 export type CurrencyTotals = { currency: string; incomeMinor: number; spendingMinor: number };
 export type GroupSlice = {
@@ -15,6 +17,16 @@ export type NetWorthBucket = {
   assetsMinor: number;
   liabilitiesMinor: number;
   netMinor: number;
+};
+export type ConvertedTotals = {
+  currency: string;
+  asOf: string;
+  netWorthMinor: number;
+  incomeMinor: number;
+  spendingMinor: number;
+  /** Currencies that could not be converted because no rate exists. */
+  missing: string[];
+  rates: { currency: string; rate: number; date: string; source: string }[];
 };
 export type CashPoint = {
   month: string;
@@ -32,7 +44,51 @@ async function query<T>(db: Db, statement: SQL): Promise<T[]> {
 }
 
 export function createReportService(db: Db) {
+  const fx = createFxService(db);
   return {
+    /**
+     * Optional blended view in the primary currency. Buckets without a rate are listed in
+     * `missing` and left out, never silently converted at 1:1.
+     */
+    async convertedTotals(
+      userId: string,
+      primary: string,
+      data: { netWorth: NetWorthBucket[]; totals: CurrencyTotals[] },
+      asOf = new Date().toISOString().slice(0, 10)
+    ): Promise<ConvertedTotals> {
+      const currencies = [
+        ...new Set([...data.netWorth.map(b => b.currency), ...data.totals.map(t => t.currency)]),
+      ];
+      const rates = new Map<string, Awaited<ReturnType<typeof fx.getRate>>>();
+      for (const currency of currencies)
+        if (currency !== primary)
+          rates.set(currency, await fx.getRate(userId, currency, primary, asOf));
+      const missing = currencies.filter(c => c !== primary && !rates.get(c));
+      const convert = (amountMinor: number, currency: string) => {
+        if (currency === primary) return amountMinor;
+        const rate = rates.get(currency);
+        return rate ? convertMinor(amountMinor, currency, primary, rate.rate) : 0;
+      };
+      return {
+        currency: primary,
+        asOf,
+        netWorthMinor: data.netWorth.reduce((sum, b) => sum + convert(b.netMinor, b.currency), 0),
+        incomeMinor: data.totals.reduce((sum, t) => sum + convert(t.incomeMinor, t.currency), 0),
+        spendingMinor: data.totals.reduce(
+          (sum, t) => sum + convert(t.spendingMinor, t.currency),
+          0
+        ),
+        missing,
+        rates: [...rates.entries()]
+          .filter((entry): entry is [string, NonNullable<(typeof entry)[1]>] => !!entry[1])
+          .map(([currency, rate]) => ({
+            currency,
+            rate: rate.rate,
+            date: rate.date,
+            source: rate.source,
+          })),
+      };
+    },
     async monthlyTotals(userId: string, month: string): Promise<CurrencyTotals[]> {
       const { start, end } = monthRange(month);
       const rows = await query<{

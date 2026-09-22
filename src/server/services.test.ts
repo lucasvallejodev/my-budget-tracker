@@ -473,4 +473,81 @@ describe('accounts and ledger', () => {
       await db.select().from(schema.transactions).where(eq(schema.transactions.userId, owner))
     ).toEqual([]);
   });
+
+  it('stores manual exchange rates and converts totals with the rate in force', async () => {
+    await services.fx.upsert(owner, { base: 'EUR', quote: 'USD', date: '2026-09-01', rate: 1.1 });
+    await services.fx.upsert(owner, { base: 'EUR', quote: 'USD', date: '2026-09-15', rate: 1.2 });
+    await services.fx.upsert(owner, { base: 'EUR', quote: 'USD', date: '2026-09-15', rate: 1.25 });
+    expect(await services.fx.list(owner)).toHaveLength(2);
+    expect((await services.fx.getRate(owner, 'EUR', 'USD', '2026-09-10'))?.rate).toBe(1.1);
+    expect((await services.fx.getRate(owner, 'EUR', 'USD', '2026-09-20'))?.rate).toBe(1.25);
+    expect(await services.fx.getRate(owner, 'EUR', 'USD', '2026-08-01')).toBeNull();
+    const inverse = await services.fx.getRate(owner, 'USD', 'EUR', '2026-09-20');
+    expect(inverse?.rate).toBeCloseTo(0.8);
+    expect(inverse?.source).toContain('inverse');
+    expect(await services.fx.getRate(other, 'EUR', 'USD', '2026-09-20')).toBeNull();
+    expect(await services.fx.convert(owner, 100000, 'USD', 'EUR', '2026-09-20')).toMatchObject({
+      amountMinor: 80000,
+      currency: 'EUR',
+    });
+    expect(await services.fx.convert(owner, 500, 'GBP', 'EUR', '2026-09-20')).toEqual({
+      amountMinor: 500,
+      currency: 'GBP',
+      rate: null,
+    });
+    await expect(
+      services.fx.upsert(owner, { base: 'EUR', quote: 'EUR', date: '2026-09-01', rate: 1 })
+    ).rejects.toThrow(/different/);
+
+    const eur = await services.accounts.create(owner, {
+      name: 'EUR',
+      type: 'checking',
+      currency: 'EUR',
+      openingBalanceMinor: 100000,
+    });
+    const usd = await services.accounts.create(owner, {
+      name: 'USD',
+      type: 'checking',
+      currency: 'USD',
+      openingBalanceMinor: 125000,
+    });
+    const gbp = await services.accounts.create(owner, {
+      name: 'GBP',
+      type: 'checking',
+      currency: 'GBP',
+      openingBalanceMinor: 1,
+    });
+    await services.ledger.createStandard(owner, {
+      accountId: eur.id,
+      amountMinor: -1000,
+      date: '2026-09-20',
+    });
+    await services.ledger.createStandard(owner, {
+      accountId: usd.id,
+      amountMinor: -2500,
+      date: '2026-09-20',
+    });
+    await services.ledger.createStandard(owner, {
+      accountId: gbp.id,
+      amountMinor: -100,
+      date: '2026-09-20',
+    });
+    const converted = await services.reports.convertedTotals(
+      owner,
+      'EUR',
+      {
+        netWorth: await services.reports.netWorth(owner),
+        totals: await services.reports.monthlyTotals(owner, '2026-09'),
+      },
+      '2026-09-20'
+    );
+    expect(converted.missing).toEqual(['GBP']);
+    expect(converted.netWorthMinor).toBe(99000 + 98000);
+    expect(converted.spendingMinor).toBe(1000 + 2000);
+    expect(converted.rates).toEqual([
+      { currency: 'USD', rate: 0.8, date: '2026-09-15', source: 'manual (inverse)' },
+    ]);
+    await services.fx.remove(owner, { base: 'EUR', quote: 'USD', date: '2026-09-15' });
+    expect((await services.fx.getRate(owner, 'EUR', 'USD', '2026-09-20'))?.rate).toBe(1.1);
+  });
 });
