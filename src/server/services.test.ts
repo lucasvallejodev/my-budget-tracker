@@ -85,6 +85,56 @@ describe('bootstrap and categories', () => {
     ).rejects.toThrow(/System/);
   });
 
+  it('creates, updates, reorders and restores groups and categories', async () => {
+    const group = await services.categories.createGroup(owner, {
+      name: 'Kids',
+      kind: 'expense',
+      color: '#D97706',
+    });
+    expect(group.sortOrder).toBe(DEFAULT_TAXONOMY.length);
+    const category = await services.categories.createCategory(owner, {
+      groupId: group.id,
+      name: 'Toys',
+      icon: 'Gift',
+    });
+    const second = await services.categories.createCategory(owner, {
+      groupId: group.id,
+      name: 'School',
+      icon: 'GraduationCap',
+    });
+    await services.categories.reorderCategories(owner, group.id, [second.id, category.id]);
+    await services.categories.updateGroup(owner, group.id, { name: 'Children', color: '#0891B2' });
+    await services.categories.updateCategory(owner, category.id, {
+      name: 'Toys & games',
+      icon: 'Gamepad2',
+    });
+    const tree = await services.categories.tree(owner);
+    const children = tree.find(g => g.id === group.id)!;
+    expect(children).toMatchObject({ name: 'Children', color: '#0891B2' });
+    expect(children.categories.map(c => c.name)).toEqual(['School', 'Toys & games']);
+    const ids = tree.map(g => g.id);
+    await services.categories.reorderGroups(owner, [
+      group.id,
+      ...ids.filter(id => id !== group.id),
+    ]);
+    expect((await services.categories.tree(owner))[0].id).toBe(group.id);
+    await services.categories.archiveCategory(owner, second.id);
+    expect(
+      (await services.categories.tree(owner)).find(g => g.id === group.id)!.categories
+    ).toHaveLength(1);
+    await services.categories.restoreCategory(owner, second.id);
+    expect(
+      (await services.categories.tree(owner)).find(g => g.id === group.id)!.categories
+    ).toHaveLength(2);
+    const income = tree.find(g => g.isSystem)!;
+    await expect(
+      services.categories.updateGroup(owner, income.id, { kind: 'expense' })
+    ).rejects.toThrow(/income group/);
+    await expect(
+      services.categories.createCategory(other, { groupId: group.id, name: 'x', icon: 'Gift' })
+    ).rejects.toThrow('not found');
+  });
+
   it('scopes categories to their owner', async () => {
     const groceries = await categoryByName(owner, 'Groceries');
     await expect(

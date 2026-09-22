@@ -299,6 +299,7 @@ export function SupportLinks() {
 }
 const sections = [
   'Profile',
+  'Categories',
   'Cards & Accounts',
   'Security',
   'Notifications',
@@ -336,6 +337,17 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
                 Signed in as {user?.fullName || user?.primaryEmailAddress?.emailAddress}
               </p>
             )}
+          </Tabs.Content>
+          <Tabs.Content value="Categories">
+            <Panel title="Categories">
+              <p className={s.muted}>
+                Manage the groups and categories used to classify your spending. Groups own the
+                colour; categories own the icon.
+              </p>
+              <Button asChild variant="outline">
+                <Link href="/settings/categories">Open the category manager</Link>
+              </Button>
+            </Panel>
           </Tabs.Content>
           <Tabs.Content value="Cards & Accounts">
             <Panel title="Cards & Accounts">
