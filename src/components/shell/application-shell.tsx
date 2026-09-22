@@ -6,6 +6,8 @@ import { Bell, Menu, Search } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { MAIN_ROUTE_ITEMS } from '@/app/(main)/routes';
 import { useAccounts } from '../finance/use-finance-data';
+import { accountGroups } from '@/constants/account';
+import { formatMoney } from '@/lib/money';
 import Logo from '../logo';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../primitives/dialog';
@@ -32,24 +34,51 @@ export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         ))}
       </div>
-      {accounts.length > 0 && (
-        <>
-          <h2 className={s.sectionLabel}>Your accounts</h2>
-          <div className={s.links}>
-            {accounts.map(account => (
-              <Link
-                key={account.id}
-                className={s.link}
-                href={`/accounts/${account.id}`}
-                aria-current={path === `/accounts/${account.id}` ? 'page' : undefined}
-                onClick={onNavigate}
-              >
-                {account.name}
-              </Link>
-            ))}
+      {accountGroups.map(group => {
+        const members = accounts.filter(account =>
+          (group.types as string[]).includes(account.type)
+        );
+        if (!members.length) return null;
+        const totals = new Map<string, number>();
+        for (const account of members) {
+          const signed =
+            account.classification === 'liability' ? -account.balanceMinor : account.balanceMinor;
+          totals.set(account.currency, (totals.get(account.currency) ?? 0) + signed);
+        }
+        return (
+          <div key={group.label}>
+            <h2 className={s.sectionLabel}>
+              {group.label}
+              <span className={s.sectionTotal}>
+                {[...totals.entries()]
+                  .map(([currency, total]) => formatMoney(total, currency))
+                  .join(' · ')}
+              </span>
+            </h2>
+            <div className={s.links}>
+              {members.map(account => (
+                <Link
+                  key={account.id}
+                  className={s.link}
+                  href={`/accounts/${account.id}`}
+                  aria-current={path === `/accounts/${account.id}` ? 'page' : undefined}
+                  onClick={onNavigate}
+                >
+                  <span>{account.name}</span>
+                  <span className={s.linkAmount}>
+                    {formatMoney(
+                      account.classification === 'liability'
+                        ? -account.balanceMinor
+                        : account.balanceMinor,
+                      account.currency
+                    )}
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
-        </>
-      )}
+        );
+      })}
     </nav>
   );
 }
