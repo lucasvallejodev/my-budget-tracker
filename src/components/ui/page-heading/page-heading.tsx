@@ -15,11 +15,11 @@ export function PageHeading({
 }) {
   return (
     <header className="page-heading">
-      <div>
+      <div className="page-heading__text">
         <h1>{title}</h1>
         {description && <p className="page-heading__description">{description}</p>}
       </div>
-      {actions && <Cluster>{actions}</Cluster>}
+      {actions && <Cluster className="page-heading__actions">{actions}</Cluster>}
     </header>
   );
 }

@@ -170,6 +170,10 @@ Everything lives in `src/styles/abstracts/` and is loaded with `@use 'abstracts'
 
 Colours still come only from `var(--token)` in `src/styles/tokens.scss`. When the same group of declarations appears in two stylesheets, turn it into a mixin; when the same markup appears in two components, turn it into a component.
 
+### Focus outlines
+
+Focus outlines are drawn with CSS only, no JavaScript. `globals.scss` styles `:focus-visible`, which the browser matches for keyboard navigation but not for most mouse clicks, and removes the outline from `:focus:not(:focus-visible)`. Charts are the exception: Recharts makes the chart and its slices focusable and the browser can show a ring after a click, so outlines inside `.recharts-wrapper` are removed entirely. Component focus styles use `&:focus-visible { @include focus-ring; }`.
+
 ## The `ui` catalogue
 
 | Group       | Components                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |

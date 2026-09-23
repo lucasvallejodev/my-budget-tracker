@@ -2,17 +2,37 @@
 
 @layer ui {
   .page-heading {
-    @include flex-column(space(5));
-
-    align-items: flex-start;
+    @include flex-column(space(4));
 
     @include media-up(tablet-landscape) {
-      @include flex-between(space(5));
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: space(6);
+    }
+
+    &__text {
+      min-width: 0;
     }
 
     &__description {
+      margin-top: space(1);
       color: var(--muted);
-      margin-top: 3px;
+    }
+
+    &__actions {
+      > * {
+        flex: 1 1 auto;
+      }
+
+      @include media-up(tablet-landscape) {
+        flex-shrink: 0;
+        justify-content: flex-end;
+
+        > * {
+          flex: 0 0 auto;
+        }
+      }
     }
   }
 }

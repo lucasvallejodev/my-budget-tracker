@@ -84,6 +84,11 @@
     outline-offset: 3px;
   }
 
+  :focus:not(:focus-visible),
+  .recharts-wrapper :focus {
+    outline: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

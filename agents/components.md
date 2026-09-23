@@ -97,6 +97,7 @@ Start every stylesheet with `@use 'abstracts' as *;` (resolved through `sassOpti
 - Functions: `space($step)` (1 = 4px … 8 = 32px), `radius($size)` (`sm` 8, `md` 10, `lg` 12, `xl` 16, `panel` 18, `pill` 999px, `round` 50%). Unknown keys fail the build.
 - Mixins: `flex-row($gap, $align)`, `flex-column($gap)`, `flex-between($gap, $align)`, `grid-center`, `surface($padding)`, `bordered($radius)`, `accent-highlight`, `muted-text($size)`, `divided($spacing)`, `focus-ring`, `reset-button`, `reset-list`, `truncate`, `pill-control`, `icon-size($size)`, `text-field`, `floating-panel($width)`, `option-item($highlight-selector)`.
 - Colours still come only from `var(--token)` in `src/styles/tokens.scss`. A value repeated in two stylesheets becomes a mixin or function in `abstracts/`; a pattern repeated in two components becomes a component.
+- Focus outlines are CSS only (no JS modality tracking): `globals.scss` rings `:focus-visible`, clears `:focus:not(:focus-visible)` and clears every outline inside `.recharts-wrapper`. Style focus with `&:focus-visible { @include focus-ring; }`, never a bare `outline`.
 
 ## Enforcement
 

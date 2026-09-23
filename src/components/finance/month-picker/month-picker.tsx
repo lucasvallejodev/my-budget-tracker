@@ -12,7 +12,7 @@ export function MonthPicker({
   onChange: (month: string) => void;
 }) {
   return (
-    <Cluster role="group" aria-label="Month">
+    <Cluster role="group" aria-label="Month" justify="between">
       <Button
         variant="outline"
         size="icon"
