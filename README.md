@@ -1,64 +1,81 @@
 # CoinKeeper
 
-Personal budget tracker built with Next.js, Clerk, Drizzle ORM and PostgreSQL.
+Personal budget and spending tracker built with Next.js, Clerk, Drizzle ORM and PostgreSQL. It keeps a ledger of every movement of money across your accounts, in the currency of each account, and turns it into balances, net worth, spending breakdowns, budgets and a review inbox.
 
-## What it does
+- **Exact money**: signed integer minor units plus a currency code; nothing is stored as a float.
+- **One ledger, many views**: balances, net worth, reports and budgets are all queries over the same table.
+- **Per currency, always**: every figure is shown per currency; a converted total is optional and labelled with the rate it used.
+- **Transfers are not spending**: moving money between your own accounts, including paying a credit card, never appears in reports.
+- **Your categories**: coloured groups and iconed categories, seeded with defaults and fully editable; archiving keeps history.
+- **Review before you trust**: uncategorised and imported entries wait in an inbox; rules and payee memory pre-fill categories.
 
-- **Ledger of signed integer amounts** (minor units + ISO currency) per account; balances, net worth and monthly reports are SQL aggregates, never stored counters.
-- **Multi-currency**: each account has one currency; every figure is shown per currency. Optional converted totals use manually entered exchange rates (Settings → Currencies) behind a pluggable `RateProvider`.
-- **Transfers and credit cards**: a transfer is two linked legs (one per account) with no category, so paying a card never counts as spending. Cards and loans are liabilities shown as amounts owed, with a "Pay card" shortcut.
-- **User-managed categories** in coloured groups, seeded from a default taxonomy on first sign-in; categories carry an icon from a curated registry, groups carry the colour. Archive with "move transactions to…" instead of deleting.
-- **Review inbox** for uncategorised or imported entries, with payee memory and text rules.
-- **CSV import** with column mapping, idempotent import ids, matching against manual entries and transfer-pair suggestions.
-- **Budgets**: monthly limits per category and currency compared with the ledger.
+Full documentation lives in [`docs/`](docs/README.md) and is served as a Docsify site with `npm run docs`.
 
-The design rationale, data model and roadmap are in [docs/redesign-proposal.md](docs/redesign-proposal.md); research notes are in [docs/research](docs/research).
+## Repository layout
 
-## Local setup
+| Folder | What is inside |
+| --- | --- |
+| `src/` | The application. `app/` (Next.js routes, server actions, API route handlers), `components/` (screens, primitives, shell, icons), `server/` (domain services: accounts, categories, ledger, payees, reports, fx, import, rules, budgets), `db/` (Drizzle schema and connection), `schema/` (Zod input schemas), `lib/` (money, dates, styles helpers). Details in [docs/getting-started/project-structure.md](docs/getting-started/project-structure.md). |
+| `drizzle/` | SQL migrations and Drizzle snapshots. Apply with `npm run db:migrate`. |
+| `scripts/` | Database schema check (`npm run db:check`). |
+| `e2e/` | Playwright tests (`npm run test:e2e`) and `playwright.config.ts` at the root. |
+| `docs/` | Human documentation (Docsify): setup, architecture, data model, feature guides, reference. `docs/legacy/` keeps the original proposal, research and migration notes; `docs/assets/` holds diagrams and screenshots. |
+| `agents/` | Documentation written for AI coding agents: condensed architecture, data model, conventions, workflows and a code-to-docs map. Start at [agents/README.md](agents/README.md). |
+| `temp/` | Scratch space for plans, throwaway diagrams and intermediate files. Git-ignored except its README. |
+| `public/` | Static assets. |
+| `AGENTS.md`, `CLAUDE.md` | Operating rules for AI agents working in this repository. |
+| `docker-compose.yml`, `Dockerfile` | Local PostgreSQL 17 and an optional app container. |
 
-1. Install Node.js 22+ and Docker Desktop (with the Docker engine running).
-2. Run `npm ci`.
-3. Copy `.env.example` to `.env` if you do not already have a local environment. Set the Clerk keys and choose a URL-safe PostgreSQL password. Use the same password in `POSTGRES_PASSWORD` and `DATABASE_URL`.
-4. Start PostgreSQL: `npm run db:up`.
-5. Apply the schema to the new local database: `npm run db:migrate`.
-6. Verify it: `npm run db:check`.
-7. Start the app: `npm run dev` and open http://localhost:3000.
+## Setup
 
-The local environment has been configured for PostgreSQL at `localhost:5432`. No hosted records are automatically imported. The app uses a normal pooled PostgreSQL connection; no ORM proxy or generated client is needed.
+Prerequisites: Node.js 22+, Docker Desktop, a Clerk application (publishable and secret key).
 
-## Database commands
+```bash
+npm ci
+cp .env.example .env          # set Clerk keys and a URL-safe POSTGRES_PASSWORD (also inside DATABASE_URL)
+npm run db:up                 # start PostgreSQL 17 in Docker
+npm run db:migrate            # apply the SQL migrations (also seeds the currencies table)
+npm run db:check              # optional: verify the live schema matches the migrations
+npm run dev                   # http://localhost:3000
+```
 
-| Command               | Purpose                                                            |
-| --------------------- | ------------------------------------------------------------------ |
-| `npm run db:up`       | Start the PostgreSQL Compose service                               |
-| `npm run db:down`     | Stop Compose services; preserve the named data volume              |
-| `npm run db:generate` | Generate reviewed SQL migrations after changing `src/db/schema.ts` |
-| `npm run db:migrate`  | Apply pending SQL migrations                                       |
-| `npm run db:check`    | Read-only check that the live schema matches all migrations        |
-| `npm run db:studio`   | Open Drizzle Studio                                                |
+Sign in through Clerk. The first request creates your settings and seeds the default categories. Step-by-step details and troubleshooting: [docs/getting-started/setup.md](docs/getting-started/setup.md).
 
-Migrations are plain SQL under `drizzle/`. Migration `0001_ledger` introduced the current schema (integer minor units, per-account currency, user-managed categories, paired transfers) and migrates rows from the legacy `Account`/`Payee`/`Transaction` tables when they exist; legacy rows land in the review inbox because their hard-coded category slugs no longer apply.
+To run the app itself in Docker after migrating from the host:
 
-PostgreSQL runs as `postgres:17-alpine`, binds only to `127.0.0.1`, and persists data in the `budget-postgres-data` named volume. Changing credentials in `.env` does not rotate credentials in an already initialized volume. Do not remove the volume to change a password or upgrade the database; manage those changes explicitly.
-
-## Run the app in Docker
-
-After initializing the database using the host-side migration commands above:
-
-```sh
+```bash
 docker compose --profile app up -d --build
 ```
 
-The app container connects to the `postgres` service over the Compose network. It waits for database health but does not run migrations on startup. Public Clerk configuration is supplied at image build time; private keys are supplied at runtime. Local `.env` files are excluded from Docker build context.
+## Commands
 
-## Checks
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Development server with Turbopack |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run lint` / `npm run lint:fix` | ESLint (Next.js, TypeScript, Prettier rules) |
+| `npm run format` / `npm run format:check` | Prettier |
+| `npm test -- --run` | Vitest: unit, component and PGlite database tests |
+| `npm run test:e2e` | Playwright end-to-end tests |
+| `npm run db:up` / `npm run db:down` | Start / stop the PostgreSQL container (data volume is kept) |
+| `npm run db:generate` | Generate a migration from `src/db/schema.ts` changes |
+| `npm run db:migrate` | Apply pending migrations |
+| `npm run db:check` | Read-only schema comparison against all migrations |
+| `npm run db:studio` | Drizzle Studio |
+| `npm run docs` | Serve the documentation site on http://localhost:3010 |
 
-```sh
-npm run lint
-npm test -- --run
-npm run build
+Before committing, run the full gate:
+
+```bash
+npm run lint && npx tsc --noEmit && npm test -- --run && npm run build
 ```
 
-Database integration tests use isolated PostgreSQL via PGlite. They do not connect to the configured database or require Docker.
+## Documentation
 
-See [DRIZZLE_MIGRATION.md](./DRIZZLE_MIGRATION.md) for the ORM migration record and [STYLE_MIGRATION.md](./STYLE_MIGRATION.md) for the SCSS component migration.
+| Where | For whom | Contents |
+| --- | --- | --- |
+| [docs/](docs/README.md) | people | setup, commands, project structure, architecture, data model, money handling, every feature step by step, API reference, migrations, default categories |
+| [agents/](agents/README.md) | AI agents | condensed architecture and data model, conventions, workflows, code-to-docs map |
+| [docs/legacy/](docs/legacy/README.md) | history | the redesign proposal, research reports and earlier migration notes |
+
+Screenshots in the feature guides are placeholders (`<!-- screenshot: … -->`) until the design settles.

@@ -54,3 +54,7 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Temporary working files (plans, scratch diagrams). Only the README is tracked.
+/temp/*
+!/temp/README.md

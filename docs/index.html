@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>CoinKeeper documentation</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+    <meta name="description" content="Documentation for CoinKeeper, a personal budget and spending tracker." />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css" />
+    <style>
+      :root {
+        --theme-color: #8b5cf6;
+      }
+      .markdown-section img {
+        max-width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+      }
+      .markdown-section table {
+        display: table;
+        width: 100%;
+      }
+      .sidebar-nav li > p {
+        font-weight: 600;
+        margin: 12px 0 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">Loading documentation…</div>
+    <script>
+      window.$docsify = {
+        name: 'CoinKeeper',
+        repo: '',
+        loadSidebar: true,
+        subMaxLevel: 3,
+        auto2top: true,
+        relativePath: false,
+        search: {
+          placeholder: 'Search the docs',
+          noData: 'No results',
+          depth: 3,
+          paths: 'auto',
+        },
+        alias: {
+          '/.*/_sidebar.md': '/_sidebar.md',
+        },
+        // Render ```mermaid fences with Mermaid 10 (the docsify-mermaid plugin predates its async API).
+        markdown: {
+          renderer: {
+            code(code, lang) {
+              if (lang === 'mermaid') {
+                const escaped = code
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+                return '<div class="mermaid">' + escaped + '</div>';
+              }
+              return this.origin.code.apply(this, arguments);
+            },
+          },
+        },
+        plugins: [
+          function (hook) {
+            hook.doneEach(function () {
+              if (window.mermaid) window.mermaid.run({ querySelector: '.mermaid' });
+            });
+          },
+        ],
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify-copy-code@2/dist/docsify-copy-code.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-typescript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-sql.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+    </script>
+  </body>
+</html>

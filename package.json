@@ -16,7 +16,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:check": "node scripts/database.mjs"
+    "db:check": "node scripts/database.mjs",
+    "docs": "npx -y docsify-cli serve docs --port 3010",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.1",
