@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { getStartAndEndOfMonth } from './date-helpers';
+import { getStartAndEndOfMonth, isoDateOfMonthStart, toIsoDate, toIsoMonth } from './date-helpers';
 
 describe('getStartAndEndOfMonth', () => {
   const mockDate = new Date(2025, 4, 1);
@@ -136,5 +136,24 @@ describe('getStartAndEndOfMonth', () => {
 
     result = getStartAndEndOfMonth(5, 2101);
     expect(result.startDate).toEqual(new Date(2025, 5, 1));
+  });
+});
+
+describe('ISO date helpers', () => {
+  const september23 = new Date(Date.UTC(2026, 8, 23));
+
+  it('formats the UTC calendar day and month', () => {
+    expect(toIsoDate(september23)).toBe('2026-09-23');
+    expect(toIsoMonth(september23)).toBe('2026-09');
+  });
+
+  it('returns the first day of a month, shifted across year boundaries', () => {
+    expect(isoDateOfMonthStart('2026-09')).toBe('2026-09-01');
+    expect(isoDateOfMonthStart('2026-12', 1)).toBe('2027-01-01');
+    expect(isoDateOfMonthStart('2026-01', -1)).toBe('2025-12-01');
+  });
+
+  it('throws a RangeError for text that is not a month', () => {
+    expect(() => isoDateOfMonthStart('September')).toThrow(RangeError);
   });
 });

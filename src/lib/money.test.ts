@@ -44,5 +44,25 @@ describe('money', () => {
     expect(convertMinor(100000, 'EUR', 'USD', 1.085)).toBe(108500);
     expect(convertMinor(100000, 'EUR', 'JPY', 160.5)).toBe(160500);
     expect(convertMinor(-333, 'USD', 'EUR', 0.9)).toBe(-300);
+    expect(convertMinor(1000, 'EUR', 'USD', 1.1)).toBe(1100);
+    expect(convertMinor(1000, 'EUR', 'JPY', 160)).toBe(1600);
+  });
+  it('rounds conversion halves away from zero symmetrically', () => {
+    expect(convertMinor(1, 'JPY', 'JPY', 0.5)).toBe(1);
+    expect(convertMinor(-1, 'JPY', 'JPY', 0.5)).toBe(-1);
+  });
+  it('treats currency codes case-insensitively', () => {
+    expect(minorUnits('jpy')).toBe(0);
+  });
+  it('reads a single separator before three digits as decimals', () => {
+    expect(parseAmountInput('1,234', 'KWD')).toBe(1234);
+    expect(() => parseAmountInput('1,234', 'USD')).toThrow(/decimal/);
+  });
+  it('accepts a leading plus sign and ignores inner whitespace', () => {
+    expect(parseAmountInput('+5', 'EUR')).toBe(500);
+    expect(parseAmountInput(' 1 234,50 ', 'EUR')).toBe(123450);
+  });
+  it('rejects amounts beyond the safe integer range', () => {
+    expect(() => parseAmountInput('99999999999999999', 'EUR')).toThrow(/too large/);
   });
 });

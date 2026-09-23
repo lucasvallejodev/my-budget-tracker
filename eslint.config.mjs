@@ -2,10 +2,12 @@ import stylistic from '@stylistic/eslint-plugin';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
 import prettierConfig from 'eslint-config-prettier';
+import jsdoc from 'eslint-plugin-jsdoc';
 import perfectionist from 'eslint-plugin-perfectionist';
 import preferArrow from 'eslint-plugin-prefer-arrow-functions';
 import prettier from 'eslint-plugin-prettier';
 import sonarjs from 'eslint-plugin-sonarjs';
+import tsdoc from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
 
 import multilineTypeAlias from './scripts/eslint-rules/multiline-type-alias.mjs';
@@ -38,6 +40,9 @@ const constantNamingMessage =
 
 const regexMessage =
   'Regular expressions live in `Patterns` (src/lib/patterns.ts) under a name that says what they match.';
+
+/** eslint-plugin-jsdoc's preset for TSDoc: types come from TypeScript, never from comments. */
+const tsdocPreset = jsdoc.configs['flat/recommended-tsdoc-error'];
 
 const colourMessage =
   'Hard-coded colour. Add it to `Colors` in src/styles/theme.ts (or a token in src/styles/tokens.scss) and reference it from there.';
@@ -325,6 +330,32 @@ const config = [
           allowTypedFunctionExpressions: true,
         },
       ],
+    },
+  },
+  {
+    // Utilities document their contract in TSDoc (see agents/conventions.md > Documentation
+    // comments): every exported function has a description, @param, @returns and @throws.
+    files: ['src/lib/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    plugins: { ...tsdocPreset.plugins, tsdoc },
+    rules: {
+      ...tsdocPreset.rules,
+      // TSDoc has no syntax for nested parameter names (`options.locale`); describe fields on `options`.
+      'jsdoc/check-param-names': ['error', { checkDestructured: false }],
+      'jsdoc/require-description': 'error',
+      'jsdoc/require-hyphen-before-param-description': 'error',
+      'jsdoc/require-jsdoc': [
+        'error',
+        {
+          publicOnly: true,
+          require: { ArrowFunctionExpression: true, FunctionDeclaration: true },
+        },
+      ],
+      'jsdoc/require-param': ['error', { checkDestructured: false }],
+      'jsdoc/require-throws': 'error',
+      'jsdoc/tag-lines': ['error', 'any', { startLines: 1 }],
+      'local/no-comments': ['error', { allowExportDocComments: true }],
+      'tsdoc/syntax': 'error',
     },
   },
   // Plain JS files (scripts, configs) are not part of the TypeScript project.

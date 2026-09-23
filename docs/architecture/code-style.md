@@ -1,14 +1,14 @@
 # Code style
 
-> Summary: how the code is formatted and named, where constants and colours live, the complexity budget, and the tools that enforce all of it.
+> Summary: how the code is formatted and named, how utilities are documented with TSDoc, where constants and colours live, the complexity budget, and the tools that enforce all of it.
 
 The goal is code that reads well for humans. Three tools enforce it, and `npm run lint:fix` applies everything that can be applied automatically:
 
-| Tool                            | Enforces                                                                                                                                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prettier (through ESLint)       | Line width (100), quotes, commas, indentation. Prettier never _adds_ blank lines, which is why the next rule exists.                                                                        |
-| ESLint (`eslint.config.mjs`)    | Blank lines, object and type layout, naming, colours, function style, complexity budget, TypeScript safety (type-aware rules), React, Next.js and accessibility rules, SonarJS code smells. |
-| Stylelint (`.stylelintrc.json`) | No hard-coded colours in SCSS outside `src/styles/tokens.scss`.                                                                                                                             |
+| Tool                            | Enforces                                                                                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prettier (through ESLint)       | Line width (100), quotes, commas, indentation. Prettier never _adds_ blank lines, which is why the next rule exists.                                                                                             |
+| ESLint (`eslint.config.mjs`)    | Blank lines, object and type layout, naming, colours, function style, complexity budget, TypeScript safety (type-aware rules), React, Next.js and accessibility rules, SonarJS code smells, TSDoc on `src/lib/`. |
+| Stylelint (`.stylelintrc.json`) | No hard-coded colours in SCSS outside `src/styles/tokens.scss`.                                                                                                                                                  |
 
 Two more tools report instead of block: `npm run lint:dupes` (jscpd, fails above 3 % duplicated lines) and `npm run knip` (unused files, exports and dependencies). In CI, the `SonarQube Cloud` workflow publishes duplication, cognitive complexity, coverage and code smells with history at sonarcloud.io (setup in [Setup](../getting-started/setup.md)); its quality gate judges new code only.
 
@@ -78,7 +78,43 @@ Every name must say what the value is for. One-letter and abbreviated names are 
 
 - Numbers other than -1, 0 and 1 (and array indexes or parameter defaults) must be named constants: `const MaxPreviewRows = 500`. Strings that act as keys, sentinels or configuration are named too (`UnmappedColumnValue`); user-facing copy stays inline.
 - Regular expressions live only in `src/lib/patterns.ts`, in the `Patterns` object under a name that says what they match (`Patterns.isoDate`, `Patterns.amountSignWrapper`), with small helpers such as `isIsoDate(text)` for the common tests. ESLint rejects a regex literal or `new RegExp` anywhere else.
-- Comments are not allowed in application code (a local rule enforces it); only tool directives and the `keep order` marker pass. The intent goes into names, small helpers and types. Config files and the local ESLint rules are the exception.
+- Comments are not allowed in application code (a local rule enforces it); only tool directives, the `keep order` marker and the TSDoc blocks described below pass. The intent goes into names, small helpers and types. Config files and the local ESLint rules are the exception.
+
+## Documenting utilities with TSDoc
+
+Every exported function in `src/lib/` carries a [TSDoc](https://tsdoc.org/) comment. It states the contract that a name cannot: units, accepted input formats, rounding, fallbacks, errors. Editors show it on hover wherever the function is used, so `formatMoney` explains itself inside a component without opening `money.ts`.
+
+````ts
+/**
+ * Converts an amount from one currency to another at a given exchange rate.
+ *
+ * @remarks
+ * The result is rounded to the nearest minor unit, with halves rounded away from zero.
+ *
+ * @param amountMinor - Signed amount in minor units of `from`.
+ * @param from - ISO 4217 code of the amount.
+ * @param to - ISO 4217 code to convert into.
+ * @param rate - Units of `to` per one unit of `from` (1 EUR = `rate` USD).
+ * @returns The converted amount in minor units of `to`.
+ *
+ * @example
+ * ```ts
+ * convertMinor(1000, 'EUR', 'USD', 1.1); // 1100
+ * ```
+ */
+export const convertMinor = (amountMinor: number, from: string, to: string, rate: number): number => …
+````
+
+- **Summary line**: one sentence saying what the function returns or does.
+- **`@remarks`**: edge cases, units, fallbacks, where the function fits in the data flow. Leave it out when there is nothing surprising.
+- **`@param name - description`** for every parameter (with the hyphen). Say what the value means, not its type; TypeScript already shows types, so `{type}` annotations are rejected. For an options object, describe its fields on the `options` line.
+- **`@returns`**, and **`@throws`** whenever the function throws, naming the error and when.
+- **`@example`** in a fenced block with the result as a trailing `// value`. Every example must be asserted by a test in the colocated `*.test.ts`.
+- Link related helpers with `{@link otherHelper}`.
+
+TSDoc is allowed only directly above an exported declaration in `src/lib/`. Private helpers, function bodies and other folders stay comment-free, and a `/** … */` block anywhere else is rejected. ESLint enforces the rest: `jsdoc/require-jsdoc` (every exported function), `jsdoc/require-param`, `jsdoc/require-returns`, `jsdoc/require-throws`, `jsdoc/check-param-names` (keeps names in sync after a rename), `jsdoc/no-types` and `tsdoc/syntax` (valid TSDoc tags and escaping).
+
+<!-- screenshot: editor hover on a formatMoney call showing its TSDoc (docs/assets/screenshots/tsdoc-hover.png) -->
 
 ## Import order and sorting
 

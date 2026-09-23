@@ -44,7 +44,7 @@ Icons: add the lucide import and key to `src/components/icons/registry.ts`. Taxo
 
 ## Add a helper or constant
 
-Search first (`grep -rn "<idea>" src/lib src/constants src/styles`). Name it for what it is (no one-letter or abbreviated identifiers). Helpers go in `src/lib/<topic>.ts` as `export const name = (...): Type => {}` with a colocated `*.test.ts`. Constant tables go in `src/constants/` or next to the feature as a PascalCase `const` (`Colors`, `FinanceKeys`). Then run `npm run lint:fix` and, if the helper replaces duplicated code, `npm run lint:dupes`.
+Search first (`grep -rn "<idea>" src/lib src/constants src/styles`). Name it for what it is (no one-letter or abbreviated identifiers). Helpers go in `src/lib/<topic>.ts` as `export const name = (...): Type => {}` with a TSDoc block (`agents/conventions.md` › Documentation comments) and a colocated `*.test.ts` that asserts every `@example`. Constant tables go in `src/constants/` or next to the feature as a PascalCase `const` (`Colors`, `FinanceKeys`). Then run `npm run lint:fix` and, if the helper replaces duplicated code, `npm run lint:dupes`.
 
 ## Add a colour or style value
 

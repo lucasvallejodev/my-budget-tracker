@@ -44,9 +44,37 @@ Before writing a helper, constant, colour or style value, search for an existing
 - Money fields end in `Minor` (`amountMinor`, `balanceMinor`, `spentMinor`).
 - Every name says what the value is for. No one-letter or abbreviated identifiers (`s`, `t`, `a`/`b`, `f`, `n`, `NONE`): style-module imports are `styles` / `formStyles` / `controlStyles`, callback parameters are named after the item (`transaction => transaction.amountMinor`), comparators use `(left, right)`, loop indexes `index`, and a sentinel says what it stands for (`UnmappedColumnValue`, not `NONE`). ESLint enforces a minimum length of two characters (`id-length`); the meaning is a review rule.
 - No magic values. Every number, string with meaning beyond display text, and regular expression gets a named `const` that says what it is (`MaxCsvRows`, `UnmappedColumnValue`, `Patterns.isoDate`), placed next to its use or in `src/constants/` when shared. `@typescript-eslint/no-magic-numbers` allows only -1, 0, 1, array indexes and default values; regular expressions may appear only in `src/lib/patterns.ts` (`Patterns` plus `isIsoDate`, `isDigitsOnly`, `isHexColor`, `isIsoMonth` helpers), which ESLint enforces everywhere else. Sentinel and lookup strings become constants; user-facing copy (labels, messages) stays inline. Exception: values Next.js parses at build time (`export const config = { matcher: [...] }` in `middleware.ts`, route segment config) must stay inline literals, since the compiler cannot follow a constant.
-- No code comments. `local/no-comments` rejects every comment except tool directives (`eslint-`, `@ts-`, `@vitest-environment`) and the `keep order` marker. When something needs explaining, express it with a better name, a small named helper or a type; if an external quirk genuinely cannot be named, write a test that documents it.
+- No code comments. `local/no-comments` rejects every comment except tool directives (`eslint-`, `@ts-`, `@vitest-environment`), the `keep order` marker and, in `src/lib/` only, a TSDoc block directly above an exported declaration (see Documentation comments). When something needs explaining, express it with a better name, a small named helper or a type; if an external quirk genuinely cannot be named, write a test that documents it.
 - Imports: external packages first, then `@/` modules, then relative files, each group separated by a blank line and sorted naturally; named imports and exports, object properties, destructured parameters and type members are sorted alphabetically (`perfectionist/*`, fixable). When order carries meaning (a display sequence), put a `// keep order` comment above the first entry; the sorter leaves everything after it as written. Ordinary comments travel with their property. Nothing but imports goes in the import block: types and constants come after it.
 - Module-level constant objects and arrays (lookup tables, palettes, key lists) are PascalCase: `Colors`, `FinanceKeys`, `QueryKeys`, `DefaultTaxonomy`, `AccountTypes`. ESLint rejects camelCase or UPPER_CASE for them (Next.js reserved exports such as `metadata` and `config` are exempt). Primitive constants stay UPPER_CASE (`MIN_YEAR`).
+
+## Documentation comments (TSDoc, `src/lib/` only)
+
+Every exported function in `src/lib/` has a TSDoc block; ESLint (`jsdoc/*`, `tsdoc/syntax`) fails without it. Shape:
+
+````ts
+/**
+ * One sentence: what it returns or does.
+ *
+ * @remarks
+ * Units, accepted formats, rounding, fallbacks, caveats. Omit when nothing is surprising.
+ *
+ * @param name - What the value means (no `{type}`; TypeScript owns types).
+ * @returns What comes back, with units.
+ * @throws `Error` when … (required whenever the function throws).
+ *
+ * @example
+ * ```ts
+ * helper(input); // result
+ * ```
+ */
+````
+
+- Hyphen after every `@param` name; options objects are described on the `options` line (no `options.field` params).
+- Every `@example` result is asserted in the colocated test; change both together.
+- Use `{@link helper}` for cross-references. Escape a literal `{` or `}` in prose, or put it in backticks.
+- No TSDoc on private helpers, inside bodies or outside `src/lib/`; the rule reports it as a floating doc comment.
+- When behaviour changes, update the TSDoc in the same edit; `jsdoc/check-param-names` catches renamed parameters, not stale prose.
 
 ## Server patterns
 

@@ -8,13 +8,13 @@ A personal budget and spending tracker: Next.js 16 App Router, React 19, TanStac
 
 ## Where things live
 
-| Path | Purpose |
-| --- | --- |
-| `agents/` | Documentation written for agents. **Start at `agents/README.md`**, an index with a one-line description per file. Every file begins with a `> Summary:` line, so `head -3 <file>` reveals its content without reading it all. |
-| `docs/` | Human documentation, a Docsify site (`npm run docs`). `docs/_sidebar.md` is its index; every page also starts with a `> Summary:` line. `docs/legacy/` is frozen history: never edit, only add. |
-| `temp/` | The only place for temporary files: plans, scratch diagrams, intermediate outputs, exports, screenshots before they are placed. Git-ignored except `temp/README.md`. |
-| `README.md` | Repository layout, setup, commands, pointers to the docs. |
-| `src/`, `drizzle/`, `scripts/`, `e2e/` | Source, migrations, DB scripts, Playwright tests. See `agents/architecture.md`. |
+| Path                                   | Purpose                                                                                                                                                                                                                       |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agents/`                              | Documentation written for agents. **Start at `agents/README.md`**, an index with a one-line description per file. Every file begins with a `> Summary:` line, so `head -3 <file>` reveals its content without reading it all. |
+| `docs/`                                | Human documentation, a Docsify site (`npm run docs`). `docs/_sidebar.md` is its index; every page also starts with a `> Summary:` line. `docs/legacy/` is frozen history: never edit, only add.                               |
+| `temp/`                                | The only place for temporary files: plans, scratch diagrams, intermediate outputs, exports, screenshots before they are placed. Git-ignored except `temp/README.md`.                                                          |
+| `README.md`                            | Repository layout, setup, commands, pointers to the docs.                                                                                                                                                                     |
+| `src/`, `drizzle/`, `scripts/`, `e2e/` | Source, migrations, DB scripts, Playwright tests. See `agents/architecture.md`.                                                                                                                                               |
 
 ## Rules for every prompt
 
@@ -24,11 +24,11 @@ A personal budget and spending tracker: Next.js 16 App Router, React 19, TanStac
    - the human docs in `docs/` (use `agents/docs-map.md` to find the pages; add a page and a `docs/_sidebar.md` entry for a new feature; keep `> Summary:` lines accurate; leave `<!-- screenshot: what to capture (docs/assets/screenshots/name.png) -->` placeholders where a screenshot belongs);
    - the agent docs in `agents/` (architecture, data model, conventions, workflows, docs map, and the index in `agents/README.md` when files are added);
    - `README.md` when folders, setup steps or commands change.
-   If nothing in the docs is affected, say so explicitly in your final message. Do not leave documentation for "later".
+     If nothing in the docs is affected, say so explicitly in your final message. Do not leave documentation for "later".
 4. **Verify before you claim.** Run `npm run lint && npx tsc --noEmit && npm test -- --run && npm run build` for code changes; add or update tests for every rule you touch (`agents/conventions.md` › Tests). Report failures honestly.
 5. **Commits.** Only commit when asked. Never add yourself as author or co-author: no `Co-Authored-By`, no "Generated with" or similar trailers, and do not change the git author. Use an imperative subject and a short body. Do not push unless explicitly told to.
 6. **Do not weaken the core rules** in `agents/architecture.md` (integer minor units, ledger as truth, paired transfers, per-currency reporting, per-user scoping, archive instead of delete) without being asked to change them and updating the docs and tests that state them.
-7. **Reuse before you write.** Before adding a helper, constant, colour or style value, search `src/lib/`, `src/constants/`, `src/styles/theme.ts` and `src/styles/tokens.scss` (`grep -rn "<idea>" src/lib src/constants src/styles`) and extend what exists. Colours live only in `theme.ts` (TypeScript) and `tokens.scss` (SCSS); module-level constant objects are PascalCase (`Colors`, `FinanceKeys`); an expression that appears twice becomes a tested helper in `src/lib/`. ESLint and Stylelint enforce the colour and naming rules; the style guide is `docs/architecture/code-style.md` (humans) and `agents/conventions.md` (agents). Run `npm run lint:fix` after editing. Names are descriptive (no `s`, `t`, `NONE`), numbers, meaningful strings and regular expressions are named constants (regexes only in `src/lib/patterns.ts`), code comments are banned (names and small helpers explain intent), imports are grouped external / `@/` / relative and everything sortable is sorted; see `agents/conventions.md` › Naming.
+7. **Reuse before you write.** Before adding a helper, constant, colour or style value, search `src/lib/`, `src/constants/`, `src/styles/theme.ts` and `src/styles/tokens.scss` (`grep -rn "<idea>" src/lib src/constants src/styles`) and extend what exists. Colours live only in `theme.ts` (TypeScript) and `tokens.scss` (SCSS); module-level constant objects are PascalCase (`Colors`, `FinanceKeys`); an expression that appears twice becomes a tested helper in `src/lib/`. ESLint and Stylelint enforce the colour and naming rules; the style guide is `docs/architecture/code-style.md` (humans) and `agents/conventions.md` (agents). Run `npm run lint:fix` after editing. Names are descriptive (no `s`, `t`, `NONE`), numbers, meaningful strings and regular expressions are named constants (regexes only in `src/lib/patterns.ts`), code comments are banned (names and small helpers explain intent) except TSDoc on exported `src/lib/` functions, which is required, imports are grouped external / `@/` / relative and everything sortable is sorted; see `agents/conventions.md` › Naming.
 
 ## Quick commands
 
