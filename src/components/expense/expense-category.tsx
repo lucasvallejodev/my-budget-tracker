@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Panel, money } from '../finance/blocks';
+
 export default function ExpenseCategory({
   icon,
   name,

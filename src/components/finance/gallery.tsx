@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import {
   PageHeading,
@@ -12,14 +13,16 @@ import { CashFlowChart, DistributionChart, TargetCard } from './charts';
 import { PaymentCards } from './payment-cards';
 import { TransactionExplorer } from './transaction-explorer';
 import { SettingsView } from './settings';
-import { sampleCards, sampleCashFlow, sampleExpenses, sampleTransactions } from './sample-data';
+import { SampleCards, SampleCashFlow, SampleExpenses, SampleTransactions } from './sample-data';
 import { Button } from '../primitives/button';
 import { TabRoot, TabList, TabTrigger, TabPanel } from '../primitives/preferences';
 import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
 import { Input } from '../primitives/input';
 import s from './finance.module.scss';
+
 export function ComponentGallery() {
   const [action, setAction] = useState('');
+
   return (
     <div className={s.page}>
       <PageHeading
@@ -55,8 +58,8 @@ export function ComponentGallery() {
                   negative
                 />
               </div>
-              <CashFlowChart data={sampleCashFlow} />
-              <TransactionExplorer transactions={sampleTransactions.slice(0, 4)} />
+              <CashFlowChart data={SampleCashFlow} />
+              <TransactionExplorer transactions={SampleTransactions.slice(0, 4)} />
             </div>
             <div className={s.stack}>
               <BalanceCard
@@ -73,14 +76,14 @@ export function ComponentGallery() {
                 }
               />
               <PaymentCards
-                cards={sampleCards}
+                cards={SampleCards}
                 action={
                   <Button variant="outline" size="sm" onClick={() => setAction('Add card')}>
                     Add card
                   </Button>
                 }
               />
-              <DistributionChart title="Budget" data={sampleExpenses.slice(0, 4)} />
+              <DistributionChart title="Budget" data={SampleExpenses.slice(0, 4)} />
               <PromotionPanel
                 title="Upgrade to pro"
                 description="A reusable promotional block matching the reference design."
@@ -91,7 +94,7 @@ export function ComponentGallery() {
           </div>
         </TabPanel>
         <TabPanel value="Transactions">
-          <TransactionExplorer transactions={sampleTransactions} />
+          <TransactionExplorer transactions={SampleTransactions} />
         </TabPanel>
         <TabPanel value="Analytics">
           <div className={s.stack}>
@@ -117,7 +120,7 @@ export function ComponentGallery() {
             </div>
             <div className={s.columns}>
               <div className={s.stack}>
-                <CashFlowChart data={sampleCashFlow} />
+                <CashFlowChart data={SampleCashFlow} />
                 <div className={s.grid}>
                   <Panel title="Budget" description="Monthly expense budget">
                     <MetricCard label="Progress" value="$3,457" />
@@ -126,7 +129,7 @@ export function ComponentGallery() {
                   <TargetCard value={4480} target={10000} />
                 </div>
               </div>
-              <DistributionChart data={sampleExpenses} />
+              <DistributionChart data={SampleExpenses} />
             </div>
           </div>
         </TabPanel>

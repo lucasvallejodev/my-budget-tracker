@@ -1,6 +1,8 @@
 'use client';
+
 import { CashFlowChart } from '../finance/charts';
-import { sampleCashFlow } from '../finance/sample-data';
+import { SampleCashFlow } from '../finance/sample-data';
+
 export default function ExpenseChart() {
-  return <CashFlowChart data={sampleCashFlow} />;
+  return <CashFlowChart data={SampleCashFlow} />;
 }

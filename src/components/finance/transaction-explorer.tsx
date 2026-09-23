@@ -1,4 +1,5 @@
 'use client';
+
 import { DatePicker } from '../primitives/date-picker';
 import { useState } from 'react';
 import * as Menu from '@radix-ui/react-dropdown-menu';
@@ -9,7 +10,7 @@ import { categoryLabel, describeTransaction, TransactionTable } from '../transac
 import { Panel, EmptyState } from './blocks';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
-import { FINANCE_KEYS, TransactionRow } from './use-finance-data';
+import { FinanceKeys, TransactionRow } from './use-finance-data';
 import { formatMoney, minorToDecimalString } from '@/lib/money';
 import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
 import { deleteTransactionAction } from '@/app/(main)/actions';
@@ -17,10 +18,11 @@ import s from './finance.module.scss';
 import c from '../primitives/controls.module.scss';
 
 export function exportTransactions(rows: TransactionRow[]) {
-  const cell = (v: unknown) =>
+  const cell = (v: string | number | boolean | null | undefined) =>
     `"${String(v ?? '')
       .replace(/^[=+@\-\t\r]/, "'$&")
       .replaceAll('"', '""')}"`;
+
   const csv = [
     [
       'Date',
@@ -53,13 +55,16 @@ export function exportTransactions(rows: TransactionRow[]) {
   ]
     .map(row => row.map(cell).join(','))
     .join('\r\n');
+
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }));
   const a = document.createElement('a');
+
   a.href = url;
   a.download = 'transactions.csv';
   a.click();
   URL.revokeObjectURL(url);
 }
+
 export function Pagination({
   page,
   pages,
@@ -83,22 +88,23 @@ export function Pagination({
     </nav>
   );
 }
+
 export function TransactionActions({ transaction }: { transaction: TransactionRow }) {
   const [details, setDetails] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const queryClient = useQueryClient();
+
   const remove = useMutation({
     mutationFn: () => deleteTransactionAction(transaction.id),
     onSuccess: async () => {
       toast.success(transaction.kind === 'transfer' ? 'Transfer deleted' : 'Transaction deleted');
-      await Promise.all(
-        FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
+      await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
       setDeleting(false);
     },
     onError: (error: Error) => toast.error(error.message || 'Could not delete'),
   });
+
   return (
     <>
       <Menu.Root>
@@ -183,6 +189,7 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
     </>
   );
 }
+
 export function TransactionExplorer({
   transactions,
   initialSearch = '',
@@ -199,6 +206,7 @@ export function TransactionExplorer({
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
+
   const typeOf = (t: TransactionRow) =>
     t.kind === 'transfer'
       ? 'TRANSFER'
@@ -207,7 +215,9 @@ export function TransactionExplorer({
         : t.amountMinor < 0
           ? 'EXPENSE'
           : 'INCOME';
+
   const statusOf = (t: TransactionRow) => (t.needsReview ? 'Needs review' : t.status);
+
   const filtered = transactions.filter(
     t =>
       `${t.id} ${describeTransaction(t)} ${t.memo} ${categoryLabel(t)} ${t.accountName}`
@@ -219,12 +229,15 @@ export function TransactionExplorer({
       (!from || t.date >= from) &&
       (!to || t.date <= to)
   );
+
   const pages = Math.max(1, Math.ceil(filtered.length / 10));
   const current = Math.min(page, pages);
+
   const update = (setter: (v: string) => void, value: string) => {
     setter(value);
     setPage(1);
   };
+
   return (
     <Panel
       title="Transactions"
@@ -260,9 +273,11 @@ export function TransactionExplorer({
             onChange={e => update(setCategory, e.target.value)}
           >
             <option value="">All categories</option>
-            {[...new Set(transactions.map(categoryLabel))].sort().map(c => (
-              <option key={c}>{c}</option>
-            ))}
+            {[...new Set(transactions.map(categoryLabel))]
+              .sort((a, b) => a.localeCompare(b))
+              .map(c => (
+                <option key={c}>{c}</option>
+              ))}
           </select>
         </label>
         <label>

@@ -16,6 +16,20 @@
   --warning: #92400e;
   --warning-soft: #fffbeb;
   --shadow: 0 16px 48px #10182818;
+  /* Values that stay the same in both themes. */
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --on-accent: #ffffff;
+  --on-accent-muted: #c4bbd8;
+  --selection: #ddd6fe;
+  --selection-ink: #241144;
+  --overlay: #080c1c85;
+  --card-shadow: 0 8px 20px #00000012;
+  --gradient-balance: linear-gradient(120deg, #a78bfa, #8728ef);
+  --gradient-card: linear-gradient(110deg, #242a21, #53554b);
+  --gradient-promotion: linear-gradient(140deg, #151827, #38116d);
+  --print-canvas: #ffffff;
+  --print-ink: #000000;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;

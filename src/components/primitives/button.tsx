@@ -8,6 +8,7 @@ export type ButtonProps = ComponentProps<'button'> & {
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive';
   size?: 'default' | 'sm' | 'icon';
 };
+
 export function Button({
   asChild,
   variant = 'default',
@@ -17,6 +18,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const Element = asChild ? Slot : 'button';
+
   return (
     <Element
       type={asChild ? undefined : type}

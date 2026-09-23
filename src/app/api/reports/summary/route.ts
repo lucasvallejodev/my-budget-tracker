@@ -1,6 +1,8 @@
 import { handle, param } from '@/server/http';
+
 export const GET = handle(async ({ userId, services, request }) => {
   const month = param(request, 'month') ?? new Date().toISOString().slice(0, 7);
+
   const [totals, breakdown, netWorth, cashFlow, needsReviewCount, accounts, settings] =
     await Promise.all([
       services.reports.monthlyTotals(userId, month),
@@ -11,8 +13,19 @@ export const GET = handle(async ({ userId, services, request }) => {
       services.accounts.list(userId),
       services.getSettings(userId),
     ]);
+
   const converted = settings?.showConvertedTotals
     ? await services.reports.convertedTotals(userId, settings.primaryCurrency, { netWorth, totals })
     : null;
-  return { month, totals, breakdown, netWorth, cashFlow, needsReviewCount, accounts, converted };
+
+  return {
+    month,
+    totals,
+    breakdown,
+    netWorth,
+    cashFlow,
+    needsReviewCount,
+    accounts,
+    converted,
+  };
 });

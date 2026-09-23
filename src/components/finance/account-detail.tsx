@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +9,7 @@ import { PageHeading, Panel, MetricCard, EmptyState } from './blocks';
 import { Button } from '../primitives/button';
 import { Amount } from '../money/amount';
 import { TransactionExplorer } from './transaction-explorer';
-import { AccountSummary, FINANCE_KEYS, useAccounts, useTransactions } from './use-finance-data';
+import { AccountSummary, FinanceKeys, useAccounts, useTransactions } from './use-finance-data';
 import CreateAccountDialog from '@/app/(main)/_components/create-account-dialog';
 import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
 import { archiveAccountAction } from '@/app/(main)/actions';
@@ -24,34 +25,40 @@ export function AccountDetail({ accountId }: { accountId: string }) {
   const [editing, setEditing] = useState(false);
   const [paying, setPaying] = useState(false);
   const account: AccountSummary | undefined = accounts.data?.find(a => a.id === accountId);
+
   const archive = useMutation({
     mutationFn: (archived: boolean) => archiveAccountAction(accountId, archived),
     onSuccess: async (_, archived) => {
       toast.success(archived ? 'Account archived' : 'Account restored');
-      await Promise.all(
-        FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
+      await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
       if (archived) router.push('/accounts');
     },
     onError: (error: Error) => toast.error(error.message),
   });
-  if (accounts.isPending)
+
+  if (accounts.isPending) {
     return (
       <p className={s.page} role="status">
         Loading account…
       </p>
     );
-  if (!account)
+  }
+
+  if (!account) {
     return (
       <div className={s.page}>
         <EmptyState title="Account not found" />
       </div>
     );
+  }
+
   const isLiability = account.classification === 'liability';
   const owed = -account.balanceMinor;
+
   const checking = accounts.data?.find(
     a => a.classification === 'asset' && !a.archivedAt && a.id !== account.id
   );
+
   return (
     <div className={s.page}>
       <PageHeading

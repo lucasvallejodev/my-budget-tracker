@@ -1,11 +1,14 @@
 'use client';
+
 import * as R from '@radix-ui/react-popover';
 import { ComponentProps } from 'react';
 import { cn } from '@/lib/styles';
 import s from './controls.module.scss';
 import { useDialogDepth } from './dialog';
+
 export const Popover = R.Root;
 export const PopoverTrigger = R.Trigger;
+
 export function PopoverContent({
   className,
   sideOffset = 8,
@@ -13,6 +16,7 @@ export function PopoverContent({
   ...props
 }: ComponentProps<typeof R.Content>) {
   const depth = useDialogDepth();
+
   return (
     <R.Portal>
       <R.Content

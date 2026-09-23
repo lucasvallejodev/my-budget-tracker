@@ -1,10 +1,15 @@
+import { Colors } from '@/styles/theme';
 import { sql, SQL } from 'drizzle-orm';
 import { convertMinor } from '@/lib/money';
 import { Db } from '../db';
 import { monthRange } from '../ledger/service';
 import { createFxService } from '../fx/service';
 
-export type CurrencyTotals = { currency: string; incomeMinor: number; spendingMinor: number };
+export type CurrencyTotals = {
+  currency: string;
+  incomeMinor: number;
+  spendingMinor: number;
+};
 export type GroupSlice = {
   currency: string;
   groupId: string | null;
@@ -26,7 +31,12 @@ export type ConvertedTotals = {
   spendingMinor: number;
   /** Currencies that could not be converted because no rate exists. */
   missing: string[];
-  rates: { currency: string; rate: number; date: string; source: string }[];
+  rates: {
+    currency: string;
+    rate: number;
+    date: string;
+    source: string;
+  }[];
 };
 export type CashPoint = {
   month: string;
@@ -38,13 +48,15 @@ export type CashPoint = {
 /** Spending predicate shared by every report: standard, not excluded, account counts in spending. */
 const spendingWhere = sql`t.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending`;
 
-async function query<T>(db: Db, statement: SQL): Promise<T[]> {
-  const result = (await db.execute(statement)) as unknown as { rows: T[] };
-  return result.rows;
-}
+const query = async <T>(db: Db, statement: SQL): Promise<T[]> => {
+  const result = (await db.execute(statement)) as { rows: T[] };
 
-export function createReportService(db: Db) {
+  return result.rows;
+};
+
+export const createReportService = (db: Db) => {
   const fx = createFxService(db);
+
   return {
     /**
      * Optional blended view in the primary currency. Buckets without a rate are listed in
@@ -59,16 +71,24 @@ export function createReportService(db: Db) {
       const currencies = [
         ...new Set([...data.netWorth.map(b => b.currency), ...data.totals.map(t => t.currency)]),
       ];
+
       const rates = new Map<string, Awaited<ReturnType<typeof fx.getRate>>>();
-      for (const currency of currencies)
-        if (currency !== primary)
+
+      for (const currency of currencies) {
+        if (currency !== primary) {
           rates.set(currency, await fx.getRate(userId, currency, primary, asOf));
+        }
+      }
+
       const missing = currencies.filter(c => c !== primary && !rates.get(c));
+
       const convert = (amountMinor: number, currency: string) => {
         if (currency === primary) return amountMinor;
         const rate = rates.get(currency);
+
         return rate ? convertMinor(amountMinor, currency, primary, rate.rate) : 0;
       };
+
       return {
         currency: primary,
         asOf,
@@ -91,6 +111,7 @@ export function createReportService(db: Db) {
     },
     async monthlyTotals(userId: string, month: string): Promise<CurrencyTotals[]> {
       const { start, end } = monthRange(month);
+
       const rows = await query<{
         currency: string;
         income_minor: string;
@@ -109,6 +130,7 @@ export function createReportService(db: Db) {
           AND t.date >= ${start} AND t.date < ${end}
         GROUP BY t.currency ORDER BY t.currency`
       );
+
       return rows.map(row => ({
         currency: row.currency,
         incomeMinor: Number(row.income_minor),
@@ -118,6 +140,7 @@ export function createReportService(db: Db) {
 
     async breakdownByGroup(userId: string, month: string): Promise<GroupSlice[]> {
       const { start, end } = monthRange(month);
+
       const rows = await query<{
         currency: string;
         group_id: string | null;
@@ -138,17 +161,19 @@ export function createReportService(db: Db) {
         GROUP BY t.currency, g.id, g.name, g.color
         ORDER BY t.currency, spent_minor DESC`
       );
+
       return rows.map(row => ({
         currency: row.currency,
         groupId: row.group_id,
         groupName: row.group_name ?? 'Uncategorized',
-        color: row.color ?? '#94A3B8',
+        color: row.color ?? Colors.uncategorized,
         spentMinor: Number(row.spent_minor),
       }));
     },
 
     async breakdownByCategory(userId: string, month: string, currency: string) {
       const { start, end } = monthRange(month);
+
       const rows = await query<{
         category_id: string | null;
         category_name: string | null;
@@ -171,13 +196,14 @@ export function createReportService(db: Db) {
         GROUP BY c.id, c.name, c.icon, g.id, g.name, g.color
         ORDER BY spent_minor DESC`
       );
+
       return rows.map(row => ({
         categoryId: row.category_id,
         categoryName: row.category_name ?? 'Uncategorized',
         icon: row.icon ?? 'CircleHelp',
         groupId: row.group_id,
         groupName: row.group_name ?? 'Uncategorized',
-        color: row.color ?? '#94A3B8',
+        color: row.color ?? Colors.uncategorized,
         spentMinor: Number(row.spent_minor),
       }));
     },
@@ -198,6 +224,7 @@ export function createReportService(db: Db) {
         WHERE a.user_id = ${userId} AND a.deleted_at IS NULL AND a.archived_at IS NULL
         GROUP BY a.currency ORDER BY a.currency`
       );
+
       return rows.map(row => ({
         currency: row.currency,
         assetsMinor: Number(row.assets_minor),
@@ -211,6 +238,7 @@ export function createReportService(db: Db) {
       const { end } = monthRange(month);
       const [year, monthIndex] = month.split('-').map(Number);
       const start = new Date(Date.UTC(year, monthIndex - months, 1)).toISOString().slice(0, 10);
+
       const rows = await query<{
         month: string;
         currency: string;
@@ -230,6 +258,7 @@ export function createReportService(db: Db) {
           AND t.date >= ${start} AND t.date < ${end}
         GROUP BY 1, 2 ORDER BY 1, 2`
       );
+
       return rows.map(row => ({
         month: row.month,
         currency: row.currency,
@@ -238,4 +267,4 @@ export function createReportService(db: Db) {
       }));
     },
   };
-}
+};

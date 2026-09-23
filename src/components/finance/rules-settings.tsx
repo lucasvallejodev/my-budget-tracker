@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -7,7 +8,7 @@ import { Panel, EmptyState } from './blocks';
 import { Button } from '../primitives/button';
 import { Input } from '../primitives/input';
 import CategoryPicker from '../category-picker';
-import { FINANCE_KEYS, useRules } from './use-finance-data';
+import { FinanceKeys, useRules } from './use-finance-data';
 import { applyRulesAction, createRuleAction, deleteRuleAction } from '@/app/(main)/actions';
 import s from './finance.module.scss';
 import f from '../forms.module.scss';
@@ -17,8 +18,10 @@ export function RulesSettings() {
   const rules = useRules();
   const [pattern, setPattern] = useState('');
   const [categoryId, setCategoryId] = useState<string | undefined>();
+
   const refresh = () =>
-    Promise.all(FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+    Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+
   const create = useMutation({
     mutationFn: () => createRuleAction({ pattern, categoryId: categoryId! }),
     onSuccess: async () => {
@@ -28,11 +31,13 @@ export function RulesSettings() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   const remove = useMutation({
     mutationFn: deleteRuleAction,
     onSuccess: refresh,
     onError: (error: Error) => toast.error(error.message),
   });
+
   const apply = useMutation({
     mutationFn: applyRulesAction,
     onSuccess: async ({ updated }) => {
@@ -41,6 +46,7 @@ export function RulesSettings() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   return (
     <div className={s.stack}>
       <Panel

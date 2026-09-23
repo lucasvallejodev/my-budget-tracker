@@ -28,6 +28,7 @@ A personal budget and spending tracker: Next.js 16 App Router, React 19, TanStac
 4. **Verify before you claim.** Run `npm run lint && npx tsc --noEmit && npm test -- --run && npm run build` for code changes; add or update tests for every rule you touch (`agents/conventions.md` › Tests). Report failures honestly.
 5. **Commits.** Only commit when asked. Never add yourself as author or co-author: no `Co-Authored-By`, no "Generated with" or similar trailers, and do not change the git author. Use an imperative subject and a short body. Do not push unless explicitly told to.
 6. **Do not weaken the core rules** in `agents/architecture.md` (integer minor units, ledger as truth, paired transfers, per-currency reporting, per-user scoping, archive instead of delete) without being asked to change them and updating the docs and tests that state them.
+7. **Reuse before you write.** Before adding a helper, constant, colour or style value, search `src/lib/`, `src/constants/`, `src/styles/theme.ts` and `src/styles/tokens.scss` (`grep -rn "<idea>" src/lib src/constants src/styles`) and extend what exists. Colours live only in `theme.ts` (TypeScript) and `tokens.scss` (SCSS); module-level constant objects are PascalCase (`Colors`, `FinanceKeys`); an expression that appears twice becomes a tested helper in `src/lib/`. ESLint and Stylelint enforce the colour and naming rules; the style guide is `docs/architecture/code-style.md` (humans) and `agents/conventions.md` (agents). Run `npm run lint:fix` after editing.
 
 ## Quick commands
 
@@ -36,6 +37,8 @@ npm run dev            # app on :3000
 npm run docs           # documentation site on :3010
 npm run db:up && npm run db:migrate && npm run db:check
 npm run lint && npx tsc --noEmit && npm test -- --run && npm run build
+npm run lint:fix       # apply formatting, blank-line and layout fixes
+npm run lint:dupes     # duplicated code (jscpd); npm run knip for dead code
 ```
 
 ## Known constraints

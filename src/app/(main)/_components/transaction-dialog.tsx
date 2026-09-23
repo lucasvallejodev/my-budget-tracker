@@ -1,4 +1,5 @@
 'use client';
+
 import s from '@/components/forms.module.scss';
 
 import { ReactNode, useEffect, useState } from 'react';
@@ -54,7 +55,7 @@ import {
   updateTransferAction,
 } from '../actions';
 import {
-  FINANCE_KEYS,
+  FinanceKeys,
   TransactionRow,
   useAccounts,
   usePayees,
@@ -76,8 +77,9 @@ const today = () => format(new Date(), 'yyyy-MM-dd');
 
 function useInvalidate() {
   const queryClient = useQueryClient();
+
   return () =>
-    Promise.all(FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+    Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
 }
 
 export default function TransactionDialog({
@@ -90,11 +92,13 @@ export default function TransactionDialog({
   const [localOpen, setLocalOpen] = useState(false);
   const [modeOverride, setModeOverride] = useState<Mode | null>(null);
   const open = controlledOpen ?? localOpen;
+
   const setOpen = (value: boolean) => {
     setLocalOpen(value);
     if (!value) setModeOverride(null);
     onOpenChange?.(value);
   };
+
   const initialMode: Mode = transaction
     ? transaction.kind === 'transfer'
       ? 'transfer'
@@ -102,6 +106,7 @@ export default function TransactionDialog({
         ? 'expense'
         : 'income'
     : (preset?.mode ?? 'expense');
+
   // The user's choice only lives while the dialog is open; closing it returns to the initial mode.
   const mode = modeOverride ?? initialMode;
   const setMode = (value: Mode) => setModeOverride(value);
@@ -157,6 +162,7 @@ export default function TransactionDialog({
 function DateField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const [open, setOpen] = useState(false);
   const selected = value ? parseISO(value) : undefined;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -196,6 +202,7 @@ function StandardForm({
 }) {
   const invalidate = useInvalidate();
   const { data: payees } = usePayees();
+
   const form = useForm<StandardTransactionValues>({
     resolver: zodResolver(standardTransactionSchema),
     defaultValues: {
@@ -212,9 +219,11 @@ function StandardForm({
       excluded: transaction?.excluded ?? false,
     },
   });
+
   useEffect(() => {
     form.setValue('direction', direction);
   }, [direction, form]);
+
   const { mutate, isPending } = useMutation({
     mutationFn: (values: StandardTransactionValues) =>
       transaction
@@ -228,6 +237,7 @@ function StandardForm({
     },
     onError: (error: Error) => toast.error(error.message || 'Could not save the transaction'),
   });
+
   return (
     <Form {...form}>
       <form className={s.form} onSubmit={form.handleSubmit(values => mutate(values))}>
@@ -275,8 +285,10 @@ function StandardForm({
                   onChange={payeeId => {
                     field.onChange(payeeId);
                     const payee = payees?.find(p => p.id === payeeId);
-                    if (payee?.defaultCategoryId && !form.getValues('categoryId'))
+
+                    if (payee?.defaultCategoryId && !form.getValues('categoryId')) {
                       form.setValue('categoryId', payee.defaultCategoryId);
+                    }
                   }}
                 />
               </FormControl>
@@ -354,6 +366,7 @@ function TransferForm({
   const invalidate = useInvalidate();
   const { data: accounts } = useAccounts();
   const outLeg = transaction && transaction.amountMinor < 0;
+
   const form = useForm<TransferValues>({
     resolver: zodResolver(transferSchema),
     defaultValues: {
@@ -381,11 +394,13 @@ function TransferForm({
       status: transaction?.status ?? 'cleared',
     },
   });
+
   const fromId = form.watch('fromAccountId');
   const toId = form.watch('toAccountId');
   const from = accounts?.find(a => a.id === fromId);
   const to = accounts?.find(a => a.id === toId);
   const crossCurrency = !!from && !!to && from.currency !== to.currency;
+
   const { mutate, isPending } = useMutation({
     mutationFn: (values: TransferValues) =>
       transaction?.transferId
@@ -399,6 +414,7 @@ function TransferForm({
     },
     onError: (error: Error) => toast.error(error.message || 'Could not save the transfer'),
   });
+
   return (
     <Form {...form}>
       <form className={s.form} onSubmit={form.handleSubmit(values => mutate(values))}>

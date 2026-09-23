@@ -30,7 +30,7 @@ All client reads go through `src/components/finance/use-finance-data.ts`:
 | `useRules()` | `/api/rules` | `['rules']` |
 | `useBudgets(month)` | `/api/budgets?month=` | `['budgets', month]` |
 
-After any mutation, components invalidate every key in `FINANCE_KEYS`. Mutations call server actions through `useMutation`, show a toast on success or `error.message` on failure, then invalidate.
+After any mutation, components invalidate every key in `FinanceKeys`. Mutations call server actions through `useMutation`, show a toast on success or `error.message` on failure, then invalidate.
 
 Types for rows (`TransactionRow`, `AccountSummary`, `CategoryTree`, …) are imported from the server services with `import type`, so the client and server never drift.
 
@@ -48,7 +48,8 @@ The transaction dialog (`transaction-dialog.tsx`) has three modes, expense, inco
 
 ## Styling
 
-- Global tokens in `src/styles/tokens.scss` (light and dark) and resets in `src/app/globals.scss`.
+- Global tokens in `src/styles/tokens.scss` (light and dark) and resets in `src/app/globals.scss`. Stylesheets only use `var(--token)`; Stylelint rejects literal colours elsewhere.
+- Colours needed from TypeScript (chart palette, category-group palette, fallbacks) come from `Colors` in `src/styles/theme.ts`; Recharts style objects from `ChartStyle`. ESLint rejects literal colours in any other file. See [Code style](code-style.md).
 - Everything else is a SCSS module next to its component (`finance.module.scss`, `forms.module.scss`, `controls.module.scss`, `shell.module.scss`). Class names are composed with `cn()` from `src/lib/styles.ts`.
 - Group colours come from the database and are applied inline (`style={{ background: group.color }}`); no per-category colours exist.
 - Icons render through `Icon` (`src/components/icon.tsx`), which only knows the names in `src/components/icons/registry.ts`. Unknown names fall back to a question mark. Add icons to the registry, never import the whole lucide package.
@@ -60,7 +61,7 @@ The transaction dialog (`transaction-dialog.tsx`) has three modes, expense, inco
 ## Adding a screen
 
 1. Create the feature component in `src/components/finance/` and a page under `src/app/(main)/`.
-2. Add a hook in `use-finance-data.ts` if it needs a new endpoint, and add its key to `FINANCE_KEYS`.
+2. Add a hook in `use-finance-data.ts` if it needs a new endpoint, and add its key to `FinanceKeys`.
 3. Add the route to `src/app/(main)/routes.ts` if it belongs in the sidebar.
 4. Write a component test with a prefilled `QueryClient` (see `category-manager.test.tsx`).
 5. Document it under `docs/features/` with screenshot placeholders.

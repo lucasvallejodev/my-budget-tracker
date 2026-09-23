@@ -1,0 +1,20 @@
+{
+  "customSyntax": "postcss-scss",
+  "ignoreFiles": ["src/styles/tokens.scss", "node_modules/**", ".next/**"],
+  "rules": {
+    "color-no-hex": [
+      true,
+      {
+        "message": "Hard-coded colour. Add a token to src/styles/tokens.scss and use var(--token)."
+      }
+    ],
+    "color-named": [
+      "never",
+      { "message": "Named colour. Add a token to src/styles/tokens.scss and use var(--token)." }
+    ],
+    "function-disallowed-list": [
+      ["rgb", "rgba", "hsl", "hsla"],
+      { "message": "Colour function. Add a token to src/styles/tokens.scss and use var(--token)." }
+    ]
+  }
+}

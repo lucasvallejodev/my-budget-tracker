@@ -1,8 +1,11 @@
 'use client';
+
 import { UserButton, useUser } from '@clerk/nextjs';
 import s from '@/components/shell/shell.module.scss';
+
 export default function UserProfile() {
   const { user } = useUser();
+
   return (
     <div className={s.profile}>
       <UserButton />

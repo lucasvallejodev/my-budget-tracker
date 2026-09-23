@@ -1,4 +1,5 @@
 'use client';
+
 import s from '@/components/forms.module.scss';
 
 import { ComponentProps, useMemo, useState } from 'react';
@@ -111,7 +112,9 @@ const CategoryPicker = ({
             category =>
               !category.archivedAt && (!term || category.name.toLowerCase().includes(term))
           );
+
           if (!visible.length) return null;
+
           return (
             <div key={group.id} className={s.categoryGroup}>
               <h3 style={{ color: group.color }}>{group.name}</h3>

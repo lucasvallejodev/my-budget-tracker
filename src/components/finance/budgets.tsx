@@ -1,4 +1,7 @@
 'use client';
+
+import { Colors } from '@/styles/theme';
+import { getPercentage } from '@/lib/math';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -31,7 +34,7 @@ import { MonthPicker } from './overview';
 import {
   BudgetRow,
   currentMonth,
-  FINANCE_KEYS,
+  FinanceKeys,
   monthLabel,
   useAccounts,
   useBudgets,
@@ -50,8 +53,10 @@ export function BudgetOverview() {
   const settings = useSettings();
   const [editing, setEditing] = useState<Partial<BudgetRow> | null>(null);
   const [deleting, setDeleting] = useState<BudgetRow | null>(null);
+
   const refresh = () =>
-    Promise.all(FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+    Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+
   const currencies = useMemo(
     () => [
       ...new Set([
@@ -61,6 +66,7 @@ export function BudgetOverview() {
     ],
     [accounts.data, settings.data]
   );
+
   const remove = useMutation({
     mutationFn: deleteBudgetAction,
     onSuccess: async () => {
@@ -70,6 +76,7 @@ export function BudgetOverview() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   const copy = useMutation({
     mutationFn: () => copyBudgetsAction(month),
     onSuccess: async ({ copied }) => {
@@ -78,10 +85,13 @@ export function BudgetOverview() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   const rows = budgets.data ?? [];
+
   const byCurrency = currencies
     .map(currency => ({ currency, rows: rows.filter(r => r.currency === currency) }))
     .filter(b => b.rows.length);
+
   return (
     <div className={s.page}>
       <PageHeading
@@ -112,6 +122,7 @@ export function BudgetOverview() {
           const limit = list.reduce((n, b) => n + b.amountMinor, 0);
           const spent = list.reduce((n, b) => n + b.spentMinor, 0);
           const format = (value: number) => formatMoney(value, currency);
+
           return (
             <div className={s.stack} key={currency}>
               <div className={s.grid}>
@@ -124,7 +135,7 @@ export function BudgetOverview() {
                 />
                 <MetricCard
                   label="Budget status"
-                  value={limit ? `${Math.round((spent / limit) * 100)}% used` : '—'}
+                  value={limit ? `${getPercentage(spent, limit)}% used` : '—'}
                 />
               </div>
               <div className={s.columns}>
@@ -132,6 +143,7 @@ export function BudgetOverview() {
                   <div className={s.stack}>
                     {list.map(b => {
                       const ratio = b.amountMinor > 0 ? b.spentMinor / b.amountMinor : 0;
+
                       return (
                         <article key={b.id} className={s.budget}>
                           <div className={s.balanceTitle}>
@@ -185,8 +197,16 @@ export function BudgetOverview() {
                     title={`Budget progress · ${currency}`}
                     format={format}
                     data={[
-                      { name: 'Spent', value: Math.min(spent, limit), color: '#8b5cf6' },
-                      { name: 'Available', value: Math.max(0, limit - spent), color: '#ddd6fe' },
+                      {
+                        name: 'Spent',
+                        value: Math.min(spent, limit),
+                        color: Colors.chart.used,
+                      },
+                      {
+                        name: 'Available',
+                        value: Math.max(0, limit - spent),
+                        color: Colors.chart.remaining,
+                      },
                     ]}
                   />
                   <BudgetInsights
@@ -255,17 +275,26 @@ function BudgetDialog({
 }) {
   const [categoryId, setCategoryId] = useState<string | undefined>(budget.categoryId);
   const [currency, setCurrency] = useState(budget.currency ?? currencies[0] ?? 'EUR');
+
   const [amount, setAmount] = useState(
     budget.amountMinor ? minorToDecimalString(budget.amountMinor, budget.currency ?? 'EUR') : ''
   );
+
   const save = useMutation({
-    mutationFn: () => upsertBudgetAction({ categoryId: categoryId!, month, currency, amount }),
+    mutationFn: () =>
+      upsertBudgetAction({
+        categoryId: categoryId!,
+        month,
+        currency,
+        amount,
+      }),
     onSuccess: async () => {
       toast.success('Budget saved');
       await onSaved();
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
       <DialogContent>

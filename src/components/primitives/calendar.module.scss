@@ -63,7 +63,7 @@
 }
 .selected .day_button {
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
 }
 .today .day_button {
   border: 1px solid var(--accent);

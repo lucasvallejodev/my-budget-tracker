@@ -17,7 +17,7 @@ Full documentation lives in [`docs/`](docs/README.md) and is served as a Docsify
 | --- | --- |
 | `src/` | The application. `app/` (Next.js routes, server actions, API route handlers), `components/` (screens, primitives, shell, icons), `server/` (domain services: accounts, categories, ledger, payees, reports, fx, import, rules, budgets), `db/` (Drizzle schema and connection), `schema/` (Zod input schemas), `lib/` (money, dates, styles helpers). Details in [docs/getting-started/project-structure.md](docs/getting-started/project-structure.md). |
 | `drizzle/` | SQL migrations and Drizzle snapshots. Apply with `npm run db:migrate`. |
-| `scripts/` | Database schema check (`npm run db:check`). |
+| `scripts/` | Database schema check (`npm run db:check`) and local ESLint rules (`scripts/eslint-rules/`). |
 | `e2e/` | Playwright tests (`npm run test:e2e`) and `playwright.config.ts` at the root. |
 | `docs/` | Human documentation (Docsify): setup, architecture, data model, feature guides, reference. `docs/legacy/` keeps the original proposal, research and migration notes; `docs/assets/` holds diagrams and screenshots. |
 | `agents/` | Documentation written for AI coding agents: condensed architecture, data model, conventions, workflows and a code-to-docs map. Start at [agents/README.md](agents/README.md). |
@@ -53,9 +53,12 @@ docker compose --profile app up -d --build
 | --- | --- |
 | `npm run dev` | Development server with Turbopack |
 | `npm run build` / `npm start` | Production build and server |
-| `npm run lint` / `npm run lint:fix` | ESLint (Next.js, TypeScript, Prettier rules) |
+| `npm run lint` / `npm run lint:fix` | ESLint (Next.js, type-aware TypeScript, SonarJS, layout and Prettier rules) and Stylelint; `lint:fix` applies every automatic fix |
+| `npm run lint:dupes` | Duplicated code report (jscpd, fails above 3 %) |
+| `npm run knip` | Unused files, exports and dependencies |
 | `npm run format` / `npm run format:check` | Prettier |
 | `npm test -- --run` | Vitest: unit, component and PGlite database tests |
+| `npm run test:coverage` | Same with an lcov coverage report (used by the SonarQube Cloud workflow) |
 | `npm run test:e2e` | Playwright end-to-end tests |
 | `npm run db:up` / `npm run db:down` | Start / stop the PostgreSQL container (data volume is kept) |
 | `npm run db:generate` | Generate a migration from `src/db/schema.ts` changes |

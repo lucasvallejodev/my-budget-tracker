@@ -1,3 +1,5 @@
+import { Colors } from '@/styles/theme';
+
 /**
  * Default category taxonomy seeded for every new user. Bumping `DEFAULT_TAXONOMY_VERSION`
  * only affects users seeded after the bump; existing users keep their data.
@@ -13,11 +15,11 @@ export type TaxonomyGroup = {
   categories: { name: string; icon: string }[];
 };
 
-export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
+export const DefaultTaxonomy: TaxonomyGroup[] = [
   {
     name: 'Income',
     kind: 'income',
-    color: '#16A34A',
+    color: Colors.group.green,
     isSystem: true,
     categories: [
       { name: 'Salary', icon: 'Banknote' },
@@ -30,7 +32,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Housing',
     kind: 'expense',
-    color: '#7C3AED',
+    color: Colors.group.violet,
     categories: [
       { name: 'Rent / Mortgage', icon: 'House' },
       { name: 'Home maintenance', icon: 'Hammer' },
@@ -42,7 +44,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Bills & Utilities',
     kind: 'expense',
-    color: '#0891B2',
+    color: Colors.group.cyan,
     categories: [
       { name: 'Electricity & gas', icon: 'Zap' },
       { name: 'Water & waste', icon: 'Droplets' },
@@ -54,7 +56,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Transportation',
     kind: 'expense',
-    color: '#EA580C',
+    color: Colors.group.orange,
     categories: [
       { name: 'Fuel', icon: 'Fuel' },
       { name: 'Public transit', icon: 'BusFront' },
@@ -67,7 +69,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Food & Dining',
     kind: 'expense',
-    color: '#DC2626',
+    color: Colors.group.red,
     categories: [
       { name: 'Groceries', icon: 'ShoppingCart' },
       { name: 'Restaurants & bars', icon: 'Utensils' },
@@ -78,7 +80,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Shopping',
     kind: 'expense',
-    color: '#DB2777',
+    color: Colors.group.pink,
     categories: [
       { name: 'Clothing', icon: 'Shirt' },
       { name: 'Electronics', icon: 'Laptop' },
@@ -90,7 +92,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Health & Wellness',
     kind: 'expense',
-    color: '#059669',
+    color: Colors.group.emerald,
     categories: [
       { name: 'Doctor & dental', icon: 'Stethoscope' },
       { name: 'Pharmacy', icon: 'Pill' },
@@ -102,7 +104,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Entertainment',
     kind: 'expense',
-    color: '#9333EA',
+    color: Colors.group.purple,
     categories: [
       { name: 'Streaming', icon: 'Tv' },
       { name: 'Movies & events', icon: 'Ticket' },
@@ -114,7 +116,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Travel',
     kind: 'expense',
-    color: '#2563EB',
+    color: Colors.group.blue,
     categories: [
       { name: 'Flights', icon: 'Plane' },
       { name: 'Lodging', icon: 'Hotel' },
@@ -125,7 +127,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Personal & Family',
     kind: 'expense',
-    color: '#D97706',
+    color: Colors.group.amber,
     categories: [
       { name: 'Childcare', icon: 'Baby' },
       { name: 'Education', icon: 'GraduationCap' },
@@ -136,7 +138,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Financial',
     kind: 'expense',
-    color: '#475569',
+    color: Colors.group.slate,
     categories: [
       { name: 'Bank fees', icon: 'Landmark' },
       { name: 'Interest & charges', icon: 'Percent' },
@@ -148,7 +150,7 @@ export const DEFAULT_TAXONOMY: TaxonomyGroup[] = [
   {
     name: 'Gifts & Donations',
     kind: 'expense',
-    color: '#E11D48',
+    color: Colors.group.rose,
     categories: [
       { name: 'Gifts', icon: 'Gift' },
       { name: 'Charity', icon: 'HandHeart' },

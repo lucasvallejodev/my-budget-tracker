@@ -1,4 +1,5 @@
 'use client';
+
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -7,13 +8,14 @@ import { Panel, PageHeading, EmptyState, LinkedAccount, StatusBadge } from './bl
 import { Button } from '../primitives/button';
 import { Amount } from '../money/amount';
 import CreateAccountDialog from '@/app/(main)/_components/create-account-dialog';
-import { accountGroups, accountTypeLabel } from '@/constants/account';
+import { AccountGroups, accountTypeLabel } from '@/constants/account';
 import s from './finance.module.scss';
 
 export function AccountsOverview() {
   const [showArchived, setShowArchived] = useState(false);
   const accounts = useAccounts(showArchived);
   const rows = (accounts.data ?? []).filter(a => showArchived || !a.archivedAt);
+
   return (
     <div className={s.page}>
       <PageHeading
@@ -48,9 +50,11 @@ export function AccountsOverview() {
           description="Create an account to start recording transactions."
         />
       ) : (
-        accountGroups.map(group => {
+        AccountGroups.map(group => {
           const members = rows.filter(a => (group.types as string[]).includes(a.type));
+
           if (!members.length) return null;
+
           return (
             <Panel key={group.label} title={group.label}>
               {members.map(a => (

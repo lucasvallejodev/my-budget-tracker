@@ -59,6 +59,6 @@ Each payee remembers a **usual category**. It is pre-filled in the transaction f
 
 - Tree, CRUD, reorder, archive and restore live in `src/server/categories/service.ts`; seeding in `seed.ts`.
 - `archiveCategory(userId, id, moveToId?)` re-points transactions and payee defaults inside one database transaction, or flags them with `needs_review`.
-- Icon names are validated by `z.enum(ICON_NAMES)` from `src/components/icons/registry.ts`; colours by a hex regex. Both in `src/schema/categories.ts`.
+- Icon names are validated by `z.enum(IconNames)` from `src/components/icons/registry.ts`; colours by a hex regex. Both in `src/schema/categories.ts`.
 - Payee memory is `payees.learnDefaultCategory`, called after every categorised create or update in the ledger service.
 - The picker (`src/components/category-picker.tsx`) groups categories, filters by kind when the direction is known, and offers "Leave uncategorized".

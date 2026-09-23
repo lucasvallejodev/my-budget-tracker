@@ -59,8 +59,8 @@ svg {
   flex-shrink: 0;
 }
 ::selection {
-  background: #ddd6fe;
-  color: #241144;
+  background: var(--selection);
+  color: var(--selection-ink);
 }
 :focus-visible {
   outline: 3px solid var(--accent);
@@ -77,8 +77,8 @@ svg {
 }
 @media print {
   body {
-    background: white;
-    color: black;
+    background: var(--print-canvas);
+    color: var(--print-ink);
   }
   button,
   nav {

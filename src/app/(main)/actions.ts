@@ -28,7 +28,9 @@ import {
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
+
   if (!result.success) throw new ServiceError(result.error.issues[0]?.message ?? 'Invalid input');
+
   return result.data;
 }
 
@@ -52,11 +54,15 @@ export async function createAccountAction(form: AccountFormValues) {
   return run(async () => {
     const { userId, services } = await requireUser();
     const data = parse(accountFormSchema, form);
+
     const openingBalanceMinor = data.openingBalance?.trim()
       ? parseAmountInput(data.openingBalance, data.currency)
       : 0;
+
     const account = await services.accounts.create(userId, { ...data, openingBalanceMinor });
+
     refresh();
+
     return account;
   });
 }
@@ -66,7 +72,9 @@ export async function updateAccountAction(form: UpdateAccountValues) {
     const { userId, services } = await requireUser();
     const { id, ...data } = parse(updateAccountSchema, form);
     const account = await services.accounts.update(userId, id, data);
+
     refresh();
+
     return account;
   });
 }
@@ -74,6 +82,7 @@ export async function updateAccountAction(form: UpdateAccountValues) {
 export async function archiveAccountAction(id: string, archived = true) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.accounts.archive(userId, id, archived);
     refresh();
   });
@@ -85,6 +94,7 @@ export async function createPayeeAction(form: PayeeFormValues) {
   return run(async () => {
     const { userId, services } = await requireUser();
     const data = parse(payeeFormSchema, form);
+
     return services.payees.create(userId, {
       name: data.name,
       defaultCategoryId: data.defaultCategoryId || null,
@@ -96,6 +106,7 @@ export async function updatePayeeAction(form: z.infer<typeof updatePayeeSchema>)
   return run(async () => {
     const { userId, services } = await requireUser();
     const { id, ...data } = parse(updatePayeeSchema, form);
+
     return services.payees.update(userId, id, {
       ...data,
       defaultCategoryId:
@@ -113,7 +124,9 @@ async function toStandardInput(
 ) {
   const account = await services.accounts.owned(userId, data.accountId);
   const magnitude = Math.abs(parseAmountInput(data.amount, account.currency));
+
   if (magnitude === 0) throw new ServiceError('Amount must not be zero');
+
   return {
     accountId: data.accountId,
     amountMinor: data.direction === 'expense' ? -magnitude : magnitude,
@@ -130,11 +143,14 @@ export async function createTransactionAction(form: StandardTransactionValues) {
   return run(async () => {
     const { userId, services } = await requireUser();
     const data = parse(standardTransactionSchema, form);
+
     const row = await services.ledger.createStandard(
       userId,
       await toStandardInput(services, userId, data)
     );
+
     refresh();
+
     return row;
   });
 }
@@ -143,12 +159,15 @@ export async function updateTransactionAction(id: string, form: StandardTransact
   return run(async () => {
     const { userId, services } = await requireUser();
     const data = parse(standardTransactionSchema, form);
+
     const row = await services.ledger.updateStandard(
       userId,
       id,
       await toStandardInput(services, userId, data)
     );
+
     refresh();
+
     return row;
   });
 }
@@ -156,11 +175,14 @@ export async function updateTransactionAction(id: string, form: StandardTransact
 export async function categorizeTransactionAction(id: string, categoryId: string | null) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     const row = await services.ledger.updateStandard(userId, id, {
       categoryId,
       needsReview: false,
     });
+
     refresh();
+
     return row;
   });
 }
@@ -168,6 +190,7 @@ export async function categorizeTransactionAction(id: string, categoryId: string
 export async function deleteTransactionAction(id: string) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.ledger.remove(userId, id);
     refresh();
   });
@@ -179,6 +202,7 @@ export async function setTransactionStatusAction(
 ) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.ledger.setStatus(userId, id, status);
     refresh();
   });
@@ -192,9 +216,11 @@ async function toTransferInput(
   const from = await services.accounts.owned(userId, data.fromAccountId);
   const to = await services.accounts.owned(userId, data.toAccountId);
   const amountFromMinor = Math.abs(parseAmountInput(data.amountFrom, from.currency));
+
   const amountToMinor = data.amountTo?.trim()
     ? Math.abs(parseAmountInput(data.amountTo, to.currency))
     : undefined;
+
   return {
     fromAccountId: data.fromAccountId,
     toAccountId: data.toAccountId,
@@ -210,11 +236,14 @@ export async function createTransferAction(form: TransferValues) {
   return run(async () => {
     const { userId, services } = await requireUser();
     const data = parse(transferSchema, form);
+
     const result = await services.ledger.createTransfer(
       userId,
       await toTransferInput(services, userId, data)
     );
+
     refresh();
+
     return result;
   });
 }
@@ -223,12 +252,15 @@ export async function updateTransferAction(transferId: string, form: TransferVal
   return run(async () => {
     const { userId, services } = await requireUser();
     const data = parse(transferSchema, form);
+
     const result = await services.ledger.updateTransfer(
       userId,
       transferId,
       await toTransferInput(services, userId, data)
     );
+
     refresh();
+
     return result;
   });
 }
@@ -238,6 +270,7 @@ export async function updateTransferAction(transferId: string, form: TransferVal
 export async function createCategoryGroupAction(form: CategoryGroupFormValues) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     return services.categories.createGroup(userId, parse(categoryGroupFormSchema, form));
   });
 }
@@ -248,6 +281,7 @@ export async function updateCategoryGroupAction(
 ) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     return services.categories.updateGroup(
       userId,
       id,
@@ -259,6 +293,7 @@ export async function updateCategoryGroupAction(
 export async function archiveCategoryGroupAction(id: string) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.categories.archiveGroup(userId, id);
   });
 }
@@ -266,6 +301,7 @@ export async function archiveCategoryGroupAction(id: string) {
 export async function reorderCategoryGroupsAction(orderedIds: string[]) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.categories.reorderGroups(userId, orderedIds);
   });
 }
@@ -273,6 +309,7 @@ export async function reorderCategoryGroupsAction(orderedIds: string[]) {
 export async function createCategoryAction(form: CategoryFormValues) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     return services.categories.createCategory(userId, parse(categoryFormSchema, form));
   });
 }
@@ -280,6 +317,7 @@ export async function createCategoryAction(form: CategoryFormValues) {
 export async function updateCategoryAction(id: string, form: Partial<CategoryFormValues>) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     return services.categories.updateCategory(
       userId,
       id,
@@ -291,6 +329,7 @@ export async function updateCategoryAction(id: string, form: Partial<CategoryFor
 export async function reorderCategoriesAction(groupId: string, orderedIds: string[]) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.categories.reorderCategories(userId, groupId, orderedIds);
   });
 }
@@ -298,6 +337,7 @@ export async function reorderCategoriesAction(groupId: string, orderedIds: strin
 export async function archiveCategoryAction(id: string, moveToId?: string) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.categories.archiveCategory(userId, id, moveToId);
     refresh();
   });
@@ -306,6 +346,7 @@ export async function archiveCategoryAction(id: string, moveToId?: string) {
 export async function restoreCategoryAction(id: string) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.categories.restoreCategory(userId, id);
   });
 }
@@ -319,6 +360,7 @@ export async function updateSettingsAction(data: {
 }) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     const parsed = parse(
       z.object({
         primaryCurrency: z.string().length(3).optional(),
@@ -327,8 +369,11 @@ export async function updateSettingsAction(data: {
       }),
       data
     );
+
     const settings = await services.updateSettings(userId, parsed);
+
     refresh();
+
     return settings;
   });
 }
@@ -343,6 +388,7 @@ export async function upsertExchangeRateAction(data: {
 }) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     const parsed = parse(
       z.object({
         base: z.string().length(3),
@@ -352,11 +398,17 @@ export async function upsertExchangeRateAction(data: {
       }),
       data
     );
+
     const rate = Number(parsed.rate.replace(',', '.'));
-    if (!Number.isFinite(rate) || rate <= 0)
+
+    if (!Number.isFinite(rate) || rate <= 0) {
       throw new ServiceError('The rate must be a positive number');
+    }
+
     const row = await services.fx.upsert(userId, { ...parsed, rate });
+
     refresh();
+
     return row;
   });
 }
@@ -364,6 +416,7 @@ export async function upsertExchangeRateAction(data: {
 export async function deleteExchangeRateAction(key: { base: string; quote: string; date: string }) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.fx.remove(userId, key);
     refresh();
   });
@@ -378,6 +431,7 @@ export async function createRuleAction(data: {
 }) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     const parsed = parse(
       z.object({
         name: z.string().max(80).optional(),
@@ -386,6 +440,7 @@ export async function createRuleAction(data: {
       }),
       data
     );
+
     return services.rules.create(userId, parsed);
   });
 }
@@ -393,6 +448,7 @@ export async function createRuleAction(data: {
 export async function deleteRuleAction(id: string) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.rules.remove(userId, id);
   });
 }
@@ -401,7 +457,9 @@ export async function applyRulesAction() {
   return run(async () => {
     const { userId, services } = await requireUser();
     const updated = await services.rules.applyToUncategorized(userId);
+
     refresh();
+
     return { updated };
   });
 }
@@ -415,7 +473,9 @@ export async function previewImportAction(input: {
 }) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     if (input.csv.length > 2_000_000) throw new ServiceError('File is too large (2 MB max)');
+
     return services.imports.preview(userId, input);
   });
 }
@@ -425,7 +485,9 @@ export async function commitImportAction(preview: Preview) {
     const { userId, services } = await requireUser();
     const result = await services.imports.commit(userId, preview);
     const suggestions = await services.imports.transferSuggestions(userId, result.insertedIds);
+
     refresh();
+
     return { ...result, suggestions };
   });
 }
@@ -433,6 +495,7 @@ export async function commitImportAction(preview: Preview) {
 export async function transferSuggestionsAction() {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     return services.imports.transferSuggestions(userId);
   });
 }
@@ -441,7 +504,9 @@ export async function linkTransferAction(outId: string, inId: string) {
   return run(async () => {
     const { userId, services } = await requireUser();
     const result = await services.ledger.linkAsTransfer(userId, outId, inId);
+
     refresh();
+
     return result;
   });
 }
@@ -456,6 +521,7 @@ export async function upsertBudgetAction(data: {
 }) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     const parsed = parse(
       z.object({
         categoryId: z.string().min(1, 'Choose a category'),
@@ -465,9 +531,12 @@ export async function upsertBudgetAction(data: {
       }),
       data
     );
+
     const amountMinor = Math.abs(parseAmountInput(parsed.amount, parsed.currency));
     const row = await services.budgets.upsert(userId, { ...parsed, amountMinor });
+
     refresh();
+
     return row;
   });
 }
@@ -475,6 +544,7 @@ export async function upsertBudgetAction(data: {
 export async function deleteBudgetAction(id: string) {
   return run(async () => {
     const { userId, services } = await requireUser();
+
     await services.budgets.remove(userId, id);
     refresh();
   });
@@ -484,7 +554,9 @@ export async function copyBudgetsAction(month: string) {
   return run(async () => {
     const { userId, services } = await requireUser();
     const copied = await services.budgets.copyFromPreviousMonth(userId, month);
+
     refresh();
+
     return { copied };
   });
 }

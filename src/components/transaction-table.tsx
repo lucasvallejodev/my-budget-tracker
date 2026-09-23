@@ -1,4 +1,5 @@
 'use client';
+
 import { Icon } from './icon';
 import { StatusBadge, EmptyState } from './finance/blocks';
 import { TransactionActions } from './finance/transaction-explorer';
@@ -10,17 +11,21 @@ import { ArrowLeftRight } from 'lucide-react';
 export type Transaction = TransactionRow;
 
 export function describeTransaction(t: TransactionRow) {
-  if (t.kind === 'transfer')
+  if (t.kind === 'transfer') {
     return t.amountMinor < 0
       ? `Transfer to ${t.counterpartAccountName ?? 'another account'}`
       : `Transfer from ${t.counterpartAccountName ?? 'another account'}`;
+  }
+
   if (t.kind === 'opening') return 'Opening balance';
+
   return t.payeeName || t.memo || t.originalPayee || t.categoryName || 'Transaction';
 }
 
 export function categoryLabel(t: TransactionRow) {
   if (t.kind === 'transfer') return 'Transfer';
   if (t.kind === 'opening') return 'Opening balance';
+
   return t.categoryName ?? 'Uncategorized';
 }
 
@@ -34,6 +39,7 @@ export function TransactionTable({
   showAccount?: boolean;
 }) {
   if (!transactions.length) return <EmptyState title="No transactions yet" />;
+
   return (
     <div className={s.tableWrap}>
       <table className={s.table}>

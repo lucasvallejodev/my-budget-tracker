@@ -1,4 +1,5 @@
 'use client';
+
 import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import * as Tabs from '@radix-ui/react-tabs';
@@ -7,7 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { PageHeading, Panel, SettingsSection, LinkedAccount, StatusBadge } from './blocks';
 import { PaymentCardList } from './payment-cards';
-import { sampleCards, sampleTransactions } from './sample-data';
+import { SampleCards, SampleTransactions } from './sample-data';
 import { Input } from '../primitives/input';
 import { ToggleSwitch } from '../primitives/preferences';
 import { Button } from '../primitives/button';
@@ -15,6 +16,7 @@ import { exportTransactions } from './transaction-explorer';
 import { TransactionRow } from './use-finance-data';
 import { applyTheme } from '../shell/theme-toggle';
 import s from './finance.module.scss';
+
 export function PreferenceRow({
   title,
   description,
@@ -34,6 +36,7 @@ export function PreferenceRow({
     </div>
   );
 }
+
 function Choice({
   label,
   options,
@@ -54,6 +57,7 @@ function Choice({
     </label>
   );
 }
+
 export function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: () => void }) {
   return (
     <Panel title="Profile Information">
@@ -102,6 +106,7 @@ export function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: (
     </Panel>
   );
 }
+
 export function SessionList() {
   return (
     <section>
@@ -131,6 +136,7 @@ export function SessionList() {
     </section>
   );
 }
+
 export function SecuritySettings({ demo, onManage }: { demo: boolean; onManage: () => void }) {
   return (
     <Panel title="Security">
@@ -168,6 +174,7 @@ export function SecuritySettings({ demo, onManage }: { demo: boolean; onManage: 
     </Panel>
   );
 }
+
 export function NotificationSettings() {
   return (
     <Panel title="Notifications">
@@ -195,18 +202,22 @@ export function NotificationSettings() {
     </Panel>
   );
 }
+
 export function DataSettings({ demo }: { demo: boolean }) {
   const cache = useQueryClient();
+
   const exportData = async () => {
     try {
-      if (demo) return exportTransactions(sampleTransactions);
+      if (demo) return exportTransactions(SampleTransactions);
       const response = await fetch('/api/transactions');
+
       if (!response.ok) throw new Error();
       exportTransactions((await response.json()) as TransactionRow[]);
     } catch {
       toast.error('Unable to export transactions. Please try again.');
     }
   };
+
   return (
     <Panel title="Data Management">
       <PreferenceRow title="Export Transactions" description="Download your transaction history">
@@ -241,6 +252,7 @@ export function DataSettings({ demo }: { demo: boolean }) {
     </Panel>
   );
 }
+
 export function AppPreferences() {
   return (
     <Panel title="App Preferences">
@@ -262,8 +274,10 @@ export function AppPreferences() {
     </Panel>
   );
 }
+
 export function SupportLinks() {
   const [expanded, setExpanded] = useState('');
+
   return (
     <Panel title="Legal & Support">
       {[
@@ -297,7 +311,8 @@ export function SupportLinks() {
     </Panel>
   );
 }
-const sections = [
+
+const Sections = [
   'Profile',
   'Categories',
   'Currencies',
@@ -309,13 +324,16 @@ const sections = [
   'App Preferences',
   'Legal and support',
 ];
+
 export function SettingsView({ demo = false }: { demo?: boolean }) {
   const { openUserProfile } = useClerk();
   const { user } = useUser();
+
   const manage = () => {
     if (demo) toast.info('Component preview — account services are not changed.');
     else openUserProfile();
   };
+
   return (
     <div className={s.page}>
       <PageHeading
@@ -324,8 +342,8 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
       />
       {demo && <p className={s.notice}>Component preview — sample account information.</p>}
       <Tabs.Root defaultValue="Profile" className={s.settings} orientation="vertical">
-        <Tabs.List className={s.settingsNav} aria-label="Settings sections">
-          {sections.map(section => (
+        <Tabs.List className={s.settingsNav} aria-label="Settings Sections">
+          {Sections.map(section => (
             <Tabs.Trigger className={s.settingsTab} key={section} value={section}>
               {section}
             </Tabs.Trigger>
@@ -381,7 +399,7 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
             <Panel title="Cards & Accounts">
               {demo ? (
                 <>
-                  <PaymentCardList initialCards={sampleCards} />
+                  <PaymentCardList initialCards={SampleCards} />
                   <LinkedAccount
                     name="Bank Account"
                     detail="Example Bank •••• 5847"

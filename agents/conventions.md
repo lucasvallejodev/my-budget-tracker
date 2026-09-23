@@ -1,6 +1,6 @@
 # Conventions and style guide
 
-> Summary: the coding rules an agent must follow in this repository: TypeScript, naming, server and client patterns, money, styling, tests, commits.
+> Summary: the coding rules an agent must follow in this repository: reuse first, formatting, TypeScript, naming, constants and colours, server and client patterns, money, styling, complexity budget, tests, commits.
 
 ## Tooling gates (run before finishing any change)
 
@@ -8,7 +8,26 @@
 npm run lint && npx tsc --noEmit && npm test -- --run && npm run build
 ```
 
-Prettier is enforced through ESLint (`prettier/prettier`, `endOfLine: auto`, 2-space indent, single quotes, 100-column width per `.prettierrc.js`). Run `npx prettier --write <files>` after editing.
+`npm run lint` runs ESLint (`eslint.config.mjs`: Next.js, type-aware typescript-eslint, SonarJS, stylistic and local rules, Prettier through `prettier/prettier`) and Stylelint (`.stylelintrc.json`). Run `npm run lint:fix` after editing: it applies Prettier, the blank-line and layout rules and every other automatic fix. `npm run lint:dupes` (jscpd) and `npm run knip` (dead code) are advisory. The human version of these rules is `docs/architecture/code-style.md`.
+
+## Reuse first
+
+Before writing a helper, constant, colour or style value, search for an existing one and extend it:
+
+- helpers: `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`);
+- lookup tables and option lists: `src/constants/`, the `*Keys` / `*Names` exports next to the feature;
+- colours and chart styles in TypeScript: `Colors`, `GroupColors`, `ChartStyle` in `src/styles/theme.ts`;
+- colours, shadows and gradients in SCSS: the tokens in `src/styles/tokens.scss`.
+
+`grep -rn "<idea>" src/lib src/constants src/styles` is the minimum check. An expression that appears twice (`Math.round((a / b) * 100)`) becomes a tested helper in `src/lib/`.
+
+## Formatting and layout (fixable, run `npm run lint:fix`)
+
+- Blank line after `'use client'`, after the imports, before every `export` / function / class / type, after a group of `const` / `let`, before and after any `const` / `let` that spans more than one line, before every `return`, around multi-line blocks.
+- Object literals with three or more properties: one property per line. Type aliases with three or more members: one member per line (local rule `local/multiline-type-alias`). Prettier preserves an object you expand by hand (line break after `{`).
+- `type`, never `interface`.
+- Single-line guards without braces (`if (!value) return 0;`); multi-line bodies always with braces.
+- Helpers in `src/lib/`, `src/constants/` and `src/server/` are `const name = (...) =>` arrow functions; `src/lib/` and `src/constants/` declare the return type (`(value: number, target: number): number =>`). Components, pages, route handlers and actions stay `function` declarations.
 
 ## TypeScript
 
@@ -23,6 +42,7 @@ Prettier is enforced through ESLint (`prettier/prettier`, `endOfLine: auto`, 2-s
 - Database: snake_case tables and columns; Drizzle properties camelCase. Enums are singular nouns (`account_type`).
 - Server actions end in `Action` (`createTransferAction`). Hooks start with `use`. Zod schemas end in `Schema`, their types in `Values`.
 - Money fields end in `Minor` (`amountMinor`, `balanceMinor`, `spentMinor`).
+- Module-level constant objects and arrays (lookup tables, palettes, key lists) are PascalCase: `Colors`, `FinanceKeys`, `QueryKeys`, `DefaultTaxonomy`, `AccountTypes`. ESLint rejects camelCase or UPPER_CASE for them (Next.js reserved exports such as `metadata` and `config` are exempt). Primitive constants stay UPPER_CASE (`MIN_YEAR`).
 
 ## Server patterns
 
@@ -35,8 +55,8 @@ Prettier is enforced through ESLint (`prettier/prettier`, `endOfLine: auto`, 2-s
 ## Client patterns
 
 - Screens are `'use client'` components in `src/components/finance/`; pages under `src/app/(main)/` only render them.
-- Data via hooks in `use-finance-data.ts`; new endpoints get a hook and their key is added to `FINANCE_KEYS`.
-- Mutations: `useMutation({ mutationFn: someAction, onSuccess: toast + invalidate FINANCE_KEYS, onError: toast(error.message) })`.
+- Data via hooks in `use-finance-data.ts`; new endpoints get a hook and their key is added to `FinanceKeys`.
+- Mutations: `useMutation({ mutationFn: someAction, onSuccess: toast + invalidate FinanceKeys, onError: toast(error.message) })`.
 - Forms: React Hook Form + `zodResolver`; amount inputs are text with `inputMode="decimal"`.
 - Define every component at module scope; never create components inside another component's body (React Compiler rule). Do not call `setState` synchronously inside `useEffect`; derive state or reset on user events instead.
 - Accessible names on every interactive control (`aria-label` on icon buttons) so tests can query by role.
@@ -44,7 +64,9 @@ Prettier is enforced through ESLint (`prettier/prettier`, `endOfLine: auto`, 2-s
 ## Styling
 
 - SCSS modules beside the component; shared classes live in `finance.module.scss` (layout blocks), `forms.module.scss` (form pieces), `controls.module.scss` (primitives), `shell.module.scss`.
-- Colours from `src/styles/tokens.scss` variables (`var(--muted)`, `var(--surface)`, …). Group colours are data and are applied inline.
+- Colours in SCSS come only from `src/styles/tokens.scss` (`var(--muted)`, `var(--surface)`, `var(--on-accent)`, gradients, overlay); Stylelint rejects hex, named and `rgb()` colours in any other stylesheet. Add a token rather than a literal.
+- Colours in TypeScript come only from `Colors` in `src/styles/theme.ts` (chart palette, category-group palette `Colors.group`, `Colors.uncategorized`); ESLint rejects hex, `rgb()` and `hsl()` literals elsewhere. In JSX prefer `var(--token)` strings when a CSS token exists. Recharts style objects come from `ChartStyle`; the colour-picker swatches from `GroupColors`.
+- Group colours chosen by users are data and are applied inline (`style={{ background: group.color }}`).
 - Icons: add to `src/components/icons/registry.ts`, render with `<Icon icon={name} />`. Never `import * as` from lucide.
 
 ## Money
@@ -52,6 +74,10 @@ Prettier is enforced through ESLint (`prettier/prettier`, `endOfLine: auto`, 2-s
 - Store and transfer `amountMinor` + `currency`. Display with `formatMoney` or `<Amount />`. Convert only through `services.fx`.
 - Never sum amounts of different currencies; group by currency instead.
 - Liabilities: keep the ledger sign, flip only for display (`flipSign` on `Amount`).
+
+## Complexity budget (warnings today, errors once the backlog is gone)
+
+Cyclomatic complexity 10 and cognitive complexity 15 per function, 80 lines per function, 400 per file, nesting depth 3, four parameters. Never add a warning; remove one when you touch the function. `sonarjs/no-nested-conditional` is part of the same budget.
 
 ## Tests
 

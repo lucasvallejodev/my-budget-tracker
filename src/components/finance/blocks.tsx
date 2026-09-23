@@ -1,3 +1,4 @@
+import { getPercentage } from '@/lib/math';
 import { ReactNode } from 'react';
 import { ArrowUpRight, CircleCheck, Info, Wallet, Zap } from 'lucide-react';
 import { Button } from '../primitives/button';
@@ -6,9 +7,12 @@ import s from './finance.module.scss';
 
 /** Formats a major-unit number (sample data, budget previews). Ledger amounts use `Amount`. */
 export const money = (amount: number, currency = 'USD') =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 2 }).format(
-    amount
-  );
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 2,
+  }).format(amount);
+
 export function PageHeading({
   title,
   description,
@@ -28,6 +32,7 @@ export function PageHeading({
     </header>
   );
 }
+
 export function Panel({
   title,
   description,
@@ -56,6 +61,7 @@ export function Panel({
     </section>
   );
 }
+
 export function MetricCard({
   label,
   value,
@@ -87,6 +93,7 @@ export function MetricCard({
     </section>
   );
 }
+
 export function BalanceCard({
   amount,
   currency = 'USD',
@@ -110,6 +117,7 @@ export function BalanceCard({
     </section>
   );
 }
+
 export function StatusBadge({
   children,
   tone = 'success',
@@ -124,6 +132,7 @@ export function StatusBadge({
     </span>
   );
 }
+
 export function BudgetProgress({
   spent,
   limit,
@@ -135,7 +144,8 @@ export function BudgetProgress({
   label?: string;
   format?: (value: number) => string;
 }) {
-  const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0;
+  const percent = getPercentage(spent, limit);
+
   return (
     <div>
       <div className={s.budgetMeta}>
@@ -151,6 +161,7 @@ export function BudgetProgress({
     </div>
   );
 }
+
 export function CategoryBudget({
   name,
   spent,
@@ -163,6 +174,7 @@ export function CategoryBudget({
   actions?: ReactNode;
 }) {
   const ratio = limit > 0 ? spent / limit : 0;
+
   return (
     <article className={s.budget}>
       <div className={s.balanceTitle}>
@@ -181,6 +193,7 @@ export function CategoryBudget({
     </article>
   );
 }
+
 export function BudgetInsights({ insights }: { insights: string[] }) {
   return (
     <Panel title="Budget Insights">
@@ -195,6 +208,7 @@ export function BudgetInsights({ insights }: { insights: string[] }) {
     </Panel>
   );
 }
+
 export function PromotionPanel({
   title,
   description,
@@ -221,6 +235,7 @@ export function PromotionPanel({
     </aside>
   );
 }
+
 export function EmptyState({
   title,
   description,
@@ -239,6 +254,7 @@ export function EmptyState({
     </div>
   );
 }
+
 export function LinkedAccount({
   name,
   detail,
@@ -263,6 +279,7 @@ export function LinkedAccount({
     </div>
   );
 }
+
 export function SettingsSection({
   title,
   description,

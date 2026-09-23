@@ -12,15 +12,17 @@ export type RuleRow = {
 };
 
 /** Rules are the simplest useful shape: "text contains X → category Y", highest priority first. */
-export function createRuleService(db: Db) {
-  async function owned(userId: string, id: string) {
+export const createRuleService = (db: Db) => {
+  const owned = async (userId: string, id: string) => {
     const [rule] = await db
       .select()
       .from(rules)
       .where(and(eq(rules.id, id), eq(rules.userId, userId)))
       .limit(1);
+
     return rule ?? notFound('Rule');
-  }
+  };
+
   return {
     async list(userId: string): Promise<RuleRow[]> {
       return db
@@ -37,9 +39,18 @@ export function createRuleService(db: Db) {
         .where(eq(rules.userId, userId))
         .orderBy(asc(rules.priority), asc(rules.createdAt));
     },
-    async create(userId: string, data: { name?: string; pattern: string; categoryId: string }) {
+    async create(
+      userId: string,
+      data: {
+        name?: string;
+        pattern: string;
+        categoryId: string;
+      }
+    ) {
       const pattern = data.pattern.trim();
+
       if (!pattern) throw new ServiceError('Pattern is required');
+
       const [category] = await db
         .select({ id: categories.id, name: categories.name })
         .from(categories)
@@ -50,11 +61,14 @@ export function createRuleService(db: Db) {
             isNull(categories.archivedAt)
           )
         );
+
       if (!category) notFound('Category');
+
       const [{ next }] = await db
         .select({ next: sql<number>`COALESCE(max(${rules.priority}), -1) + 1` })
         .from(rules)
         .where(eq(rules.userId, userId));
+
       const [rule] = await db
         .insert(rules)
         .values({
@@ -65,6 +79,7 @@ export function createRuleService(db: Db) {
           priority: Number(next),
         })
         .returning();
+
       return rule;
     },
     async remove(userId: string, id: string) {
@@ -77,15 +92,21 @@ export function createRuleService(db: Db) {
         .filter((t): t is string => !!t)
         .join('\n')
         .toLowerCase();
+
       if (!haystack) return null;
-      for (const rule of await this.list(userId))
+
+      for (const rule of await this.list(userId)) {
         if (haystack.includes(rule.pattern.toLowerCase())) return rule;
+      }
+
       return null;
     },
     /** Applies rules to every uncategorised standard transaction; returns how many were set. */
     async applyToUncategorized(userId: string) {
       const list = await this.list(userId);
+
       if (!list.length) return 0;
+
       const rows = await db
         .select({
           id: transactions.id,
@@ -104,13 +125,17 @@ export function createRuleService(db: Db) {
             isNull(transactions.deletedAt)
           )
         );
+
       let updated = 0;
+
       for (const row of rows) {
         const haystack = [row.payeeName, row.originalPayee, row.memo]
           .filter(Boolean)
           .join('\n')
           .toLowerCase();
+
         const rule = list.find(r => haystack.includes(r.pattern.toLowerCase()));
+
         if (!rule) continue;
         await db
           .update(transactions)
@@ -118,7 +143,8 @@ export function createRuleService(db: Db) {
           .where(eq(transactions.id, row.id));
         updated++;
       }
+
       return updated;
     },
   };
-}
+};

@@ -73,47 +73,56 @@ export type TransferInput = {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export function monthRange(month: string) {
+export const monthRange = (month: string) => {
   if (!/^\d{4}-\d{2}$/.test(month)) throw new ServiceError('Month must be YYYY-MM');
   const [year, monthIndex] = month.split('-').map(Number);
   const start = `${month}-01`;
   const next = new Date(Date.UTC(year, monthIndex, 1)).toISOString().slice(0, 10);
-  return { start, end: next };
-}
 
-export function createLedgerService(db: Db) {
+  return { start, end: next };
+};
+
+export const createLedgerService = (db: Db) => {
   const payeeService = createPayeeService(db);
 
-  async function ownedAccount(tx: DbOrTx, userId: string, id: string) {
+  const ownedAccount = async (tx: DbOrTx, userId: string, id: string) => {
     const [account] = await tx
       .select()
       .from(accounts)
       .where(and(eq(accounts.id, id), eq(accounts.userId, userId), isNull(accounts.deletedAt)))
       .for('update');
+
     if (!account) notFound('Account');
     if (account.archivedAt) throw new ServiceError('This account is archived');
+
     return account;
-  }
-  async function assertCategory(tx: DbOrTx, userId: string, id: string) {
+  };
+
+  const assertCategory = async (tx: DbOrTx, userId: string, id: string) => {
     const [category] = await tx
       .select({ id: categories.id })
       .from(categories)
       .where(
         and(eq(categories.id, id), eq(categories.userId, userId), isNull(categories.archivedAt))
       );
+
     if (!category) notFound('Category');
-  }
-  async function assertPayee(tx: DbOrTx, userId: string, id: string) {
+  };
+
+  const assertPayee = async (tx: DbOrTx, userId: string, id: string) => {
     const [payee] = await tx
       .select({ id: payees.id })
       .from(payees)
       .where(and(eq(payees.id, id), eq(payees.userId, userId)));
+
     if (!payee) notFound('Payee');
-  }
-  function assertDate(date: string) {
+  };
+
+  const assertDate = (date: string) => {
     if (!DATE_RE.test(date)) throw new ServiceError('Date must be YYYY-MM-DD');
-  }
-  async function ownedTransaction(tx: DbOrTx, userId: string, id: string) {
+  };
+
+  const ownedTransaction = async (tx: DbOrTx, userId: string, id: string) => {
     const [row] = await tx
       .select()
       .from(transactions)
@@ -125,21 +134,26 @@ export function createLedgerService(db: Db) {
         )
       )
       .for('update');
+
     return row ?? notFound('Transaction');
-  }
+  };
 
   return {
     async list(userId: string, filters: ListFilters = {}): Promise<TransactionRow[]> {
       const peer = alias(transactions, 'peer');
       const peerAccount = alias(accounts, 'peer_account');
+
       const conditions: (SQL | undefined)[] = [
         eq(transactions.userId, userId),
         isNull(transactions.deletedAt),
       ];
+
       if (filters.month) {
         const { start, end } = monthRange(filters.month);
+
         conditions.push(gte(transactions.date, start), lt(transactions.date, end));
       }
+
       if (filters.from) conditions.push(gte(transactions.date, filters.from));
       if (filters.to) conditions.push(sql`${transactions.date} <= ${filters.to}`);
       if (filters.accountId) conditions.push(eq(transactions.accountId, filters.accountId));
@@ -147,8 +161,10 @@ export function createLedgerService(db: Db) {
       if (filters.needsReview) conditions.push(eq(transactions.needsReview, true));
       if (filters.kind) conditions.push(eq(transactions.kind, filters.kind));
       if (filters.ids) conditions.push(inArray(transactions.id, filters.ids));
+
       if (filters.search) {
         const term = `%${filters.search}%`;
+
         conditions.push(
           or(
             ilike(transactions.memo, term),
@@ -158,6 +174,7 @@ export function createLedgerService(db: Db) {
           )
         );
       }
+
       const rows = await db
         .select({
           id: transactions.id,
@@ -205,22 +222,29 @@ export function createLedgerService(db: Db) {
         .orderBy(desc(transactions.date), desc(transactions.createdAt))
         .limit(Math.min(filters.limit ?? 500, 2000))
         .offset(filters.offset ?? 0);
+
       return rows.map(row => ({ ...row, amountMinor: Number(row.amountMinor) }));
     },
 
     async get(userId: string, id: string) {
       const [row] = await this.list(userId, { ids: [id], limit: 1 });
+
       return row ?? notFound('Transaction');
     },
 
     async createStandard(userId: string, input: StandardInput) {
       assertDate(input.date);
-      if (!Number.isInteger(input.amountMinor) || input.amountMinor === 0)
+
+      if (!Number.isInteger(input.amountMinor) || input.amountMinor === 0) {
         throw new ServiceError('Amount must be a non-zero whole number of minor units');
+      }
+
       const row = await db.transaction(async tx => {
         const account = await ownedAccount(tx, userId, input.accountId);
+
         if (input.categoryId) await assertCategory(tx, userId, input.categoryId);
         if (input.payeeId) await assertPayee(tx, userId, input.payeeId);
+
         const [created] = await tx
           .insert(transactions)
           .values({
@@ -240,61 +264,86 @@ export function createLedgerService(db: Db) {
             originalPayee: input.originalPayee || null,
           })
           .returning();
+
         return created;
       });
-      if (row.payeeId && row.categoryId)
+
+      if (row.payeeId && row.categoryId) {
         await payeeService.learnDefaultCategory(userId, row.payeeId);
+      }
+
       return row;
     },
 
     async updateStandard(userId: string, id: string, input: Partial<StandardInput>) {
       if (input.date) assertDate(input.date);
+
       if (
         input.amountMinor !== undefined &&
         (!Number.isInteger(input.amountMinor) || input.amountMinor === 0)
-      )
+      ) {
         throw new ServiceError('Amount must be a non-zero whole number of minor units');
+      }
+
       const row = await db.transaction(async tx => {
         const existing = await ownedTransaction(tx, userId, id);
-        if (existing.kind === 'transfer')
+
+        if (existing.kind === 'transfer') {
           throw new ServiceError('Use the transfer editor for transfer legs');
+        }
+
         if (
           existing.status === 'reconciled' &&
           (input.amountMinor !== undefined || input.date || input.accountId)
-        )
+        ) {
           throw new ServiceError('Reconciled transactions are locked; unlock them first');
+        }
+
         const patch: Partial<typeof transactions.$inferInsert> = {};
+
         if (input.accountId && input.accountId !== existing.accountId) {
           const account = await ownedAccount(tx, userId, input.accountId);
+
           patch.accountId = account.id;
           patch.currency = account.currency;
         }
+
         if (input.categoryId !== undefined) {
           if (input.categoryId) await assertCategory(tx, userId, input.categoryId);
-          if (existing.kind !== 'standard' && input.categoryId)
+
+          if (existing.kind !== 'standard' && input.categoryId) {
             throw new ServiceError('Only standard transactions can have a category');
+          }
+
           patch.categoryId = input.categoryId || null;
           patch.needsReview = input.needsReview ?? !input.categoryId;
         }
+
         if (input.payeeId !== undefined) {
           if (input.payeeId) await assertPayee(tx, userId, input.payeeId);
           patch.payeeId = input.payeeId || null;
         }
+
         if (input.amountMinor !== undefined) patch.amountMinor = input.amountMinor;
         if (input.date) patch.date = input.date;
         if (input.memo !== undefined) patch.memo = input.memo.trim();
         if (input.status) patch.status = input.status;
         if (input.excluded !== undefined) patch.excluded = input.excluded;
         if (input.needsReview !== undefined) patch.needsReview = input.needsReview;
+
         const [updated] = await tx
           .update(transactions)
           .set(patch)
           .where(eq(transactions.id, id))
           .returning();
+
         return updated;
       });
-      if (row.payeeId && row.categoryId)
+
+      if (row.payeeId && row.categoryId) {
         await payeeService.learnDefaultCategory(userId, row.payeeId);
+      }
+
       return row;
     },
 
@@ -302,6 +351,7 @@ export function createLedgerService(db: Db) {
       await db.transaction(async tx => {
         const existing = await ownedTransaction(tx, userId, id);
         const now = new Date();
+
         if (existing.transferId) {
           await tx
             .update(transactions)
@@ -319,6 +369,7 @@ export function createLedgerService(db: Db) {
       await db.transaction(async tx => {
         const existing = await ownedTransaction(tx, userId, id);
         const ids = existing.transferId ? undefined : [id];
+
         await tx
           .update(transactions)
           .set({ status })
@@ -336,22 +387,31 @@ export function createLedgerService(db: Db) {
     /** Writes both legs of a transfer in one transaction and returns them. */
     async createTransfer(userId: string, input: TransferInput) {
       assertDate(input.date);
-      if (input.fromAccountId === input.toAccountId)
+
+      if (input.fromAccountId === input.toAccountId) {
         throw new ServiceError('Choose two different accounts');
-      if (!Number.isInteger(input.amountFromMinor) || input.amountFromMinor <= 0)
+      }
+
+      if (!Number.isInteger(input.amountFromMinor) || input.amountFromMinor <= 0) {
         throw new ServiceError('Amount must be a positive whole number of minor units');
+      }
+
       return db.transaction(async tx => {
         const from = await ownedAccount(tx, userId, input.fromAccountId);
         const to = await ownedAccount(tx, userId, input.toAccountId);
         let amountTo = input.amountToMinor;
+
         if (from.currency === to.currency) amountTo = amountTo ?? input.amountFromMinor;
-        else if (!amountTo || !Number.isInteger(amountTo) || amountTo <= 0)
+        else if (!amountTo || !Number.isInteger(amountTo) || amountTo <= 0) {
           throw new ServiceError(
             `Enter the amount received in ${to.currency} for this cross-currency transfer`
           );
+        }
+
         const transferId = crypto.randomUUID();
         const memo = input.memo?.trim() ?? '';
         const status = input.status ?? 'cleared';
+
         const legs = await tx
           .insert(transactions)
           .values([
@@ -370,7 +430,7 @@ export function createLedgerService(db: Db) {
               userId,
               accountId: to.id,
               currency: to.currency,
-              amountMinor: amountTo!,
+              amountMinor: amountTo,
               date: input.date,
               kind: 'transfer',
               transferId,
@@ -379,12 +439,14 @@ export function createLedgerService(db: Db) {
             },
           ])
           .returning();
+
         return { transferId, legs };
       });
     },
 
     async updateTransfer(userId: string, transferId: string, input: Partial<TransferInput>) {
       if (input.date) assertDate(input.date);
+
       return db.transaction(async tx => {
         const legs = await tx
           .select()
@@ -397,33 +459,52 @@ export function createLedgerService(db: Db) {
             )
           )
           .for('update');
+
         if (legs.length !== 2) notFound('Transfer');
         const outLeg = legs.find(leg => leg.amountMinor < 0)!;
         const inLeg = legs.find(leg => leg.amountMinor > 0)!;
         const from = await ownedAccount(tx, userId, input.fromAccountId ?? outLeg.accountId);
         const to = await ownedAccount(tx, userId, input.toAccountId ?? inLeg.accountId);
+
         if (from.id === to.id) throw new ServiceError('Choose two different accounts');
         const amountFrom = input.amountFromMinor ?? -Number(outLeg.amountMinor);
         let amountTo = input.amountToMinor;
+
         if (from.currency === to.currency) amountTo = amountFrom;
-        else
+        else {
           amountTo =
             amountTo ?? (to.id === inLeg.accountId ? Number(inLeg.amountMinor) : undefined);
-        if (!amountTo || amountTo <= 0 || amountFrom <= 0)
+        }
+
+        if (!amountTo || amountTo <= 0 || amountFrom <= 0) {
           throw new ServiceError('Transfer amounts must be positive');
+        }
+
         const shared = {
           date: input.date ?? outLeg.date,
           memo: input.memo?.trim() ?? outLeg.memo,
           status: input.status ?? outLeg.status,
         };
+
         await tx
           .update(transactions)
-          .set({ ...shared, accountId: from.id, currency: from.currency, amountMinor: -amountFrom })
+          .set({
+            ...shared,
+            accountId: from.id,
+            currency: from.currency,
+            amountMinor: -amountFrom,
+          })
           .where(eq(transactions.id, outLeg.id));
         await tx
           .update(transactions)
-          .set({ ...shared, accountId: to.id, currency: to.currency, amountMinor: amountTo })
+          .set({
+            ...shared,
+            accountId: to.id,
+            currency: to.currency,
+            amountMinor: amountTo,
+          })
           .where(eq(transactions.id, inLeg.id));
+
         return { transferId };
       });
     },
@@ -433,14 +514,22 @@ export function createLedgerService(db: Db) {
       return db.transaction(async tx => {
         const outRow = await ownedTransaction(tx, userId, outId);
         const inRow = await ownedTransaction(tx, userId, inId);
-        if (outRow.kind !== 'standard' || inRow.kind !== 'standard')
+
+        if (outRow.kind !== 'standard' || inRow.kind !== 'standard') {
           throw new ServiceError('Only standard transactions can be linked');
-        if (outRow.accountId === inRow.accountId)
+        }
+
+        if (outRow.accountId === inRow.accountId) {
           throw new ServiceError('Transfer legs must be in different accounts');
-        if (Number(outRow.amountMinor) >= 0 || Number(inRow.amountMinor) <= 0)
+        }
+
+        if (Number(outRow.amountMinor) >= 0 || Number(inRow.amountMinor) <= 0) {
           throw new ServiceError('One leg must be money out and the other money in');
+        }
+
         const transferId = crypto.randomUUID();
-        for (const legId of [outId, inId])
+
+        for (const legId of [outId, inId]) {
           await tx
             .update(transactions)
             .set({
@@ -451,6 +540,8 @@ export function createLedgerService(db: Db) {
               needsReview: false,
             })
             .where(eq(transactions.id, legId));
+        }
+
         return { transferId };
       });
     },
@@ -466,7 +557,8 @@ export function createLedgerService(db: Db) {
             isNull(transactions.deletedAt)
           )
         );
+
       return Number(count);
     },
   };
-}
+};

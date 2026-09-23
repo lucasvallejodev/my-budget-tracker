@@ -5,8 +5,10 @@ describe('csv', () => {
   it('sniffs the delimiter and handles quotes, escapes and blank lines', () => {
     const text =
       'Date;Payee;Amount\r\n2026-09-01;"Café ""Central"", Madrid";-12,50\r\n\r\n2026-09-02;Salary;2.000,00\n';
+
     expect(sniffDelimiter(text)).toBe(';');
     const parsed = parseCsv(text);
+
     expect(parsed.headers).toEqual(['Date', 'Payee', 'Amount']);
     expect(parsed.rows).toEqual([
       ['2026-09-01', 'Café "Central", Madrid', '-12,50'],

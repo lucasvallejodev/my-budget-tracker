@@ -18,6 +18,7 @@ export function Amount({
   className?: string;
 }) {
   const value = flipSign ? -amountMinor : amountMinor;
+
   return (
     <span
       className={cn(

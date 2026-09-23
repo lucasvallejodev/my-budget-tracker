@@ -17,10 +17,13 @@ All commands run from the repository root.
 
 | Command | What it does |
 | --- | --- |
-| `npm run lint` | ESLint with the Next.js, TypeScript and Prettier rules. |
-| `npm run lint:fix` | Same, applying automatic fixes. |
+| `npm run lint` | ESLint (Next.js, type-aware TypeScript, SonarJS, blank-line and layout rules, Prettier) plus Stylelint for SCSS. Errors fail; complexity warnings are reported. See [Code style](../architecture/code-style.md). |
+| `npm run lint:fix` | Same, applying every automatic fix (formatting, blank lines, object layout, arrow functions). Run it after editing. |
+| `npm run lint:dupes` | Duplicated-code report with jscpd; fails above 3 % duplicated lines. |
+| `npm run knip` | Unused files, exports, types and dependencies. Advisory. |
 | `npm run format` / `npm run format:check` | Prettier over the whole repository. |
 | `npm test -- --run` | Vitest once (unit, component and PGlite database tests). Without `--run` it watches. |
+| `npm run test:coverage` | Same, writing `coverage/lcov.info` (read by SonarQube Cloud in CI). |
 | `npm run test:e2e` | Playwright end-to-end tests in `e2e/` (requires a running app and a signed-in session; the sample spec only visits playwright.dev). |
 | `npx tsc --noEmit` | Type check without building. |
 

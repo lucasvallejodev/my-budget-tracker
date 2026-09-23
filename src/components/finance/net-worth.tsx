@@ -1,4 +1,5 @@
 'use client';
+
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { Button } from '../primitives/button';
@@ -15,7 +16,7 @@ export function NetWorthCards({
   buckets: NetWorthBucket[];
   accounts: AccountSummary[];
 }) {
-  if (!buckets.length)
+  if (!buckets.length) {
     return (
       <section className={s.balance}>
         <div className={s.balanceTitle}>
@@ -32,10 +33,13 @@ export function NetWorthCards({
         </div>
       </section>
     );
+  }
+
   return (
     <>
       {buckets.map(bucket => {
         const count = accounts.filter(a => a.currency === bucket.currency).length;
+
         return (
           <section className={s.balance} key={bucket.currency}>
             <div className={s.balanceTitle}>

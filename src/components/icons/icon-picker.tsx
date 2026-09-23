@@ -1,6 +1,8 @@
 'use client';
+
+import { Colors, GroupColors } from '@/styles/theme';
 import { useState } from 'react';
-import { ICON_NAMES, IconName } from './registry';
+import { IconNames, IconName } from './registry';
 import { Icon } from '../icon';
 import { Input } from '../primitives/input';
 import { Button } from '../primitives/button';
@@ -12,13 +14,14 @@ export function IconPicker({
   onChange,
   color,
 }: {
-  value: IconName | string;
+  value: string;
   onChange: (icon: IconName) => void;
   color?: string;
 }) {
   const [search, setSearch] = useState('');
   const term = search.trim().toLowerCase();
-  const visible = ICON_NAMES.filter(name => !term || name.toLowerCase().includes(term));
+  const visible = IconNames.filter(name => !term || name.toLowerCase().includes(term));
+
   return (
     <div className={s.form}>
       <Input
@@ -50,25 +53,6 @@ export function IconPicker({
   );
 }
 
-export const GROUP_COLORS = [
-  '#16A34A',
-  '#059669',
-  '#0891B2',
-  '#2563EB',
-  '#7C3AED',
-  '#9333EA',
-  '#DB2777',
-  '#E11D48',
-  '#DC2626',
-  '#EA580C',
-  '#D97706',
-  '#CA8A04',
-  '#475569',
-  '#64748B',
-  '#78716C',
-  '#0F766E',
-];
-
 export function ColorPicker({
   value,
   onChange,
@@ -78,7 +62,7 @@ export function ColorPicker({
 }) {
   return (
     <div className={s.swatches} role="radiogroup" aria-label="Colour">
-      {GROUP_COLORS.map(hex => (
+      {GroupColors.map(hex => (
         <button
           key={hex}
           type="button"
@@ -96,7 +80,7 @@ export function ColorPicker({
       <input
         type="color"
         aria-label="Custom colour"
-        value={/^#[0-9a-f]{6}$/i.test(value) ? value : '#8b5cf6'}
+        value={/^#[0-9a-f]{6}$/i.test(value) ? value : Colors.accent}
         onChange={event => onChange(event.target.value.toUpperCase())}
       />
     </div>

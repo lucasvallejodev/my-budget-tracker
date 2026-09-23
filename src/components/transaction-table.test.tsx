@@ -2,13 +2,13 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it } from 'vitest';
 import { categoryLabel, describeTransaction, TransactionTable } from './transaction-table';
-import { sampleTransactions } from './finance/sample-data';
+import { SampleTransactions } from './finance/sample-data';
 import type { TransactionRow } from './finance/use-finance-data';
 
 afterEach(cleanup);
 
 const leg = (overrides: Partial<TransactionRow>): TransactionRow => ({
-  ...sampleTransactions[1],
+  ...SampleTransactions[1],
   id: 'leg',
   kind: 'transfer',
   transferId: 'xfer',
@@ -32,13 +32,23 @@ describe('transfer legs', () => {
     expect(describeTransaction(leg({ amountMinor: -10500 }))).toBe('Transfer to Visa');
     expect(
       describeTransaction(
-        leg({ amountMinor: 10500, accountName: 'Visa', counterpartAccountName: 'Checking' })
+        leg({
+          amountMinor: 10500,
+          accountName: 'Visa',
+          counterpartAccountName: 'Checking',
+        })
       )
     ).toBe('Transfer from Checking');
     expect(categoryLabel(leg({ amountMinor: -10500 }))).toBe('Transfer');
-    expect(categoryLabel(leg({ kind: 'opening', transferId: null, amountMinor: 100 }))).toBe(
-      'Opening balance'
-    );
+    expect(
+      categoryLabel(
+        leg({
+          kind: 'opening',
+          transferId: null,
+          amountMinor: 100,
+        })
+      )
+    ).toBe('Opening balance');
   });
 
   it('renders a transfer row with a signed amount and no review badge', () => {

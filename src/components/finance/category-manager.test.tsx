@@ -77,7 +77,9 @@ afterEach(cleanup);
 
 function renderManager() {
   const client = new QueryClient();
+
   client.setQueryData(['categories', true], tree);
+
   return render(
     <QueryClientProvider client={client}>
       <CategoryManager />
@@ -101,6 +103,7 @@ describe('CategoryManager', () => {
 
   it('offers a destination when archiving a category that has transactions', async () => {
     const actions = await import('@/app/(main)/actions');
+
     renderManager();
     fireEvent.click(screen.getByRole('button', { name: 'Archive Groceries' }));
     expect(screen.getByRole('dialog', { name: 'Archive Groceries?' })).toBeTruthy();
@@ -113,6 +116,7 @@ describe('CategoryManager', () => {
 
   it('reorders categories with the arrow buttons', async () => {
     const actions = await import('@/app/(main)/actions');
+
     renderManager();
     fireEvent.click(screen.getByRole('button', { name: 'Move Coffee up' }));
     await vi.waitFor(() =>
@@ -122,7 +126,7 @@ describe('CategoryManager', () => {
       ])
     );
     expect(
-      (screen.getByRole('button', { name: 'Move Groceries up' }) as HTMLButtonElement).disabled
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Move Groceries up' }).disabled
     ).toBe(true);
   });
 });

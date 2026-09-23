@@ -13,8 +13,8 @@ export type RateQuote = {
   source: string;
 };
 
-export interface RateProvider {
+export type RateProvider = {
   readonly name: string;
   /** Most recent rate on or before `date`, or null when the provider has none. */
   getRate(userId: string, base: string, quote: string, date: string): Promise<RateQuote | null>;
-}
+};

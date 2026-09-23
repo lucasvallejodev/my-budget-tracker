@@ -1,6 +1,7 @@
 import { CategoryManager } from '@/components/finance/category-manager';
 import { PageHeading } from '@/components/finance/blocks';
 import s from '@/components/finance/finance.module.scss';
+
 export default function Page() {
   return (
     <div className={s.page}>

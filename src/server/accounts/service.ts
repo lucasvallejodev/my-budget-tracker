@@ -5,9 +5,8 @@ import { Db, ServiceError, notFound } from '../db';
 export type AccountType = (typeof accounts.$inferSelect)['type'];
 export type Classification = (typeof accounts.$inferSelect)['classification'];
 
-export function classificationFor(type: AccountType): Classification {
-  return type === 'credit_card' || type === 'loan' ? 'liability' : 'asset';
-}
+export const classificationFor = (type: AccountType): Classification =>
+  type === 'credit_card' || type === 'loan' ? 'liability' : 'asset';
 
 export type AccountSummary = {
   id: string;
@@ -26,15 +25,17 @@ export type AccountSummary = {
   transactionCount: number;
 };
 
-export function createAccountService(db: Db) {
-  async function owned(userId: string, id: string) {
+export const createAccountService = (db: Db) => {
+  const owned = async (userId: string, id: string) => {
     const [account] = await db
       .select()
       .from(accounts)
       .where(and(eq(accounts.id, id), eq(accounts.userId, userId), isNull(accounts.deletedAt)))
       .limit(1);
+
     return account ?? notFound('Account');
-  }
+  };
+
   return {
     owned,
     async list(userId: string, { includeArchived = false } = {}): Promise<AccountSummary[]> {
@@ -64,6 +65,7 @@ export function createAccountService(db: Db) {
           )
         )
         .orderBy(asc(accounts.createdAt));
+
       return rows.map(row => ({
         ...row,
         archivedAt: row.archivedAt?.toISOString() ?? null,
@@ -75,6 +77,7 @@ export function createAccountService(db: Db) {
       const [summary] = (await this.list(userId, { includeArchived: true })).filter(
         row => row.id === id
       );
+
       return summary ?? notFound('Account');
     },
     async create(
@@ -94,12 +97,15 @@ export function createAccountService(db: Db) {
       }
     ) {
       const currency = data.currency.toUpperCase();
+
       const [known] = await db
         .select({ code: currencies.code })
         .from(currencies)
         .where(eq(currencies.code, currency))
         .limit(1);
+
       if (!known) throw new ServiceError(`Unknown currency ${currency}`);
+
       return db.transaction(async tx => {
         const [account] = await tx
           .insert(accounts)
@@ -117,6 +123,7 @@ export function createAccountService(db: Db) {
             countsInSpending: data.countsInSpending ?? data.type !== 'investment',
           })
           .returning();
+
         if (data.openingBalanceMinor) {
           await tx.insert(transactions).values({
             userId,
@@ -128,6 +135,7 @@ export function createAccountService(db: Db) {
             memo: 'Opening balance',
           });
         }
+
         return account;
       });
     },
@@ -148,19 +156,25 @@ export function createAccountService(db: Db) {
     ) {
       const account = await owned(userId, id);
       const patch: Partial<typeof accounts.$inferInsert> = { ...data };
+
       if (data.currency && data.currency.toUpperCase() !== account.currency) {
         const [{ count }] = await db
           .select({ count: sql<number>`count(*)::int` })
           .from(transactions)
           .where(and(eq(transactions.accountId, id), isNull(transactions.deletedAt)));
-        if (Number(count) > 0)
+
+        if (Number(count) > 0) {
           throw new ServiceError('The currency of an account with transactions cannot change');
+        }
+
         patch.currency = data.currency.toUpperCase();
       } else {
         delete patch.currency;
       }
+
       if (data.type) patch.classification = classificationFor(data.type);
       const [updated] = await db.update(accounts).set(patch).where(eq(accounts.id, id)).returning();
+
       return updated;
     },
     async archive(userId: string, id: string, archived = true) {
@@ -172,13 +186,17 @@ export function createAccountService(db: Db) {
     },
     async remove(userId: string, id: string) {
       await owned(userId, id);
+
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(transactions)
         .where(and(eq(transactions.accountId, id), isNull(transactions.deletedAt)));
-      if (Number(count) > 0)
+
+      if (Number(count) > 0) {
         throw new ServiceError('Archive accounts that have transactions instead of deleting them');
+      }
+
       await db.update(accounts).set({ deletedAt: new Date() }).where(eq(accounts.id, id));
     },
   };
-}
+};

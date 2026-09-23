@@ -1,4 +1,6 @@
 'use client';
+
+import { Colors } from '@/styles/theme';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -18,7 +20,7 @@ import {
 import { Icon } from '../icon';
 import { ColorPicker, IconPicker } from '../icons/icon-picker';
 import { IconName } from '../icons/registry';
-import { CategoryTree, FINANCE_KEYS, useCategories } from './use-finance-data';
+import { CategoryTree, FinanceKeys, useCategories } from './use-finance-data';
 import {
   archiveCategoryAction,
   archiveCategoryGroupAction,
@@ -38,18 +40,21 @@ type Category = CategoryTree['categories'][number];
 
 function useRefresh() {
   const queryClient = useQueryClient();
+
   return () =>
-    Promise.all(FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+    Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
 }
 
 export function CategoryManager() {
   const tree = useCategories(true);
   const refresh = useRefresh();
   const [groupDialog, setGroupDialog] = useState<{ group?: Group } | null>(null);
+
   const [categoryDialog, setCategoryDialog] = useState<{
     groupId: string;
     category?: Category;
   } | null>(null);
+
   const [archiving, setArchiving] = useState<{ category: Category; group: Group } | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const groups = (tree.data ?? []).filter(g => !g.archivedAt);
@@ -62,17 +67,21 @@ export function CategoryManager() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   const moveGroup = (index: number, delta: number) => {
     const ordered = groups.map(g => g.id);
     const target = index + delta;
+
     if (target < 0 || target >= ordered.length) return;
     [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
     run.mutate({ fn: () => reorderCategoryGroupsAction(ordered) });
   };
+
   const moveCategory = (group: Group, index: number, delta: number) => {
     const live = group.categories.filter(c => !c.archivedAt);
     const ordered = live.map(c => c.id);
     const target = index + delta;
+
     if (target < 0 || target >= ordered.length) return;
     [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
     run.mutate({ fn: () => reorderCategoriesAction(group.id, ordered) });
@@ -94,6 +103,7 @@ export function CategoryManager() {
       {groups.map((group, groupIndex) => {
         const live = group.categories.filter(c => !c.archivedAt);
         const archived = group.categories.filter(c => c.archivedAt);
+
         return (
           <Panel
             key={group.id}
@@ -290,18 +300,28 @@ function GroupDialog({
 }) {
   const [name, setName] = useState(group?.name ?? '');
   const [kind, setKind] = useState<'income' | 'expense'>(group?.kind ?? 'expense');
-  const [color, setColor] = useState(group?.color ?? '#2563EB');
+  const [color, setColor] = useState(group?.color ?? Colors.group.blue);
+
   const save = useMutation({
     mutationFn: () =>
       group
-        ? updateCategoryGroupAction(group.id, { name, kind, color })
-        : createCategoryGroupAction({ name, kind, color }),
+        ? updateCategoryGroupAction(group.id, {
+            name,
+            kind,
+            color,
+          })
+        : createCategoryGroupAction({
+            name,
+            kind,
+            color,
+          }),
     onSuccess: async () => {
       toast.success(group ? 'Group updated' : 'Group created');
       await onSaved();
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
       <DialogContent>
@@ -367,20 +387,30 @@ function CategoryDialog({
   onSaved: () => Promise<void>;
 }) {
   const [name, setName] = useState(category?.name ?? '');
-  const [icon, setIcon] = useState<IconName | string>(category?.icon ?? 'Shapes');
+  const [icon, setIcon] = useState<string>(category?.icon ?? 'Shapes');
   const [group, setGroup] = useState(groupId);
   const color = groups.find(g => g.id === group)?.color;
+
   const save = useMutation({
     mutationFn: () =>
       category
-        ? updateCategoryAction(category.id, { name, icon: icon as IconName, groupId: group })
-        : createCategoryAction({ name, icon: icon as IconName, groupId: group }),
+        ? updateCategoryAction(category.id, {
+            name,
+            icon: icon as IconName,
+            groupId: group,
+          })
+        : createCategoryAction({
+            name,
+            icon: icon as IconName,
+            groupId: group,
+          }),
     onSuccess: async () => {
       toast.success(category ? 'Category updated' : 'Category created');
       await onSaved();
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
       <DialogContent>
@@ -445,11 +475,13 @@ function ArchiveDialog({
   onDone: () => Promise<void>;
 }) {
   const [moveTo, setMoveTo] = useState('');
+
   const options = groups.flatMap(g =>
     g.categories
       .filter(c => !c.archivedAt && c.id !== category.id)
       .map(c => ({ id: c.id, label: `${g.name} › ${c.name}` }))
   );
+
   const archive = useMutation({
     mutationFn: () => archiveCategoryAction(category.id, moveTo || undefined),
     onSuccess: async () => {
@@ -458,6 +490,7 @@ function ArchiveDialog({
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
       <DialogContent>

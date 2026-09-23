@@ -41,6 +41,7 @@ it('closes the picker, hides the parent, and restores its draft and focus after 
   );
   const parent = screen.getByRole('dialog', { name: 'Transaction' });
   const picker = screen.getByRole('button', { name: 'Select accounts' });
+
   fireEvent.click(picker);
   expect(screen.getByPlaceholderText('Search accounts…')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Create new' }));
@@ -49,6 +50,6 @@ it('closes the picker, hides the parent, and restores its draft and focus after 
   expect(screen.getByRole('dialog', { name: 'Create account' }).style.visibility).toBe('visible');
   fireEvent.click(screen.getByRole('button', { name: 'Cancel account' }));
   await waitFor(() => expect(parent.style.visibility).toBe('visible'));
-  expect((screen.getByLabelText('Description') as HTMLInputElement).value).toBe('Saved draft');
+  expect(screen.getByLabelText<HTMLInputElement>('Description').value).toBe('Saved draft');
   await waitFor(() => expect(document.activeElement).toBe(picker));
 });

@@ -1,4 +1,5 @@
 'use client';
+
 import { useId, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
@@ -21,10 +22,12 @@ export function DatePicker({
   const id = useId();
   const [open, setOpen] = useState(false);
   const selected = value ? parseISO(value) : undefined;
+
   const choose = (date?: Date) => {
     onChange(date ? format(date, 'yyyy-MM-dd') : '');
     setOpen(false);
   };
+
   return (
     <div className={s.field}>
       <label htmlFor={id}>{label}</label>

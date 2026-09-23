@@ -12,6 +12,7 @@
   - [Server layer](architecture/server.md)
   - [Frontend](architecture/frontend.md)
   - [Testing](architecture/testing.md)
+  - [Code style](architecture/code-style.md)
 
 - Features
   - [Accounts](features/accounts.md)

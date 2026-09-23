@@ -8,7 +8,7 @@
 | --- | --- |
 | `src/` | Application source (Next.js App Router, components, server layer, database schema). |
 | `drizzle/` | SQL migrations and Drizzle snapshots. `0000_initial.sql` is the legacy schema, `0001_ledger.sql` the current one. |
-| `scripts/` | Node scripts: `database.mjs` (schema check) and `schema-signature.mjs` (its helper). |
+| `scripts/` | Node scripts: `database.mjs` (schema check), `schema-signature.mjs` (its helper) and `eslint-rules/` (local ESLint rules). |
 | `e2e/` | Playwright end-to-end tests and their config in `playwright.config.ts`. |
 | `docs/` | This documentation (Docsify). `docs/legacy/` holds the original proposal, research and migration notes. `docs/assets/` holds diagrams and screenshots. |
 | `agents/` | Documentation written for AI coding agents: condensed architecture, conventions, workflows. Humans can read it too, but the site above is the friendly version. |
@@ -17,7 +17,8 @@
 | `.claude/` | Local tooling configuration (dev-server launch config). |
 | `AGENTS.md`, `CLAUDE.md` | Instructions for AI agents working in this repository. |
 | `docker-compose.yml`, `Dockerfile`, `.dockerignore` | Local PostgreSQL and the optional app container. |
-| `drizzle.config.ts`, `next.config.ts`, `vitest.config.mts`, `eslint.config.js`, `.prettierrc.js`, `tsconfig.json` | Tool configuration. |
+| `drizzle.config.ts`, `next.config.ts`, `vitest.config.mts`, `eslint.config.mjs`, `.stylelintrc.json`, `.prettierrc.js`, `sonar-project.properties`, `tsconfig.json` | Tool configuration. |
+| `.github/workflows/` | CI: `quality.yml` (lint, types, tests, duplication), `sonar.yml` (SonarQube Cloud), `playwright.yml`. |
 
 ## Inside `src/`
 
@@ -51,11 +52,13 @@ src/
 │  ├─ index.ts             Lazy node-postgres pool
 │  └─ connection.ts        DATABASE_URL validation
 ├─ schema/                 Zod schemas for form and action input
-├─ lib/                    Pure helpers: money.ts (minor units, parsing, formatting), date-helpers.ts, styles.ts
+├─ lib/                    Pure helpers: money.ts (minor units, parsing, formatting), math.ts, date-helpers.ts, styles.ts
 ├─ constants/account.ts    Account type labels and sidebar grouping
 ├─ providers/              React Query provider
 ├─ hooks/                  Small React hooks
-├─ styles/tokens.scss      Colour and spacing tokens (light and dark)
+├─ styles/
+│  ├─ tokens.scss          CSS colour tokens (light, dark and theme-independent)
+│  └─ theme.ts             Colours and chart styles needed from TypeScript (Colors, GroupColors, ChartStyle)
 └─ middleware.ts           Clerk route protection
 ```
 

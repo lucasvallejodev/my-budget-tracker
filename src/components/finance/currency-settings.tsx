@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -16,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../primitives/select';
-import { FINANCE_KEYS, useCurrencies, useExchangeRates, useSettings } from './use-finance-data';
+import { FinanceKeys, useCurrencies, useExchangeRates, useSettings } from './use-finance-data';
 import {
   deleteExchangeRateAction,
   updateSettingsAction,
@@ -27,11 +28,16 @@ import f from '../forms.module.scss';
 
 function useRefresh() {
   const queryClient = useQueryClient();
+
   return () =>
-    Promise.all(FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
+    Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
 }
 
-type CurrencyOption = { code: string; name: string; symbol: string };
+type CurrencyOption = {
+  code: string;
+  name: string;
+  symbol: string;
+};
 
 function CurrencySelect({
   value,
@@ -67,12 +73,14 @@ export function CurrencySettings() {
   const settings = useSettings();
   const currencies = useCurrencies();
   const rates = useExchangeRates();
+
   const [form, setForm] = useState({
     base: '',
     quote: '',
     date: new Date().toISOString().slice(0, 10),
     rate: '',
   });
+
   const save = useMutation({
     mutationFn: updateSettingsAction,
     onSuccess: async () => {
@@ -81,6 +89,7 @@ export function CurrencySettings() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   const addRate = useMutation({
     mutationFn: () => upsertExchangeRateAction(form),
     onSuccess: async () => {
@@ -90,13 +99,16 @@ export function CurrencySettings() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   const removeRate = useMutation({
     mutationFn: deleteExchangeRateAction,
     onSuccess: refresh,
     onError: (error: Error) => toast.error(error.message),
   });
+
   const primary = settings.data?.primaryCurrency ?? 'EUR';
   const options = currencies.data ?? [];
+
   return (
     <div className={s.stack}>
       <Panel

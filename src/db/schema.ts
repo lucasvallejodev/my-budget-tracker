@@ -34,7 +34,9 @@ const id = () =>
   text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID());
+
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
+
 const updatedAt = () =>
   timestamp('updated_at', { withTimezone: true })
     .notNull()

@@ -1,4 +1,7 @@
 'use client';
+
+import { ChartStyle, Colors } from '@/styles/theme';
+import { getPercentage } from '@/lib/math';
 import { useId } from 'react';
 import {
   Area,
@@ -14,9 +17,18 @@ import {
 } from 'recharts';
 import { Panel, money, EmptyState } from './blocks';
 import s from './finance.module.scss';
-export type CashPoint = { label: string; income: number; expense: number };
-export type Segment = { name: string; value: number; color?: string };
-const colors = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#e5e7eb'];
+
+export type CashPoint = {
+  label: string;
+  income: number;
+  expense: number;
+};
+export type Segment = {
+  name: string;
+  value: number;
+  color?: string;
+};
+
 export function CashFlowChart({
   data,
   action,
@@ -29,6 +41,7 @@ export function CashFlowChart({
   description?: string;
 }) {
   const id = useId().replace(/:/g, '');
+
   return (
     <Panel title="Cash Flow" description={description} action={action}>
       <div className={s.chart}>
@@ -36,37 +49,19 @@ export function CashFlowChart({
           <AreaChart data={data} accessibilityLayer>
             <defs>
               <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+                <stop offset="0%" stopColor={Colors.chart.income} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={Colors.chart.income} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke="var(--border)" />
-            <XAxis
-              dataKey="label"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: 'var(--muted)', fontSize: 11 }}
-            />
-            <YAxis
-              width={60}
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: 'var(--muted)', fontSize: 11 }}
-            />
-            <Tooltip
-              formatter={value => format(Number(value))}
-              contentStyle={{
-                background: 'var(--surface)',
-                color: 'var(--ink)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-              }}
-            />
+            <CartesianGrid vertical={false} stroke={ChartStyle.grid} />
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
+            <YAxis width={60} axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
+            <Tooltip formatter={value => format(Number(value))} contentStyle={ChartStyle.tooltip} />
             <Area
               type="monotone"
               name="Income"
               dataKey="income"
-              stroke="#8b5cf6"
+              stroke={Colors.chart.income}
               strokeWidth={3}
               fill={`url(#${id})`}
             />
@@ -74,7 +69,7 @@ export function CashFlowChart({
               type="monotone"
               name="Expenses"
               dataKey="expense"
-              stroke="#9ca3af"
+              stroke={Colors.chart.expense}
               strokeDasharray="5 5"
               fill="transparent"
             />
@@ -85,6 +80,7 @@ export function CashFlowChart({
     </Panel>
   );
 }
+
 export function DistributionChart({
   title = 'Top Expenses',
   data,
@@ -97,7 +93,10 @@ export function DistributionChart({
   format?: (value: number) => string;
 }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
-  const fill = (d: Segment, i: number) => d.color ?? colors[i % colors.length];
+
+  const fill = (d: Segment, i: number) =>
+    d.color ?? Colors.chart.series[i % Colors.chart.series.length];
+
   return (
     <Panel title={title} action={action}>
       {total <= 0 ? (
@@ -127,11 +126,7 @@ export function DistributionChart({
                 </Pie>
                 <Tooltip
                   formatter={value => format(Number(value))}
-                  contentStyle={{
-                    background: 'var(--surface)',
-                    borderRadius: 10,
-                    border: '1px solid var(--border)',
-                  }}
+                  contentStyle={ChartStyle.tooltip}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -150,8 +145,10 @@ export function DistributionChart({
     </Panel>
   );
 }
+
 export function TargetCard({ value, target }: { value: number; target: number }) {
-  const percent = target > 0 ? Math.round((value / target) * 100) : 0;
+  const percent = getPercentage(value, target);
+
   return (
     <Panel title="Target" description="Income target progress">
       <div className={s.chart} role="img" aria-label={`${percent}% of income target`}>
@@ -167,7 +164,7 @@ export function TargetCard({ value, target }: { value: number; target: number })
               cy="75%"
               stroke="none"
             >
-              <Cell fill="#8b5cf6" />
+              <Cell fill={Colors.chart.used} />
               <Cell fill="var(--border)" />
             </Pie>
           </PieChart>

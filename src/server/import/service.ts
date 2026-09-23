@@ -39,7 +39,12 @@ export type Preview = {
   accountId: string;
   currency: string;
   rows: PreviewRow[];
-  counts: { new: number; duplicate: number; matched: number; invalid: number };
+  counts: {
+    new: number;
+    duplicate: number;
+    matched: number;
+    invalid: number;
+  };
 };
 
 export type TransferSuggestion = {
@@ -52,30 +57,34 @@ export type TransferSuggestion = {
   date: string;
 };
 
-function hash(text: string) {
+const hash = (text: string) => {
   let h = 2166136261;
+
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}
 
-export function createImportService(db: Db) {
+  return (h >>> 0).toString(16).padStart(8, '0');
+};
+
+export const createImportService = (db: Db) => {
   const ledger = createLedgerService(db);
   const payees = createPayeeService(db);
   const rulesService = createRuleService(db);
 
-  async function ownedAccount(userId: string, id: string) {
+  const ownedAccount = async (userId: string, id: string) => {
     const [account] = await db
       .select()
       .from(accounts)
       .where(and(eq(accounts.id, id), eq(accounts.userId, userId), isNull(accounts.deletedAt)))
       .limit(1);
+
     if (!account) notFound('Account');
     if (account.archivedAt) throw new ServiceError('This account is archived');
+
     return account;
-  }
+  };
 
   return {
     parseCsv,
@@ -83,11 +92,16 @@ export function createImportService(db: Db) {
     /** Parses and classifies every row without writing anything. */
     async preview(
       userId: string,
-      input: { accountId: string; csv: string; mapping: ColumnMapping }
+      input: {
+        accountId: string;
+        csv: string;
+        mapping: ColumnMapping;
+      }
     ): Promise<Preview> {
       const account = await ownedAccount(userId, input.accountId);
       const parsed = parseCsv(input.csv);
       const column = (name?: string) => (name ? parsed.headers.indexOf(name) : -1);
+
       const cols = {
         date: column(input.mapping.date),
         amount: column(input.mapping.amount),
@@ -97,9 +111,12 @@ export function createImportService(db: Db) {
         memo: column(input.mapping.memo),
         externalId: column(input.mapping.externalId),
       };
+
       if (cols.date < 0) throw new ServiceError('Choose the date column');
-      if (cols.amount < 0 && cols.debit < 0 && cols.credit < 0)
+
+      if (cols.amount < 0 && cols.debit < 0 && cols.credit < 0) {
         throw new ServiceError('Choose an amount column, or debit and credit columns');
+      }
 
       const existingIds = new Set(
         (
@@ -111,6 +128,7 @@ export function createImportService(db: Db) {
           .map(row => row.importId)
           .filter((id): id is string => !!id)
       );
+
       const candidates = await db
         .select({
           id: transactions.id,
@@ -126,32 +144,41 @@ export function createImportService(db: Db) {
             isNull(transactions.deletedAt)
           )
         );
+
       const claimed = new Set<string>();
       const occurrences = new Map<string, number>();
+
       const payeeDefaults = new Map(
         (await payees.list(userId)).map(p => [p.name.toLowerCase(), p.defaultCategoryId])
       );
+
       const rows: PreviewRow[] = [];
+
       for (const [index, cells] of parsed.rows.entries()) {
         const cell = (i: number) => (i >= 0 ? (cells[i] ?? '').trim() : '');
         const date = parseDateCell(cell(cols.date), input.mapping.dateFormat ?? 'auto');
         let amountMinor: number | null = null;
         let error: string | undefined;
+
         try {
           if (cols.amount >= 0) amountMinor = parseAmountInput(cell(cols.amount), account.currency);
           else {
             const debit = cell(cols.debit)
               ? Math.abs(parseAmountInput(cell(cols.debit), account.currency))
               : 0;
+
             const credit = cell(cols.credit)
               ? Math.abs(parseAmountInput(cell(cols.credit), account.currency))
               : 0;
+
             amountMinor = credit - debit;
           }
+
           if (input.mapping.invertSign && cols.amount >= 0) amountMinor = -amountMinor;
         } catch (e) {
           error = e instanceof Error ? e.message : 'Invalid amount';
         }
+
         if (!date) error = error ?? 'Unreadable date';
         if (amountMinor === 0) error = error ?? 'Zero amount';
         const payee = cell(cols.payee);
@@ -159,8 +186,10 @@ export function createImportService(db: Db) {
         const external = cell(cols.externalId);
         const key = `${date}:${amountMinor}:${payee.toLowerCase()}`;
         const occurrence = (occurrences.get(key) ?? 0) + 1;
+
         occurrences.set(key, occurrence);
         const importId = external || `csv:${date}:${amountMinor}:${occurrence}:${hash(payee)}`;
+
         const row: PreviewRow = {
           index,
           date,
@@ -173,6 +202,7 @@ export function createImportService(db: Db) {
           suggestedCategoryId: null,
           suggestedBy: null,
         };
+
         if (error) row.status = 'invalid';
         else if (existingIds.has(importId)) row.status = 'duplicate';
         else {
@@ -181,12 +211,15 @@ export function createImportService(db: Db) {
             .map(c => ({ ...c, distance: Math.abs(Date.parse(c.date) - Date.parse(date!)) }))
             .filter(c => c.distance <= 7 * 86400000)
             .sort((a, b) => a.distance - b.distance)[0];
+
           if (match) {
             claimed.add(match.id);
             row.status = 'matched';
             row.matchedTransactionId = match.id;
           }
+
           const rule = await rulesService.match(userId, [payee, memo]);
+
           if (rule) {
             row.suggestedCategoryId = rule.categoryId;
             row.suggestedBy = 'rule';
@@ -195,8 +228,10 @@ export function createImportService(db: Db) {
             row.suggestedBy = 'payee';
           }
         }
+
         rows.push(row);
       }
+
       return {
         accountId: account.id,
         currency: account.currency,
@@ -219,6 +254,7 @@ export function createImportService(db: Db) {
       let inserted = 0;
       let matched = 0;
       const insertedIds: string[] = [];
+
       for (const row of preview.rows) {
         if (row.status === 'matched' && row.matchedTransactionId) {
           const updated = await db
@@ -232,12 +268,15 @@ export function createImportService(db: Db) {
               )
             )
             .returning({ id: transactions.id });
+
           if (updated.length) matched++;
           continue;
         }
+
         if (row.status !== 'new' || row.date === null || row.amountMinor === null) continue;
         const payee = row.payee ? await payees.findOrCreate(userId, row.payee) : null;
         const categoryId = row.suggestedCategoryId ?? payee?.defaultCategoryId ?? null;
+
         try {
           const created = await ledger.createStandard(userId, {
             accountId: account.id,
@@ -251,6 +290,7 @@ export function createImportService(db: Db) {
             importId: row.importId,
             originalPayee: row.payee || null,
           });
+
           insertedIds.push(created.id);
           inserted++;
         } catch (error) {
@@ -258,7 +298,12 @@ export function createImportService(db: Db) {
           if (!(error instanceof Error && /unique|duplicate/i.test(error.message))) throw error;
         }
       }
-      return { inserted, matched, insertedIds };
+
+      return {
+        inserted,
+        matched,
+        insertedIds,
+      };
     },
 
     /** Opposite-sign rows in other accounts within four days that look like the other leg. */
@@ -271,12 +316,15 @@ export function createImportService(db: Db) {
         limit: 2000,
         ids: transactionIds,
       });
+
       const suggestions: TransferSuggestion[] = [];
       const seen = new Set<string>();
+
       for (const row of rows) {
         if (row.amountMinor >= 0 || row.categoryId) continue;
         const from = new Date(Date.parse(row.date) - 4 * 86400000).toISOString().slice(0, 10);
         const to = new Date(Date.parse(row.date) + 4 * 86400000).toISOString().slice(0, 10);
+
         const [peer] = await db
           .select({
             id: transactions.id,
@@ -300,12 +348,15 @@ export function createImportService(db: Db) {
           )
           .orderBy(sql`abs(${transactions.date}::date - ${row.date}::date)`)
           .limit(1);
+
         if (!peer || seen.has(peer.id)) continue;
         seen.add(peer.id);
+
         const [peerAccount] = await db
           .select({ name: accounts.name })
           .from(accounts)
           .where(eq(accounts.id, peer.accountId));
+
         suggestions.push({
           outId: row.id,
           outAccount: row.accountName,
@@ -316,7 +367,8 @@ export function createImportService(db: Db) {
           date: row.date,
         });
       }
+
       return suggestions;
     },
   };
-}
+};

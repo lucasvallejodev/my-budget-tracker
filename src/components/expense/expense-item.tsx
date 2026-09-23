@@ -1,4 +1,5 @@
 import { CategoryBudget } from '../finance/blocks';
+
 export default function ExpenseItem({
   name,
   amount,

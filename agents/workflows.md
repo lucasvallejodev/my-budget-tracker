@@ -7,13 +7,14 @@
 1. Read `CLAUDE.md`, then `agents/README.md`, then only the agent docs the task needs.
 2. Write plans, scratch diagrams and intermediate output to `temp/` (never to `docs/`, `agents/` or the source tree).
 3. Check the existing tests for the area you touch; they encode the invariants.
+4. Before writing a helper, constant, colour or style value, search `src/lib/`, `src/constants/`, `src/styles/theme.ts` and `src/styles/tokens.scss` and extend what exists (`agents/conventions.md` > Reuse first).
 
 ## Add a feature (end to end)
 
 1. **Schema** (if needed): edit `src/db/schema.ts` → `npm run db:generate` → review and, if needed, hand-edit the SQL → `npm run db:migrate`. Update `agents/data-model.md` and `docs/architecture/data-model.md`, and add the migration to `docs/reference/migrations.md`.
 2. **Service**: add functions to `src/server/<domain>/service.ts` (new domains: create the folder, register in `src/server/services.ts`). Enforce ownership and invariants there.
 3. **Validation + entry points**: Zod schema in `src/schema/`, server action in `src/app/(main)/actions.ts`, route handler in `src/app/api/...` for reads.
-4. **Client**: hook + query key in `use-finance-data.ts` (add to `FINANCE_KEYS`), screen in `src/components/finance/`, page in `src/app/(main)/`, sidebar entry in `routes.ts` if needed.
+4. **Client**: hook + query key in `use-finance-data.ts` (add to `FinanceKeys`), screen in `src/components/finance/`, page in `src/app/(main)/`, sidebar entry in `routes.ts` if needed.
 5. **Tests**: service test(s) in `services.test.ts`, helper unit tests, a component test for the main interaction.
 6. **Gates**: `npm run lint && npx tsc --noEmit && npm test -- --run && npm run build`.
 7. **Docs**: feature page in `docs/features/` (step-by-step + "How it works" + screenshot placeholders), sidebar entry in `docs/_sidebar.md`, `docs/reference/api.md` rows, and `agents/architecture.md` service catalogue if a service changed. Update `README.md` if commands or folders changed.
@@ -40,6 +41,14 @@ Component in `src/components/finance/` → page → optional `routes.ts` entry �
 ## Add default categories or icons
 
 Icons: add the lucide import and key to `src/components/icons/registry.ts`. Taxonomy: edit `src/server/categories/default-taxonomy.ts`, bump `DEFAULT_TAXONOMY_VERSION`, update `docs/reference/default-taxonomy.md`. The seeding test validates icon names.
+
+## Add a helper or constant
+
+Search first (`grep -rn "<idea>" src/lib src/constants src/styles`). Helpers go in `src/lib/<topic>.ts` as `export const name = (...): Type => {}` with a colocated `*.test.ts`. Constant tables go in `src/constants/` or next to the feature as a PascalCase `const` (`Colors`, `FinanceKeys`). Then run `npm run lint:fix` and, if the helper replaces duplicated code, `npm run lint:dupes`.
+
+## Add a colour or style value
+
+SCSS: add a `--token` to `src/styles/tokens.scss` (light and dark, or the theme-independent block) and use `var(--token)`. TypeScript: add it to `Colors` / `ChartStyle` in `src/styles/theme.ts`. Never write a literal colour anywhere else; `npm run lint` rejects it. Document new tokens in `docs/architecture/code-style.md` only if they introduce a new concept.
 
 ## Add an exchange-rate provider
 

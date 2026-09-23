@@ -1,4 +1,7 @@
 'use client';
+
+import type { Summary } from './use-finance-data';
+import { getPercentage } from '@/lib/math';
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -56,17 +59,32 @@ export function MonthPicker({
   );
 }
 
+const describeConversion = (converted: NonNullable<Summary['converted']>): string => {
+  const base = `Approximate, using your manual rates as of ${converted.asOf}`;
+
+  if (!converted.rates.length) return base;
+
+  const rates = converted.rates
+    .map(r => `1 ${r.currency} = ${r.rate} ${converted.currency} from ${r.date}`)
+    .join(', ');
+
+  return `${base} (${rates})`;
+};
+
 export function Overview({ analytics = false }: { analytics?: boolean }) {
   const [month, setMonth] = useState(currentMonth());
   const summary = useSummary(month);
   const recent = useTransactions({ limit: '6' });
-  if (summary.isPending)
+
+  if (summary.isPending) {
     return (
       <div className={s.page} role="status">
         Loading your finances…
       </div>
     );
-  if (summary.isError || !summary.data)
+  }
+
+  if (summary.isError || !summary.data) {
     return (
       <div className={s.page}>
         <EmptyState
@@ -76,11 +94,16 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
         />
       </div>
     );
+  }
+
   const data = summary.data;
+
   const currencies = [
     ...new Set([...data.totals.map(t => t.currency), ...data.netWorth.map(n => n.currency)]),
   ];
-  const months = [...new Set(data.cashFlow.map(p => p.month))].sort();
+
+  const months = [...new Set(data.cashFlow.map(p => p.month))].sort((a, b) => a.localeCompare(b));
+
   return (
     <div className={s.page}>
       <PageHeading
@@ -114,11 +137,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
       {data.converted && (
         <Panel
           title={`≈ Converted totals · ${data.converted.currency}`}
-          description={`Approximate, using your manual rates as of ${data.converted.asOf}${
-            data.converted.rates.length
-              ? ` (${data.converted.rates.map(r => `1 ${r.currency} = ${r.rate} ${data.converted!.currency} from ${r.date}`).join(', ')})`
-              : ''
-          }`}
+          description={describeConversion(data.converted)}
         >
           <div className={s.grid}>
             <MetricCard
@@ -155,6 +174,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
         const totals = data.totals.find(t => t.currency === currency);
         const income = totals?.incomeMinor ?? 0;
         const spending = totals?.spendingMinor ?? 0;
+
         return (
           <div className={s.grid} key={currency}>
             <MetricCard
@@ -171,7 +191,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
             />
             <MetricCard
               label={`Savings rate · ${currency}`}
-              value={income ? `${Math.round(((income - spending) / income) * 100)}%` : '—'}
+              value={income ? `${getPercentage(income - spending, income)}%` : '—'}
               detail="Income kept this month"
             />
           </div>
@@ -186,6 +206,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
               format={value => formatMoney(value, currency)}
               data={months.map(m => {
                 const point = data.cashFlow.find(p => p.month === m && p.currency === currency);
+
                 return {
                   label: monthLabel(m).split(' ')[0].slice(0, 3),
                   income: point?.incomeMinor ?? 0,

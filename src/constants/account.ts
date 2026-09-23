@@ -1,4 +1,4 @@
-export const accountTypes = [
+export const AccountTypes = [
   { value: 'checking', label: 'Checking' },
   { value: 'savings', label: 'Savings' },
   { value: 'cash', label: 'Cash' },
@@ -8,12 +8,12 @@ export const accountTypes = [
   { value: 'other', label: 'Other' },
 ] as const;
 
-export type AccountTypeValue = (typeof accountTypes)[number]['value'];
+export type AccountTypeValue = (typeof AccountTypes)[number]['value'];
 
-export const accountTypeLabel = (value: string) =>
-  accountTypes.find(type => type.value === value)?.label ?? value;
+export const accountTypeLabel = (value: string): string =>
+  AccountTypes.find(type => type.value === value)?.label ?? value;
 
-export const accountGroups: { label: string; types: AccountTypeValue[] }[] = [
+export const AccountGroups: { label: string; types: AccountTypeValue[] }[] = [
   { label: 'Cash', types: ['checking', 'cash'] },
   { label: 'Savings & investments', types: ['savings', 'investment'] },
   { label: 'Credit cards', types: ['credit_card'] },

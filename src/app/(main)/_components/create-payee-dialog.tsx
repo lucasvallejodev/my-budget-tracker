@@ -1,4 +1,5 @@
 'use client';
+
 import s from '@/components/forms.module.scss';
 
 import { ComponentProps, useState } from 'react';
@@ -29,7 +30,7 @@ import { toast } from 'sonner';
 import { createPayeeAction, updatePayeeAction } from '../actions';
 import { payeeFormSchema, PayeeFormValues } from '@/schema/payees';
 import CategoryPicker from '@/components/category-picker';
-import { PayeeRow, queryKeys } from '@/components/finance/use-finance-data';
+import { PayeeRow, QueryKeys } from '@/components/finance/use-finance-data';
 
 type CreatePayeeDialogProps = {
   open?: boolean;
@@ -48,21 +49,25 @@ function CreatePayeeDialog({
 }: CreatePayeeDialogProps) {
   const [localOpen, setLocalOpen] = useState(false);
   const open = controlledOpen ?? localOpen;
+
   const setOpen = (value: boolean) => {
     setLocalOpen(value);
     onOpenChange?.(value);
   };
+
   const form = useForm<PayeeFormValues>({
     resolver: zodResolver(payeeFormSchema),
     defaultValues: { name: payee?.name ?? '', defaultCategoryId: payee?.defaultCategoryId ?? '' },
   });
+
   const queryClient = useQueryClient();
+
   const { mutate, isPending } = useMutation({
     mutationFn: (values: PayeeFormValues) =>
       payee ? updatePayeeAction({ id: payee.id, ...values }) : createPayeeAction(values),
     onSuccess: async data => {
       toast.success(`Payee ${data.name} saved`);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.payees });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.payees });
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
       form.reset();
       onSuccessCallback?.(data);

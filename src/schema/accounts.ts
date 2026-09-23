@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const accountTypeValues = [
+export const AccountTypeValues = [
   'checking',
   'savings',
   'cash',
@@ -12,7 +12,7 @@ export const accountTypeValues = [
 
 export const accountFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(50),
-  type: z.enum(accountTypeValues),
+  type: z.enum(AccountTypeValues),
   currency: z.string().length(3, 'Choose a currency'),
   institution: z.string().max(50).optional(),
   accountNumber: z.string().max(20).optional(),
@@ -26,7 +26,5 @@ export type AccountFormValues = z.infer<typeof accountFormSchema>;
 export const updateAccountSchema = accountFormSchema
   .omit({ openingBalance: true })
   .partial()
-  .extend({
-    id: z.string().min(1),
-  });
+  .extend({ id: z.string().min(1) });
 export type UpdateAccountValues = z.infer<typeof updateAccountSchema>;

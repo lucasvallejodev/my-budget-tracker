@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ICON_NAMES } from '@/components/icons/registry';
+import { IconNames } from '@/components/icons/registry';
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Choose a colour');
 
@@ -13,6 +13,6 @@ export type CategoryGroupFormValues = z.infer<typeof categoryGroupFormSchema>;
 export const categoryFormSchema = z.object({
   groupId: z.string().min(1, 'Choose a group'),
   name: z.string().trim().min(1, 'Name is required').max(50),
-  icon: z.enum(ICON_NAMES),
+  icon: z.enum(IconNames),
 });
 export type CategoryFormValues = z.infer<typeof categoryFormSchema>;

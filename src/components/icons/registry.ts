@@ -90,7 +90,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-export const ICONS = {
+export const Icons = {
   Activity,
   ArrowLeftRight,
   Baby,
@@ -178,8 +178,9 @@ export const ICONS = {
   Zap,
 } as const;
 
-export type IconName = keyof typeof ICONS;
-export const ICON_NAMES = Object.keys(ICONS) as [IconName, ...IconName[]];
+export type IconName = keyof typeof Icons;
+export const IconNames = Object.keys(Icons) as [IconName, ...IconName[]];
+
 export function isIconName(value: string): value is IconName {
-  return value in ICONS;
+  return value in Icons;
 }

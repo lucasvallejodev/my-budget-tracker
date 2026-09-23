@@ -19,11 +19,13 @@ export type BudgetRow = {
 };
 
 /** Monthly spending limits per category and currency, compared against the ledger. */
-export function createBudgetService(db: Db) {
+export const createBudgetService = (db: Db) => {
   const reports = createReportService(db);
+
   return {
     async list(userId: string, month: string): Promise<BudgetRow[]> {
       const { start } = monthRange(month);
+
       const rows = await db
         .select({
           id: budgets.id,
@@ -41,11 +43,16 @@ export function createBudgetService(db: Db) {
         .innerJoin(categories, eq(categories.id, budgets.categoryId))
         .innerJoin(categoryGroups, eq(categoryGroups.id, categories.groupId))
         .where(and(eq(budgets.userId, userId), eq(budgets.month, start)));
+
       const currencies = [...new Set(rows.map(row => row.currency))];
       const spent = new Map<string, number>();
-      for (const currency of currencies)
-        for (const slice of await reports.breakdownByCategory(userId, month, currency))
+
+      for (const currency of currencies) {
+        for (const slice of await reports.breakdownByCategory(userId, month, currency)) {
           if (slice.categoryId) spent.set(`${currency}:${slice.categoryId}`, slice.spentMinor);
+        }
+      }
+
       return rows
         .map(row => ({
           ...row,
@@ -59,11 +66,19 @@ export function createBudgetService(db: Db) {
     },
     async upsert(
       userId: string,
-      data: { categoryId: string; month: string; currency: string; amountMinor: number }
+      data: {
+        categoryId: string;
+        month: string;
+        currency: string;
+        amountMinor: number;
+      }
     ) {
-      if (!Number.isInteger(data.amountMinor) || data.amountMinor <= 0)
+      if (!Number.isInteger(data.amountMinor) || data.amountMinor <= 0) {
         throw new ServiceError('The limit must be a positive amount');
+      }
+
       const { start } = monthRange(data.month);
+
       const [category] = await db
         .select({ id: categories.id })
         .from(categories)
@@ -74,7 +89,9 @@ export function createBudgetService(db: Db) {
             isNull(categories.archivedAt)
           )
         );
+
       if (!category) notFound('Category');
+
       const [row] = await db
         .insert(budgets)
         .values({
@@ -89,6 +106,7 @@ export function createBudgetService(db: Db) {
           set: { amountMinor: data.amountMinor },
         })
         .returning();
+
       return { ...row, amountMinor: Number(row.amountMinor) };
     },
     async remove(userId: string, id: string) {
@@ -96,6 +114,7 @@ export function createBudgetService(db: Db) {
         .delete(budgets)
         .where(and(eq(budgets.id, id), eq(budgets.userId, userId)))
         .returning({ id: budgets.id });
+
       if (!deleted.length) notFound('Budget');
     },
     /** Copies last month's limits into `month` for categories that have none yet. */
@@ -103,11 +122,14 @@ export function createBudgetService(db: Db) {
       const { start } = monthRange(month);
       const [year, monthIndex] = month.split('-').map(Number);
       const previous = new Date(Date.UTC(year, monthIndex - 2, 1)).toISOString().slice(0, 10);
+
       const rows = await db
         .select()
         .from(budgets)
         .where(and(eq(budgets.userId, userId), eq(budgets.month, previous)));
+
       let copied = 0;
+
       for (const row of rows) {
         const inserted = await db
           .insert(budgets)
@@ -120,9 +142,11 @@ export function createBudgetService(db: Db) {
           })
           .onConflictDoNothing()
           .returning({ id: budgets.id });
+
         copied += inserted.length;
       }
+
       return copied;
     },
   };
-}
+};

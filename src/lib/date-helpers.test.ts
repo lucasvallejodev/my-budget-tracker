@@ -106,6 +106,7 @@ describe('getStartAndEndOfMonth', () => {
 
   it('should handle boundary values for month', () => {
     let result = getStartAndEndOfMonth(1, 2024);
+
     expect(result.startDate).toEqual(new Date(2024, 1, 1));
 
     result = getStartAndEndOfMonth(10, 2024);
@@ -114,6 +115,7 @@ describe('getStartAndEndOfMonth', () => {
 
   it('should handle boundary values for year', () => {
     let result = getStartAndEndOfMonth(5, 1901);
+
     expect(result.startDate).toEqual(new Date(1901, 5, 1));
 
     result = getStartAndEndOfMonth(5, 2099);
@@ -122,6 +124,7 @@ describe('getStartAndEndOfMonth', () => {
 
   it('should handle equal to boundary values', () => {
     let result = getStartAndEndOfMonth(0, 2024);
+
     expect(result.startDate).toEqual(new Date(2024, 0, 1));
 
     result = getStartAndEndOfMonth(5, 1899);

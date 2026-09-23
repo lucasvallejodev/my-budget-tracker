@@ -1,5 +1,5 @@
-export function dateToUTCDate(date: Date) {
-  return new Date(
+export const dateToUTCDate = (date: Date): Date =>
+  new Date(
     Date.UTC(
       date.getFullYear(),
       date.getMonth(),
@@ -10,13 +10,12 @@ export function dateToUTCDate(date: Date) {
       date.getMilliseconds()
     )
   );
-}
 
 const MIN_MONTH = 0;
 const MAX_MONTH = 11;
 
-function getValidMonth(month?: number): number {
-  if (month === null || month === undefined || isNaN(month)) {
+const getValidMonth = (month?: number): number => {
+  if (month === undefined || Number.isNaN(month)) {
     return new Date().getMonth();
   }
 
@@ -25,13 +24,13 @@ function getValidMonth(month?: number): number {
   }
 
   return month;
-}
+};
 
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
 
-function getValidYear(year?: number): number {
-  if (year === null || year === undefined || isNaN(year)) {
+const getValidYear = (year?: number): number => {
+  if (year === undefined || Number.isNaN(year)) {
     return new Date().getFullYear();
   }
 
@@ -40,9 +39,12 @@ function getValidYear(year?: number): number {
   }
 
   return year;
-}
+};
 
-export function getStartAndEndOfMonth(month?: number, year?: number) {
+export const getStartAndEndOfMonth = (
+  month?: number,
+  year?: number
+): { startDate: Date; endDate: Date } => {
   const monthIndex = getValidMonth(month);
   const yearIndex = getValidYear(year);
 
@@ -61,4 +63,4 @@ export function getStartAndEndOfMonth(month?: number, year?: number) {
     startDate,
     endDate,
   };
-}
+};

@@ -22,8 +22,16 @@ export class ManualRateProvider implements RateProvider {
       )
       .orderBy(desc(exchangeRates.date))
       .limit(1);
+
     if (!row) return null;
-    return { base, quote, rate: Number(row.rate), date: row.date, source: row.source };
+
+    return {
+      base,
+      quote,
+      rate: Number(row.rate),
+      date: row.date,
+      source: row.source,
+    };
   }
 }
 
@@ -33,13 +41,20 @@ export type Conversion = {
   rate: RateQuote | null;
 };
 
-export function createFxService(db: Db, providers: RateProvider[] = [new ManualRateProvider(db)]) {
-  async function lookup(userId: string, base: string, quote: string, date: string) {
+export const createFxService = (
+  db: Db,
+  providers: RateProvider[] = [new ManualRateProvider(db)]
+) => {
+  const lookup = async (userId: string, base: string, quote: string, date: string) => {
     for (const provider of providers) {
       const direct = await provider.getRate(userId, base, quote, date);
+
       if (direct) return direct;
+      // The inverse pair is looked up on purpose: 1 / (quote->base) gives base->quote.
+      // eslint-disable-next-line sonarjs/arguments-order
       const inverse = await provider.getRate(userId, quote, base, date);
-      if (inverse && inverse.rate !== 0)
+
+      if (inverse && inverse.rate !== 0) {
         return {
           base,
           quote,
@@ -47,9 +62,12 @@ export function createFxService(db: Db, providers: RateProvider[] = [new ManualR
           date: inverse.date,
           source: `${inverse.source} (inverse)`,
         };
+      }
     }
+
     return null;
-  }
+  };
+
   return {
     providers,
     async list(userId: string) {
@@ -63,13 +81,25 @@ export function createFxService(db: Db, providers: RateProvider[] = [new ManualR
     },
     async upsert(
       userId: string,
-      data: { base: string; quote: string; date: string; rate: number; source?: string }
+      data: {
+        base: string;
+        quote: string;
+        date: string;
+        rate: number;
+        source?: string;
+      }
     ) {
       const base = data.base.toUpperCase();
       const quote = data.quote.toUpperCase();
+
       if (base === quote) throw new ServiceError('Choose two different currencies');
-      if (!(data.rate > 0)) throw new ServiceError('The rate must be a positive number');
+
+      if (!Number.isFinite(data.rate) || data.rate <= 0) {
+        throw new ServiceError('The rate must be a positive number');
+      }
+
       if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) throw new ServiceError('Date must be YYYY-MM-DD');
+
       const [row] = await db
         .insert(exchangeRates)
         .values({
@@ -90,9 +120,17 @@ export function createFxService(db: Db, providers: RateProvider[] = [new ManualR
           set: { rate: String(data.rate), source: data.source ?? 'manual' },
         })
         .returning();
+
       return { ...row, rate: Number(row.rate) };
     },
-    async remove(userId: string, key: { base: string; quote: string; date: string }) {
+    async remove(
+      userId: string,
+      key: {
+        base: string;
+        quote: string;
+        date: string;
+      }
+    ) {
       await db
         .delete(exchangeRates)
         .where(
@@ -114,10 +152,29 @@ export function createFxService(db: Db, providers: RateProvider[] = [new ManualR
       to: string,
       date: string
     ): Promise<Conversion> {
-      if (from === to) return { amountMinor, currency: to, rate: null };
+      if (from === to) {
+        return {
+          amountMinor,
+          currency: to,
+          rate: null,
+        };
+      }
+
       const rate = await lookup(userId, from, to, date);
-      if (!rate) return { amountMinor, currency: from, rate: null };
-      return { amountMinor: convertMinor(amountMinor, from, to, rate.rate), currency: to, rate };
+
+      if (!rate) {
+        return {
+          amountMinor,
+          currency: from,
+          rate: null,
+        };
+      }
+
+      return {
+        amountMinor: convertMinor(amountMinor, from, to, rate.rate),
+        currency: to,
+        rate,
+      };
     },
   };
-}
+};

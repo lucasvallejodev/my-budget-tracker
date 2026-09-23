@@ -18,6 +18,9 @@
 | `src/server/budgets/*` | `features/budgets.md`, `reference/api.md` | catalogue | — |
 | `src/app/api/*`, `src/app/(main)/actions.ts` | `reference/api.md` | — | — |
 | `src/components/**`, styling, hooks | `architecture/frontend.md`, the feature page of the screen | `agents/conventions.md` › Client/Styling | — |
+| `src/styles/theme.ts`, `src/styles/tokens.scss`, `src/lib/*` helpers, `src/constants/*` | `architecture/code-style.md`, `architecture/frontend.md` › Styling | `agents/conventions.md` › Reuse first / Styling | — |
+| `sonar-project.properties`, `.github/workflows/*` | `getting-started/setup.md` › SonarQube Cloud, `architecture/code-style.md` | — | if a command changed |
+| `eslint.config.mjs`, `.stylelintrc.json`, `scripts/eslint-rules/*`, `.prettierrc.js` | `architecture/code-style.md`, `getting-started/commands.md` | `agents/conventions.md` › Tooling gates / Formatting | **yes** (Commands) |
 | `src/server/auth/*`, `src/middleware.ts` | `architecture/server.md` › Authentication | `agents/architecture.md` › Bootstrap | — |
 | Tests or test tooling | `architecture/testing.md` | `agents/conventions.md` › Tests | — |
 | `package.json` scripts, Docker, env vars | `getting-started/setup.md`, `getting-started/commands.md` | — | **yes** (Commands / Setup) |
@@ -36,6 +39,7 @@
 | `docs/architecture/server.md` | services, conventions, errors, auth/bootstrap, adding a method |
 | `docs/architecture/frontend.md` | screens, hooks, forms, pickers, styling, adding a screen |
 | `docs/architecture/testing.md` | test kinds, PGlite harness, coverage expectations |
+| `docs/architecture/code-style.md` | formatting, naming, constants and colours, complexity budget, lint tooling |
 | `docs/features/*.md` | one page per feature: steps, statuses, "How it works" |
 | `docs/reference/*.md` | API + actions, migrations, default taxonomy |
 | `docs/legacy/*` | frozen history; never update, only add |

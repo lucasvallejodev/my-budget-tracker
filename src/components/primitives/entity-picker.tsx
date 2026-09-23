@@ -1,15 +1,18 @@
 'use client';
+
 import { ComponentProps, ReactNode, useState } from 'react';
 import { Check, ChevronsUpDown, PlusSquare } from 'lucide-react';
 import { Button } from './button';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from './command';
 import s from '../forms.module.scss';
+
 export type EntityPickerProps = Omit<ComponentProps<'button'>, 'value' | 'onChange'> & {
   value?: string;
   onChange?: (value: string) => void;
   invalid?: boolean;
 };
+
 export function EntityPicker({
   value = '',
   onChange,
@@ -37,10 +40,12 @@ export function EntityPicker({
   const [open, setOpen] = useState(false);
   const [creationOpen, setCreationOpen] = useState(false);
   const [trigger, setTrigger] = useState<HTMLButtonElement | null>(null);
+
   const select = (id: string) => {
     onChange?.(id);
     setOpen(false);
   };
+
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>

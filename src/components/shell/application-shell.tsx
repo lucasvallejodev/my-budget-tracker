@@ -1,12 +1,13 @@
 'use client';
+
 import { ReactNode, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bell, Menu, Search } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
-import { MAIN_ROUTE_ITEMS } from '@/app/(main)/routes';
+import { MainRouteItems } from '@/app/(main)/routes';
 import { useAccounts } from '../finance/use-finance-data';
-import { accountGroups } from '@/constants/account';
+import { AccountGroups } from '@/constants/account';
 import { formatMoney } from '@/lib/money';
 import Logo from '../logo';
 import { Button } from '../primitives/button';
@@ -15,13 +16,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { PromotionPanel } from '../finance/blocks';
 import { ThemeToggle } from './theme-toggle';
 import s from './shell.module.scss';
+
 export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
   const { data: accounts = [] } = useAccounts();
+
   return (
     <nav aria-label="Main navigation">
       <div className={s.links}>
-        {MAIN_ROUTE_ITEMS.map(item => (
+        {MainRouteItems.map(item => (
           <Link
             key={item.path}
             className={s.link}
@@ -34,17 +37,21 @@ export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         ))}
       </div>
-      {accountGroups.map(group => {
+      {AccountGroups.map(group => {
         const members = accounts.filter(account =>
           (group.types as string[]).includes(account.type)
         );
+
         if (!members.length) return null;
         const totals = new Map<string, number>();
+
         for (const account of members) {
           const signed =
             account.classification === 'liability' ? -account.balanceMinor : account.balanceMinor;
+
           totals.set(account.currency, (totals.get(account.currency) ?? 0) + signed);
         }
+
         return (
           <div key={group.label}>
             <h2 className={s.sectionLabel}>
@@ -82,10 +89,12 @@ export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
     </nav>
   );
 }
+
 export function ApplicationHeader() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const router = useRouter();
+
   return (
     <header className={s.topbar}>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -141,6 +150,7 @@ export function ApplicationHeader() {
     </header>
   );
 }
+
 export function ApplicationShell({ children }: { children: ReactNode }) {
   return (
     <div className={s.shell}>

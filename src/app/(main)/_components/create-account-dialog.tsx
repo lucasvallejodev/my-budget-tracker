@@ -1,4 +1,5 @@
 'use client';
+
 import s from '@/components/forms.module.scss';
 
 import { ComponentProps, useState } from 'react';
@@ -37,10 +38,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/primitives/select';
-import { accountTypes } from '@/constants/account';
+import { AccountTypes } from '@/constants/account';
 import {
   AccountSummary,
-  FINANCE_KEYS,
+  FinanceKeys,
   useCurrencies,
   useSettings,
 } from '@/components/finance/use-finance-data';
@@ -64,12 +65,15 @@ function CreateAccountDialog({
 }: CreateAccountDialogProps) {
   const [localOpen, setLocalOpen] = useState(false);
   const open = controlledOpen ?? localOpen;
+
   const setOpen = (value: boolean) => {
     setLocalOpen(value);
     onOpenChange?.(value);
   };
+
   const { data: currencies } = useCurrencies();
   const { data: settings } = useSettings();
+
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
@@ -95,6 +99,7 @@ function CreateAccountDialog({
   });
 
   const queryClient = useQueryClient();
+
   const { mutate, isPending } = useMutation({
     mutationFn: ({ openingBalance, ...values }: AccountFormValues) =>
       account
@@ -102,15 +107,14 @@ function CreateAccountDialog({
         : createAccountAction({ ...values, openingBalance }),
     onSuccess: async data => {
       toast.success(`Account ${data.name} saved`);
-      await Promise.all(
-        FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
+      await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
       form.reset();
       onSuccessCallback?.(data);
       setOpen(false);
     },
     onError: (error: Error) => toast.error(error.message || 'Error saving account'),
   });
+
   const currencyLocked = !!account && account.transactionCount > 0;
 
   return (
@@ -147,7 +151,7 @@ function CreateAccountDialog({
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Account types</SelectLabel>
-                        {accountTypes.map(accountType => (
+                        {AccountTypes.map(accountType => (
                           <SelectItem key={accountType.value} value={accountType.value}>
                             {accountType.label}
                           </SelectItem>

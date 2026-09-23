@@ -52,7 +52,7 @@ Schema    src/db/schema.ts                 Drizzle tables/enums; migrations in d
 ## Frontend essentials
 
 - Pages are thin; screens live in `src/components/finance/`. Shared dialogs/pickers in `src/app/(main)/_components/`.
-- Hooks + query keys in `use-finance-data.ts`; after mutations invalidate every key in `FINANCE_KEYS`.
+- Hooks + query keys in `use-finance-data.ts`; after mutations invalidate every key in `FinanceKeys`.
 - Types for API rows are `import type`d from the services.
 - Styling: SCSS modules per component, tokens in `src/styles/tokens.scss`, `cn()` from `src/lib/styles.ts`. Group colour applied inline.
 - Define components at module scope (React Compiler lint forbids components created inside render); avoid `setState` inside `useEffect`.

@@ -7,8 +7,8 @@ import { eq } from 'drizzle-orm';
 import * as schema from '@/db/schema';
 import { createServices } from './services';
 import { Db } from './db';
-import { DEFAULT_TAXONOMY } from './categories/default-taxonomy';
-import { ICON_NAMES } from '@/components/icons/registry';
+import { DefaultTaxonomy } from './categories/default-taxonomy';
+import { IconNames } from '@/components/icons/registry';
 
 const client = new PGlite();
 const pglite = drizzle(client, { schema });
@@ -19,10 +19,13 @@ const other = 'user_other';
 
 async function categoryByName(userId: string, name: string) {
   const tree = await services.categories.tree(userId);
+
   for (const group of tree) {
     const category = group.categories.find(c => c.name === name);
+
     if (category) return { ...category, group };
   }
+
   throw new Error(`Category ${name} not seeded`);
 }
 
@@ -43,16 +46,25 @@ beforeEach(async () => {
 describe('bootstrap and categories', () => {
   it('seeds the default taxonomy once per user with valid icons', async () => {
     const tree = await services.categories.tree(owner);
-    expect(tree).toHaveLength(DEFAULT_TAXONOMY.length);
+
+    expect(tree).toHaveLength(DefaultTaxonomy.length);
     expect(tree.flatMap(g => g.categories)).toHaveLength(
-      DEFAULT_TAXONOMY.flatMap(g => g.categories).length
+      DefaultTaxonomy.flatMap(g => g.categories).length
     );
-    for (const category of tree.flatMap(g => g.categories))
-      expect(ICON_NAMES).toContain(category.icon);
-    expect(tree[0]).toMatchObject({ name: 'Income', kind: 'income', isSystem: true });
+
+    for (const category of tree.flatMap(g => g.categories)) {
+      expect(IconNames).toContain(category.icon);
+    }
+
+    expect(tree[0]).toMatchObject({
+      name: 'Income',
+      kind: 'income',
+      isSystem: true,
+    });
     const again = await services.bootstrap(owner);
+
     expect(again.seeded).toBe(false);
-    expect(await services.categories.tree(owner)).toHaveLength(DEFAULT_TAXONOMY.length);
+    expect(await services.categories.tree(owner)).toHaveLength(DefaultTaxonomy.length);
     expect((await services.getSettings(other))?.primaryCurrency).toBe('USD');
   });
 
@@ -62,18 +74,22 @@ describe('bootstrap and categories', () => {
       type: 'checking',
       currency: 'EUR',
     });
+
     const groceries = await categoryByName(owner, 'Groceries');
     const coffee = await categoryByName(owner, 'Coffee');
+
     const tx = await services.ledger.createStandard(owner, {
       accountId: account.id,
       amountMinor: -1200,
       date: '2026-09-03',
       categoryId: coffee.id,
     });
+
     await services.categories.archiveCategory(owner, coffee.id, groceries.id);
     expect((await services.ledger.get(owner, tx.id)).categoryId).toBe(groceries.id);
     await services.categories.archiveCategory(owner, groceries.id);
     const reopened = await services.ledger.get(owner, tx.id);
+
     expect(reopened.categoryId).toBeNull();
     expect(reopened.needsReview).toBe(true);
     expect(await services.ledger.needsReviewCount(owner)).toBe(1);
@@ -91,17 +107,21 @@ describe('bootstrap and categories', () => {
       kind: 'expense',
       color: '#D97706',
     });
-    expect(group.sortOrder).toBe(DEFAULT_TAXONOMY.length);
+
+    expect(group.sortOrder).toBe(DefaultTaxonomy.length);
+
     const category = await services.categories.createCategory(owner, {
       groupId: group.id,
       name: 'Toys',
       icon: 'Gift',
     });
+
     const second = await services.categories.createCategory(owner, {
       groupId: group.id,
       name: 'School',
       icon: 'GraduationCap',
     });
+
     await services.categories.reorderCategories(owner, group.id, [second.id, category.id]);
     await services.categories.updateGroup(owner, group.id, { name: 'Children', color: '#0891B2' });
     await services.categories.updateCategory(owner, category.id, {
@@ -110,9 +130,11 @@ describe('bootstrap and categories', () => {
     });
     const tree = await services.categories.tree(owner);
     const children = tree.find(g => g.id === group.id)!;
+
     expect(children).toMatchObject({ name: 'Children', color: '#0891B2' });
     expect(children.categories.map(c => c.name)).toEqual(['School', 'Toys & games']);
     const ids = tree.map(g => g.id);
+
     await services.categories.reorderGroups(owner, [
       group.id,
       ...ids.filter(id => id !== group.id),
@@ -127,16 +149,22 @@ describe('bootstrap and categories', () => {
       (await services.categories.tree(owner)).find(g => g.id === group.id)!.categories
     ).toHaveLength(2);
     const income = tree.find(g => g.isSystem)!;
+
     await expect(
       services.categories.updateGroup(owner, income.id, { kind: 'expense' })
     ).rejects.toThrow(/income group/);
     await expect(
-      services.categories.createCategory(other, { groupId: group.id, name: 'x', icon: 'Gift' })
+      services.categories.createCategory(other, {
+        groupId: group.id,
+        name: 'x',
+        icon: 'Gift',
+      })
     ).rejects.toThrow('not found');
   });
 
   it('scopes categories to their owner', async () => {
     const groceries = await categoryByName(owner, 'Groceries');
+
     await expect(
       services.categories.updateCategory(other, groceries.id, { name: 'x' })
     ).rejects.toThrow('not found');
@@ -152,19 +180,24 @@ describe('accounts and ledger', () => {
       openingBalanceMinor: 150000,
       openingDate: '2026-01-01',
     });
+
     const salary = await categoryByName(owner, 'Salary');
+
     await services.ledger.createStandard(owner, {
       accountId: account.id,
       amountMinor: 250000,
       date: '2026-09-01',
       categoryId: salary.id,
     });
+
     const spend = await services.ledger.createStandard(owner, {
       accountId: account.id,
       amountMinor: -2550,
       date: '2026-09-02',
     });
+
     const [summary] = await services.accounts.list(owner);
+
     expect(summary.balanceMinor).toBe(150000 + 250000 - 2550);
     expect(summary.transactionCount).toBe(3);
     expect(spend.needsReview).toBe(true);
@@ -182,7 +215,9 @@ describe('accounts and ledger', () => {
       type: 'checking',
       currency: 'EUR',
     });
+
     const foreignCategory = await categoryByName(other, 'Groceries');
+
     await expect(
       services.ledger.createStandard(owner, {
         accountId: account.id,
@@ -199,7 +234,11 @@ describe('accounts and ledger', () => {
       })
     ).rejects.toThrow('Account not found');
     await expect(
-      services.accounts.create(owner, { name: 'X', type: 'cash', currency: 'XXX' })
+      services.accounts.create(owner, {
+        name: 'X',
+        type: 'cash',
+        currency: 'XXX',
+      })
     ).rejects.toThrow('Unknown currency');
     expect(await services.ledger.list(owner)).toEqual([]);
   });
@@ -210,6 +249,7 @@ describe('accounts and ledger', () => {
       type: 'cash',
       currency: 'EUR',
     });
+
     await services.accounts.update(owner, account.id, { currency: 'USD' });
     expect((await services.accounts.get(owner, account.id)).currency).toBe('USD');
     await services.ledger.createStandard(owner, {
@@ -239,13 +279,16 @@ describe('accounts and ledger', () => {
       openingBalanceMinor: 150000,
       openingDate: '2026-08-01',
     });
+
     const visa = await services.accounts.create(owner, {
       name: 'Visa',
       type: 'credit_card',
       currency: 'EUR',
     });
+
     const groceries = await categoryByName(owner, 'Groceries');
     const restaurants = await categoryByName(owner, 'Restaurants & bars');
+
     await services.ledger.createStandard(owner, {
       accountId: visa.id,
       amountMinor: -6000,
@@ -258,6 +301,7 @@ describe('accounts and ledger', () => {
       date: '2026-09-10',
       categoryId: restaurants.id,
     });
+
     const { legs, transferId } = await services.ledger.createTransfer(owner, {
       fromAccountId: checking.id,
       toAccountId: visa.id,
@@ -265,17 +309,26 @@ describe('accounts and ledger', () => {
       date: '2026-09-25',
       memo: 'Card payment',
     });
-    expect(legs.map(l => Number(l.amountMinor)).sort()).toEqual([-10500, 10500]);
+
+    expect(legs.map(l => Number(l.amountMinor)).sort((a, b) => a - b)).toEqual([-10500, 10500]);
     expect(legs.every(l => l.categoryId === null && l.kind === 'transfer')).toBe(true);
     const accounts = await services.accounts.list(owner);
+
     expect(accounts.find(a => a.id === checking.id)?.balanceMinor).toBe(139500);
     expect(accounts.find(a => a.id === visa.id)?.balanceMinor).toBe(0);
     const [totals] = await services.reports.monthlyTotals(owner, '2026-09');
-    expect(totals).toEqual({ currency: 'EUR', incomeMinor: 0, spendingMinor: 10500 });
+
+    expect(totals).toEqual({
+      currency: 'EUR',
+      incomeMinor: 0,
+      spendingMinor: 10500,
+    });
     const breakdown = await services.reports.breakdownByGroup(owner, '2026-09');
+
     expect(breakdown).toHaveLength(1);
     expect(breakdown[0]).toMatchObject({ groupName: 'Food & Dining', spentMinor: 10500 });
     const [netWorth] = await services.reports.netWorth(owner);
+
     expect(netWorth).toEqual({
       currency: 'EUR',
       assetsMinor: 139500,
@@ -283,13 +336,17 @@ describe('accounts and ledger', () => {
       netMinor: 139500,
     });
     const rows = await services.ledger.list(owner, { kind: 'transfer' });
-    expect(rows.map(r => r.counterpartAccountName).sort()).toEqual(['Checking', 'Visa']);
+
+    expect(
+      rows.map(r => r.counterpartAccountName ?? '').sort((a, b) => a.localeCompare(b))
+    ).toEqual(['Checking', 'Visa']);
     // editing and deleting act on both legs
     await services.ledger.updateTransfer(owner, transferId, {
       amountFromMinor: 10000,
       memo: 'Partial',
     });
     const updated = await services.ledger.list(owner, { kind: 'transfer' });
+
     expect(updated.map(r => r.amountMinor).sort((a, b) => a - b)).toEqual([-10000, 10000]);
     expect(updated.every(r => r.memo === 'Partial')).toBe(true);
     await expect(
@@ -307,11 +364,13 @@ describe('accounts and ledger', () => {
       currency: 'EUR',
       openingBalanceMinor: 200000,
     });
+
     const usd = await services.accounts.create(owner, {
       name: 'USD',
       type: 'savings',
       currency: 'USD',
     });
+
     await expect(
       services.ledger.createTransfer(owner, {
         fromAccountId: eur.id,
@@ -328,9 +387,20 @@ describe('accounts and ledger', () => {
       date: '2026-09-05',
     });
     const netWorth = await services.reports.netWorth(owner);
+
     expect(netWorth).toEqual([
-      { currency: 'EUR', assetsMinor: 100000, liabilitiesMinor: 0, netMinor: 100000 },
-      { currency: 'USD', assetsMinor: 108500, liabilitiesMinor: 0, netMinor: 108500 },
+      {
+        currency: 'EUR',
+        assetsMinor: 100000,
+        liabilitiesMinor: 0,
+        netMinor: 100000,
+      },
+      {
+        currency: 'USD',
+        assetsMinor: 108500,
+        liabilitiesMinor: 0,
+        netMinor: 108500,
+      },
     ]);
     expect(await services.reports.monthlyTotals(owner, '2026-09')).toEqual([]);
   });
@@ -341,18 +411,22 @@ describe('accounts and ledger', () => {
       type: 'checking',
       currency: 'EUR',
     });
+
     const usd = await services.accounts.create(owner, {
       name: 'USD',
       type: 'checking',
       currency: 'USD',
     });
+
     const investing = await services.accounts.create(owner, {
       name: 'Broker',
       type: 'investment',
       currency: 'EUR',
     });
+
     const salary = await categoryByName(owner, 'Salary');
     const groceries = await categoryByName(owner, 'Groceries');
+
     await services.ledger.createStandard(owner, {
       accountId: eur.id,
       amountMinor: 300000,
@@ -393,15 +467,25 @@ describe('accounts and ledger', () => {
       date: '2026-10-01',
     });
     expect(await services.reports.monthlyTotals(owner, '2026-09')).toEqual([
-      { currency: 'EUR', incomeMinor: 300000, spendingMinor: 4800 },
-      { currency: 'USD', incomeMinor: 0, spendingMinor: 2000 },
+      {
+        currency: 'EUR',
+        incomeMinor: 300000,
+        spendingMinor: 4800,
+      },
+      {
+        currency: 'USD',
+        incomeMinor: 0,
+        spendingMinor: 2000,
+      },
     ]);
     const breakdown = await services.reports.breakdownByGroup(owner, '2026-09');
+
     expect(breakdown.find(b => b.currency === 'USD')).toMatchObject({
       groupName: 'Uncategorized',
       spentMinor: 2000,
     });
     const flow = await services.reports.cashFlow(owner, '2026-10', 3);
+
     expect(flow.map(p => `${p.month}:${p.currency}:${p.spendingMinor}`)).toEqual([
       '2026-09:EUR:4800',
       '2026-09:USD:2000',
@@ -415,9 +499,11 @@ describe('accounts and ledger', () => {
       type: 'checking',
       currency: 'EUR',
     });
+
     const payee = await services.payees.create(owner, { name: 'Mercadona' });
     const groceries = await categoryByName(owner, 'Groceries');
     const coffee = await categoryByName(owner, 'Coffee');
+
     await services.ledger.createStandard(owner, {
       accountId: account.id,
       amountMinor: -100,
@@ -451,6 +537,7 @@ describe('accounts and ledger', () => {
       type: 'checking',
       currency: 'EUR',
     });
+
     const [foreign] = await db
       .insert(schema.accounts)
       .values({
@@ -461,6 +548,7 @@ describe('accounts and ledger', () => {
         currency: 'EUR',
       })
       .returning();
+
     await expect(
       services.ledger.createTransfer(owner, {
         fromAccountId: checking.id,
@@ -475,14 +563,30 @@ describe('accounts and ledger', () => {
   });
 
   it('stores manual exchange rates and converts totals with the rate in force', async () => {
-    await services.fx.upsert(owner, { base: 'EUR', quote: 'USD', date: '2026-09-01', rate: 1.1 });
-    await services.fx.upsert(owner, { base: 'EUR', quote: 'USD', date: '2026-09-15', rate: 1.2 });
-    await services.fx.upsert(owner, { base: 'EUR', quote: 'USD', date: '2026-09-15', rate: 1.25 });
+    await services.fx.upsert(owner, {
+      base: 'EUR',
+      quote: 'USD',
+      date: '2026-09-01',
+      rate: 1.1,
+    });
+    await services.fx.upsert(owner, {
+      base: 'EUR',
+      quote: 'USD',
+      date: '2026-09-15',
+      rate: 1.2,
+    });
+    await services.fx.upsert(owner, {
+      base: 'EUR',
+      quote: 'USD',
+      date: '2026-09-15',
+      rate: 1.25,
+    });
     expect(await services.fx.list(owner)).toHaveLength(2);
     expect((await services.fx.getRate(owner, 'EUR', 'USD', '2026-09-10'))?.rate).toBe(1.1);
     expect((await services.fx.getRate(owner, 'EUR', 'USD', '2026-09-20'))?.rate).toBe(1.25);
     expect(await services.fx.getRate(owner, 'EUR', 'USD', '2026-08-01')).toBeNull();
     const inverse = await services.fx.getRate(owner, 'USD', 'EUR', '2026-09-20');
+
     expect(inverse?.rate).toBeCloseTo(0.8);
     expect(inverse?.source).toContain('inverse');
     expect(await services.fx.getRate(other, 'EUR', 'USD', '2026-09-20')).toBeNull();
@@ -496,7 +600,12 @@ describe('accounts and ledger', () => {
       rate: null,
     });
     await expect(
-      services.fx.upsert(owner, { base: 'EUR', quote: 'EUR', date: '2026-09-01', rate: 1 })
+      services.fx.upsert(owner, {
+        base: 'EUR',
+        quote: 'EUR',
+        date: '2026-09-01',
+        rate: 1,
+      })
     ).rejects.toThrow(/different/);
 
     const eur = await services.accounts.create(owner, {
@@ -505,18 +614,21 @@ describe('accounts and ledger', () => {
       currency: 'EUR',
       openingBalanceMinor: 100000,
     });
+
     const usd = await services.accounts.create(owner, {
       name: 'USD',
       type: 'checking',
       currency: 'USD',
       openingBalanceMinor: 125000,
     });
+
     const gbp = await services.accounts.create(owner, {
       name: 'GBP',
       type: 'checking',
       currency: 'GBP',
       openingBalanceMinor: 1,
     });
+
     await services.ledger.createStandard(owner, {
       accountId: eur.id,
       amountMinor: -1000,
@@ -532,6 +644,7 @@ describe('accounts and ledger', () => {
       amountMinor: -100,
       date: '2026-09-20',
     });
+
     const converted = await services.reports.convertedTotals(
       owner,
       'EUR',
@@ -541,13 +654,23 @@ describe('accounts and ledger', () => {
       },
       '2026-09-20'
     );
+
     expect(converted.missing).toEqual(['GBP']);
     expect(converted.netWorthMinor).toBe(99000 + 98000);
     expect(converted.spendingMinor).toBe(1000 + 2000);
     expect(converted.rates).toEqual([
-      { currency: 'USD', rate: 0.8, date: '2026-09-15', source: 'manual (inverse)' },
+      {
+        currency: 'USD',
+        rate: 0.8,
+        date: '2026-09-15',
+        source: 'manual (inverse)',
+      },
     ]);
-    await services.fx.remove(owner, { base: 'EUR', quote: 'USD', date: '2026-09-15' });
+    await services.fx.remove(owner, {
+      base: 'EUR',
+      quote: 'USD',
+      date: '2026-09-15',
+    });
     expect((await services.fx.getRate(owner, 'EUR', 'USD', '2026-09-20'))?.rate).toBe(1.1);
   });
 
@@ -557,18 +680,23 @@ describe('accounts and ledger', () => {
       type: 'checking',
       currency: 'EUR',
     });
+
     const savings = await services.accounts.create(owner, {
       name: 'Savings',
       type: 'savings',
       currency: 'EUR',
     });
+
     const groceries = await categoryByName(owner, 'Groceries');
     const coffee = await categoryByName(owner, 'Coffee');
+
     await services.rules.create(owner, { pattern: 'mercadona', categoryId: groceries.id });
+
     const payee = await services.payees.create(owner, {
       name: 'Starbucks',
       defaultCategoryId: coffee.id,
     });
+
     // A manual entry the bank file will also contain
     const manual = await services.ledger.createStandard(owner, {
       accountId: checking.id,
@@ -578,12 +706,14 @@ describe('accounts and ledger', () => {
       categoryId: coffee.id,
       memo: 'Coffee beans',
     });
+
     // The other leg of a transfer, already in savings
     await services.ledger.createStandard(owner, {
       accountId: savings.id,
       amountMinor: 20000,
       date: '2026-09-12',
     });
+
     const csv = [
       'Fecha;Concepto;Importe',
       '01/09/2026;MERCADONA SUPERMERCADO;-62,30',
@@ -593,14 +723,26 @@ describe('accounts and ledger', () => {
       '12/09/2026;;0',
       '13/09/2026;Unknown shop;-10,00',
     ].join('\n');
+
     const mapping = {
       date: 'Fecha',
       amount: 'Importe',
       payee: 'Concepto',
       dateFormat: 'DD/MM/YYYY' as const,
     };
-    const preview = await services.imports.preview(owner, { accountId: checking.id, csv, mapping });
-    expect(preview.counts).toEqual({ new: 4, duplicate: 0, matched: 1, invalid: 1 });
+
+    const preview = await services.imports.preview(owner, {
+      accountId: checking.id,
+      csv,
+      mapping,
+    });
+
+    expect(preview.counts).toEqual({
+      new: 4,
+      duplicate: 0,
+      matched: 1,
+      invalid: 1,
+    });
     expect(preview.rows[0]).toMatchObject({
       date: '2026-09-01',
       amountMinor: -6230,
@@ -617,10 +759,13 @@ describe('accounts and ledger', () => {
     expect(preview.rows[4].status).toBe('invalid');
 
     const result = await services.imports.commit(owner, preview);
+
     expect(result).toMatchObject({ inserted: 4, matched: 1 });
     const rows = await services.ledger.list(owner, { accountId: checking.id });
+
     expect(rows).toHaveLength(5);
     const merc = rows.find(r => r.originalPayee === 'MERCADONA SUPERMERCADO')!;
+
     expect(merc).toMatchObject({
       categoryId: groceries.id,
       status: 'pending',
@@ -631,11 +776,22 @@ describe('accounts and ledger', () => {
     expect(await services.ledger.needsReviewCount(owner)).toBe(5);
 
     // Re-importing the same file is a no-op
-    const again = await services.imports.preview(owner, { accountId: checking.id, csv, mapping });
-    expect(again.counts).toEqual({ new: 0, duplicate: 5, matched: 0, invalid: 1 });
+    const again = await services.imports.preview(owner, {
+      accountId: checking.id,
+      csv,
+      mapping,
+    });
+
+    expect(again.counts).toEqual({
+      new: 0,
+      duplicate: 5,
+      matched: 0,
+      invalid: 1,
+    });
     expect((await services.imports.commit(owner, again)).inserted).toBe(0);
 
     const suggestions = await services.imports.transferSuggestions(owner, result.insertedIds);
+
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0]).toMatchObject({
       outAccount: 'Checking',
@@ -644,6 +800,7 @@ describe('accounts and ledger', () => {
     });
     await services.ledger.linkAsTransfer(owner, suggestions[0].outId, suggestions[0].inId);
     const legs = await services.ledger.list(owner, { kind: 'transfer' });
+
     expect(legs).toHaveLength(2);
     expect(legs.every(l => l.transferId === legs[0].transferId && l.categoryId === null)).toBe(
       true
@@ -658,7 +815,11 @@ describe('accounts and ledger', () => {
       services.rules.create(other, { pattern: 'x', categoryId: coffee.id })
     ).rejects.toThrow('not found');
     await expect(
-      services.imports.preview(owner, { accountId: checking.id, csv, mapping: { date: 'Nope' } })
+      services.imports.preview(owner, {
+        accountId: checking.id,
+        csv,
+        mapping: { date: 'Nope' },
+      })
     ).rejects.toThrow(/date column/);
   });
 
@@ -668,13 +829,16 @@ describe('accounts and ledger', () => {
       type: 'checking',
       currency: 'EUR',
     });
+
     const usd = await services.accounts.create(owner, {
       name: 'USD',
       type: 'checking',
       currency: 'USD',
     });
+
     const groceries = await categoryByName(owner, 'Groceries');
     const coffee = await categoryByName(owner, 'Coffee');
+
     await services.budgets.upsert(owner, {
       categoryId: groceries.id,
       month: '2026-08',
@@ -724,6 +888,7 @@ describe('accounts and ledger', () => {
       categoryId: coffee.id,
     });
     const september = await services.budgets.list(owner, '2026-09');
+
     expect(september).toHaveLength(2);
     expect(september.find(b => b.currency === 'EUR')).toMatchObject({
       amountMinor: 26000,
@@ -738,6 +903,7 @@ describe('accounts and ledger', () => {
     expect(await services.budgets.copyFromPreviousMonth(owner, '2026-10')).toBe(2);
     expect(await services.budgets.copyFromPreviousMonth(owner, '2026-10')).toBe(0);
     const october = await services.budgets.list(owner, '2026-10');
+
     expect(october.map(b => b.spentMinor)).toEqual([0, 0]);
     await services.budgets.remove(owner, october[0].id);
     expect(await services.budgets.list(owner, '2026-10')).toHaveLength(1);

@@ -42,7 +42,7 @@ sequenceDiagram
   R-->>B: row, then revalidatePath + query invalidation
 ```
 
-1. **Client** components fetch with the hooks in `use-finance-data.ts`. Every mutation invalidates the query keys listed in `FINANCE_KEYS`, which is cheap for a personal app and avoids stale screens.
+1. **Client** components fetch with the hooks in `use-finance-data.ts`. Every mutation invalidates the query keys listed in `FinanceKeys`, which is cheap for a personal app and avoids stale screens.
 2. **Route handlers** (`src/app/api/**`) are wrapped by `handle()` in `src/server/http.ts`: it resolves the user, serialises the result and maps `ServiceError` to an HTTP status.
 3. **Server actions** (`src/app/(main)/actions.ts`) parse input with Zod, call the service, then `revalidatePath('/')`. They throw plain `Error`s so the client can show `error.message`.
 4. **`requireUser()`** (`src/server/auth/require-user.ts`) reads the Clerk session and calls `ensureUserBootstrap`, which creates the user's settings row and seeds the default categories the first time.

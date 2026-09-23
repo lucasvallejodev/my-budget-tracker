@@ -2,21 +2,25 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TransactionExplorer } from './transaction-explorer';
-import { sampleTransactions } from './sample-data';
+import { SampleTransactions } from './sample-data';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../primitives/dialog';
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
 });
+
 function renderExplorer() {
   const client = new QueryClient();
+
   return render(
     <QueryClientProvider client={client}>
-      <TransactionExplorer transactions={sampleTransactions} />
+      <TransactionExplorer transactions={SampleTransactions} />
     </QueryClientProvider>
   );
 }
+
 describe('Finance controls', () => {
   it('filters transactions and resets pagination', () => {
     renderExplorer();
@@ -58,7 +62,7 @@ describe('Finance controls', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open test dialog' }));
     expect(screen.getByRole('dialog', { name: 'Test dialog' })).toBeTruthy();
-    fireEvent.keyDown(document.activeElement || document.body, { key: 'Escape', code: 'Escape' });
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape', code: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
   it('does not submit forms from incidental buttons', () => {

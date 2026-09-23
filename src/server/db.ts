@@ -9,13 +9,13 @@ export type DbOrTx = Db | Tx;
 export class ServiceError extends Error {
   constructor(
     message: string,
-    public readonly status: number = 400
+    public readonly status = 400
   ) {
     super(message);
     this.name = 'ServiceError';
   }
 }
 
-export function notFound(what: string): never {
+export const notFound = (what: string): never => {
   throw new ServiceError(`${what} not found`, 404);
-}
+};

@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { Panel, EmptyState, StatusBadge } from './blocks';
@@ -6,6 +7,7 @@ import { Button } from '../primitives/button';
 import s from './finance.module.scss';
 import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
 import { Input } from '../primitives/input';
+
 export type PaymentCard = {
   id: string;
   name: string;
@@ -13,11 +15,13 @@ export type PaymentCard = {
   expires: string;
   network?: string;
 };
+
 export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] }) {
   const [cards, setCards] = useState(initialCards);
   const [primary, setPrimary] = useState(initialCards[0]?.id);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
+
   return (
     <Panel
       title="My Cards"
@@ -55,6 +59,7 @@ export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] 
                 size="sm"
                 onClick={() => {
                   const remaining = cards.filter(c => c.id !== card.id);
+
                   setCards(remaining);
                   if (primary === card.id) setPrimary(remaining[0]?.id);
                 }}
@@ -75,7 +80,16 @@ export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] 
             onSubmit={e => {
               e.preventDefault();
               const id = crypto.randomUUID();
-              setCards(all => [...all, { id, name, lastFour: '0000', expires: '12/29' }]);
+
+              setCards(all => [
+                ...all,
+                {
+                  id,
+                  name,
+                  lastFour: '0000',
+                  expires: '12/29',
+                },
+              ]);
               if (!cards.length) setPrimary(id);
               setOpen(false);
               setName('');
@@ -92,6 +106,7 @@ export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] 
     </Panel>
   );
 }
+
 export function PaymentCards({
   cards,
   action,
@@ -101,6 +116,7 @@ export function PaymentCards({
 }) {
   const [index, setIndex] = useState(0);
   const card = cards[Math.min(index, cards.length - 1)];
+
   return (
     <Panel title="My card" action={action}>
       {card ? (

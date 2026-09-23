@@ -1,8 +1,9 @@
 'use client';
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CheckCircle2 } from 'lucide-react';
-import { FINANCE_KEYS, useTransactions } from './use-finance-data';
+import { FinanceKeys, useTransactions } from './use-finance-data';
 import { PageHeading, Panel, EmptyState } from './blocks';
 import { Button } from '../primitives/button';
 import { Amount } from '../money/amount';
@@ -14,17 +15,18 @@ import s from './finance.module.scss';
 export function ReviewInbox() {
   const queryClient = useQueryClient();
   const rows = useTransactions({ needsReview: '1', limit: '500' });
+
   const categorize = useMutation({
     mutationFn: ({ id, categoryId }: { id: string; categoryId: string | null }) =>
       categorizeTransactionAction(id, categoryId),
     onSuccess: async () => {
-      await Promise.all(
-        FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
+      await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   const pending = rows.data ?? [];
+
   return (
     <div className={s.page}>
       <PageHeading

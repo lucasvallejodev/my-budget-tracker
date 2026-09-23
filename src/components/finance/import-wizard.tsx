@@ -1,4 +1,5 @@
 'use client';
+
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from '../primitives/select';
 import AccountPicker from '@/app/(main)/_components/account-picker';
-import { FINANCE_KEYS, useCategories } from './use-finance-data';
+import { FinanceKeys, useCategories } from './use-finance-data';
 import { flattenCategories } from '../category-picker';
 import { parseCsv } from '@/server/import/csv';
 import type { ColumnMapping, Preview, TransferSuggestion } from '@/server/import/service';
@@ -28,10 +29,13 @@ const NONE = '__none';
 
 function guess(headers: string[], candidates: string[]) {
   const lower = headers.map(h => h.toLowerCase());
+
   for (const candidate of candidates) {
     const index = lower.findIndex(h => h.includes(candidate));
+
     if (index >= 0) return headers[index];
   }
+
   return '';
 }
 
@@ -82,12 +86,15 @@ export function ImportWizard() {
   const [fileName, setFileName] = useState('');
   const [mapping, setMapping] = useState<ColumnMapping>({ date: '', dateFormat: 'auto' });
   const [preview, setPreview] = useState<Preview | null>(null);
+
   const [result, setResult] = useState<{
     inserted: number;
     matched: number;
     suggestions: TransferSuggestion[];
   } | null>(null);
+
   const headers = useMemo(() => (csv ? parseCsv(csv).headers : []), [csv]);
+
   const setColumn = (field: keyof ColumnMapping, value: string) =>
     setMapping(current => ({ ...current, [field]: value }));
 
@@ -95,6 +102,7 @@ export function ImportWizard() {
     if (!file) return;
     const text = await file.text();
     const parsed = parseCsv(text);
+
     setCsv(text);
     setFileName(file.name);
     setPreview(null);
@@ -110,23 +118,29 @@ export function ImportWizard() {
       dateFormat: 'auto',
     });
   };
+
   const runPreview = useMutation({
-    mutationFn: () => previewImportAction({ accountId, csv, mapping }),
+    mutationFn: () =>
+      previewImportAction({
+        accountId,
+        csv,
+        mapping,
+      }),
     onSuccess: setPreview,
     onError: (error: Error) => toast.error(error.message),
   });
+
   const commit = useMutation({
     mutationFn: () => commitImportAction(preview!),
     onSuccess: async data => {
       toast.success(`Imported ${data.inserted} transaction${data.inserted === 1 ? '' : 's'}`);
       setResult(data);
       setPreview(null);
-      await Promise.all(
-        FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
+      await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
   const link = useMutation({
     mutationFn: (suggestion: TransferSuggestion) =>
       linkTransferAction(suggestion.outId, suggestion.inId),
@@ -140,9 +154,7 @@ export function ImportWizard() {
             }
           : current
       );
-      await Promise.all(
-        FINANCE_KEYS.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
+      await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
     },
     onError: (error: Error) => toast.error(error.message),
   });

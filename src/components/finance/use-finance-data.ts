@@ -1,4 +1,5 @@
 'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import type { AccountSummary } from '@/server/accounts/service';
 import type { CategoryTree } from '@/server/categories/service';
@@ -13,7 +14,11 @@ import type {
 import type { Currency, UserSettings } from '@/db/schema';
 
 export type { AccountSummary, CategoryTree, TransactionRow };
-export type PayeeRow = { id: string; name: string; defaultCategoryId: string | null };
+export type PayeeRow = {
+  id: string;
+  name: string;
+  defaultCategoryId: string | null;
+};
 export type Summary = {
   month: string;
   totals: CurrencyTotals[];
@@ -34,17 +39,21 @@ export type ExchangeRateRow = {
 
 export async function fetchFinance<T>(url: string): Promise<T> {
   const response = await fetch(url);
+
   if (!response.ok) {
     let message = 'Unable to load financial data. Please try again.';
+
     try {
       message = ((await response.json()) as { error?: string }).error ?? message;
     } catch {}
+
     throw new Error(message);
   }
+
   return (await response.json()) as T;
 }
 
-export const queryKeys = {
+export const QueryKeys = {
   accounts: ['accounts'] as const,
   payees: ['payees'] as const,
   categories: ['categories'] as const,
@@ -58,37 +67,42 @@ export const queryKeys = {
 
 export function useAccounts(includeArchived = false) {
   return useQuery({
-    queryKey: [...queryKeys.accounts, includeArchived],
+    queryKey: [...QueryKeys.accounts, includeArchived],
     queryFn: () =>
       fetchFinance<AccountSummary[]>(`/api/accounts${includeArchived ? '?includeArchived=1' : ''}`),
   });
 }
+
 export function usePayees() {
   return useQuery({
-    queryKey: queryKeys.payees,
+    queryKey: QueryKeys.payees,
     queryFn: () => fetchFinance<PayeeRow[]>('/api/payees'),
   });
 }
+
 export function useCategories(includeArchived = false) {
   return useQuery({
-    queryKey: [...queryKeys.categories, includeArchived],
+    queryKey: [...QueryKeys.categories, includeArchived],
     queryFn: () =>
       fetchFinance<CategoryTree[]>(`/api/categories${includeArchived ? '?includeArchived=1' : ''}`),
   });
 }
+
 export function useCurrencies() {
   return useQuery({
-    queryKey: queryKeys.currencies,
+    queryKey: QueryKeys.currencies,
     queryFn: () => fetchFinance<Currency[]>('/api/currencies'),
     staleTime: Infinity,
   });
 }
+
 export function useSettings() {
   return useQuery({
-    queryKey: queryKeys.settings,
+    queryKey: QueryKeys.settings,
     queryFn: () => fetchFinance<UserSettings>('/api/settings'),
   });
 }
+
 export type RuleRow = {
   id: string;
   name: string;
@@ -110,39 +124,47 @@ export type BudgetRow = {
   amountMinor: number;
   spentMinor: number;
 };
+
 export function useBudgets(month: string) {
   return useQuery({
     queryKey: ['budgets', month],
     queryFn: () => fetchFinance<BudgetRow[]>(`/api/budgets?month=${month}`),
   });
 }
+
 export function useRules() {
   return useQuery({ queryKey: ['rules'], queryFn: () => fetchFinance<RuleRow[]>('/api/rules') });
 }
+
 export function useExchangeRates() {
   return useQuery({
-    queryKey: queryKeys.exchangeRates,
+    queryKey: QueryKeys.exchangeRates,
     queryFn: () => fetchFinance<ExchangeRateRow[]>('/api/exchange-rates'),
   });
 }
+
 export function useTransactions(params: Record<string, string | undefined> = {}) {
   const query = new URLSearchParams(
     Object.entries(params).filter((entry): entry is [string, string] => !!entry[1])
   ).toString();
+
   return useQuery({
-    queryKey: queryKeys.transactions(params),
-    queryFn: () => fetchFinance<TransactionRow[]>(`/api/transactions${query ? `?${query}` : ''}`),
+    queryKey: QueryKeys.transactions(params),
+    queryFn: () =>
+      fetchFinance<TransactionRow[]>(query ? `/api/transactions?${query}` : '/api/transactions'),
   });
 }
+
 export function useSummary(month?: string) {
   return useQuery({
-    queryKey: queryKeys.summary(month),
-    queryFn: () => fetchFinance<Summary>(`/api/reports/summary${month ? `?month=${month}` : ''}`),
+    queryKey: QueryKeys.summary(month),
+    queryFn: () =>
+      fetchFinance<Summary>(month ? `/api/reports/summary?month=${month}` : '/api/reports/summary'),
   });
 }
 
 /** Query keys every mutation invalidates; cheap enough for a personal app. */
-export const FINANCE_KEYS = [
+export const FinanceKeys = [
   'accounts',
   'payees',
   'categories',
@@ -154,12 +176,16 @@ export const FINANCE_KEYS = [
 export function currentMonth() {
   return new Date().toISOString().slice(0, 7);
 }
+
 export function shiftMonth(month: string, delta: number) {
   const [year, monthIndex] = month.split('-').map(Number);
+
   return new Date(Date.UTC(year, monthIndex - 1 + delta, 1)).toISOString().slice(0, 7);
 }
+
 export function monthLabel(month: string) {
   const [year, monthIndex] = month.split('-').map(Number);
+
   return new Date(Date.UTC(year, monthIndex - 1, 1)).toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric',
