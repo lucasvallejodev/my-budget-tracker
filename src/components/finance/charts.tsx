@@ -1,50 +1,54 @@
 'use client';
 
-import { ChartStyle, Colors } from '@/styles/theme';
-import { getPercentage } from '@/lib/math';
 import { useId } from 'react';
 import {
   Area,
   AreaChart,
   CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
-import { Panel, money, EmptyState } from './blocks';
-import s from './finance.module.scss';
+
+import { PERCENT_SCALE } from '@/constants/money';
+import { getPercentage } from '@/lib/math';
+import { Patterns } from '@/lib/patterns';
+import { ChartStyle, Colors } from '@/styles/theme';
+
+import { EmptyState, money, Panel } from './blocks';
+import styles from './finance.module.scss';
 
 export type CashPoint = {
-  label: string;
-  income: number;
   expense: number;
+  income: number;
+  label: string;
 };
 export type Segment = {
+  color?: string;
   name: string;
   value: number;
-  color?: string;
 };
 
 export function CashFlowChart({
-  data,
   action,
-  format = money,
+  data,
   description = 'Income vs Expenses',
+  format = money,
 }: {
-  data: CashPoint[];
   action?: React.ReactNode;
-  format?: (value: number) => string;
+  data: CashPoint[];
   description?: string;
+  format?: (value: number) => string;
 }) {
-  const id = useId().replace(/:/g, '');
+  const id = useId().replace(Patterns.reactIdColon, '');
 
   return (
     <Panel title="Cash Flow" description={description} action={action}>
-      <div className={s.chart}>
+      <div className={styles.chart}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} accessibilityLayer>
             <defs>
@@ -76,26 +80,26 @@ export function CashFlowChart({
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <p className={s.muted}>Purple: income · Dashed: expenses</p>
+      <p className={styles.muted}>Purple: income · Dashed: expenses</p>
     </Panel>
   );
 }
 
 export function DistributionChart({
-  title = 'Top Expenses',
-  data,
   action,
+  data,
   format = money,
+  title = 'Top Expenses',
 }: {
-  title?: string;
-  data: Segment[];
   action?: React.ReactNode;
+  data: Segment[];
   format?: (value: number) => string;
+  title?: string;
 }) {
-  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const total = data.reduce((sum, segment) => sum + segment.value, 0);
 
-  const fill = (d: Segment, i: number) =>
-    d.color ?? Colors.chart.series[i % Colors.chart.series.length];
+  const fill = (segment: Segment, index: number) =>
+    segment.color ?? Colors.chart.series[index % Colors.chart.series.length];
 
   return (
     <Panel title={title} action={action}>
@@ -104,9 +108,9 @@ export function DistributionChart({
       ) : (
         <>
           <div
-            className={s.chart}
+            className={styles.chart}
             role="img"
-            aria-label={data.map(d => `${d.name}: ${format(d.value)}`).join(', ')}
+            aria-label={data.map(segment => `${segment.name}: ${format(segment.value)}`).join(', ')}
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -120,8 +124,8 @@ export function DistributionChart({
                   cornerRadius={6}
                   stroke="none"
                 >
-                  {data.map((d, i) => (
-                    <Cell key={d.name} fill={fill(d, i)} />
+                  {data.map((segment, index) => (
+                    <Cell key={segment.name} fill={fill(segment, index)} />
                   ))}
                 </Pie>
                 <Tooltip
@@ -131,12 +135,12 @@ export function DistributionChart({
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className={s.legend}>
-            {data.map((d, i) => (
-              <div key={d.name} className={s.legendRow}>
-                <span className={s.swatch} style={{ background: fill(d, i) }} />
-                {d.name}
-                <strong>{format(d.value)}</strong>
+          <div className={styles.legend}>
+            {data.map((segment, index) => (
+              <div key={segment.name} className={styles.legendRow}>
+                <span className={styles.swatch} style={{ background: fill(segment, index) }} />
+                {segment.name}
+                <strong>{format(segment.value)}</strong>
               </div>
             ))}
           </div>
@@ -146,16 +150,19 @@ export function DistributionChart({
   );
 }
 
-export function TargetCard({ value, target }: { value: number; target: number }) {
+export function TargetCard({ target, value }: { target: number; value: number }) {
   const percent = getPercentage(value, target);
 
   return (
     <Panel title="Target" description="Income target progress">
-      <div className={s.chart} role="img" aria-label={`${percent}% of income target`}>
+      <div className={styles.chart} role="img" aria-label={`${percent}% of income target`}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={[{ value: Math.min(100, percent) }, { value: Math.max(0, 100 - percent) }]}
+              data={[
+                { value: Math.min(PERCENT_SCALE, percent) },
+                { value: Math.max(0, PERCENT_SCALE - percent) },
+              ]}
               dataKey="value"
               startAngle={180}
               endAngle={0}
@@ -170,8 +177,8 @@ export function TargetCard({ value, target }: { value: number; target: number })
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className={s.metricValue}>{percent}%</div>
-      <p className={s.muted}>
+      <div className={styles.metricValue}>{percent}%</div>
+      <p className={styles.muted}>
         {money(value)} of {money(target)}
       </p>
     </Panel>

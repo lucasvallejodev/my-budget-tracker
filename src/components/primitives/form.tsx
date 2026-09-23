@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useId, ComponentProps } from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { ComponentProps, createContext, useContext, useId } from 'react';
 import {
   Controller,
   ControllerProps,
@@ -9,8 +10,8 @@ import {
   FormProvider,
   useFormContext,
 } from 'react-hook-form';
-import { Slot } from '@radix-ui/react-slot';
-import s from './controls.module.scss';
+
+import styles from './controls.module.scss';
 
 const FieldContext = createContext('');
 const ItemContext = createContext('');
@@ -32,7 +33,7 @@ export function FormItem(props: ComponentProps<'div'>) {
 
   return (
     <ItemContext.Provider value={id}>
-      <div className={s.field} {...props} />
+      <div className={styles.field} {...props} />
     </ItemContext.Provider>
   );
 }
@@ -40,13 +41,13 @@ export function FormItem(props: ComponentProps<'div'>) {
 export function FormLabel(props: ComponentProps<'label'>) {
   const id = useContext(ItemContext);
 
-  return <label htmlFor={id} className={s.label} {...props} />;
+  return <label htmlFor={id} className={styles.label} {...props} />;
 }
 
 export function FormControl(props: ComponentProps<typeof Slot>) {
   const id = useContext(ItemContext);
   const name = useContext(FieldContext);
-  const { getFieldState, formState } = useFormContext();
+  const { formState, getFieldState } = useFormContext();
   const { error } = getFieldState(name, formState);
 
   return (
@@ -58,7 +59,7 @@ export function FormControl(props: ComponentProps<typeof Slot>) {
         {...props}
       />
       {error && (
-        <span id={`${id}-error`} role="alert" className={s.error}>
+        <span id={`${id}-error`} role="alert" className={styles.error}>
           {error.message}
         </span>
       )}
@@ -69,5 +70,5 @@ export function FormControl(props: ComponentProps<typeof Slot>) {
 export function FormDescription(props: ComponentProps<'p'>) {
   const id = useContext(ItemContext);
 
-  return <p id={`${id}-description`} className={s.description} {...props} />;
+  return <p id={`${id}-description`} className={styles.description} {...props} />;
 }

@@ -72,16 +72,33 @@ export type CashPoint = {
 
 ESLint rejects a module-level `const` holding an object or array literal whose name is not PascalCase (names Next.js reserves, such as `metadata` and `config`, are exempt).
 
+Every name must say what the value is for. One-letter and abbreviated names are out: `import styles from './finance.module.scss'`, not `s`; `transaction => transaction.amountMinor`, not `t => t.amountMinor`; `(left, right) => left - right` in comparators; `index` in loops; a sentinel such as `UnmappedColumnValue` rather than `NONE`. ESLint enforces a minimum of two characters (`id-length`); reviewers enforce the meaning.
+
+## No magic values, no comments
+
+- Numbers other than -1, 0 and 1 (and array indexes or parameter defaults) must be named constants: `const MaxPreviewRows = 500`. Strings that act as keys, sentinels or configuration are named too (`UnmappedColumnValue`); user-facing copy stays inline.
+- Regular expressions live only in `src/lib/patterns.ts`, in the `Patterns` object under a name that says what they match (`Patterns.isoDate`, `Patterns.amountSignWrapper`), with small helpers such as `isIsoDate(text)` for the common tests. ESLint rejects a regex literal or `new RegExp` anywhere else.
+- Comments are not allowed in application code (a local rule enforces it); only tool directives and the `keep order` marker pass. The intent goes into names, small helpers and types. Config files and the local ESLint rules are the exception.
+
+## Import order and sorting
+
+`npm run lint:fix` keeps these deterministic (`eslint-plugin-perfectionist`):
+
+- Imports in three groups separated by a blank line: external packages, `@/` modules, relative files. Within a group, natural order by module path. Nothing else goes in the import block; types and constants come after it.
+- Named imports and exports, object literal properties, destructured parameters and type members in alphabetical order. Positional parameters are never reordered, since their order is the signature.
+- When an object's order carries meaning (a display sequence), add a `// keep order` comment above the first entry; the sorter leaves everything after it as written. Ordinary comments travel with their property.
+
 ## Reuse before you write
 
 Before adding a helper, a constant, a colour or a style value, look for an existing one:
 
-| You need…                             | Look in                                                              |
-| ------------------------------------- | -------------------------------------------------------------------- |
-| a calculation or formatting helper    | `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`)   |
-| a lookup table or list of options     | `src/constants/`, the `*Keys` / `*Names` exports next to the feature |
-| a colour or chart style in TypeScript | `Colors`, `GroupColors`, `ChartStyle` in `src/styles/theme.ts`       |
-| a colour, shadow or gradient in SCSS  | the `--tokens` in `src/styles/tokens.scss`                           |
+| You need…                             | Look in                                                                                                                                   |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| a calculation or formatting helper    | `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`)                                                                        |
+| a lookup table, limit or unit         | `src/constants/` (`account.ts`, `field-lengths.ts`, `http.ts`, `money.ts`, `time.ts`), the `*Keys` / `*Names` exports next to the feature |
+| a regular expression or format check  | `Patterns`, `isIsoDate`, `isIsoMonth`, `isDigitsOnly`, `isHexColor` in `src/lib/patterns.ts`                                              |
+| a colour or chart style in TypeScript | `Colors`, `GroupColors`, `ChartStyle` in `src/styles/theme.ts`                                                                            |
+| a colour, shadow or gradient in SCSS  | the `--tokens` in `src/styles/tokens.scss`                                                                                                |
 
 If it exists, use or extend it. If the same expression appears twice, move it to `src/lib/` with a test. `npm run lint:dupes` reports larger copies.
 

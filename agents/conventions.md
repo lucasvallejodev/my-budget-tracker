@@ -14,8 +14,8 @@ npm run lint && npx tsc --noEmit && npm test -- --run && npm run build
 
 Before writing a helper, constant, colour or style value, search for an existing one and extend it:
 
-- helpers: `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`);
-- lookup tables and option lists: `src/constants/`, the `*Keys` / `*Names` exports next to the feature;
+- helpers: `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts` with `toIsoDate` / `toIsoMonth`, `patterns.ts`, `styles.ts`);
+- lookup tables, limits and units: `src/constants/` (`account.ts`, `field-lengths.ts`, `http.ts`, `money.ts`, `time.ts`), the `*Keys` / `*Names` exports next to the feature;
 - colours and chart styles in TypeScript: `Colors`, `GroupColors`, `ChartStyle` in `src/styles/theme.ts`;
 - colours, shadows and gradients in SCSS: the tokens in `src/styles/tokens.scss`.
 
@@ -42,6 +42,10 @@ Before writing a helper, constant, colour or style value, search for an existing
 - Database: snake_case tables and columns; Drizzle properties camelCase. Enums are singular nouns (`account_type`).
 - Server actions end in `Action` (`createTransferAction`). Hooks start with `use`. Zod schemas end in `Schema`, their types in `Values`.
 - Money fields end in `Minor` (`amountMinor`, `balanceMinor`, `spentMinor`).
+- Every name says what the value is for. No one-letter or abbreviated identifiers (`s`, `t`, `a`/`b`, `f`, `n`, `NONE`): style-module imports are `styles` / `formStyles` / `controlStyles`, callback parameters are named after the item (`transaction => transaction.amountMinor`), comparators use `(left, right)`, loop indexes `index`, and a sentinel says what it stands for (`UnmappedColumnValue`, not `NONE`). ESLint enforces a minimum length of two characters (`id-length`); the meaning is a review rule.
+- No magic values. Every number, string with meaning beyond display text, and regular expression gets a named `const` that says what it is (`MaxCsvRows`, `UnmappedColumnValue`, `Patterns.isoDate`), placed next to its use or in `src/constants/` when shared. `@typescript-eslint/no-magic-numbers` allows only -1, 0, 1, array indexes and default values; regular expressions may appear only in `src/lib/patterns.ts` (`Patterns` plus `isIsoDate`, `isDigitsOnly`, `isHexColor`, `isIsoMonth` helpers), which ESLint enforces everywhere else. Sentinel and lookup strings become constants; user-facing copy (labels, messages) stays inline. Exception: values Next.js parses at build time (`export const config = { matcher: [...] }` in `middleware.ts`, route segment config) must stay inline literals, since the compiler cannot follow a constant.
+- No code comments. `local/no-comments` rejects every comment except tool directives (`eslint-`, `@ts-`, `@vitest-environment`) and the `keep order` marker. When something needs explaining, express it with a better name, a small named helper or a type; if an external quirk genuinely cannot be named, write a test that documents it.
+- Imports: external packages first, then `@/` modules, then relative files, each group separated by a blank line and sorted naturally; named imports and exports, object properties, destructured parameters and type members are sorted alphabetically (`perfectionist/*`, fixable). When order carries meaning (a display sequence), put a `// keep order` comment above the first entry; the sorter leaves everything after it as written. Ordinary comments travel with their property. Nothing but imports goes in the import block: types and constants come after it.
 - Module-level constant objects and arrays (lookup tables, palettes, key lists) are PascalCase: `Colors`, `FinanceKeys`, `QueryKeys`, `DefaultTaxonomy`, `AccountTypes`. ESLint rejects camelCase or UPPER_CASE for them (Next.js reserved exports such as `metadata` and `config` are exempt). Primitive constants stay UPPER_CASE (`MIN_YEAR`).
 
 ## Server patterns
@@ -56,10 +60,12 @@ Before writing a helper, constant, colour or style value, search for an existing
 
 - Screens are `'use client'` components in `src/components/finance/`; pages under `src/app/(main)/` only render them.
 - Data via hooks in `use-finance-data.ts`; new endpoints get a hook and their key is added to `FinanceKeys`.
-- Mutations: `useMutation({ mutationFn: someAction, onSuccess: toast + invalidate FinanceKeys, onError: toast(error.message) })`.
-- Forms: React Hook Form + `zodResolver`; amount inputs are text with `inputMode="decimal"`.
+- Mutations from a dialog form: `useEntityMutation({ mutationFn: someAction, successMessage, errorMessage, onSuccess: reset + close })` (`src/app/(main)/_components/use-entity-mutation.ts`); it toasts, invalidates every `FinanceKeys` query and then runs `onSuccess`. Elsewhere use `useMutation` with the same toast + invalidate shape.
+- Forms: React Hook Form + `zodResolver`; amount inputs are text with `inputMode="decimal"`. Build dialog forms from `TextField` / `AmountField` / `DateField` (`src/components/primitives/form-fields.tsx`) and end them with `DialogFormFooter` + `saveLabel(editing)` (`src/components/primitives/dialog-form.tsx`); do not hand-write a `FormField` + `FormItem` block for a plain input, and do not nest ternaries for the submit label.
+- Default values and create/update branching live in small module-level helpers (`standardDefaults`, `accountDefaults`, `saveAccount`), not inline in the component.
 - Define every component at module scope; never create components inside another component's body (React Compiler rule). Do not call `setState` synchronously inside `useEffect`; derive state or reset on user events instead.
 - Accessible names on every interactive control (`aria-label` on icon buttons) so tests can query by role.
+- Loading / error / empty rendering goes through `QueryContent` (`blocks.tsx`); no `a ? x : b ? y : z` chains in JSX. Label selection with more than two branches becomes a small `if` helper (`TransactionStatus`, `budgetStatus`, `suggestionLabel`).
 
 ## Styling
 

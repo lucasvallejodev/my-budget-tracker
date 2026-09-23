@@ -7,13 +7,6 @@
  * rule there would fight the formatter.
  */
 const MultilineTypeAliasRule = {
-  meta: {
-    type: 'layout',
-    fixable: 'whitespace',
-    docs: { description: 'Type aliases with three or more members go one member per line.' },
-    schema: [{ type: 'object', properties: { minMembers: { type: 'integer', minimum: 1 } } }],
-    messages: { expand: 'Write this {{count}}-member type alias with one member per line.' },
-  },
   create(context) {
     const minMembers = context.options[0]?.minMembers ?? 3;
     const sourceCode = context.sourceCode;
@@ -32,8 +25,6 @@ const MultilineTypeAliasRule = {
 
         if (!needsOpen && !needsClose) return;
         context.report({
-          node,
-          messageId: 'expand',
           data: { count: members.length },
           fix(fixer) {
             const fixes = [];
@@ -43,9 +34,18 @@ const MultilineTypeAliasRule = {
 
             return fixes;
           },
+          messageId: 'expand',
+          node,
         });
       },
     };
+  },
+  meta: {
+    docs: { description: 'Type aliases with three or more members go one member per line.' },
+    fixable: 'whitespace',
+    messages: { expand: 'Write this {{count}}-member type alias with one member per line.' },
+    schema: [{ properties: { minMembers: { minimum: 1, type: 'integer' } }, type: 'object' }],
+    type: 'layout',
   },
 };
 

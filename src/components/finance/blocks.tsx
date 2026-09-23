@@ -1,55 +1,57 @@
-import { getPercentage } from '@/lib/math';
-import { ReactNode } from 'react';
 import { ArrowUpRight, CircleCheck, Info, Wallet, Zap } from 'lucide-react';
-import { Button } from '../primitives/button';
-import { cn } from '@/lib/styles';
-import s from './finance.module.scss';
+import { ReactNode } from 'react';
 
-/** Formats a major-unit number (sample data, budget previews). Ledger amounts use `Amount`. */
+import { PERCENT_SCALE } from '@/constants/money';
+import { getPercentage } from '@/lib/math';
+import { cn } from '@/lib/styles';
+
+import { Button } from '../primitives/button';
+import styles from './finance.module.scss';
+
 export const money = (amount: number, currency = 'USD') =>
   new Intl.NumberFormat('en-US', {
-    style: 'currency',
     currency,
     maximumFractionDigits: 2,
+    style: 'currency',
   }).format(amount);
 
 export function PageHeading({
-  title,
-  description,
   actions,
+  description,
+  title,
 }: {
-  title: string;
-  description?: string;
   actions?: ReactNode;
+  description?: string;
+  title: string;
 }) {
   return (
-    <header className={s.heading}>
+    <header className={styles.heading}>
       <div>
         <h1>{title}</h1>
         {description && <p>{description}</p>}
       </div>
-      {actions && <div className={s.actions}>{actions}</div>}
+      {actions && <div className={styles.actions}>{actions}</div>}
     </header>
   );
 }
 
 export function Panel({
-  title,
-  description,
   action,
   children,
   className,
+  description,
+  title,
 }: {
-  title?: string;
-  description?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  description?: string;
+  title?: string;
 }) {
   return (
-    <section className={cn(s.panel, className)}>
+    <section className={cn(styles.panel, className)}>
       {title && (
-        <div className={s.panelHead}>
+        <div className={styles.panelHead}>
           <div>
             <h2>{title}</h2>
             {description && <p>{description}</p>}
@@ -63,30 +65,30 @@ export function Panel({
 }
 
 export function MetricCard({
-  label,
-  value,
-  icon = <Wallet size={20} />,
-  trend,
   detail,
+  icon = <Wallet size={20} />,
+  label,
   negative,
+  trend,
+  value,
 }: {
-  label: string;
-  value: string;
-  icon?: ReactNode;
-  trend?: string;
   detail?: string;
+  icon?: ReactNode;
+  label: string;
   negative?: boolean;
+  trend?: string;
+  value: string;
 }) {
   return (
-    <section className={s.panel}>
-      <div className={s.metricLabel}>
-        <span className={s.metricIcon}>{icon}</span>
+    <section className={styles.panel}>
+      <div className={styles.metricLabel}>
+        <span className={styles.metricIcon}>{icon}</span>
         {label}
       </div>
-      <div className={s.metricValue}>{value}</div>
+      <div className={styles.metricValue}>{value}</div>
       {(trend || detail) && (
-        <p className={s.trend}>
-          <span className={negative ? s.negative : s.positive}>{trend}</span>
+        <p className={styles.trend}>
+          <span className={negative ? styles.negative : styles.positive}>{trend}</span>
           {detail}
         </p>
       )}
@@ -95,25 +97,25 @@ export function MetricCard({
 }
 
 export function BalanceCard({
+  actions,
   amount,
   currency = 'USD',
-  actions,
 }: {
+  actions?: ReactNode;
   amount: number;
   currency?: string;
-  actions?: ReactNode;
 }) {
   return (
-    <section className={s.balance}>
-      <div className={s.balanceTitle}>
+    <section className={styles.balance}>
+      <div className={styles.balanceTitle}>
         <h2>Total balance</h2>
         <span>{currency}</span>
       </div>
       <div>
-        <p className={s.muted}>Available to use</p>
-        <div className={s.metricValue}>{money(amount, currency)}</div>
+        <p className={styles.muted}>Available to use</p>
+        <div className={styles.metricValue}>{money(amount, currency)}</div>
       </div>
-      {actions && <div className={s.actions}>{actions}</div>}
+      {actions && <div className={styles.actions}>{actions}</div>}
     </section>
   );
 }
@@ -126,7 +128,7 @@ export function StatusBadge({
   tone?: 'success' | 'warning' | 'danger' | 'neutral';
 }) {
   return (
-    <span className={cn(s.badge, s[tone])}>
+    <span className={cn(styles.badge, styles[tone])}>
       <span aria-hidden="true">•</span>
       {children}
     </span>
@@ -134,73 +136,41 @@ export function StatusBadge({
 }
 
 export function BudgetProgress({
-  spent,
-  limit,
-  label = 'Budget progress',
   format = money,
+  label = 'Budget progress',
+  limit,
+  spent,
 }: {
-  spent: number;
-  limit: number;
-  label?: string;
   format?: (value: number) => string;
+  label?: string;
+  limit: number;
+  spent: number;
 }) {
   const percent = getPercentage(spent, limit);
 
   return (
     <div>
-      <div className={s.budgetMeta}>
+      <div className={styles.budgetMeta}>
         <span>{percent}% used</span>
         <span>{format(Math.max(0, limit - spent))} remaining</span>
       </div>
       <progress
-        className={s.progress}
-        max={100}
-        value={Math.min(100, Math.max(0, percent))}
+        className={styles.progress}
+        max={PERCENT_SCALE}
+        value={Math.min(PERCENT_SCALE, Math.max(0, percent))}
         aria-label={label}
       />
     </div>
   );
 }
 
-export function CategoryBudget({
-  name,
-  spent,
-  limit,
-  actions,
-}: {
-  name: string;
-  spent: number;
-  limit: number;
-  actions?: ReactNode;
-}) {
-  const ratio = limit > 0 ? spent / limit : 0;
-
-  return (
-    <article className={s.budget}>
-      <div className={s.balanceTitle}>
-        <div>
-          <h3>{name}</h3>
-          <p className={s.muted}>
-            Budget: {money(limit)} · Spent: {money(spent)}
-          </p>
-        </div>
-        <StatusBadge tone={ratio >= 1 ? 'danger' : ratio >= 0.8 ? 'warning' : 'success'}>
-          {ratio >= 1 ? 'Exceeded' : ratio >= 0.8 ? 'Near limit' : 'Safe'}
-        </StatusBadge>
-      </div>
-      <BudgetProgress spent={spent} limit={limit} label={`${name} budget`} />
-      {actions && <div className={s.budgetActions}>{actions}</div>}
-    </article>
-  );
-}
-
 export function BudgetInsights({ insights }: { insights: string[] }) {
   return (
     <Panel title="Budget Insights">
-      <ul className={s.insights}>
-        {insights.map((text, i) => (
+      <ul className={styles.insights}>
+        {insights.map((text, index) => (
           <li key={text}>
-            {i === 0 ? <Info size={18} /> : <CircleCheck size={18} />}
+            {index === 0 ? <Info size={18} /> : <CircleCheck size={18} />}
             {text}
           </li>
         ))}
@@ -210,18 +180,18 @@ export function BudgetInsights({ insights }: { insights: string[] }) {
 }
 
 export function PromotionPanel({
-  title,
+  actionLabel,
   description,
   href,
-  actionLabel,
+  title,
 }: {
-  title: string;
+  actionLabel: string;
   description: string;
   href: string;
-  actionLabel: string;
+  title: string;
 }) {
   return (
-    <aside className={s.promotion}>
+    <aside className={styles.promotion}>
       <h3>
         <Zap size={18} /> {title}
       </h3>
@@ -237,16 +207,16 @@ export function PromotionPanel({
 }
 
 export function EmptyState({
-  title,
-  description,
   action,
+  description,
+  title,
 }: {
-  title: string;
-  description?: string;
   action?: ReactNode;
+  description?: string;
+  title: string;
 }) {
   return (
-    <div className={s.empty}>
+    <div className={styles.empty}>
       <Wallet size={30} />
       <h3>{title}</h3>
       {description && <p>{description}</p>}
@@ -256,18 +226,18 @@ export function EmptyState({
 }
 
 export function LinkedAccount({
-  name,
-  detail,
   actions,
+  detail,
+  name,
 }: {
-  name: string;
-  detail: string;
   actions?: ReactNode;
+  detail: string;
+  name: string;
 }) {
   return (
-    <div className={s.row}>
-      <div className={s.actions}>
-        <span className={s.metricIcon}>
+    <div className={styles.row}>
+      <div className={styles.actions}>
+        <span className={styles.metricIcon}>
           <Wallet size={20} />
         </span>
         <div>
@@ -281,16 +251,16 @@ export function LinkedAccount({
 }
 
 export function SettingsSection({
-  title,
-  description,
   children,
+  description,
+  title,
 }: {
-  title: string;
-  description?: string;
   children: ReactNode;
+  description?: string;
+  title: string;
 }) {
   return (
-    <section className={s.section}>
+    <section className={styles.section}>
       <div>
         <h3>{title}</h3>
         {description && <p>{description}</p>}
@@ -299,3 +269,47 @@ export function SettingsSection({
     </section>
   );
 }
+
+export function QueryContent({
+  children,
+  empty,
+  error,
+  errorTitle,
+  loading,
+  onRetry,
+  pending,
+}: {
+  children: () => ReactNode;
+  empty?: ReactNode;
+  error?: boolean;
+  errorTitle?: string;
+  loading: string;
+  onRetry?: () => void;
+  pending: boolean;
+}) {
+  if (pending) return <p role="status">{loading}</p>;
+
+  if (error) {
+    return (
+      <EmptyState
+        title={errorTitle ?? 'Something went wrong'}
+        action={onRetry && <Button onClick={onRetry}>Try again</Button>}
+      />
+    );
+  }
+
+  if (empty) return <>{empty}</>;
+
+  return <>{children()}</>;
+}
+
+const NearLimitRatio = 0.8;
+
+export const budgetStatus = (
+  ratio: number
+): { label: string; tone: 'danger' | 'warning' | 'success' } => {
+  if (ratio >= 1) return { label: 'Exceeded', tone: 'danger' };
+  if (ratio >= NearLimitRatio) return { label: 'Near limit', tone: 'warning' };
+
+  return { label: 'On track', tone: 'success' };
+};

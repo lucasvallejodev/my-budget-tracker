@@ -1,43 +1,75 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+
 import { budgets, categories, categoryGroups } from '@/db/schema';
-import { Db, ServiceError, notFound } from '../db';
-import { createReportService } from '../reports/service';
+import { isoDateOfMonthStart } from '@/lib/date-helpers';
+
+import { ownedActiveCategory } from '../categories/service';
+import { Db, notFound, ServiceError } from '../db';
 import { monthRange } from '../ledger/service';
+import { createReportService } from '../reports/service';
 
 export type BudgetRow = {
-  id: string;
+  amountMinor: number;
   categoryId: string;
   categoryName: string;
-  icon: string;
+  color: string;
+  currency: string;
   groupId: string;
   groupName: string;
-  color: string;
+  icon: string;
+  id: string;
   month: string;
-  currency: string;
-  amountMinor: number;
   spentMinor: number;
 };
 
-/** Monthly spending limits per category and currency, compared against the ledger. */
 export const createBudgetService = (db: Db) => {
   const reports = createReportService(db);
 
   return {
+    async copyFromPreviousMonth(userId: string, month: string) {
+      const { start } = monthRange(month);
+      const previous = isoDateOfMonthStart(month, -1);
+
+      const rows = await db
+        .select()
+        .from(budgets)
+        .where(and(eq(budgets.userId, userId), eq(budgets.month, previous)));
+
+      let copied = 0;
+
+      for (const row of rows) {
+        const inserted = await db
+          .insert(budgets)
+          .values({
+            amountMinor: row.amountMinor,
+            categoryId: row.categoryId,
+            currency: row.currency,
+            month: start,
+            userId,
+          })
+          .onConflictDoNothing()
+          .returning({ id: budgets.id });
+
+        copied += inserted.length;
+      }
+
+      return copied;
+    },
     async list(userId: string, month: string): Promise<BudgetRow[]> {
       const { start } = monthRange(month);
 
       const rows = await db
         .select({
-          id: budgets.id,
+          amountMinor: budgets.amountMinor,
           categoryId: budgets.categoryId,
           categoryName: categories.name,
-          icon: categories.icon,
+          color: categoryGroups.color,
+          currency: budgets.currency,
           groupId: categoryGroups.id,
           groupName: categoryGroups.name,
-          color: categoryGroups.color,
+          icon: categories.icon,
+          id: budgets.id,
           month: budgets.month,
-          currency: budgets.currency,
-          amountMinor: budgets.amountMinor,
         })
         .from(budgets)
         .innerJoin(categories, eq(categories.id, budgets.categoryId))
@@ -60,54 +92,10 @@ export const createBudgetService = (db: Db) => {
           spentMinor: spent.get(`${row.currency}:${row.categoryId}`) ?? 0,
         }))
         .sort(
-          (a, b) =>
-            a.groupName.localeCompare(b.groupName) || a.categoryName.localeCompare(b.categoryName)
+          (left, right) =>
+            left.groupName.localeCompare(right.groupName) ||
+            left.categoryName.localeCompare(right.categoryName)
         );
-    },
-    async upsert(
-      userId: string,
-      data: {
-        categoryId: string;
-        month: string;
-        currency: string;
-        amountMinor: number;
-      }
-    ) {
-      if (!Number.isInteger(data.amountMinor) || data.amountMinor <= 0) {
-        throw new ServiceError('The limit must be a positive amount');
-      }
-
-      const { start } = monthRange(data.month);
-
-      const [category] = await db
-        .select({ id: categories.id })
-        .from(categories)
-        .where(
-          and(
-            eq(categories.id, data.categoryId),
-            eq(categories.userId, userId),
-            isNull(categories.archivedAt)
-          )
-        );
-
-      if (!category) notFound('Category');
-
-      const [row] = await db
-        .insert(budgets)
-        .values({
-          userId,
-          categoryId: data.categoryId,
-          month: start,
-          currency: data.currency.toUpperCase(),
-          amountMinor: data.amountMinor,
-        })
-        .onConflictDoUpdate({
-          target: [budgets.categoryId, budgets.month, budgets.currency],
-          set: { amountMinor: data.amountMinor },
-        })
-        .returning();
-
-      return { ...row, amountMinor: Number(row.amountMinor) };
     },
     async remove(userId: string, id: string) {
       const deleted = await db
@@ -117,36 +105,39 @@ export const createBudgetService = (db: Db) => {
 
       if (!deleted.length) notFound('Budget');
     },
-    /** Copies last month's limits into `month` for categories that have none yet. */
-    async copyFromPreviousMonth(userId: string, month: string) {
-      const { start } = monthRange(month);
-      const [year, monthIndex] = month.split('-').map(Number);
-      const previous = new Date(Date.UTC(year, monthIndex - 2, 1)).toISOString().slice(0, 10);
-
-      const rows = await db
-        .select()
-        .from(budgets)
-        .where(and(eq(budgets.userId, userId), eq(budgets.month, previous)));
-
-      let copied = 0;
-
-      for (const row of rows) {
-        const inserted = await db
-          .insert(budgets)
-          .values({
-            userId,
-            categoryId: row.categoryId,
-            month: start,
-            currency: row.currency,
-            amountMinor: row.amountMinor,
-          })
-          .onConflictDoNothing()
-          .returning({ id: budgets.id });
-
-        copied += inserted.length;
+    async upsert(
+      userId: string,
+      data: {
+        amountMinor: number;
+        categoryId: string;
+        currency: string;
+        month: string;
+      }
+    ) {
+      if (!Number.isInteger(data.amountMinor) || data.amountMinor <= 0) {
+        throw new ServiceError('The limit must be a positive amount');
       }
 
-      return copied;
+      const { start } = monthRange(data.month);
+
+      await ownedActiveCategory(db, userId, data.categoryId);
+
+      const [row] = await db
+        .insert(budgets)
+        .values({
+          amountMinor: data.amountMinor,
+          categoryId: data.categoryId,
+          currency: data.currency.toUpperCase(),
+          month: start,
+          userId,
+        })
+        .onConflictDoUpdate({
+          set: { amountMinor: data.amountMinor },
+          target: [budgets.categoryId, budgets.month, budgets.currency],
+        })
+        .returning();
+
+      return { ...row, amountMinor: Number(row.amountMinor) };
     },
   };
 };

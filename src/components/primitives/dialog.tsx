@@ -1,21 +1,23 @@
 'use client';
 
-import * as R from '@radix-ui/react-dialog';
-import { ComponentProps, createContext, useContext, useState, useCallback, useEffect } from 'react';
+import * as RadixDialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
+import { ComponentProps, createContext, useCallback, useContext, useEffect, useState } from 'react';
+
 import { cn } from '@/lib/styles';
-import s from './controls.module.scss';
+
+import styles from './controls.module.scss';
+import { DialogContentZIndex, DialogOverlayZIndex, layerZIndex } from './layers';
 
 type DialogLayerValue = {
-  depth: number;
   childrenOpen: number;
-  /** Registers an open child dialog; returns the function that unregisters it. */
+  depth: number;
   register: () => () => void;
 };
 
 const DialogLayer = createContext<DialogLayerValue>({
-  depth: 0,
   childrenOpen: 0,
+  depth: 0,
   register: () => () => undefined,
 });
 
@@ -24,21 +26,21 @@ export function useDialogDepth() {
 }
 
 export function Dialog({
-  open: controlledOpen,
+  children,
   defaultOpen = false,
   onOpenChange,
-  children,
+  open: controlledOpen,
   ...props
-}: ComponentProps<typeof R.Root>) {
+}: ComponentProps<typeof RadixDialog.Root>) {
   const { depth: parentDepth, register: registerParent } = useContext(DialogLayer);
   const [localOpen, setLocalOpen] = useState(defaultOpen);
   const [childrenOpen, setChildrenOpen] = useState(0);
   const open = controlledOpen ?? localOpen;
 
   const register = useCallback(() => {
-    setChildrenOpen(n => n + 1);
+    setChildrenOpen(count => count + 1);
 
-    return () => setChildrenOpen(n => n - 1);
+    return () => setChildrenOpen(count => count - 1);
   }, []);
 
   useEffect(() => {
@@ -48,12 +50,12 @@ export function Dialog({
   return (
     <DialogLayer.Provider
       value={{
-        depth: parentDepth + 1,
         childrenOpen,
+        depth: parentDepth + 1,
         register,
       }}
     >
-      <R.Root
+      <RadixDialog.Root
         {...props}
         open={open}
         onOpenChange={value => {
@@ -62,53 +64,59 @@ export function Dialog({
         }}
       >
         {children}
-      </R.Root>
+      </RadixDialog.Root>
     </DialogLayer.Provider>
   );
 }
 
-export const DialogTrigger = R.Trigger;
-export const DialogClose = R.Close;
+export const DialogTrigger = RadixDialog.Trigger;
+export const DialogClose = RadixDialog.Close;
 
 export function DialogContent({
   children,
   className,
   style,
   ...props
-}: ComponentProps<typeof R.Content>) {
-  const { depth, childrenOpen } = useContext(DialogLayer);
+}: ComponentProps<typeof RadixDialog.Content>) {
+  const { childrenOpen, depth } = useContext(DialogLayer);
   const visibility = childrenOpen ? 'hidden' : 'visible';
 
   return (
-    <R.Portal>
-      <R.Overlay className={s.overlay} style={{ zIndex: 80 + depth * 20, visibility }} />
-      <R.Content
+    <RadixDialog.Portal>
+      <RadixDialog.Overlay
+        className={styles.overlay}
+        style={{ visibility, zIndex: layerZIndex(DialogOverlayZIndex, depth) }}
+      />
+      <RadixDialog.Content
         aria-describedby={undefined}
-        className={cn(s.dialog, className)}
+        className={cn(styles.dialog, className)}
         {...props}
         style={{
           ...style,
-          zIndex: 81 + depth * 20,
           visibility,
+          zIndex: layerZIndex(DialogContentZIndex, depth),
         }}
       >
         {children}
-        <R.Close className={s.close} aria-label="Close dialog">
+        <RadixDialog.Close className={styles.close} aria-label="Close dialog">
           <X size={20} />
-        </R.Close>
-      </R.Content>
-    </R.Portal>
+        </RadixDialog.Close>
+      </RadixDialog.Content>
+    </RadixDialog.Portal>
   );
 }
 
-export function DialogTitle({ className, ...props }: ComponentProps<typeof R.Title>) {
-  return <R.Title className={cn(s.title, className)} {...props} />;
+export function DialogTitle({ className, ...props }: ComponentProps<typeof RadixDialog.Title>) {
+  return <RadixDialog.Title className={cn(styles.title, className)} {...props} />;
 }
 
-export function DialogDescription({ className, ...props }: ComponentProps<typeof R.Description>) {
-  return <R.Description className={cn(s.description, className)} {...props} />;
+export function DialogDescription({
+  className,
+  ...props
+}: ComponentProps<typeof RadixDialog.Description>) {
+  return <RadixDialog.Description className={cn(styles.description, className)} {...props} />;
 }
 
 export function DialogFooter({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cn(s.footer, className)} {...props} />;
+  return <div className={cn(styles.footer, className)} {...props} />;
 }

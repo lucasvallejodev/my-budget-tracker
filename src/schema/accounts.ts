@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-export const AccountTypeValues = [
+import { FieldLengths } from '@/constants/field-lengths';
+
+const AccountTypeValues = [
   'checking',
   'savings',
   'cash',
@@ -11,15 +13,14 @@ export const AccountTypeValues = [
 ] as const;
 
 export const accountFormSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(50),
-  type: z.enum(AccountTypeValues),
-  currency: z.string().length(3, 'Choose a currency'),
-  institution: z.string().max(50).optional(),
-  accountNumber: z.string().max(20).optional(),
-  notes: z.string().max(500).optional(),
-  /** Decimal string in the account currency, e.g. "1250.00". Empty means zero. */
-  openingBalance: z.string().max(30).optional(),
+  accountNumber: z.string().max(FieldLengths.accountNumber).optional(),
   countsInSpending: z.boolean().optional(),
+  currency: z.string().length(FieldLengths.currencyCode, 'Choose a currency'),
+  institution: z.string().max(FieldLengths.institution).optional(),
+  name: z.string().trim().min(1, 'Name is required').max(FieldLengths.name),
+  notes: z.string().max(FieldLengths.notes).optional(),
+  openingBalance: z.string().max(FieldLengths.amountInput).optional(),
+  type: z.enum(AccountTypeValues),
 });
 export type AccountFormValues = z.infer<typeof accountFormSchema>;
 

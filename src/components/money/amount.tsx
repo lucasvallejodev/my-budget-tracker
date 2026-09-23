@@ -1,29 +1,28 @@
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/styles';
-import s from '../finance/finance.module.scss';
 
-/** Formats minor units with the currency; colours inflows green and outflows red when `signed`. */
+import styles from '../finance/finance.module.scss';
+
 export function Amount({
   amountMinor,
-  currency,
-  signed = false,
-  flipSign = false,
   className,
+  currency,
+  flipSign = false,
+  signed = false,
 }: {
   amountMinor: number;
-  currency: string;
-  signed?: boolean;
-  /** Show liabilities as positive "owed" amounts. */
-  flipSign?: boolean;
   className?: string;
+  currency: string;
+  flipSign?: boolean;
+  signed?: boolean;
 }) {
   const value = flipSign ? -amountMinor : amountMinor;
 
   return (
     <span
       className={cn(
-        signed && value > 0 && s.positive,
-        signed && value < 0 && s.negative,
+        signed && value > 0 && styles.positive,
+        signed && value < 0 && styles.negative,
         className
       )}
     >

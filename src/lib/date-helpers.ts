@@ -1,18 +1,7 @@
-export const dateToUTCDate = (date: Date): Date =>
-  new Date(
-    Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      date.getHours(),
-      date.getMinutes(),
-      date.getSeconds(),
-      date.getMilliseconds()
-    )
-  );
+import { EndOfDay, ISO_DATE_LENGTH, ISO_MONTH_LENGTH, LAST_MONTH_INDEX } from '@/constants/time';
 
 const MIN_MONTH = 0;
-const MAX_MONTH = 11;
+const MAX_MONTH = LAST_MONTH_INDEX;
 
 const getValidMonth = (month?: number): number => {
   if (month === undefined || Number.isNaN(month)) {
@@ -44,23 +33,33 @@ const getValidYear = (year?: number): number => {
 export const getStartAndEndOfMonth = (
   month?: number,
   year?: number
-): { startDate: Date; endDate: Date } => {
+): { endDate: Date; startDate: Date } => {
   const monthIndex = getValidMonth(month);
   const yearIndex = getValidYear(year);
 
-  const endMonthIndex = monthIndex + 1 > 11 ? 0 : monthIndex + 1;
+  const endMonthIndex = monthIndex + 1 > LAST_MONTH_INDEX ? 0 : monthIndex + 1;
   const endYearIndex = endMonthIndex === 0 ? yearIndex + 1 : yearIndex;
 
   const startDate = new Date(yearIndex, monthIndex, 1);
   const endDate = new Date(endYearIndex, endMonthIndex, 0);
 
-  endDate.setHours(23);
-  endDate.setMinutes(59);
-  endDate.setSeconds(59);
-  endDate.setMilliseconds(999);
+  endDate.setHours(EndOfDay.hours);
+  endDate.setMinutes(EndOfDay.minutes);
+  endDate.setSeconds(EndOfDay.seconds);
+  endDate.setMilliseconds(EndOfDay.milliseconds);
 
   return {
-    startDate,
     endDate,
+    startDate,
   };
+};
+
+export const toIsoDate = (date: Date): string => date.toISOString().slice(0, ISO_DATE_LENGTH);
+
+export const toIsoMonth = (date: Date): string => date.toISOString().slice(0, ISO_MONTH_LENGTH);
+
+export const isoDateOfMonthStart = (isoMonth: string, monthOffset = 0): string => {
+  const [year, monthNumber] = isoMonth.split('-').map(Number);
+
+  return toIsoDate(new Date(Date.UTC(year, monthNumber - 1 + monthOffset, 1)));
 };

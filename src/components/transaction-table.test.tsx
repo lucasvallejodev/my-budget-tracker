@@ -1,29 +1,30 @@
-import { cleanup, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { categoryLabel, describeTransaction, TransactionTable } from './transaction-table';
+
 import { SampleTransactions } from './finance/sample-data';
 import type { TransactionRow } from './finance/use-finance-data';
+import { categoryLabel, describeTransaction, TransactionTable } from './transaction-table';
 
 afterEach(cleanup);
 
 const leg = (overrides: Partial<TransactionRow>): TransactionRow => ({
   ...SampleTransactions[1],
-  id: 'leg',
-  kind: 'transfer',
-  transferId: 'xfer',
+  categoryIcon: null,
   categoryId: null,
   categoryName: null,
-  categoryIcon: null,
-  groupId: null,
-  groupName: null,
-  groupColor: null,
-  groupKind: null,
-  payeeId: null,
-  payeeName: null,
   counterpartAccountId: 'visa',
   counterpartAccountName: 'Visa',
+  groupColor: null,
+  groupId: null,
+  groupKind: null,
+  groupName: null,
+  id: 'leg',
+  kind: 'transfer',
   needsReview: false,
+  payeeId: null,
+  payeeName: null,
+  transferId: 'xfer',
   ...overrides,
 });
 
@@ -33,8 +34,8 @@ describe('transfer legs', () => {
     expect(
       describeTransaction(
         leg({
-          amountMinor: 10500,
           accountName: 'Visa',
+          amountMinor: 10500,
           counterpartAccountName: 'Checking',
         })
       )
@@ -43,9 +44,9 @@ describe('transfer legs', () => {
     expect(
       categoryLabel(
         leg({
+          amountMinor: 100,
           kind: 'opening',
           transferId: null,
-          amountMinor: 100,
         })
       )
     ).toBe('Opening balance');

@@ -1,11 +1,11 @@
-import { readSchemaSignature } from './schema-signature.mjs';
 import 'dotenv/config';
-import { Pool } from 'pg';
+
 import { PGlite } from '@electric-sql/pglite';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
+import { Pool } from 'pg';
 
-// Read-only check: applies every migration to an in-memory PostgreSQL and compares the resulting
-// schema (columns, constraints, indexes, enums) with the live database. Never changes anything.
+import { readSchemaSignature } from './schema-signature.mjs';
+
 const describeCode = error => (error.code ? ` (${error.code})` : '');
 const value = process.env.DATABASE_URL;
 let url;
@@ -36,7 +36,7 @@ try {
 
   const applied = await client
     .query('SELECT count(*)::int AS n FROM drizzle.__drizzle_migrations')
-    .then(r => r.rows[0].n)
+    .then(result => result.rows[0].n)
     .catch(() => 0);
 
   if (JSON.stringify(expected) !== JSON.stringify(actual)) {

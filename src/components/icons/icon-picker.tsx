@@ -1,36 +1,38 @@
 'use client';
 
-import { Colors, GroupColors } from '@/styles/theme';
 import { useState } from 'react';
-import { IconNames, IconName } from './registry';
-import { Icon } from '../icon';
-import { Input } from '../primitives/input';
-import { Button } from '../primitives/button';
-import s from '../forms.module.scss';
 
-/** Searchable grid over the curated icon registry. */
+import { isHexColor } from '@/lib/patterns';
+import { Colors, GroupColors } from '@/styles/theme';
+
+import formStyles from '../forms.module.scss';
+import { Icon } from '../icon';
+import { Button } from '../primitives/button';
+import { Input } from '../primitives/input';
+import { IconName, IconNames } from './registry';
+
 export function IconPicker({
-  value,
-  onChange,
   color,
+  onChange,
+  value,
 }: {
-  value: string;
-  onChange: (icon: IconName) => void;
   color?: string;
+  onChange: (icon: IconName) => void;
+  value: string;
 }) {
   const [search, setSearch] = useState('');
   const term = search.trim().toLowerCase();
   const visible = IconNames.filter(name => !term || name.toLowerCase().includes(term));
 
   return (
-    <div className={s.form}>
+    <div className={formStyles.form}>
       <Input
         aria-label="Search icons"
         placeholder="Search icons…"
         value={search}
         onChange={event => setSearch(event.target.value)}
       />
-      <div className={s.iconGrid} role="listbox" aria-label="Icons">
+      <div className={formStyles.iconGrid} role="listbox" aria-label="Icons">
         {visible.map(name => (
           <Button
             key={name}
@@ -47,21 +49,21 @@ export function IconPicker({
             <Icon icon={name} size={18} />
           </Button>
         ))}
-        {!visible.length && <p className={s.muted}>No icons match.</p>}
+        {!visible.length && <p className={formStyles.muted}>No icons match.</p>}
       </div>
     </div>
   );
 }
 
 export function ColorPicker({
-  value,
   onChange,
+  value,
 }: {
-  value: string;
   onChange: (hex: string) => void;
+  value: string;
 }) {
   return (
-    <div className={s.swatches} role="radiogroup" aria-label="Colour">
+    <div className={formStyles.swatches} role="radiogroup" aria-label="Colour">
       {GroupColors.map(hex => (
         <button
           key={hex}
@@ -69,7 +71,7 @@ export function ColorPicker({
           role="radio"
           aria-checked={value.toLowerCase() === hex.toLowerCase()}
           aria-label={hex}
-          className={s.swatch}
+          className={formStyles.swatch}
           style={{
             background: hex,
             outline: value.toLowerCase() === hex.toLowerCase() ? '3px solid var(--ink)' : 'none',
@@ -80,7 +82,7 @@ export function ColorPicker({
       <input
         type="color"
         aria-label="Custom colour"
-        value={/^#[0-9a-f]{6}$/i.test(value) ? value : Colors.accent}
+        value={isHexColor(value) ? value : Colors.accent}
         onChange={event => onChange(event.target.value.toUpperCase())}
       />
     </div>

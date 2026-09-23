@@ -1,29 +1,32 @@
 'use client';
 
-import { Command as R } from 'cmdk';
+import { Command as CmdkCommand } from 'cmdk';
 import { ComponentProps } from 'react';
-import s from './controls.module.scss';
 
-export function Command(props: ComponentProps<typeof R>) {
-  return <R className={s.command} {...props} />;
+import styles from './controls.module.scss';
+
+export function Command(props: ComponentProps<typeof CmdkCommand>) {
+  return <CmdkCommand className={styles.command} {...props} />;
 }
 
-export function CommandInput(props: ComponentProps<typeof R.Input>) {
+export function CommandInput(props: ComponentProps<typeof CmdkCommand.Input>) {
   return (
-    <R.Input className={s.input} aria-label={props.placeholder || 'Search options'} {...props} />
+    <CmdkCommand.Input
+      className={styles.input}
+      aria-label={props.placeholder || 'Search options'}
+      {...props}
+    />
   );
 }
 
-export function CommandList(props: ComponentProps<typeof R.List>) {
-  return <R.List className={s.commandList} {...props} />;
+export function CommandList(props: ComponentProps<typeof CmdkCommand.List>) {
+  return <CmdkCommand.List className={styles.commandList} {...props} />;
 }
 
-export function CommandItem(props: ComponentProps<typeof R.Item>) {
-  return <R.Item className={s.commandItem} {...props} />;
+export function CommandItem(props: ComponentProps<typeof CmdkCommand.Item>) {
+  return <CmdkCommand.Item className={styles.commandItem} {...props} />;
 }
 
-export function CommandEmpty(props: ComponentProps<typeof R.Empty>) {
-  return <R.Empty className={s.empty} {...props} />;
+export function CommandEmpty(props: ComponentProps<typeof CmdkCommand.Empty>) {
+  return <CmdkCommand.Empty className={styles.empty} {...props} />;
 }
-
-export const CommandGroup = R.Group;

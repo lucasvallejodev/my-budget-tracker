@@ -1,18 +1,20 @@
+import './globals.scss';
+
+import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
-import './globals.scss';
-import { ClerkProvider } from '@clerk/nextjs';
-import RootProvider from '@/providers/root-provider';
 import { Toaster } from 'sonner';
 
+import RootProvider from '@/providers/root-provider';
+
 const dmSans = DM_Sans({
-  variable: '--font-sans',
   subsets: ['latin'],
+  variable: '--font-sans',
 });
 
 export const metadata: Metadata = {
-  title: 'CoinKeeper',
   description: 'Track your budget with ease',
+  title: 'CoinKeeper',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

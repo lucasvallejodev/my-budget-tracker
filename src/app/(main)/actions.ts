@@ -2,16 +2,21 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { requireUser } from '@/server/auth/require-user';
-import { ServiceError } from '@/server/db';
-import type { ColumnMapping, Preview } from '@/server/import/service';
+
 import { parseAmountInput } from '@/lib/money';
+import { Patterns } from '@/lib/patterns';
 import {
   accountFormSchema,
   AccountFormValues,
   updateAccountSchema,
   UpdateAccountValues,
 } from '@/schema/accounts';
+import {
+  categoryFormSchema,
+  CategoryFormValues,
+  categoryGroupFormSchema,
+  CategoryGroupFormValues,
+} from '@/schema/categories';
 import { payeeFormSchema, PayeeFormValues, updatePayeeSchema } from '@/schema/payees';
 import {
   standardTransactionSchema,
@@ -19,12 +24,16 @@ import {
   transferSchema,
   TransferValues,
 } from '@/schema/transaction';
-import {
-  categoryFormSchema,
-  CategoryFormValues,
-  categoryGroupFormSchema,
-  CategoryGroupFormValues,
-} from '@/schema/categories';
+import { requireUser } from '@/server/auth/require-user';
+import { ServiceError } from '@/server/db';
+import type { ColumnMapping, Preview } from '@/server/import/service';
+
+const MinLocaleLength = 2;
+const MaxLocaleLength = 20;
+const CurrencyCodeLength = 3;
+const MaxRuleNameLength = 80;
+const MaxRulePatternLength = 120;
+const MaxImportCsvLength = 2_000_000;
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
@@ -34,7 +43,6 @@ function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   return result.data;
 }
 
-/** Actions throw plain Errors so React Query surfaces `error.message` to the user. */
 async function run<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
@@ -48,11 +56,9 @@ function refresh() {
   revalidatePath('/', 'layout');
 }
 
-// Accounts -------------------------------------------------------------------------------
-
 export async function createAccountAction(form: AccountFormValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const data = parse(accountFormSchema, form);
 
     const openingBalanceMinor = data.openingBalance?.trim()
@@ -69,7 +75,7 @@ export async function createAccountAction(form: AccountFormValues) {
 
 export async function updateAccountAction(form: UpdateAccountValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const { id, ...data } = parse(updateAccountSchema, form);
     const account = await services.accounts.update(userId, id, data);
 
@@ -81,30 +87,28 @@ export async function updateAccountAction(form: UpdateAccountValues) {
 
 export async function archiveAccountAction(id: string, archived = true) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.accounts.archive(userId, id, archived);
     refresh();
   });
 }
 
-// Payees ---------------------------------------------------------------------------------
-
 export async function createPayeeAction(form: PayeeFormValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const data = parse(payeeFormSchema, form);
 
     return services.payees.create(userId, {
-      name: data.name,
       defaultCategoryId: data.defaultCategoryId || null,
+      name: data.name,
     });
   });
 }
 
 export async function updatePayeeAction(form: z.infer<typeof updatePayeeSchema>) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const { id, ...data } = parse(updatePayeeSchema, form);
 
     return services.payees.update(userId, id, {
@@ -114,8 +118,6 @@ export async function updatePayeeAction(form: z.infer<typeof updatePayeeSchema>)
     });
   });
 }
-
-// Transactions ---------------------------------------------------------------------------
 
 async function toStandardInput(
   services: Awaited<ReturnType<typeof requireUser>>['services'],
@@ -130,18 +132,18 @@ async function toStandardInput(
   return {
     accountId: data.accountId,
     amountMinor: data.direction === 'expense' ? -magnitude : magnitude,
-    date: data.date,
     categoryId: data.categoryId || null,
-    payeeId: data.payeeId || null,
-    memo: data.memo,
-    status: data.status,
+    date: data.date,
     excluded: data.excluded,
+    memo: data.memo,
+    payeeId: data.payeeId || null,
+    status: data.status,
   };
 }
 
 export async function createTransactionAction(form: StandardTransactionValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const data = parse(standardTransactionSchema, form);
 
     const row = await services.ledger.createStandard(
@@ -157,7 +159,7 @@ export async function createTransactionAction(form: StandardTransactionValues) {
 
 export async function updateTransactionAction(id: string, form: StandardTransactionValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const data = parse(standardTransactionSchema, form);
 
     const row = await services.ledger.updateStandard(
@@ -174,7 +176,7 @@ export async function updateTransactionAction(id: string, form: StandardTransact
 
 export async function categorizeTransactionAction(id: string, categoryId: string | null) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     const row = await services.ledger.updateStandard(userId, id, {
       categoryId,
@@ -189,7 +191,7 @@ export async function categorizeTransactionAction(id: string, categoryId: string
 
 export async function deleteTransactionAction(id: string) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.ledger.remove(userId, id);
     refresh();
@@ -201,7 +203,7 @@ export async function setTransactionStatusAction(
   status: 'pending' | 'cleared' | 'reconciled'
 ) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.ledger.setStatus(userId, id, status);
     refresh();
@@ -222,19 +224,19 @@ async function toTransferInput(
     : undefined;
 
   return {
-    fromAccountId: data.fromAccountId,
-    toAccountId: data.toAccountId,
     amountFromMinor,
     amountToMinor,
     date: data.date,
+    fromAccountId: data.fromAccountId,
     memo: data.memo,
     status: data.status,
+    toAccountId: data.toAccountId,
   };
 }
 
 export async function createTransferAction(form: TransferValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const data = parse(transferSchema, form);
 
     const result = await services.ledger.createTransfer(
@@ -250,7 +252,7 @@ export async function createTransferAction(form: TransferValues) {
 
 export async function updateTransferAction(transferId: string, form: TransferValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const data = parse(transferSchema, form);
 
     const result = await services.ledger.updateTransfer(
@@ -265,11 +267,9 @@ export async function updateTransferAction(transferId: string, form: TransferVal
   });
 }
 
-// Categories -----------------------------------------------------------------------------
-
 export async function createCategoryGroupAction(form: CategoryGroupFormValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     return services.categories.createGroup(userId, parse(categoryGroupFormSchema, form));
   });
@@ -280,7 +280,7 @@ export async function updateCategoryGroupAction(
   form: Partial<CategoryGroupFormValues>
 ) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     return services.categories.updateGroup(
       userId,
@@ -292,7 +292,7 @@ export async function updateCategoryGroupAction(
 
 export async function archiveCategoryGroupAction(id: string) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.categories.archiveGroup(userId, id);
   });
@@ -300,7 +300,7 @@ export async function archiveCategoryGroupAction(id: string) {
 
 export async function reorderCategoryGroupsAction(orderedIds: string[]) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.categories.reorderGroups(userId, orderedIds);
   });
@@ -308,7 +308,7 @@ export async function reorderCategoryGroupsAction(orderedIds: string[]) {
 
 export async function createCategoryAction(form: CategoryFormValues) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     return services.categories.createCategory(userId, parse(categoryFormSchema, form));
   });
@@ -316,7 +316,7 @@ export async function createCategoryAction(form: CategoryFormValues) {
 
 export async function updateCategoryAction(id: string, form: Partial<CategoryFormValues>) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     return services.categories.updateCategory(
       userId,
@@ -328,7 +328,7 @@ export async function updateCategoryAction(id: string, form: Partial<CategoryFor
 
 export async function reorderCategoriesAction(groupId: string, orderedIds: string[]) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.categories.reorderCategories(userId, groupId, orderedIds);
   });
@@ -336,7 +336,7 @@ export async function reorderCategoriesAction(groupId: string, orderedIds: strin
 
 export async function archiveCategoryAction(id: string, moveToId?: string) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.categories.archiveCategory(userId, id, moveToId);
     refresh();
@@ -345,26 +345,24 @@ export async function archiveCategoryAction(id: string, moveToId?: string) {
 
 export async function restoreCategoryAction(id: string) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.categories.restoreCategory(userId, id);
   });
 }
 
-// Settings -------------------------------------------------------------------------------
-
 export async function updateSettingsAction(data: {
-  primaryCurrency?: string;
   locale?: string;
+  primaryCurrency?: string;
   showConvertedTotals?: boolean;
 }) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     const parsed = parse(
       z.object({
-        primaryCurrency: z.string().length(3).optional(),
-        locale: z.string().min(2).max(20).optional(),
+        locale: z.string().min(MinLocaleLength).max(MaxLocaleLength).optional(),
+        primaryCurrency: z.string().length(CurrencyCodeLength).optional(),
         showConvertedTotals: z.boolean().optional(),
       }),
       data
@@ -378,22 +376,20 @@ export async function updateSettingsAction(data: {
   });
 }
 
-// Exchange rates ---------------------------------------------------------------------------
-
 export async function upsertExchangeRateAction(data: {
   base: string;
-  quote: string;
   date: string;
+  quote: string;
   rate: string;
 }) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     const parsed = parse(
       z.object({
-        base: z.string().length(3),
-        quote: z.string().length(3),
-        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a date'),
+        base: z.string().length(CurrencyCodeLength),
+        date: z.string().regex(Patterns.isoDate, 'Choose a date'),
+        quote: z.string().length(CurrencyCodeLength),
         rate: z.string().trim().min(1, 'Rate is required'),
       }),
       data
@@ -413,30 +409,28 @@ export async function upsertExchangeRateAction(data: {
   });
 }
 
-export async function deleteExchangeRateAction(key: { base: string; quote: string; date: string }) {
+export async function deleteExchangeRateAction(key: { base: string; date: string; quote: string }) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.fx.remove(userId, key);
     refresh();
   });
 }
 
-// Rules ----------------------------------------------------------------------------------
-
 export async function createRuleAction(data: {
+  categoryId: string;
   name?: string;
   pattern: string;
-  categoryId: string;
 }) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     const parsed = parse(
       z.object({
-        name: z.string().max(80).optional(),
-        pattern: z.string().trim().min(1, 'Pattern is required').max(120),
         categoryId: z.string().min(1, 'Choose a category'),
+        name: z.string().max(MaxRuleNameLength).optional(),
+        pattern: z.string().trim().min(1, 'Pattern is required').max(MaxRulePatternLength),
       }),
       data
     );
@@ -447,7 +441,7 @@ export async function createRuleAction(data: {
 
 export async function deleteRuleAction(id: string) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.rules.remove(userId, id);
   });
@@ -455,7 +449,7 @@ export async function deleteRuleAction(id: string) {
 
 export async function applyRulesAction() {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const updated = await services.rules.applyToUncategorized(userId);
 
     refresh();
@@ -464,17 +458,17 @@ export async function applyRulesAction() {
   });
 }
 
-// Import ---------------------------------------------------------------------------------
-
 export async function previewImportAction(input: {
   accountId: string;
   csv: string;
   mapping: ColumnMapping;
 }) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
-    if (input.csv.length > 2_000_000) throw new ServiceError('File is too large (2 MB max)');
+    if (input.csv.length > MaxImportCsvLength) {
+      throw new ServiceError('File is too large (2 MB max)');
+    }
 
     return services.imports.preview(userId, input);
   });
@@ -482,7 +476,7 @@ export async function previewImportAction(input: {
 
 export async function commitImportAction(preview: Preview) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const result = await services.imports.commit(userId, preview);
     const suggestions = await services.imports.transferSuggestions(userId, result.insertedIds);
 
@@ -494,7 +488,7 @@ export async function commitImportAction(preview: Preview) {
 
 export async function transferSuggestionsAction() {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     return services.imports.transferSuggestions(userId);
   });
@@ -502,7 +496,7 @@ export async function transferSuggestionsAction() {
 
 export async function linkTransferAction(outId: string, inId: string) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const result = await services.ledger.linkAsTransfer(userId, outId, inId);
 
     refresh();
@@ -511,23 +505,21 @@ export async function linkTransferAction(outId: string, inId: string) {
   });
 }
 
-// Budgets --------------------------------------------------------------------------------
-
 export async function upsertBudgetAction(data: {
-  categoryId: string;
-  month: string;
-  currency: string;
   amount: string;
+  categoryId: string;
+  currency: string;
+  month: string;
 }) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     const parsed = parse(
       z.object({
-        categoryId: z.string().min(1, 'Choose a category'),
-        month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be YYYY-MM'),
-        currency: z.string().length(3),
         amount: z.string().trim().min(1, 'Amount is required'),
+        categoryId: z.string().min(1, 'Choose a category'),
+        currency: z.string().length(CurrencyCodeLength),
+        month: z.string().regex(Patterns.isoMonth, 'Month must be YYYY-MM'),
       }),
       data
     );
@@ -543,7 +535,7 @@ export async function upsertBudgetAction(data: {
 
 export async function deleteBudgetAction(id: string) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
 
     await services.budgets.remove(userId, id);
     refresh();
@@ -552,7 +544,7 @@ export async function deleteBudgetAction(id: string) {
 
 export async function copyBudgetsAction(month: string) {
   return run(async () => {
-    const { userId, services } = await requireUser();
+    const { services, userId } = await requireUser();
     const copied = await services.budgets.copyFromPreviousMonth(userId, month);
 
     refresh();

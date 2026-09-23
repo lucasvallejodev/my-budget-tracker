@@ -1,48 +1,62 @@
 'use client';
 
-import { Icon } from './icon';
-import { StatusBadge, EmptyState } from './finance/blocks';
-import { TransactionActions } from './finance/transaction-explorer';
-import { Amount } from './money/amount';
-import { TransactionRow } from './finance/use-finance-data';
-import s from './finance/finance.module.scss';
 import { ArrowLeftRight } from 'lucide-react';
 
-export type Transaction = TransactionRow;
+import { EmptyState, StatusBadge } from './finance/blocks';
+import styles from './finance/finance.module.scss';
+import { TransactionActions } from './finance/transaction-explorer';
+import { TransactionRow } from './finance/use-finance-data';
+import { Icon } from './icon';
+import { Amount } from './money/amount';
 
-export function describeTransaction(t: TransactionRow) {
-  if (t.kind === 'transfer') {
-    return t.amountMinor < 0
-      ? `Transfer to ${t.counterpartAccountName ?? 'another account'}`
-      : `Transfer from ${t.counterpartAccountName ?? 'another account'}`;
+export function describeTransaction(transaction: TransactionRow) {
+  if (transaction.kind === 'transfer') {
+    return transaction.amountMinor < 0
+      ? `Transfer to ${transaction.counterpartAccountName ?? 'another account'}`
+      : `Transfer from ${transaction.counterpartAccountName ?? 'another account'}`;
   }
 
-  if (t.kind === 'opening') return 'Opening balance';
+  if (transaction.kind === 'opening') return 'Opening balance';
 
-  return t.payeeName || t.memo || t.originalPayee || t.categoryName || 'Transaction';
+  return (
+    transaction.payeeName ||
+    transaction.memo ||
+    transaction.originalPayee ||
+    transaction.categoryName ||
+    'Transaction'
+  );
 }
 
-export function categoryLabel(t: TransactionRow) {
-  if (t.kind === 'transfer') return 'Transfer';
-  if (t.kind === 'opening') return 'Opening balance';
+export function categoryLabel(transaction: TransactionRow) {
+  if (transaction.kind === 'transfer') return 'Transfer';
+  if (transaction.kind === 'opening') return 'Opening balance';
 
-  return t.categoryName ?? 'Uncategorized';
+  return transaction.categoryName ?? 'Uncategorized';
+}
+
+function TransactionStatus({ transaction }: { transaction: TransactionRow }) {
+  if (transaction.needsReview) return <StatusBadge tone="warning">Needs review</StatusBadge>;
+  if (transaction.status === 'pending') return <StatusBadge tone="neutral">Pending</StatusBadge>;
+  if (transaction.status === 'reconciled') return <StatusBadge>Reconciled</StatusBadge>;
+  if (transaction.excluded) return <StatusBadge tone="neutral">Excluded</StatusBadge>;
+
+  return <StatusBadge>Cleared</StatusBadge>;
 }
 
 export function TransactionTable({
-  transactions,
-  showActions = false,
   showAccount = true,
+  showActions = false,
+  transactions,
 }: {
-  transactions: TransactionRow[];
-  showActions?: boolean;
   showAccount?: boolean;
+  showActions?: boolean;
+  transactions: TransactionRow[];
 }) {
   if (!transactions.length) return <EmptyState title="No transactions yet" />;
 
   return (
-    <div className={s.tableWrap}>
-      <table className={s.table}>
+    <div className={styles.tableWrap}>
+      <table className={styles.table}>
         <thead>
           <tr>
             <th scope="col">Description</th>
@@ -55,55 +69,55 @@ export function TransactionTable({
           </tr>
         </thead>
         <tbody>
-          {transactions.map(t => (
-            <tr key={t.id}>
+          {transactions.map(transaction => (
+            <tr key={transaction.id}>
               <td>
-                <div className={s.description}>
+                <div className={styles.description}>
                   <span
-                    className={s.metricIcon}
-                    style={t.groupColor ? { background: t.groupColor, color: 'white' } : undefined}
+                    className={styles.metricIcon}
+                    style={
+                      transaction.groupColor
+                        ? { background: transaction.groupColor, color: 'white' }
+                        : undefined
+                    }
                   >
-                    {t.kind === 'transfer' ? (
+                    {transaction.kind === 'transfer' ? (
                       <ArrowLeftRight size={18} />
                     ) : (
-                      <Icon icon={t.categoryIcon} />
+                      <Icon icon={transaction.categoryIcon} />
                     )}
                   </span>
                   <div>
-                    {describeTransaction(t)}
-                    {t.memo && t.payeeName && <p className={s.muted}>{t.memo}</p>}
+                    {describeTransaction(transaction)}
+                    {transaction.memo && transaction.payeeName && (
+                      <p className={styles.muted}>{transaction.memo}</p>
+                    )}
                   </div>
                 </div>
               </td>
-              <td>{categoryLabel(t)}</td>
-              {showAccount && <td>{t.accountName}</td>}
+              <td>{categoryLabel(transaction)}</td>
+              {showAccount && <td>{transaction.accountName}</td>}
               <td>
-                <Amount amountMinor={t.amountMinor} currency={t.currency} signed />
+                <Amount
+                  amountMinor={transaction.amountMinor}
+                  currency={transaction.currency}
+                  signed
+                />
               </td>
               <td>
-                {new Date(`${t.date}T00:00:00Z`).toLocaleDateString('en-US', {
-                  timeZone: 'UTC',
-                  month: 'short',
+                {new Date(`${transaction.date}T00:00:00Z`).toLocaleDateString('en-US', {
                   day: 'numeric',
+                  month: 'short',
+                  timeZone: 'UTC',
                   year: 'numeric',
                 })}
               </td>
               <td>
-                {t.needsReview ? (
-                  <StatusBadge tone="warning">Needs review</StatusBadge>
-                ) : t.status === 'pending' ? (
-                  <StatusBadge tone="neutral">Pending</StatusBadge>
-                ) : t.status === 'reconciled' ? (
-                  <StatusBadge>Reconciled</StatusBadge>
-                ) : t.excluded ? (
-                  <StatusBadge tone="neutral">Excluded</StatusBadge>
-                ) : (
-                  <StatusBadge>Cleared</StatusBadge>
-                )}
+                <TransactionStatus transaction={transaction} />
               </td>
               {showActions && (
                 <td>
-                  <TransactionActions transaction={t} />
+                  <TransactionActions transaction={transaction} />
                 </td>
               )}
             </tr>

@@ -1,13 +1,20 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { ArrowLeftRight, Upload } from 'lucide-react';
-import { Panel, EmptyState, StatusBadge, PageHeading } from './blocks';
-import { Button } from '../primitives/button';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+
+import AccountPicker from '@/app/(main)/_components/account-picker';
+import { commitImportAction, linkTransferAction, previewImportAction } from '@/app/(main)/actions';
+import { parseCsv } from '@/server/import/csv';
+import type { ColumnMapping, Preview, TransferSuggestion } from '@/server/import/service';
+
+import { flattenCategories } from '../category-picker';
+import formStyles from '../forms.module.scss';
 import { Amount } from '../money/amount';
+import { Button } from '../primitives/button';
 import {
   Select,
   SelectContent,
@@ -16,22 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../primitives/select';
-import AccountPicker from '@/app/(main)/_components/account-picker';
+import { EmptyState, PageHeading, Panel, StatusBadge } from './blocks';
+import styles from './finance.module.scss';
 import { FinanceKeys, useCategories } from './use-finance-data';
-import { flattenCategories } from '../category-picker';
-import { parseCsv } from '@/server/import/csv';
-import type { ColumnMapping, Preview, TransferSuggestion } from '@/server/import/service';
-import { commitImportAction, linkTransferAction, previewImportAction } from '@/app/(main)/actions';
-import s from './finance.module.scss';
-import f from '../forms.module.scss';
 
-const NONE = '__none';
+const UnmappedColumnValue = '__none';
+
+type PreviewRow = Preview['rows'][number];
 
 function guess(headers: string[], candidates: string[]) {
-  const lower = headers.map(h => h.toLowerCase());
+  const lower = headers.map(header => header.toLowerCase());
 
   for (const candidate of candidates) {
-    const index = lower.findIndex(h => h.includes(candidate));
+    const index = lower.findIndex(header => header.includes(candidate));
 
     if (index >= 0) return headers[index];
   }
@@ -41,30 +45,30 @@ function guess(headers: string[], candidates: string[]) {
 
 function ColumnSelect({
   field,
+  headers,
   label,
   mapping,
-  headers,
   onChange,
 }: {
   field: keyof ColumnMapping;
+  headers: string[];
   label: string;
   mapping: ColumnMapping;
-  headers: string[];
   onChange: (field: keyof ColumnMapping, value: string) => void;
 }) {
   return (
-    <label className={s.field}>
+    <label className={styles.field}>
       {label}
       <Select
-        value={(mapping[field] as string) || NONE}
-        onValueChange={value => onChange(field, value === NONE ? '' : value)}
+        value={(mapping[field] as string) || UnmappedColumnValue}
+        onValueChange={value => onChange(field, value === UnmappedColumnValue ? '' : value)}
       >
-        <SelectTrigger className={f.full} aria-label={label}>
+        <SelectTrigger className={formStyles.full} aria-label={label}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectItem value={NONE}>—</SelectItem>
+            <SelectItem value={UnmappedColumnValue}>—</SelectItem>
             {headers.map(header => (
               <SelectItem key={header} value={header}>
                 {header}
@@ -76,6 +80,16 @@ function ColumnSelect({
     </label>
   );
 }
+
+const suggestionLabel = (row: PreviewRow, flat: { id: string; name: string }[]): string => {
+  if (row.suggestedCategoryId) {
+    const name = flat.find(category => category.id === row.suggestedCategoryId)?.name ?? 'Category';
+
+    return `${name} (${row.suggestedBy})`;
+  }
+
+  return row.status === 'new' ? 'Review later' : '—';
+};
 
 export function ImportWizard() {
   const queryClient = useQueryClient();
@@ -108,14 +122,14 @@ export function ImportWizard() {
     setPreview(null);
     setResult(null);
     setMapping({
-      date: guess(parsed.headers, ['date', 'fecha']),
       amount: guess(parsed.headers, ['amount', 'importe', 'cantidad', 'monto']),
-      debit: guess(parsed.headers, ['debit', 'cargo', 'withdraw']),
       credit: guess(parsed.headers, ['credit', 'abono', 'deposit']),
-      payee: guess(parsed.headers, ['payee', 'description', 'concepto', 'merchant', 'name']),
-      memo: guess(parsed.headers, ['memo', 'note', 'detail', 'observ']),
-      externalId: guess(parsed.headers, ['id', 'reference', 'referencia']),
+      date: guess(parsed.headers, ['date', 'fecha']),
       dateFormat: 'auto',
+      debit: guess(parsed.headers, ['debit', 'cargo', 'withdraw']),
+      externalId: guess(parsed.headers, ['id', 'reference', 'referencia']),
+      memo: guess(parsed.headers, ['memo', 'note', 'detail', 'observ']),
+      payee: guess(parsed.headers, ['payee', 'description', 'concepto', 'merchant', 'name']),
     });
   };
 
@@ -126,52 +140,54 @@ export function ImportWizard() {
         csv,
         mapping,
       }),
-    onSuccess: setPreview,
     onError: (error: Error) => toast.error(error.message),
+    onSuccess: setPreview,
   });
 
   const commit = useMutation({
     mutationFn: () => commitImportAction(preview!),
+    onError: (error: Error) => toast.error(error.message),
     onSuccess: async data => {
       toast.success(`Imported ${data.inserted} transaction${data.inserted === 1 ? '' : 's'}`);
       setResult(data);
       setPreview(null);
       await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
     },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   const link = useMutation({
     mutationFn: (suggestion: TransferSuggestion) =>
       linkTransferAction(suggestion.outId, suggestion.inId),
-    onSuccess: async (_, suggestion) => {
+    onError: (error: Error) => toast.error(error.message),
+    onSuccess: async (result, suggestion) => {
       toast.success('Linked as a transfer');
       setResult(current =>
         current
           ? {
               ...current,
-              suggestions: current.suggestions.filter(x => x.outId !== suggestion.outId),
+              suggestions: current.suggestions.filter(
+                candidate => candidate.outId !== suggestion.outId
+              ),
             }
           : current
       );
       await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
     },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   return (
-    <div className={s.page}>
+    <div className={styles.page}>
       <PageHeading
         title="Import transactions"
         description="Upload a CSV export from your bank. Rows are matched against what you already entered, duplicates are skipped, and imported entries wait in the review inbox."
       />
       <Panel title="1 · Account and file">
-        <div className={s.filters}>
-          <label className={s.field}>
+        <div className={styles.filters}>
+          <label className={styles.field}>
             Account
             <AccountPicker value={accountId} onChange={setAccountId} />
           </label>
-          <label className={s.field}>
+          <label className={styles.field}>
             CSV file
             <input
               type="file"
@@ -180,7 +196,7 @@ export function ImportWizard() {
             />
           </label>
           {fileName && (
-            <p className={s.muted}>
+            <p className={styles.muted}>
               {fileName} · {headers.length} columns
             </p>
           )}
@@ -191,7 +207,7 @@ export function ImportWizard() {
           title="2 · Columns"
           description="Pick which column holds what. Either one signed amount column, or separate debit and credit columns."
         >
-          <div className={s.filters}>
+          <div className={styles.filters}>
             <ColumnSelect
               field="date"
               label="Date column"
@@ -199,7 +215,7 @@ export function ImportWizard() {
               headers={headers}
               onChange={setColumn}
             />
-            <label className={s.field}>
+            <label className={styles.field}>
               Date format
               <Select
                 value={mapping.dateFormat ?? 'auto'}
@@ -210,7 +226,7 @@ export function ImportWizard() {
                   }))
                 }
               >
-                <SelectTrigger className={f.full} aria-label="Date format">
+                <SelectTrigger className={formStyles.full} aria-label="Date format">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -265,7 +281,7 @@ export function ImportWizard() {
               headers={headers}
               onChange={setColumn}
             />
-            <label className={s.field}>
+            <label className={styles.field}>
               <span>
                 <input
                   type="checkbox"
@@ -299,8 +315,8 @@ export function ImportWizard() {
             </Button>
           }
         >
-          <div className={s.tableWrap}>
-            <table className={s.table}>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
               <thead>
                 <tr>
                   <th scope="col">Date</th>
@@ -324,13 +340,7 @@ export function ImportWizard() {
                         '—'
                       )}
                     </td>
-                    <td>
-                      {row.suggestedCategoryId
-                        ? `${flat.find(c => c.id === row.suggestedCategoryId)?.name ?? 'Category'} (${row.suggestedBy})`
-                        : row.status === 'new'
-                          ? 'Review later'
-                          : '—'}
-                    </td>
+                    <td>{suggestionLabel(row, flat)}</td>
                     <td>
                       {row.status === 'new' && <StatusBadge>New</StatusBadge>}
                       {row.status === 'matched' && (
@@ -355,15 +365,15 @@ export function ImportWizard() {
           title="Done"
           description={`${result.inserted} imported, ${result.matched} matched to entries you had already recorded.`}
         >
-          <p className={s.muted}>
+          <p className={styles.muted}>
             Imported entries are pending and wait in the <Link href="/review">review inbox</Link>{' '}
             until you confirm their category.
           </p>
           {result.suggestions.length ? (
-            <div className={s.stack}>
+            <div className={styles.stack}>
               <h3>Possible transfers</h3>
               {result.suggestions.map(suggestion => (
-                <div key={suggestion.outId} className={s.row}>
+                <div key={suggestion.outId} className={styles.row}>
                   <div>
                     <h3>
                       {suggestion.outAccount} → {suggestion.inAccount}

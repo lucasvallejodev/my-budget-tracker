@@ -1,14 +1,22 @@
 'use client';
 
-import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
-import { Panel, EmptyState } from './blocks';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import {
+  deleteExchangeRateAction,
+  updateSettingsAction,
+  upsertExchangeRateAction,
+} from '@/app/(main)/actions';
+import { ISO_DATE_LENGTH } from '@/constants/time';
+
+import formStyles from '../forms.module.scss';
 import { Button } from '../primitives/button';
+import { DatePicker } from '../primitives/date-picker';
 import { Input } from '../primitives/input';
 import { ToggleSwitch } from '../primitives/preferences';
-import { DatePicker } from '../primitives/date-picker';
 import {
   Select,
   SelectContent,
@@ -17,14 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../primitives/select';
+import { EmptyState, Panel, QueryContent } from './blocks';
+import styles from './finance.module.scss';
 import { FinanceKeys, useCurrencies, useExchangeRates, useSettings } from './use-finance-data';
-import {
-  deleteExchangeRateAction,
-  updateSettingsAction,
-  upsertExchangeRateAction,
-} from '@/app/(main)/actions';
-import s from './finance.module.scss';
-import f from '../forms.module.scss';
 
 function useRefresh() {
   const queryClient = useQueryClient();
@@ -40,19 +43,19 @@ type CurrencyOption = {
 };
 
 function CurrencySelect({
-  value,
-  onChange,
   label,
+  onChange,
   options,
+  value,
 }: {
-  value: string;
-  onChange: (value: string) => void;
   label: string;
+  onChange: (value: string) => void;
   options: CurrencyOption[];
+  value: string;
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={f.full} aria-label={label}>
+      <SelectTrigger className={formStyles.full} aria-label={label}>
         <SelectValue placeholder={label} />
       </SelectTrigger>
       <SelectContent>
@@ -76,41 +79,41 @@ export function CurrencySettings() {
 
   const [form, setForm] = useState({
     base: '',
+    date: new Date().toISOString().slice(0, ISO_DATE_LENGTH),
     quote: '',
-    date: new Date().toISOString().slice(0, 10),
     rate: '',
   });
 
   const save = useMutation({
     mutationFn: updateSettingsAction,
+    onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success('Currency settings saved');
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   const addRate = useMutation({
     mutationFn: () => upsertExchangeRateAction(form),
+    onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success('Rate saved');
       setForm(current => ({ ...current, rate: '' }));
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   const removeRate = useMutation({
     mutationFn: deleteExchangeRateAction,
-    onSuccess: refresh,
     onError: (error: Error) => toast.error(error.message),
+    onSuccess: refresh,
   });
 
   const primary = settings.data?.primaryCurrency ?? 'EUR';
   const options = currencies.data ?? [];
 
   return (
-    <div className={s.stack}>
+    <div className={styles.stack}>
       <Panel
         title="Primary currency"
         description="Used as the default for new accounts and for the optional converted totals. Every report is still shown per currency."
@@ -118,8 +121,8 @@ export function CurrencySettings() {
         {settings.isPending ? (
           <p role="status">Loading…</p>
         ) : (
-          <div className={s.form}>
-            <label className={s.field}>
+          <div className={styles.form}>
+            <label className={styles.field}>
               Primary currency
               <CurrencySelect
                 options={options}
@@ -128,7 +131,7 @@ export function CurrencySettings() {
                 onChange={value => save.mutate({ primaryCurrency: value })}
               />
             </label>
-            <div className={s.row}>
+            <div className={styles.row}>
               <div>
                 <h3>Show converted totals</h3>
                 <p>
@@ -150,13 +153,13 @@ export function CurrencySettings() {
         description="Rates are entered by hand for now. A rate applies from its date until a newer one is added; automatic sources can be plugged in later."
       >
         <form
-          className={s.filters}
+          className={styles.filters}
           onSubmit={event => {
             event.preventDefault();
             addRate.mutate();
           }}
         >
-          <label className={s.field}>
+          <label className={styles.field}>
             1 unit of
             <CurrencySelect
               options={options}
@@ -165,7 +168,7 @@ export function CurrencySettings() {
               onChange={base => setForm(current => ({ ...current, base }))}
             />
           </label>
-          <label className={s.field}>
+          <label className={styles.field}>
             equals (in)
             <CurrencySelect
               options={options}
@@ -174,7 +177,7 @@ export function CurrencySettings() {
               onChange={quote => setForm(current => ({ ...current, quote }))}
             />
           </label>
-          <label className={s.field}>
+          <label className={styles.field}>
             Rate
             <Input
               inputMode="decimal"
@@ -195,50 +198,56 @@ export function CurrencySettings() {
             Save rate
           </Button>
         </form>
-        {rates.isPending ? (
-          <p role="status">Loading rates…</p>
-        ) : !rates.data?.length ? (
-          <EmptyState
-            title="No exchange rates yet"
-            description="Add a rate to enable converted totals across currencies."
-          />
-        ) : (
-          <div className={s.tableWrap}>
-            <table className={s.table}>
-              <thead>
-                <tr>
-                  <th scope="col">From</th>
-                  <th scope="col">Pair</th>
-                  <th scope="col">Rate</th>
-                  <th scope="col">Source</th>
-                  <th scope="col">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rates.data.map(rate => (
-                  <tr key={`${rate.base}-${rate.quote}-${rate.date}`}>
-                    <td>{rate.date}</td>
-                    <td>
-                      1 {rate.base} → {rate.quote}
-                    </td>
-                    <td>{rate.rate}</td>
-                    <td>{rate.source}</td>
-                    <td>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Delete rate ${rate.base} to ${rate.quote} from ${rate.date}`}
-                        onClick={() => removeRate.mutate(rate)}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </td>
+        <QueryContent
+          pending={rates.isPending}
+          loading="Loading rates…"
+          empty={
+            !rates.data?.length && (
+              <EmptyState
+                title="No exchange rates yet"
+                description="Add a rate to enable converted totals across currencies."
+              />
+            )
+          }
+        >
+          {() => (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">From</th>
+                    <th scope="col">Pair</th>
+                    <th scope="col">Rate</th>
+                    <th scope="col">Source</th>
+                    <th scope="col">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {(rates.data ?? []).map(rate => (
+                    <tr key={`${rate.base}-${rate.quote}-${rate.date}`}>
+                      <td>{rate.date}</td>
+                      <td>
+                        1 {rate.base} → {rate.quote}
+                      </td>
+                      <td>{rate.rate}</td>
+                      <td>{rate.source}</td>
+                      <td>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Delete rate ${rate.base} to ${rate.quote} from ${rate.date}`}
+                          onClick={() => removeRate.mutate(rate)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </QueryContent>
       </Panel>
     </div>
   );

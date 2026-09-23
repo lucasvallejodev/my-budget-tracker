@@ -2,14 +2,19 @@ import stylistic from '@stylistic/eslint-plugin';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
 import prettierConfig from 'eslint-config-prettier';
+import perfectionist from 'eslint-plugin-perfectionist';
 import preferArrow from 'eslint-plugin-prefer-arrow-functions';
 import prettier from 'eslint-plugin-prettier';
 import sonarjs from 'eslint-plugin-sonarjs';
 import tseslint from 'typescript-eslint';
+
 import multilineTypeAlias from './scripts/eslint-rules/multiline-type-alias.mjs';
+import noComments from './scripts/eslint-rules/no-comments.mjs';
 
 /** Rules that exist only in this repository (see scripts/eslint-rules/). */
-const LocalRules = { rules: { 'multiline-type-alias': multilineTypeAlias } };
+const LocalRules = {
+  rules: { 'multiline-type-alias': multilineTypeAlias, 'no-comments': noComments },
+};
 
 /**
  * Names Next.js requires on module-level exports; they are exempt from the constant
@@ -30,6 +35,9 @@ const notPascal = `VariableDeclarator[id.type="Identifier"][id.name!=/${pascalCa
 
 const constantNamingMessage =
   'Module-level constant objects and arrays are PascalCase (`Colors`, `FinanceKeys`). Check src/lib, src/constants and src/styles/theme.ts before adding a new one.';
+
+const regexMessage =
+  'Regular expressions live in `Patterns` (src/lib/patterns.ts) under a name that says what they match.';
 
 const colourMessage =
   'Hard-coded colour. Add it to `Colors` in src/styles/theme.ts (or a token in src/styles/tokens.scss) and reference it from there.';
@@ -66,119 +74,20 @@ const config = [
   prettierConfig,
   {
     plugins: {
-      prettier,
       '@stylistic': stylistic,
-      'prefer-arrow-functions': preferArrow,
       local: LocalRules,
+      perfectionist,
+      'prefer-arrow-functions': preferArrow,
+      prettier,
     },
     rules: {
-      'prettier/prettier': ['error', { endOfLine: 'auto' }],
-
-      // TypeScript
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'error',
-      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
-      '@typescript-eslint/prefer-nullish-coalescing': [
-        'error',
-        {
-          ignorePrimitives: {
-            string: true,
-            number: true,
-            boolean: true,
-          },
-        },
-      ],
-      // react-hook-form's handleSubmit returns a promise; passing it to onSubmit is the documented use.
-      '@typescript-eslint/no-misused-promises': [
-        'error',
-        { checksVoidReturn: { attributes: false } },
-      ],
-
       // Readability: blank lines. Prettier never adds blank lines, this rule does (fixable).
-      '@stylistic/padding-line-between-statements': [
-        'error',
-        {
-          blankLine: 'always',
-          prev: 'directive',
-          next: '*',
-        },
-        {
-          blankLine: 'any',
-          prev: 'directive',
-          next: 'directive',
-        },
-        {
-          blankLine: 'always',
-          prev: 'import',
-          next: '*',
-        },
-        {
-          blankLine: 'any',
-          prev: 'import',
-          next: 'import',
-        },
-        {
-          blankLine: 'always',
-          prev: '*',
-          next: 'export',
-        },
-        {
-          blankLine: 'any',
-          prev: 'export',
-          next: 'export',
-        },
-        {
-          blankLine: 'always',
-          prev: '*',
-          next: 'return',
-        },
-        {
-          blankLine: 'always',
-          prev: '*',
-          next: ['function', 'class', 'multiline-block-like'],
-        },
-        {
-          blankLine: 'always',
-          prev: ['function', 'class', 'multiline-block-like'],
-          next: '*',
-        },
-        {
-          blankLine: 'always',
-          prev: ['const', 'let'],
-          next: '*',
-        },
-        {
-          blankLine: 'any',
-          prev: ['const', 'let'],
-          next: ['const', 'let'],
-        },
-        {
-          blankLine: 'always',
-          prev: '*',
-          next: ['interface', 'type'],
-        },
-        {
-          blankLine: 'any',
-          prev: ['interface', 'type'],
-          next: ['interface', 'type'],
-        },
-        // A declaration that spans several lines stands alone: blank line before and after.
-        {
-          blankLine: 'always',
-          prev: ['multiline-const', 'multiline-let', 'multiline-var'],
-          next: '*',
-        },
-        {
-          blankLine: 'always',
-          prev: '*',
-          next: ['multiline-const', 'multiline-let', 'multiline-var'],
-        },
-      ],
       '@stylistic/lines-between-class-members': [
         'error',
         'always',
         { exceptAfterSingleLine: true },
       ],
+
       // Object literals with three or more properties and type aliases with three or more
       // members go one entry per line. Prettier keeps them expanded (objectWrap: preserve),
       // so the two tools agree. Type literals in parameter positions are left to Prettier,
@@ -191,39 +100,129 @@ const config = [
         },
       ],
       '@stylistic/object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
-      'local/multiline-type-alias': ['error', { minMembers: 3 }],
-      curly: ['error', 'multi-line'],
-
-      // Constants and colours live in one place.
-      'no-restricted-syntax': [
+      '@stylistic/padding-line-between-statements': [
         'error',
         {
-          selector: `${moduleConst} > ${notPascal} > ${literalTable}`,
-          message: constantNamingMessage,
+          blankLine: 'always',
+          next: '*',
+          prev: 'directive',
         },
         {
-          selector: `${moduleConst} > ${notPascal} > :matches(TSAsExpression, TSSatisfiesExpression) > ${literalTable}`,
-          message: constantNamingMessage,
+          blankLine: 'any',
+          next: 'directive',
+          prev: 'directive',
         },
-        { selector: 'Literal[value=/^#[0-9a-fA-F]{3,8}$/]', message: colourMessage },
-        { selector: 'Literal[value=/^(rgb|hsl)a?\\(/]', message: colourMessage },
-        { selector: 'TemplateElement[value.raw=/#[0-9a-fA-F]{6}/]', message: colourMessage },
+        {
+          blankLine: 'always',
+          next: '*',
+          prev: 'import',
+        },
+        {
+          blankLine: 'any',
+          next: 'import',
+          prev: 'import',
+        },
+        {
+          blankLine: 'always',
+          next: 'export',
+          prev: '*',
+        },
+        {
+          blankLine: 'any',
+          next: 'export',
+          prev: 'export',
+        },
+        {
+          blankLine: 'always',
+          next: 'return',
+          prev: '*',
+        },
+        {
+          blankLine: 'always',
+          next: ['function', 'class', 'multiline-block-like'],
+          prev: '*',
+        },
+        {
+          blankLine: 'always',
+          next: '*',
+          prev: ['function', 'class', 'multiline-block-like'],
+        },
+        {
+          blankLine: 'always',
+          next: '*',
+          prev: ['const', 'let'],
+        },
+        {
+          blankLine: 'any',
+          next: ['const', 'let'],
+          prev: ['const', 'let'],
+        },
+        {
+          blankLine: 'always',
+          next: ['interface', 'type'],
+          prev: '*',
+        },
+        {
+          blankLine: 'any',
+          next: ['interface', 'type'],
+          prev: ['interface', 'type'],
+        },
+        // A declaration that spans several lines stands alone: blank line before and after.
+        {
+          blankLine: 'always',
+          next: '*',
+          prev: ['multiline-const', 'multiline-let', 'multiline-var'],
+        },
+        {
+          blankLine: 'always',
+          next: ['multiline-const', 'multiline-let', 'multiline-var'],
+          prev: '*',
+        },
       ],
+      // TypeScript
+      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+      '@typescript-eslint/no-explicit-any': 'off',
 
+      '@typescript-eslint/no-magic-numbers': [
+        'error',
+        {
+          detectObjects: false,
+          enforceConst: true,
+          ignore: [-1, 0, 1],
+          ignoreArrayIndexes: true,
+          ignoreDefaultValues: true,
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
+        },
+      ],
+      // react-hook-form's handleSubmit returns a promise; passing it to onSubmit is the documented use.
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        { checksVoidReturn: { attributes: false } },
+      ],
+      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': [
+        'error',
+        {
+          ignorePrimitives: {
+            boolean: true,
+            number: true,
+            string: true,
+          },
+        },
+      ],
       // Complexity budget. Warnings first; tighten to errors once the backlog is gone.
       complexity: ['warn', { max: 10 }],
-      'sonarjs/cognitive-complexity': ['warn', 15],
+      curly: ['error', 'multi-line'],
+      // Names say what a value is for: no one-letter identifiers (see agents/conventions.md > Naming).
+      'id-length': ['error', { min: 2, properties: 'never' }],
+      'local/multiline-type-alias': ['error', { minMembers: 3 }],
+
+      'local/no-comments': 'error',
+
       'max-depth': ['warn', 3],
-      'max-params': ['warn', 4],
-      'max-lines-per-function': [
-        'warn',
-        {
-          max: 80,
-          skipBlankLines: true,
-          skipComments: true,
-          IIFEs: true,
-        },
-      ],
       'max-lines': [
         'warn',
         {
@@ -232,13 +231,72 @@ const config = [
           skipComments: true,
         },
       ],
-      'sonarjs/no-nested-conditional': 'warn',
+      'max-lines-per-function': [
+        'warn',
+        {
+          IIFEs: true,
+          max: 80,
+          skipBlankLines: true,
+          skipComments: true,
+        },
+      ],
+      'max-params': ['warn', 4],
+      // Constants and colours live in one place.
+      'no-restricted-syntax': [
+        'error',
+        {
+          message: constantNamingMessage,
+          selector: `${moduleConst} > ${notPascal} > ${literalTable}`,
+        },
+        {
+          message: constantNamingMessage,
+          selector: `${moduleConst} > ${notPascal} > :matches(TSAsExpression, TSSatisfiesExpression) > ${literalTable}`,
+        },
+        { message: regexMessage, selector: 'Literal[regex]' },
+        { message: regexMessage, selector: 'NewExpression[callee.name="RegExp"]' },
+        { message: colourMessage, selector: 'Literal[value=/^#[0-9a-fA-F]{3,8}$/]' },
+        { message: colourMessage, selector: 'Literal[value=/^(rgb|hsl)a?\\(/]' },
+        { message: colourMessage, selector: 'TemplateElement[value.raw=/#[0-9a-fA-F]{6}/]' },
+      ],
 
+      // Deterministic order (fixable): external imports, then `@/` modules, then relative files,
+      // separated by blank lines; names, object properties, destructured parameters and type
+      // members alphabetically. A `// keep order` comment starts a group that is left as written.
+      'perfectionist/sort-imports': [
+        'error',
+        {
+          groups: [
+            'side-effect',
+            ['builtin', 'external'],
+            'internal',
+            ['parent', 'sibling', 'index'],
+            'unknown',
+          ],
+          internalPattern: ['^@/.+'],
+          newlinesBetween: 1,
+          type: 'natural',
+        },
+      ],
+
+      'perfectionist/sort-named-exports': ['error', { type: 'natural' }],
+      'perfectionist/sort-named-imports': ['error', { type: 'natural' }],
+      'perfectionist/sort-object-types': [
+        'error',
+        { partitionByComment: ['^\\s*keep order'], type: 'natural' },
+      ],
+      'perfectionist/sort-objects': [
+        'error',
+        { partitionByComment: ['^\\s*keep order'], type: 'natural' },
+      ],
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+      'sonarjs/cognitive-complexity': ['warn', 15],
       // Sonar rules that duplicate typescript-eslint or fight React conventions.
-      'sonarjs/prefer-read-only-props': 'off',
       'sonarjs/deprecation': 'off',
-      'sonarjs/prefer-regexp-exec': 'off',
+
+      'sonarjs/no-nested-conditional': 'warn',
       'sonarjs/no-selector-parameter': 'off',
+      'sonarjs/prefer-read-only-props': 'off',
+      'sonarjs/prefer-regexp-exec': 'off',
     },
   },
   {
@@ -262,9 +320,9 @@ const config = [
         'error',
         {
           allowExpressions: true,
-          allowTypedFunctionExpressions: true,
           allowHigherOrderFunctions: true,
           allowIIFEs: true,
+          allowTypedFunctionExpressions: true,
         },
       ],
     },
@@ -277,20 +335,33 @@ const config = [
     rules: { '@typescript-eslint/unbound-method': 'off' },
   },
   {
-    files: ['src/styles/theme.ts'],
+    // Column order in the schema is part of the Drizzle snapshot; keep it as written.
+    files: ['src/db/schema.ts'],
+    rules: { 'perfectionist/sort-objects': 'off' },
+  },
+  {
+    files: ['src/styles/theme.ts', 'src/lib/patterns.ts'],
     rules: { 'no-restricted-syntax': 'off' },
+  },
+  {
+    files: ['*.config.{ts,mts,js,mjs}', 'scripts/eslint-rules/**'],
+    rules: {
+      '@typescript-eslint/no-magic-numbers': 'off',
+      'local/no-comments': 'off',
+      'no-restricted-syntax': 'off',
+    },
   },
   {
     files: ['**/*.test.{ts,tsx}', 'e2e/**', 'scripts/**', '*.config.{ts,mts,js,mjs}'],
     rules: {
-      'max-lines-per-function': 'off',
-      'max-lines': 'off',
-      'prefer-arrow-functions/prefer-arrow-functions': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
+      'prefer-arrow-functions/prefer-arrow-functions': 'off',
       'sonarjs/no-duplicate-string': 'off',
     },
   },
@@ -298,9 +369,10 @@ const config = [
     // Test fixtures are local data, not shared constants; stubs are allowed to be empty.
     files: ['**/*.test.{ts,tsx}', 'e2e/**'],
     rules: {
-      'no-restricted-syntax': 'off',
       '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
       '@typescript-eslint/require-await': 'off',
+      'no-restricted-syntax': 'off',
       'sonarjs/no-floating-point-equality': 'off',
     },
   },

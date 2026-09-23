@@ -1,23 +1,24 @@
 'use client';
 
-import { useId, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
+import { useId, useState } from 'react';
+
 import { Button } from './button';
 import { Calendar } from './calendar';
+import styles from './calendar.module.scss';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import s from './calendar.module.scss';
 
 export function DatePicker({
   label,
-  value,
-  onChange,
   min,
+  onChange,
+  value,
 }: {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
   min?: string;
+  onChange: (value: string) => void;
+  value: string;
 }) {
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -29,16 +30,16 @@ export function DatePicker({
   };
 
   return (
-    <div className={s.field}>
+    <div className={styles.field}>
       <label htmlFor={id}>{label}</label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button id={id} variant="outline" className={s.trigger}>
+          <Button id={id} variant="outline" className={styles.trigger}>
             <span>{selected ? format(selected, 'MMM d, yyyy') : 'Select date'}</span>
             <CalendarDays size={16} />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className={s.popup} align="start" aria-label={`${label} date`}>
+        <PopoverContent className={styles.popup} align="start" aria-label={`${label} date`}>
           <Calendar
             mode="single"
             selected={selected}
@@ -47,7 +48,7 @@ export function DatePicker({
             onSelect={choose}
             autoFocus
           />
-          <div className={s.actions}>
+          <div className={styles.actions}>
             <Button variant="ghost" size="sm" onClick={() => choose()}>
               Clear
             </Button>

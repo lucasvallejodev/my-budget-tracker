@@ -1,17 +1,23 @@
-/** Minimal RFC-4180 CSV parser with delimiter sniffing (comma, semicolon, tab, pipe). */
+import { MAX_DAYS_IN_MONTH, MONTHS_PER_YEAR } from '@/constants/time';
+import { Patterns } from '@/lib/patterns';
+
 export type ParsedCsv = {
+  delimiter: string;
   headers: string[];
   rows: string[][];
-  delimiter: string;
 };
 
+const DelimiterCandidates = [',', ';', '\t', '|'];
+const ESCAPED_QUOTE_LENGTH = 2;
+const CRLF_LENGTH = 2;
+const DATE_PART_WIDTH = 2;
+
 export const sniffDelimiter = (text: string): string => {
-  const firstLine = text.split(/\r?\n/).find(line => line.trim()) ?? '';
-  const candidates = [',', ';', '\t', '|'];
+  const firstLine = text.split(Patterns.lineBreak).find(line => line.trim()) ?? '';
   let best = ',';
   let bestCount = -1;
 
-  for (const candidate of candidates) {
+  for (const candidate of DelimiterCandidates) {
     const count = firstLine.split(candidate).length - 1;
 
     if (count > bestCount) {
@@ -23,79 +29,134 @@ export const sniffDelimiter = (text: string): string => {
   return best;
 };
 
-export const parseCsv = (text: string, delimiter = sniffDelimiter(text)): ParsedCsv => {
-  const source = text.replace(/^﻿/, '');
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = '';
-  let quoted = false;
+type CsvScan = {
+  field: string;
+  quoted: boolean;
+  row: string[];
+  rows: string[][];
+};
 
-  for (let i = 0; i < source.length; i++) {
-    const char = source[i];
+export const isBlankRow = (row: string[]): boolean => row.every(cell => cell.trim() === '');
 
-    if (quoted) {
-      if (char === '"') {
-        if (source[i + 1] === '"') {
-          field += '"';
-          i++;
-        } else quoted = false;
-      } else field += char;
-      continue;
-    }
+const endField = (scan: CsvScan): void => {
+  scan.row.push(scan.field);
+  scan.field = '';
+};
 
-    if (char === '"') quoted = true;
-    else if (char === delimiter) {
-      row.push(field);
-      field = '';
-    } else if (char === '\n' || char === '\r') {
-      if (char === '\r' && source[i + 1] === '\n') i++;
-      row.push(field);
-      field = '';
-      if (row.some(cell => cell.trim() !== '')) rows.push(row);
-      row = [];
-    } else field += char;
+const endRow = (scan: CsvScan): void => {
+  endField(scan);
+  if (!isBlankRow(scan.row)) scan.rows.push(scan.row);
+  scan.row = [];
+};
+
+const scanQuoted = (scan: CsvScan, source: string, position: number): number => {
+  const char = source[position];
+
+  if (char !== '"') {
+    scan.field += char;
+
+    return position + 1;
   }
 
-  row.push(field);
-  if (row.some(cell => cell.trim() !== '')) rows.push(row);
-  const [headers = [], ...body] = rows;
+  if (source[position + 1] === '"') {
+    scan.field += '"';
+
+    return position + ESCAPED_QUOTE_LENGTH;
+  }
+
+  scan.quoted = false;
+
+  return position + 1;
+};
+
+const scanPlain = (scan: CsvScan, source: string, position: number, delimiter: string): number => {
+  const char = source[position];
+
+  if (char === '"') {
+    scan.quoted = true;
+
+    return position + 1;
+  }
+
+  if (char === delimiter) {
+    endField(scan);
+
+    return position + 1;
+  }
+
+  if (char === '\n' || char === '\r') {
+    endRow(scan);
+
+    return char === '\r' && source[position + 1] === '\n' ? position + CRLF_LENGTH : position + 1;
+  }
+
+  scan.field += char;
+
+  return position + 1;
+};
+
+export const parseCsv = (text: string, delimiter = sniffDelimiter(text)): ParsedCsv => {
+  const source = text.replace(Patterns.byteOrderMark, '');
+
+  const scan: CsvScan = {
+    field: '',
+    quoted: false,
+    row: [],
+    rows: [],
+  };
+
+  let position = 0;
+
+  while (position < source.length) {
+    position = scan.quoted
+      ? scanQuoted(scan, source, position)
+      : scanPlain(scan, source, position, delimiter);
+  }
+
+  endRow(scan);
+  const [headers = [], ...body] = scan.rows;
 
   return {
-    headers: headers.map(h => h.trim()),
-    rows: body,
     delimiter,
+    headers: headers.map(header => header.trim()),
+    rows: body,
   };
 };
 
 export type DateFormat = 'auto' | 'YYYY-MM-DD' | 'DD/MM/YYYY' | 'MM/DD/YYYY';
 
-/** Normalises a date cell to YYYY-MM-DD, or returns null when it cannot be read. */
+export const buildIsoDate = (
+  yearText: string,
+  monthText: string,
+  dayText: string
+): string | null => {
+  const month = Number(monthText);
+  const day = Number(dayText);
+
+  if (month < 1 || month > MONTHS_PER_YEAR || day < 1 || day > MAX_DAYS_IN_MONTH) return null;
+
+  return `${yearText}-${String(month).padStart(DATE_PART_WIDTH, '0')}-${String(day).padStart(DATE_PART_WIDTH, '0')}`;
+};
+
+const parseDayMonthCell = (parts: RegExpExecArray, format: DateFormat): string | null => {
+  const [, first, second, year] = parts;
+
+  if (format === 'MM/DD/YYYY') return buildIsoDate(year, first, second);
+  if (format === 'DD/MM/YYYY') return buildIsoDate(year, second, first);
+  const monthFirst = Number(first) <= MONTHS_PER_YEAR && Number(second) > MONTHS_PER_YEAR;
+
+  return monthFirst ? buildIsoDate(year, first, second) : buildIsoDate(year, second, first);
+};
+
 export const parseDateCell = (value: string, format: DateFormat = 'auto'): string | null => {
   const text = value.trim();
-  const iso = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/.exec(text);
-  const dmy = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/.exec(text);
-
-  const build = (y: string, m: string, d: string) => {
-    const month = Number(m);
-    const day = Number(d);
-
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-
-    return `${y}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  };
+  const iso = Patterns.dateYearFirst.exec(text);
 
   if (format === 'YYYY-MM-DD' || (format === 'auto' && iso)) {
-    return iso ? build(iso[1], iso[2], iso[3]) : null;
+    return iso ? buildIsoDate(iso[1], iso[2], iso[3]) : null;
   }
 
-  if (!dmy) return null;
-  if (format === 'MM/DD/YYYY') return build(dmy[3], dmy[1], dmy[2]);
-  if (format === 'DD/MM/YYYY') return build(dmy[3], dmy[2], dmy[1]);
+  const dmy = Patterns.dateDayFirst.exec(text);
 
-  // auto: prefer day-first unless the first number cannot be a day
-  return Number(dmy[1]) > 12
-    ? build(dmy[3], dmy[2], dmy[1])
-    : Number(dmy[2]) > 12
-      ? build(dmy[3], dmy[1], dmy[2])
-      : build(dmy[3], dmy[2], dmy[1]);
+  return dmy ? parseDayMonthCell(dmy, format) : null;
 };

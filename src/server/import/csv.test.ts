@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseCsv, parseDateCell, sniffDelimiter } from './csv';
+
+import { buildIsoDate, isBlankRow, parseCsv, parseDateCell, sniffDelimiter } from './csv';
 
 describe('csv', () => {
   it('sniffs the delimiter and handles quotes, escapes and blank lines', () => {
@@ -28,5 +29,33 @@ describe('csv', () => {
     expect(parseDateCell('2026-09-05 10:22')).toBe('2026-09-05');
     expect(parseDateCell('not a date')).toBeNull();
     expect(parseDateCell('31/13/2026')).toBeNull();
+  });
+});
+
+describe('csv scanner helpers', () => {
+  it('treats rows made only of whitespace as blank', () => {
+    expect(isBlankRow(['', '  ', '\t'])).toBe(true);
+    expect(isBlankRow(['', 'x'])).toBe(false);
+  });
+  it('keeps delimiters and newlines inside quotes and closes an unterminated quote at the end', () => {
+    expect(parseCsv('a,b\n"x,y\nz",2').rows).toEqual([['x,y\nz', '2']]);
+    expect(parseCsv('a,b\n"open,1').rows).toEqual([['open,1']]);
+  });
+  it('accepts an explicit delimiter and lone carriage returns', () => {
+    expect(parseCsv('a|b\r1|2\r', '|')).toEqual({
+      delimiter: '|',
+      headers: ['a', 'b'],
+      rows: [['1', '2']],
+    });
+  });
+  it('builds ISO dates only from valid months and days', () => {
+    expect(buildIsoDate('2026', '9', '5')).toBe('2026-09-05');
+    expect(buildIsoDate('2026', '13', '5')).toBeNull();
+    expect(buildIsoDate('2026', '0', '5')).toBeNull();
+    expect(buildIsoDate('2026', '9', '32')).toBeNull();
+  });
+  it('returns null for an explicit format that does not match the cell', () => {
+    expect(parseDateCell('05/09/2026', 'YYYY-MM-DD')).toBeNull();
+    expect(parseDateCell('2026-09-05', 'DD/MM/YYYY')).toBeNull();
   });
 });

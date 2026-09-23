@@ -1,20 +1,22 @@
-import { ComponentProps } from 'react';
 import { Slot } from '@radix-ui/react-slot';
+import { ComponentProps } from 'react';
+
 import { cn } from '@/lib/styles';
-import s from './controls.module.scss';
+
+import styles from './controls.module.scss';
 
 export type ButtonProps = ComponentProps<'button'> & {
   asChild?: boolean;
-  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive';
   size?: 'default' | 'sm' | 'icon';
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive';
 };
 
 export function Button({
   asChild,
-  variant = 'default',
-  size = 'default',
   className,
+  size = 'default',
   type = 'button',
+  variant = 'default',
   ...props
 }: ButtonProps) {
   const Element = asChild ? Slot : 'button';
@@ -22,7 +24,7 @@ export function Button({
   return (
     <Element
       type={asChild ? undefined : type}
-      className={cn(s.button, s[variant], s[size], className)}
+      className={cn(styles.button, styles[variant], styles[size], className)}
       {...props}
     />
   );

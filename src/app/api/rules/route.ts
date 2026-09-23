@@ -1,3 +1,3 @@
 import { handle } from '@/server/http';
 
-export const GET = handle(({ userId, services }) => services.rules.list(userId));
+export const GET = handle(({ services, userId }) => services.rules.list(userId));

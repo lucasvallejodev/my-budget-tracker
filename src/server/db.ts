@@ -1,15 +1,18 @@
 import { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+
+import { HttpStatus } from '@/constants/http';
 import * as schema from '@/db/schema';
 
-/** Any Drizzle PostgreSQL database (node-postgres in the app, PGlite in tests). */
 export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
-export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+
+type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+
 export type DbOrTx = Db | Tx;
 
 export class ServiceError extends Error {
   constructor(
     message: string,
-    public readonly status = 400
+    public readonly status: number = HttpStatus.badRequest
   ) {
     super(message);
     this.name = 'ServiceError';
@@ -17,5 +20,5 @@ export class ServiceError extends Error {
 }
 
 export const notFound = (what: string): never => {
-  throw new ServiceError(`${what} not found`, 404);
+  throw new ServiceError(`${what} not found`, HttpStatus.notFound);
 };

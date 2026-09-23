@@ -1,20 +1,22 @@
 import { relations, sql } from 'drizzle-orm';
 import {
-  pgTable,
-  pgEnum,
-  text,
-  char,
-  boolean,
   bigint,
+  boolean,
+  char,
+  check,
+  date,
+  index,
   integer,
   numeric,
-  date,
-  timestamp,
-  index,
-  uniqueIndex,
+  pgEnum,
+  pgTable,
   primaryKey,
-  check,
+  text,
+  timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
+
+const DEFAULT_MINOR_UNITS = 2;
 
 export const accountType = pgEnum('account_type', [
   'checking',
@@ -43,12 +45,11 @@ const updatedAt = () =>
     .defaultNow()
     .$onUpdate(() => new Date());
 
-/** Global ISO-4217 reference data, seeded by migration. */
 export const currencies = pgTable('currencies', {
   code: char('code', { length: 3 }).primaryKey(),
   name: text('name').notNull(),
   symbol: text('symbol').notNull(),
-  minorUnits: integer('minor_units').notNull().default(2),
+  minorUnits: integer('minor_units').notNull().default(DEFAULT_MINOR_UNITS),
   isActive: boolean('is_active').notNull().default(true),
 });
 
@@ -86,7 +87,7 @@ export const accounts = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  t => [index('accounts_user_idx').on(t.userId)]
+  columns => [index('accounts_user_idx').on(columns.userId)]
 );
 
 export const categoryGroups = pgTable(
@@ -103,7 +104,7 @@ export const categoryGroups = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  t => [index('category_groups_user_idx').on(t.userId)]
+  columns => [index('category_groups_user_idx').on(columns.userId)]
 );
 
 export const categories = pgTable(
@@ -121,7 +122,10 @@ export const categories = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  t => [index('categories_user_idx').on(t.userId), index('categories_group_idx').on(t.groupId)]
+  columns => [
+    index('categories_user_idx').on(columns.userId),
+    index('categories_group_idx').on(columns.groupId),
+  ]
 );
 
 export const payees = pgTable(
@@ -135,7 +139,7 @@ export const payees = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  t => [uniqueIndex('payees_user_name_key').on(t.userId, t.name)]
+  columns => [uniqueIndex('payees_user_name_key').on(columns.userId, columns.name)]
 );
 
 export const transactions = pgTable(
@@ -148,7 +152,6 @@ export const transactions = pgTable(
       .references(() => accounts.id),
     categoryId: text('category_id').references(() => categories.id),
     payeeId: text('payee_id').references(() => payees.id),
-    /** Signed minor units (cents): negative = money out, positive = money in. */
     amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
     currency: char('currency', { length: 3 })
       .notNull()
@@ -166,21 +169,21 @@ export const transactions = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  t => [
-    index('transactions_user_date_idx').on(t.userId, t.date),
-    index('transactions_account_date_idx').on(t.accountId, t.date),
-    index('transactions_user_category_idx').on(t.userId, t.categoryId),
-    index('transactions_transfer_idx').on(t.transferId),
+  columns => [
+    index('transactions_user_date_idx').on(columns.userId, columns.date),
+    index('transactions_account_date_idx').on(columns.accountId, columns.date),
+    index('transactions_user_category_idx').on(columns.userId, columns.categoryId),
+    index('transactions_transfer_idx').on(columns.transferId),
     uniqueIndex('transactions_account_import_key')
-      .on(t.accountId, t.importId)
-      .where(sql`${t.importId} IS NOT NULL`),
+      .on(columns.accountId, columns.importId)
+      .where(sql`${columns.importId} IS NOT NULL`),
     check(
       'transactions_category_kind_check',
-      sql`${t.kind} = 'standard' OR ${t.categoryId} IS NULL`
+      sql`${columns.kind} = 'standard' OR ${columns.categoryId} IS NULL`
     ),
     check(
       'transactions_transfer_kind_check',
-      sql`(${t.kind} = 'transfer') = (${t.transferId} IS NOT NULL)`
+      sql`(${columns.kind} = 'transfer') = (${columns.transferId} IS NOT NULL)`
     ),
   ]
 );
@@ -200,7 +203,7 @@ export const exchangeRates = pgTable(
     source: text('source').notNull().default('manual'),
     createdAt: createdAt(),
   },
-  t => [primaryKey({ columns: [t.userId, t.base, t.quote, t.date] })]
+  columns => [primaryKey({ columns: [columns.userId, columns.base, columns.quote, columns.date] })]
 );
 
 export const budgets = pgTable(
@@ -219,9 +222,13 @@ export const budgets = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  t => [
-    uniqueIndex('budgets_category_month_currency_key').on(t.categoryId, t.month, t.currency),
-    index('budgets_user_month_idx').on(t.userId, t.month),
+  columns => [
+    uniqueIndex('budgets_category_month_currency_key').on(
+      columns.categoryId,
+      columns.month,
+      columns.currency
+    ),
+    index('budgets_user_month_idx').on(columns.userId, columns.month),
   ]
 );
 
@@ -231,7 +238,6 @@ export const rules = pgTable(
     id: id(),
     userId: text('user_id').notNull(),
     name: text('name').notNull(),
-    /** Case-insensitive substring matched against payee name / original payee / memo. */
     pattern: text('pattern').notNull(),
     categoryId: text('category_id')
       .notNull()
@@ -240,7 +246,7 @@ export const rules = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  t => [index('rules_user_idx').on(t.userId)]
+  columns => [index('rules_user_idx').on(columns.userId)]
 );
 
 export const categoryGroupRelations = relations(categoryGroups, ({ many }) => ({

@@ -1,7 +1,8 @@
 'use client';
 
-import { EntityPicker, EntityPickerProps } from '@/components/primitives/entity-picker';
 import { usePayees } from '@/components/finance/use-finance-data';
+import { EntityPicker, EntityPickerProps } from '@/components/primitives/entity-picker';
+
 import CreatePayeeDialog from './create-payee-dialog';
 
 export default function PayeePicker(props: EntityPickerProps) {

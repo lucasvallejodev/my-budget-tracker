@@ -1,25 +1,21 @@
-/**
- * Money helpers. Amounts are stored as signed integer minor units (cents) next to an
- * ISO-4217 currency code. Nothing here ever uses floating point for arithmetic.
- */
-export type Money = { amountMinor: number; currency: string };
+import { DECIMAL_RADIX, DEFAULT_MINOR_UNIT_DIGITS } from '@/constants/money';
+import { isDigitsOnly, Patterns } from '@/lib/patterns';
 
 const exponentCache = new Map<string, number>();
 
-/** Number of minor-unit digits for a currency (EUR 2, JPY 0, KWD 3). */
 export const minorUnits = (currency: string): number => {
   const code = currency.toUpperCase();
   const cached = exponentCache.get(code);
 
   if (cached !== undefined) return cached;
-  let digits = 2;
+  let digits = DEFAULT_MINOR_UNIT_DIGITS;
 
   try {
     digits =
-      new Intl.NumberFormat('en', { style: 'currency', currency: code }).resolvedOptions()
-        .maximumFractionDigits ?? 2;
+      new Intl.NumberFormat('en', { currency: code, style: 'currency' }).resolvedOptions()
+        .maximumFractionDigits ?? DEFAULT_MINOR_UNIT_DIGITS;
   } catch {
-    digits = 2;
+    digits = DEFAULT_MINOR_UNIT_DIGITS;
   }
 
   exponentCache.set(code, digits);
@@ -27,37 +23,34 @@ export const minorUnits = (currency: string): number => {
   return digits;
 };
 
-/** Parse user input such as "12.50", "12,50", "1.234,56" or "-7" into minor units. */
+const minorUnitScale = (digits: number): number => DECIMAL_RADIX ** digits;
+
+const splitDecimal = (text: string): { fractionPart: string; integerPart: string } => {
+  const separatorIndex = Math.max(text.lastIndexOf(','), text.lastIndexOf('.'));
+
+  if (separatorIndex < 0) return { fractionPart: '', integerPart: text };
+  const separator = text[separatorIndex];
+  const occurrences = text.split(separator).length - 1;
+
+  if (occurrences !== 1) {
+    return { fractionPart: '', integerPart: text.replace(Patterns.thousandsSeparator, '') };
+  }
+
+  return {
+    fractionPart: text.slice(separatorIndex + 1),
+    integerPart: text.slice(0, separatorIndex).replace(Patterns.thousandsSeparator, ''),
+  };
+};
+
 export const parseAmountInput = (input: string, currency: string): number => {
   const digits = minorUnits(currency);
-  let text = input.trim().replace(/\s/g, '');
+  const text = input.trim().replace(Patterns.whitespace, '');
 
   if (!text) throw new Error('Amount is required');
   const negative = text.startsWith('-') || (text.startsWith('(') && text.endsWith(')'));
+  const { fractionPart, integerPart } = splitDecimal(text.replace(Patterns.amountSignWrapper, ''));
 
-  text = text.replace(/^[-+(]|\)$/g, '');
-  // Decimal separator rule: when both "," and "." appear, the last one is the decimal separator.
-  // A separator that appears more than once is a thousands separator. A single separator is
-  // always treated as the decimal separator ("1.234" → 1.234, like an HTML number input).
-  let integerPart = text;
-  let fractionPart = '';
-  const lastComma = text.lastIndexOf(',');
-  const lastDot = text.lastIndexOf('.');
-  const separatorIndex = Math.max(lastComma, lastDot);
-
-  if (separatorIndex >= 0) {
-    const separator = text[separatorIndex];
-    const occurrences = text.split(separator).length - 1;
-
-    if (occurrences === 1) {
-      integerPart = text.slice(0, separatorIndex);
-      fractionPart = text.slice(separatorIndex + 1);
-    }
-  }
-
-  integerPart = integerPart.replace(/[.,]/g, '');
-
-  if (!/^\d*$/.test(integerPart) || !/^\d*$/.test(fractionPart)) {
+  if (!isDigitsOnly(integerPart) || !isDigitsOnly(fractionPart)) {
     throw new Error('Amount must be a number');
   }
 
@@ -66,7 +59,7 @@ export const parseAmountInput = (input: string, currency: string): number => {
   }
 
   const scaled =
-    BigInt(integerPart || '0') * BigInt(10) ** BigInt(digits) +
+    BigInt(integerPart || '0') * BigInt(DECIMAL_RADIX) ** BigInt(digits) +
     BigInt((fractionPart || '').padEnd(digits, '0') || '0');
 
   if (scaled > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Amount is too large');
@@ -75,36 +68,33 @@ export const parseAmountInput = (input: string, currency: string): number => {
   return negative ? -value : value;
 };
 
-/** Convert minor units to a decimal string with the currency's exponent, e.g. 1250 → "12.50". */
 export const minorToDecimalString = (amountMinor: number, currency: string): string => {
   const digits = minorUnits(currency);
   const abs = Math.abs(Math.trunc(amountMinor));
-  const whole = Math.floor(abs / 10 ** digits);
-  const frac = abs % 10 ** digits;
+  const whole = Math.floor(abs / minorUnitScale(digits));
+  const frac = abs % minorUnitScale(digits);
   const body = digits ? `${whole}.${String(frac).padStart(digits, '0')}` : String(whole);
 
   return amountMinor < 0 ? `-${body}` : body;
 };
 
-/** Format minor units as a localised currency string. */
 export const formatMoney = (
   amountMinor: number,
   currency: string,
   options: { locale?: string; signDisplay?: 'auto' | 'always' | 'never' | 'exceptZero' } = {}
 ): string => {
   const digits = minorUnits(currency);
-  const value = amountMinor / 10 ** digits;
+  const value = amountMinor / minorUnitScale(digits);
 
   return new Intl.NumberFormat(options.locale ?? undefined, {
-    style: 'currency',
     currency: currency.toUpperCase(),
-    minimumFractionDigits: digits,
     maximumFractionDigits: digits,
+    minimumFractionDigits: digits,
     signDisplay: options.signDisplay ?? 'auto',
+    style: 'currency',
   }).format(value);
 };
 
-/** Convert minor units of one currency into another using a decimal rate, rounding half away from zero. */
 export const convertMinor = (
   amountMinor: number,
   from: string,
@@ -113,11 +103,8 @@ export const convertMinor = (
 ): number => {
   const fromDigits = minorUnits(from);
   const toDigits = minorUnits(to);
-  const major = amountMinor / 10 ** fromDigits;
-  const converted = major * rate * 10 ** toDigits;
+  const major = amountMinor / minorUnitScale(fromDigits);
+  const converted = major * rate * minorUnitScale(toDigits);
 
   return Math.sign(converted) * Math.round(Math.abs(converted));
 };
-
-export const sumMinor = (values: number[]): number =>
-  values.reduce((total, value) => total + value, 0);

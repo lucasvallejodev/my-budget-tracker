@@ -1,7 +1,3 @@
-/**
- * Curated icon registry. Explicit imports keep tree shaking intact (the whole lucide set is
- * ~6,000 components) and the key list doubles as the validation enum for user-chosen icons.
- */
 import {
   Activity,
   ArrowLeftRight,
@@ -59,8 +55,8 @@ import {
   Repeat,
   Sandwich,
   Scale,
-  Scissors,
   School,
+  Scissors,
   Shapes,
   Shield,
   ShieldCheck,
@@ -147,8 +143,8 @@ export const Icons = {
   Repeat,
   Sandwich,
   Scale,
-  Scissors,
   School,
+  Scissors,
   Shapes,
   Shield,
   ShieldCheck,

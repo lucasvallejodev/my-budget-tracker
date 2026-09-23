@@ -32,13 +32,25 @@ All client reads go through `src/components/finance/use-finance-data.ts`:
 
 After any mutation, components invalidate every key in `FinanceKeys`. Mutations call server actions through `useMutation`, show a toast on success or `error.message` on failure, then invalidate.
 
+Screens render a query's lifecycle through `QueryContent` from `blocks.tsx` (`pending`, `error` with a retry button, an optional `empty` state, then the children render function) instead of chained ternaries. Budget badges take their tone and label from `budgetStatus(ratio)` in the same file.
+
 Types for rows (`TransactionRow`, `AccountSummary`, `CategoryTree`, …) are imported from the server services with `import type`, so the client and server never drift.
 
 ## Forms
 
 Forms use React Hook Form with `zodResolver` and the schemas in `src/schema/`. Money fields are text inputs (`inputMode="decimal"`) whose value is parsed on the server with the account's currency. Dates are `YYYY-MM-DD` strings picked with the shared calendar popover.
 
-The transaction dialog (`transaction-dialog.tsx`) has three modes, expense, income and transfer, and works for both creating and editing; editing a transfer leg edits the whole transfer.
+Dialog forms are assembled from shared pieces rather than written field by field:
+
+| Piece | File | What it gives you |
+| --- | --- | --- |
+| `TextField`, `AmountField`, `DateField` | `src/components/primitives/form-fields.tsx` | A `FormField` wrapper taking `control`, `name`, `label` and `description`; `AmountField` is the decimal text input, `DateField` the calendar popover. |
+| `DialogFormFooter`, `saveLabel`, `CreateNewTrigger` | `src/components/primitives/dialog-form.tsx` | The Cancel + submit row (spinner while pending; `saveLabel(editing, 'Create')` yields "Save" or the create label) and the "Create new" row pickers use to open a dialog. |
+| `useEntityMutation` | `src/app/(main)/_components/use-entity-mutation.ts` | `useMutation` plus the success toast, invalidation of every `FinanceKeys` query and the caller's follow-up (reset, close, callback). |
+| `AccountField`, `PayeeField`, `CategoryField`, `MemoField` | `src/app/(main)/_components/transaction-fields.tsx` | The transaction pickers as form fields. |
+| `AccountFormFields`, `accountDefaults`, `saveAccount` | `src/app/(main)/_components/account-fields.tsx` | The account form's type, currency and detail fields and its create/update wiring. |
+
+The transaction dialog (`transaction-dialog.tsx`) has three modes, expense, income and transfer, and works for both creating and editing; editing a transfer leg edits the whole transfer. Its default values come from `standardDefaults` and `transferDefaults`, which merge an existing row or a caller preset with blank values.
 
 ## Pickers
 

@@ -1,26 +1,31 @@
 'use client';
 
-import { DatePicker } from '../primitives/date-picker';
-import { useState } from 'react';
 import * as Menu from '@radix-ui/react-dropdown-menu';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { Download, MoreHorizontal } from 'lucide-react';
-import { categoryLabel, describeTransaction, TransactionTable } from '../transaction-table';
-import { Panel, EmptyState } from './blocks';
-import { Button } from '../primitives/button';
-import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
-import { FinanceKeys, TransactionRow } from './use-finance-data';
-import { formatMoney, minorToDecimalString } from '@/lib/money';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
 import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
 import { deleteTransactionAction } from '@/app/(main)/actions';
-import s from './finance.module.scss';
-import c from '../primitives/controls.module.scss';
+import { formatMoney, minorToDecimalString } from '@/lib/money';
+import { Patterns } from '@/lib/patterns';
+
+import { Button } from '../primitives/button';
+import controlStyles from '../primitives/controls.module.scss';
+import { DatePicker } from '../primitives/date-picker';
+import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
+import { categoryLabel, describeTransaction, TransactionTable } from '../transaction-table';
+import { EmptyState, Panel } from './blocks';
+import styles from './finance.module.scss';
+import { FinanceKeys, TransactionRow } from './use-finance-data';
+
+const PageSize = 10;
 
 export function exportTransactions(rows: TransactionRow[]) {
-  const cell = (v: string | number | boolean | null | undefined) =>
-    `"${String(v ?? '')
-      .replace(/^[=+@\-\t\r]/, "'$&")
+  const cell = (value: string | number | boolean | null | undefined) =>
+    `"${String(value ?? '')
+      .replace(Patterns.csvFormulaPrefix, "'$&")
       .replaceAll('"', '""')}"`;
 
   const csv = [
@@ -38,44 +43,44 @@ export function exportTransactions(rows: TransactionRow[]) {
       'Memo',
       'ID',
     ],
-    ...rows.map(t => [
-      t.date,
-      describeTransaction(t),
-      t.payeeName ?? '',
-      categoryLabel(t),
-      t.groupName ?? '',
-      t.accountName,
-      minorToDecimalString(t.amountMinor, t.currency),
-      t.currency,
-      t.kind,
-      t.status,
-      t.memo,
-      t.id,
+    ...rows.map(transaction => [
+      transaction.date,
+      describeTransaction(transaction),
+      transaction.payeeName ?? '',
+      categoryLabel(transaction),
+      transaction.groupName ?? '',
+      transaction.accountName,
+      minorToDecimalString(transaction.amountMinor, transaction.currency),
+      transaction.currency,
+      transaction.kind,
+      transaction.status,
+      transaction.memo,
+      transaction.id,
     ]),
   ]
     .map(row => row.map(cell).join(','))
     .join('\r\n');
 
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }));
-  const a = document.createElement('a');
+  const link = document.createElement('a');
 
-  a.href = url;
-  a.download = 'transactions.csv';
-  a.click();
+  link.href = url;
+  link.download = 'transactions.csv';
+  link.click();
   URL.revokeObjectURL(url);
 }
 
-export function Pagination({
+function Pagination({
+  onChange,
   page,
   pages,
-  onChange,
 }: {
+  onChange: (page: number) => void;
   page: number;
   pages: number;
-  onChange: (page: number) => void;
 }) {
   return (
-    <nav aria-label="Table pagination" className={s.pagination}>
+    <nav aria-label="Table pagination" className={styles.pagination}>
       <Button variant="outline" disabled={page <= 1} onClick={() => onChange(page - 1)}>
         Previous
       </Button>
@@ -97,12 +102,12 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
 
   const remove = useMutation({
     mutationFn: () => deleteTransactionAction(transaction.id),
+    onError: (error: Error) => toast.error(error.message || 'Could not delete'),
     onSuccess: async () => {
       toast.success(transaction.kind === 'transfer' ? 'Transfer deleted' : 'Transaction deleted');
       await Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
       setDeleting(false);
     },
-    onError: (error: Error) => toast.error(error.message || 'Could not delete'),
   });
 
   return (
@@ -118,16 +123,16 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
           </Button>
         </Menu.Trigger>
         <Menu.Portal>
-          <Menu.Content className={c.popover} align="end">
-            <Menu.Item className={c.selectItem} onSelect={() => setDetails(true)}>
+          <Menu.Content className={controlStyles.popover} align="end">
+            <Menu.Item className={controlStyles.selectItem} onSelect={() => setDetails(true)}>
               View details
             </Menu.Item>
             {transaction.kind !== 'opening' && (
-              <Menu.Item className={c.selectItem} onSelect={() => setEditing(true)}>
+              <Menu.Item className={controlStyles.selectItem} onSelect={() => setEditing(true)}>
                 Edit
               </Menu.Item>
             )}
-            <Menu.Item className={c.selectItem} onSelect={() => setDeleting(true)}>
+            <Menu.Item className={controlStyles.selectItem} onSelect={() => setDeleting(true)}>
               Delete
             </Menu.Item>
           </Menu.Content>
@@ -138,20 +143,20 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
           <DialogTitle>Transaction details</DialogTitle>
           <dl>
             {Object.entries({
-              Description: describeTransaction(transaction),
-              Payee: transaction.payeeName || '—',
-              Category: categoryLabel(transaction),
               Account: transaction.accountName,
               Amount: formatMoney(transaction.amountMinor, transaction.currency, {
                 signDisplay: 'exceptZero',
               }),
-              Kind: transaction.kind,
-              Status: transaction.status,
+              Category: categoryLabel(transaction),
               Date: transaction.date,
-              Memo: transaction.memo || '—',
+              Description: describeTransaction(transaction),
               ID: transaction.id,
+              Kind: transaction.kind,
+              Memo: transaction.memo || '—',
+              Payee: transaction.payeeName || '—',
+              Status: transaction.status,
             }).map(([key, value]) => (
-              <div className={s.row} key={key}>
+              <div className={styles.row} key={key}>
                 <dt>{key}</dt>
                 <dd>{value}</dd>
               </div>
@@ -172,7 +177,7 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
               ? 'Both legs of the transfer are removed and both account balances update.'
               : 'The account balance and reports update immediately. This cannot be undone.'}
           </p>
-          <div className={s.actions}>
+          <div className={styles.actions}>
             <Button variant="outline" onClick={() => setDeleting(false)}>
               Cancel
             </Button>
@@ -191,13 +196,13 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
 }
 
 export function TransactionExplorer({
-  transactions,
   initialSearch = '',
   showAccount = true,
+  transactions,
 }: {
-  transactions: TransactionRow[];
   initialSearch?: string;
   showAccount?: boolean;
+  transactions: TransactionRow[];
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState('');
@@ -207,30 +212,29 @@ export function TransactionExplorer({
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
 
-  const typeOf = (t: TransactionRow) =>
-    t.kind === 'transfer'
-      ? 'TRANSFER'
-      : t.kind === 'opening'
-        ? 'OPENING'
-        : t.amountMinor < 0
-          ? 'EXPENSE'
-          : 'INCOME';
+  const typeOf = (transaction: TransactionRow) => {
+    if (transaction.kind === 'transfer') return 'TRANSFER';
+    if (transaction.kind === 'opening') return 'OPENING';
 
-  const statusOf = (t: TransactionRow) => (t.needsReview ? 'Needs review' : t.status);
+    return transaction.amountMinor < 0 ? 'EXPENSE' : 'INCOME';
+  };
+
+  const statusOf = (transaction: TransactionRow) =>
+    transaction.needsReview ? 'Needs review' : transaction.status;
 
   const filtered = transactions.filter(
-    t =>
-      `${t.id} ${describeTransaction(t)} ${t.memo} ${categoryLabel(t)} ${t.accountName}`
+    transaction =>
+      `${transaction.id} ${describeTransaction(transaction)} ${transaction.memo} ${categoryLabel(transaction)} ${transaction.accountName}`
         .toLowerCase()
         .includes(search.toLowerCase()) &&
-      (!category || categoryLabel(t) === category) &&
-      (!type || typeOf(t) === type) &&
-      (!status || statusOf(t) === status) &&
-      (!from || t.date >= from) &&
-      (!to || t.date <= to)
+      (!category || categoryLabel(transaction) === category) &&
+      (!type || typeOf(transaction) === type) &&
+      (!status || statusOf(transaction) === status) &&
+      (!from || transaction.date >= from) &&
+      (!to || transaction.date <= to)
   );
 
-  const pages = Math.max(1, Math.ceil(filtered.length / 10));
+  const pages = Math.max(1, Math.ceil(filtered.length / PageSize));
   const current = Math.min(page, pages);
 
   const update = (setter: (v: string) => void, value: string) => {
@@ -242,7 +246,7 @@ export function TransactionExplorer({
     <Panel
       title="Transactions"
       action={
-        <div className={s.actions}>
+        <div className={styles.actions}>
           <Button variant="outline" size="sm" onClick={() => exportTransactions(filtered)}>
             <Download />
             Export CSV
@@ -253,14 +257,14 @@ export function TransactionExplorer({
         </div>
       }
     >
-      <div className={s.filters}>
+      <div className={styles.filters}>
         <label>
           Search
           <input
-            className={s.filter}
+            className={styles.filter}
             placeholder="Search by payee, memo, category…"
             value={search}
-            onChange={e => update(setSearch, e.target.value)}
+            onChange={event => update(setSearch, event.target.value)}
           />
         </label>
         <DatePicker label="From" value={from} onChange={value => update(setFrom, value)} />
@@ -268,21 +272,25 @@ export function TransactionExplorer({
         <label>
           Category
           <select
-            className={s.filter}
+            className={styles.filter}
             value={category}
-            onChange={e => update(setCategory, e.target.value)}
+            onChange={event => update(setCategory, event.target.value)}
           >
             <option value="">All categories</option>
             {[...new Set(transactions.map(categoryLabel))]
-              .sort((a, b) => a.localeCompare(b))
-              .map(c => (
-                <option key={c}>{c}</option>
+              .sort((left, right) => left.localeCompare(right))
+              .map(label => (
+                <option key={label}>{label}</option>
               ))}
           </select>
         </label>
         <label>
           Type
-          <select className={s.filter} value={type} onChange={e => update(setType, e.target.value)}>
+          <select
+            className={styles.filter}
+            value={type}
+            onChange={event => update(setType, event.target.value)}
+          >
             <option value="">All types</option>
             <option value="INCOME">Income</option>
             <option value="EXPENSE">Expense</option>
@@ -293,14 +301,14 @@ export function TransactionExplorer({
         <label>
           Status
           <select
-            className={s.filter}
+            className={styles.filter}
             value={status}
-            onChange={e => update(setStatus, e.target.value)}
+            onChange={event => update(setStatus, event.target.value)}
           >
             <option value="">All statuses</option>
-            {['Needs review', 'pending', 'cleared', 'reconciled'].map(v => (
-              <option key={v} value={v}>
-                {v[0].toUpperCase() + v.slice(1)}
+            {['Needs review', 'pending', 'cleared', 'reconciled'].map(label => (
+              <option key={label} value={label}>
+                {label[0].toUpperCase() + label.slice(1)}
               </option>
             ))}
           </select>
@@ -308,7 +316,7 @@ export function TransactionExplorer({
       </div>
       {filtered.length ? (
         <TransactionTable
-          transactions={filtered.slice((current - 1) * 10, current * 10)}
+          transactions={filtered.slice((current - 1) * PageSize, current * PageSize)}
           showActions
           showAccount={showAccount}
         />

@@ -1,39 +1,28 @@
 import { asc, eq } from 'drizzle-orm';
-import { currencies, userSettings } from '@/db/schema';
+
 import { getDb } from '@/db';
-import { Db } from './db';
+import { currencies, userSettings } from '@/db/schema';
+
 import { createAccountService } from './accounts/service';
+import { createBudgetService } from './budgets/service';
+import { ensureUserBootstrap } from './categories/seed';
 import { createCategoryService } from './categories/service';
+import { Db } from './db';
+import { createFxService, ManualRateProvider } from './fx/service';
+import { createImportService } from './import/service';
 import { createLedgerService } from './ledger/service';
 import { createPayeeService } from './payees/service';
 import { createReportService } from './reports/service';
-import { ensureUserBootstrap } from './categories/seed';
-import { createFxService, ManualRateProvider } from './fx/service';
-import { createImportService } from './import/service';
 import { createRuleService } from './rules/service';
-import { createBudgetService } from './budgets/service';
 
 export const createServices = (db: Db) => ({
-  db,
   accounts: createAccountService(db),
-  categories: createCategoryService(db),
-  ledger: createLedgerService(db),
-  payees: createPayeeService(db),
-  reports: createReportService(db),
-  // Register additional RateProvider implementations here to automate rates later.
-  fx: createFxService(db, [new ManualRateProvider(db)]),
-  rules: createRuleService(db),
-  imports: createImportService(db),
-  budgets: createBudgetService(db),
   bootstrap: (userId: string, primaryCurrency?: string) =>
     ensureUserBootstrap(db, userId, primaryCurrency),
-  async listCurrencies() {
-    return db
-      .select()
-      .from(currencies)
-      .where(eq(currencies.isActive, true))
-      .orderBy(asc(currencies.code));
-  },
+  budgets: createBudgetService(db),
+  categories: createCategoryService(db),
+  db,
+  fx: createFxService(db, [new ManualRateProvider(db)]),
   async getSettings(userId: string) {
     const [settings] = await db
       .select()
@@ -43,11 +32,23 @@ export const createServices = (db: Db) => ({
 
     return settings;
   },
+  imports: createImportService(db),
+  ledger: createLedgerService(db),
+  async listCurrencies() {
+    return db
+      .select()
+      .from(currencies)
+      .where(eq(currencies.isActive, true))
+      .orderBy(asc(currencies.code));
+  },
+  payees: createPayeeService(db),
+  reports: createReportService(db),
+  rules: createRuleService(db),
   async updateSettings(
     userId: string,
     data: {
-      primaryCurrency?: string;
       locale?: string;
+      primaryCurrency?: string;
       showConvertedTotals?: boolean;
     }
   ) {

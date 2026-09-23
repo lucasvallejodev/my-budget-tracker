@@ -1,41 +1,42 @@
 'use client';
 
-import { ComponentProps, ReactNode, useState } from 'react';
 import { Check, ChevronsUpDown, PlusSquare } from 'lucide-react';
+import { ComponentProps, ReactNode, useState } from 'react';
+
+import styles from '../forms.module.scss';
 import { Button } from './button';
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from './command';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from './command';
-import s from '../forms.module.scss';
 
 export type EntityPickerProps = Omit<ComponentProps<'button'>, 'value' | 'onChange'> & {
-  value?: string;
-  onChange?: (value: string) => void;
   invalid?: boolean;
+  onChange?: (value: string) => void;
+  value?: string;
 };
 
 export function EntityPicker({
-  value = '',
-  onChange,
+  create,
+  error,
   invalid,
   items,
   label,
+  onChange,
   pending,
-  error,
-  create,
+  value = '',
   ...props
 }: EntityPickerProps & {
-  items: { id: string; name: string }[];
-  label: string;
-  pending: boolean;
-  error: boolean;
   create: (
     onCreated: (item: { id: string }) => void,
     dialogProps: {
-      open: boolean;
-      onOpenChange: (open: boolean) => void;
       onCloseAutoFocus: (event: Event) => void;
+      onOpenChange: (open: boolean) => void;
+      open: boolean;
     }
   ) => ReactNode;
+  error: boolean;
+  items: { id: string; name: string }[];
+  label: string;
+  pending: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [creationOpen, setCreationOpen] = useState(false);
@@ -52,18 +53,18 @@ export function EntityPicker({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className={s.picker}
+            className={styles.picker}
             aria-expanded={open}
             aria-invalid={invalid}
             {...props}
             ref={setTrigger}
           >
             {items.find(item => item.id === value)?.name || `Select ${label}`}
-            <ChevronsUpDown className={s.pickerIcon} />
+            <ChevronsUpDown className={styles.pickerIcon} />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className={s.pickerContent}
+          className={styles.pickerContent}
           onCloseAutoFocus={event => {
             if (creationOpen) event.preventDefault();
           }}
@@ -71,11 +72,11 @@ export function EntityPicker({
           <Command>
             <CommandInput placeholder={`Search ${label}…`} />
             <CommandList>
-              {pending ? (
-                <p role="status">Loading…</p>
-              ) : error ? (
+              {pending && <p role="status">Loading…</p>}
+              {!pending && error && (
                 <p role="alert">Unable to load {label}. Close and try again.</p>
-              ) : (
+              )}
+              {!pending && !error && (
                 <>
                   <CommandEmpty>No {label} found.</CommandEmpty>
                   {items.map(item => (
@@ -86,7 +87,7 @@ export function EntityPicker({
                       onSelect={() => select(item.id)}
                     >
                       {item.name}
-                      {value === item.id && <Check className={s.check} />}
+                      {value === item.id && <Check className={styles.check} />}
                     </CommandItem>
                   ))}
                 </>
@@ -95,7 +96,7 @@ export function EntityPicker({
           </Command>
           <Button
             variant="ghost"
-            className={s.create}
+            className={styles.create}
             onClick={() => {
               setOpen(false);
               setCreationOpen(true);
@@ -112,12 +113,12 @@ export function EntityPicker({
           setCreationOpen(false);
         },
         {
-          open: creationOpen,
-          onOpenChange: setCreationOpen,
           onCloseAutoFocus: event => {
             event.preventDefault();
             trigger?.focus();
           },
+          onOpenChange: setCreationOpen,
+          open: creationOpen,
         }
       )}
     </>

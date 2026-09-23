@@ -45,6 +45,7 @@ Importing the same file again is safe. Every row gets a deterministic import id 
 ## How it works
 
 - Parsing: `src/server/import/csv.ts` (`parseCsv`, `parseDateCell`).
-- Classification and writing: `src/server/import/service.ts`. `preview` never writes; `commit` inserts new rows through `ledger.createStandard` with `status = 'pending'`, `needs_review = true`, the import id and the raw payee text in `original_payee`, creating payees by name as needed. Matched rows only get their `import_id` set.
+- Row mapping and classification (pure): `src/server/import/preview.ts` (`resolveColumns`, `parseRow`, `buildImportId`, `findMatch`, `classifyRow`).
+- Loading and writing: `src/server/import/service.ts`. `preview` never writes; `commit` inserts new rows through `ledger.createStandard` with `status = 'pending'`, `needs_review = true`, the import id and the raw payee text in `original_payee`, creating payees by name as needed. Matched rows only get their `import_id` set.
 - Category suggestion order: first matching rule, then the payee's usual category.
 - `transferSuggestions` looks for uncategorised standard rows with the opposite amount in another account of the same currency within four days; `ledger.linkAsTransfer` pairs them.

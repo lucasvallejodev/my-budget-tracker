@@ -1,6 +1,7 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { CategoryManager } from './category-manager';
 import type { CategoryTree } from './use-finance-data';
 
@@ -18,58 +19,58 @@ vi.mock('@/app/(main)/actions', () => ({
 
 const tree: CategoryTree[] = [
   {
-    id: 'g-income',
-    name: 'Income',
-    kind: 'income',
-    color: '#16A34A',
-    sortOrder: 0,
-    isSystem: true,
     archivedAt: null,
     categories: [
       {
+        archivedAt: null,
+        icon: 'Banknote',
         id: 'c-salary',
         name: 'Salary',
-        icon: 'Banknote',
         sortOrder: 0,
-        archivedAt: null,
         transactionCount: 2,
       },
     ],
+    color: '#16A34A',
+    id: 'g-income',
+    isSystem: true,
+    kind: 'income',
+    name: 'Income',
+    sortOrder: 0,
   },
   {
-    id: 'g-food',
-    name: 'Food & Dining',
-    kind: 'expense',
-    color: '#DC2626',
-    sortOrder: 1,
-    isSystem: false,
     archivedAt: null,
     categories: [
       {
+        archivedAt: null,
+        icon: 'ShoppingCart',
         id: 'c-groceries',
         name: 'Groceries',
-        icon: 'ShoppingCart',
         sortOrder: 0,
-        archivedAt: null,
         transactionCount: 5,
       },
       {
+        archivedAt: null,
+        icon: 'Coffee',
         id: 'c-coffee',
         name: 'Coffee',
-        icon: 'Coffee',
         sortOrder: 1,
-        archivedAt: null,
         transactionCount: 0,
       },
       {
+        archivedAt: '2026-01-01',
+        icon: 'Pizza',
         id: 'c-old',
         name: 'Old snacks',
-        icon: 'Pizza',
         sortOrder: 2,
-        archivedAt: '2026-01-01',
         transactionCount: 1,
       },
     ],
+    color: '#DC2626',
+    id: 'g-food',
+    isSystem: false,
+    kind: 'expense',
+    name: 'Food & Dining',
+    sortOrder: 1,
   },
 ];
 

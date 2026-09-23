@@ -1,28 +1,31 @@
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+
 import { accounts, currencies, transactions } from '@/db/schema';
-import { Db, ServiceError, notFound } from '../db';
+import { toIsoDate } from '@/lib/date-helpers';
+
+import { Db, notFound, ServiceError } from '../db';
 
 export type AccountType = (typeof accounts.$inferSelect)['type'];
 export type Classification = (typeof accounts.$inferSelect)['classification'];
 
-export const classificationFor = (type: AccountType): Classification =>
+const classificationFor = (type: AccountType): Classification =>
   type === 'credit_card' || type === 'loan' ? 'liability' : 'asset';
 
 export type AccountSummary = {
-  id: string;
-  name: string;
-  type: AccountType;
-  classification: Classification;
-  currency: string;
-  institution: string | null;
   accountNumber: string | null;
-  color: string | null;
-  icon: string | null;
-  notes: string | null;
-  countsInSpending: boolean;
   archivedAt: string | null;
   balanceMinor: number;
+  classification: Classification;
+  color: string | null;
+  countsInSpending: boolean;
+  currency: string;
+  icon: string | null;
+  id: string;
+  institution: string | null;
+  name: string;
+  notes: string | null;
   transactionCount: number;
+  type: AccountType;
 };
 
 export const createAccountService = (db: Db) => {
@@ -37,24 +40,96 @@ export const createAccountService = (db: Db) => {
   };
 
   return {
-    owned,
+    async archive(userId: string, id: string, archived = true) {
+      await owned(userId, id);
+      await db
+        .update(accounts)
+        .set({ archivedAt: archived ? new Date() : null })
+        .where(eq(accounts.id, id));
+    },
+    async create(
+      userId: string,
+      data: {
+        accountNumber?: string;
+        color?: string;
+        countsInSpending?: boolean;
+        currency: string;
+        icon?: string;
+        institution?: string;
+        name: string;
+        notes?: string;
+        openingBalanceMinor?: number;
+        openingDate?: string;
+        type: AccountType;
+      }
+    ) {
+      const currency = data.currency.toUpperCase();
+
+      const [known] = await db
+        .select({ code: currencies.code })
+        .from(currencies)
+        .where(eq(currencies.code, currency))
+        .limit(1);
+
+      if (!known) throw new ServiceError(`Unknown currency ${currency}`);
+
+      return db.transaction(async tx => {
+        const [account] = await tx
+          .insert(accounts)
+          .values({
+            accountNumber: data.accountNumber || null,
+            classification: classificationFor(data.type),
+            color: data.color || null,
+            countsInSpending: data.countsInSpending ?? data.type !== 'investment',
+            currency,
+            icon: data.icon || null,
+            institution: data.institution || null,
+            name: data.name,
+            notes: data.notes || null,
+            type: data.type,
+            userId,
+          })
+          .returning();
+
+        if (data.openingBalanceMinor) {
+          await tx.insert(transactions).values({
+            accountId: account.id,
+            amountMinor: data.openingBalanceMinor,
+            currency,
+            date: data.openingDate ?? toIsoDate(new Date()),
+            kind: 'opening',
+            memo: 'Opening balance',
+            userId,
+          });
+        }
+
+        return account;
+      });
+    },
+    async get(userId: string, id: string) {
+      const [summary] = (await this.list(userId, { includeArchived: true })).filter(
+        row => row.id === id
+      );
+
+      return summary ?? notFound('Account');
+    },
     async list(userId: string, { includeArchived = false } = {}): Promise<AccountSummary[]> {
       const rows = await db
         .select({
-          id: accounts.id,
-          name: accounts.name,
-          type: accounts.type,
-          classification: accounts.classification,
-          currency: accounts.currency,
-          institution: accounts.institution,
           accountNumber: accounts.accountNumber,
-          color: accounts.color,
-          icon: accounts.icon,
-          notes: accounts.notes,
-          countsInSpending: accounts.countsInSpending,
           archivedAt: accounts.archivedAt,
           balanceMinor: sql<string>`COALESCE((SELECT sum(t.amount_minor) FROM ${transactions} t WHERE t.account_id = "accounts"."id" AND t.deleted_at IS NULL), 0)`,
+          classification: accounts.classification,
+          color: accounts.color,
+          countsInSpending: accounts.countsInSpending,
+          currency: accounts.currency,
+          icon: accounts.icon,
+          id: accounts.id,
+          institution: accounts.institution,
+          name: accounts.name,
+          notes: accounts.notes,
           transactionCount: sql<number>`(SELECT count(*)::int FROM ${transactions} t WHERE t.account_id = "accounts"."id" AND t.deleted_at IS NULL)`,
+          type: accounts.type,
         })
         .from(accounts)
         .where(
@@ -73,85 +148,34 @@ export const createAccountService = (db: Db) => {
         transactionCount: Number(row.transactionCount),
       }));
     },
-    async get(userId: string, id: string) {
-      const [summary] = (await this.list(userId, { includeArchived: true })).filter(
-        row => row.id === id
-      );
+    owned,
+    async remove(userId: string, id: string) {
+      await owned(userId, id);
 
-      return summary ?? notFound('Account');
-    },
-    async create(
-      userId: string,
-      data: {
-        name: string;
-        type: AccountType;
-        currency: string;
-        institution?: string;
-        accountNumber?: string;
-        color?: string;
-        icon?: string;
-        notes?: string;
-        countsInSpending?: boolean;
-        openingBalanceMinor?: number;
-        openingDate?: string;
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(transactions)
+        .where(and(eq(transactions.accountId, id), isNull(transactions.deletedAt)));
+
+      if (Number(count) > 0) {
+        throw new ServiceError('Archive accounts that have transactions instead of deleting them');
       }
-    ) {
-      const currency = data.currency.toUpperCase();
 
-      const [known] = await db
-        .select({ code: currencies.code })
-        .from(currencies)
-        .where(eq(currencies.code, currency))
-        .limit(1);
-
-      if (!known) throw new ServiceError(`Unknown currency ${currency}`);
-
-      return db.transaction(async tx => {
-        const [account] = await tx
-          .insert(accounts)
-          .values({
-            userId,
-            name: data.name,
-            type: data.type,
-            classification: classificationFor(data.type),
-            currency,
-            institution: data.institution || null,
-            accountNumber: data.accountNumber || null,
-            color: data.color || null,
-            icon: data.icon || null,
-            notes: data.notes || null,
-            countsInSpending: data.countsInSpending ?? data.type !== 'investment',
-          })
-          .returning();
-
-        if (data.openingBalanceMinor) {
-          await tx.insert(transactions).values({
-            userId,
-            accountId: account.id,
-            amountMinor: data.openingBalanceMinor,
-            currency,
-            date: data.openingDate ?? new Date().toISOString().slice(0, 10),
-            kind: 'opening',
-            memo: 'Opening balance',
-          });
-        }
-
-        return account;
-      });
+      await db.update(accounts).set({ deletedAt: new Date() }).where(eq(accounts.id, id));
     },
     async update(
       userId: string,
       id: string,
       data: {
-        name?: string;
-        type?: AccountType;
-        currency?: string;
-        institution?: string | null;
         accountNumber?: string | null;
         color?: string | null;
-        icon?: string | null;
-        notes?: string | null;
         countsInSpending?: boolean;
+        currency?: string;
+        icon?: string | null;
+        institution?: string | null;
+        name?: string;
+        notes?: string | null;
+        type?: AccountType;
       }
     ) {
       const account = await owned(userId, id);
@@ -176,27 +200,6 @@ export const createAccountService = (db: Db) => {
       const [updated] = await db.update(accounts).set(patch).where(eq(accounts.id, id)).returning();
 
       return updated;
-    },
-    async archive(userId: string, id: string, archived = true) {
-      await owned(userId, id);
-      await db
-        .update(accounts)
-        .set({ archivedAt: archived ? new Date() : null })
-        .where(eq(accounts.id, id));
-    },
-    async remove(userId: string, id: string) {
-      await owned(userId, id);
-
-      const [{ count }] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(transactions)
-        .where(and(eq(transactions.accountId, id), isNull(transactions.deletedAt)));
-
-      if (Number(count) > 0) {
-        throw new ServiceError('Archive accounts that have transactions instead of deleting them');
-      }
-
-      await db.update(accounts).set({ deletedAt: new Date() }).where(eq(accounts.id, id));
     },
   };
 };

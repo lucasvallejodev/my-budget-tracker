@@ -1,10 +1,15 @@
 import { NextRequest } from 'next/server';
-import { ServiceError } from './db';
+
+import { HttpStatus } from '@/constants/http';
+
 import { requireUser } from './auth/require-user';
+import { ServiceError } from './db';
 
 type Context = Awaited<ReturnType<typeof requireUser>> & { request: NextRequest };
 
-/** Wraps a route handler: resolves the user, serialises the result, maps service errors. */
+const isNextRedirect = (error: unknown): boolean =>
+  !!error && typeof error === 'object' && 'digest' in error;
+
 export const handle =
   (fn: (context: Context) => Promise<unknown>) => async (request: NextRequest) => {
     try {
@@ -17,10 +22,10 @@ export const handle =
         return Response.json({ error: error.message }, { status: error.status });
       }
 
-      if (error && typeof error === 'object' && 'digest' in error) throw error; // Next redirects
+      if (isNextRedirect(error)) throw error;
       console.error(error);
 
-      return Response.json({ error: 'Unexpected error' }, { status: 500 });
+      return Response.json({ error: 'Unexpected error' }, { status: HttpStatus.internalError });
     }
   };
 

@@ -1,26 +1,11 @@
 'use client';
 
-import { Colors } from '@/styles/theme';
-import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Archive, ArrowDown, ArrowUp, Pencil, Plus, RotateCcw } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowDown, ArrowUp, Archive, Pencil, Plus, RotateCcw } from 'lucide-react';
-import { Panel, EmptyState, StatusBadge } from './blocks';
-import { Button } from '../primitives/button';
-import { Input } from '../primitives/input';
-import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../primitives/select';
-import { Icon } from '../icon';
-import { ColorPicker, IconPicker } from '../icons/icon-picker';
-import { IconName } from '../icons/registry';
-import { CategoryTree, FinanceKeys, useCategories } from './use-finance-data';
+
+import { useEntityMutation } from '@/app/(main)/_components/use-entity-mutation';
 import {
   archiveCategoryAction,
   archiveCategoryGroupAction,
@@ -32,11 +17,35 @@ import {
   updateCategoryAction,
   updateCategoryGroupAction,
 } from '@/app/(main)/actions';
-import s from './finance.module.scss';
-import f from '../forms.module.scss';
+import { Colors } from '@/styles/theme';
+
+import formStyles from '../forms.module.scss';
+import { Icon } from '../icon';
+import { ColorPicker, IconPicker } from '../icons/icon-picker';
+import { IconName } from '../icons/registry';
+import { Button } from '../primitives/button';
+import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
+import { Input } from '../primitives/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../primitives/select';
+import { EmptyState, Panel, StatusBadge } from './blocks';
+import styles from './finance.module.scss';
+import { CategoryTree, FinanceKeys, useCategories } from './use-finance-data';
 
 type Group = CategoryTree;
 type Category = CategoryTree['categories'][number];
+
+const NewGroup: Pick<Group, 'name' | 'kind' | 'color'> = {
+  color: Colors.group.blue,
+  kind: 'expense',
+  name: '',
+};
 
 function useRefresh() {
   const queryClient = useQueryClient();
@@ -45,31 +54,41 @@ function useRefresh() {
     Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
 }
 
+const archiveDescription = (count: number, groupName: string): string => {
+  if (!count) {
+    return 'This category has no transactions. It disappears from pickers but can be restored later.';
+  }
+
+  const noun = count === 1 ? 'transaction' : 'transactions';
+
+  return `${count} ${noun} use this category in ${groupName}. Move them to another category, or keep them and they will reappear in the review inbox.`;
+};
+
 export function CategoryManager() {
   const tree = useCategories(true);
   const refresh = useRefresh();
   const [groupDialog, setGroupDialog] = useState<{ group?: Group } | null>(null);
 
   const [categoryDialog, setCategoryDialog] = useState<{
-    groupId: string;
     category?: Category;
+    groupId: string;
   } | null>(null);
 
   const [archiving, setArchiving] = useState<{ category: Category; group: Group } | null>(null);
   const [showArchived, setShowArchived] = useState(false);
-  const groups = (tree.data ?? []).filter(g => !g.archivedAt);
+  const groups = (tree.data ?? []).filter(group => !group.archivedAt);
 
   const run = useMutation({
-    mutationFn: async ({ fn }: { fn: () => Promise<unknown>; done?: string }) => fn(),
-    onSuccess: async (_, { done }) => {
+    mutationFn: async ({ fn }: { done?: string; fn: () => Promise<unknown> }) => fn(),
+    onError: (error: Error) => toast.error(error.message),
+    onSuccess: async (result, { done }) => {
       if (done) toast.success(done);
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   const moveGroup = (index: number, delta: number) => {
-    const ordered = groups.map(g => g.id);
+    const ordered = groups.map(group => group.id);
     const target = index + delta;
 
     if (target < 0 || target >= ordered.length) return;
@@ -78,8 +97,8 @@ export function CategoryManager() {
   };
 
   const moveCategory = (group: Group, index: number, delta: number) => {
-    const live = group.categories.filter(c => !c.archivedAt);
-    const ordered = live.map(c => c.id);
+    const live = group.categories.filter(category => !category.archivedAt);
+    const ordered = live.map(category => category.id);
     const target = index + delta;
 
     if (target < 0 || target >= ordered.length) return;
@@ -91,18 +110,18 @@ export function CategoryManager() {
   if (tree.isError) return <EmptyState title="Could not load categories" />;
 
   return (
-    <div className={s.stack}>
-      <div className={s.actions}>
+    <div className={styles.stack}>
+      <div className={styles.actions}>
         <Button onClick={() => setGroupDialog({})}>
           <Plus /> New group
         </Button>
-        <Button variant="outline" onClick={() => setShowArchived(v => !v)}>
+        <Button variant="outline" onClick={() => setShowArchived(visible => !visible)}>
           {showArchived ? 'Hide archived' : 'Show archived'}
         </Button>
       </div>
       {groups.map((group, groupIndex) => {
-        const live = group.categories.filter(c => !c.archivedAt);
-        const archived = group.categories.filter(c => c.archivedAt);
+        const live = group.categories.filter(category => !category.archivedAt);
+        const archived = group.categories.filter(category => category.archivedAt);
 
         return (
           <Panel
@@ -110,9 +129,9 @@ export function CategoryManager() {
             title={group.name}
             description={`${group.kind === 'income' ? 'Income' : 'Expense'} group · ${live.length} categor${live.length === 1 ? 'y' : 'ies'}`}
             action={
-              <div className={s.actions}>
+              <div className={styles.actions}>
                 <span
-                  className={s.swatch}
+                  className={styles.swatch}
                   style={{ background: group.color }}
                   aria-label={`Colour ${group.color}`}
                 />
@@ -151,8 +170,8 @@ export function CategoryManager() {
                     aria-label={`Archive group ${group.name}`}
                     onClick={() =>
                       run.mutate({
-                        fn: () => archiveCategoryGroupAction(group.id),
                         done: `Archived ${group.name}`,
+                        fn: () => archiveCategoryGroupAction(group.id),
                       })
                     }
                   >
@@ -162,12 +181,12 @@ export function CategoryManager() {
               </div>
             }
           >
-            {!live.length && <p className={s.muted}>No categories yet.</p>}
+            {!live.length && <p className={styles.muted}>No categories yet.</p>}
             {live.map((category, index) => (
-              <div key={category.id} className={s.row}>
-                <div className={s.actions}>
+              <div key={category.id} className={styles.row}>
+                <div className={styles.actions}>
                   <span
-                    className={s.metricIcon}
+                    className={styles.metricIcon}
                     style={{ background: group.color, color: 'white' }}
                   >
                     <Icon icon={category.icon} />
@@ -180,7 +199,7 @@ export function CategoryManager() {
                     </p>
                   </div>
                 </div>
-                <div className={s.actions}>
+                <div className={styles.actions}>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -203,7 +222,7 @@ export function CategoryManager() {
                     variant="outline"
                     size="sm"
                     aria-label={`Edit ${category.name}`}
-                    onClick={() => setCategoryDialog({ groupId: group.id, category })}
+                    onClick={() => setCategoryDialog({ category, groupId: group.id })}
                   >
                     <Pencil size={14} />
                   </Button>
@@ -220,9 +239,9 @@ export function CategoryManager() {
             ))}
             {showArchived &&
               archived.map(category => (
-                <div key={category.id} className={s.row}>
-                  <div className={s.actions}>
-                    <span className={s.metricIcon}>
+                <div key={category.id} className={styles.row}>
+                  <div className={styles.actions}>
+                    <span className={styles.metricIcon}>
                       <Icon icon={category.icon} />
                     </span>
                     <div>
@@ -239,8 +258,8 @@ export function CategoryManager() {
                     size="sm"
                     onClick={() =>
                       run.mutate({
-                        fn: () => restoreCategoryAction(category.id),
                         done: `Restored ${category.name}`,
+                        fn: () => restoreCategoryAction(category.id),
                       })
                     }
                   >
@@ -255,10 +274,7 @@ export function CategoryManager() {
         <GroupDialog
           group={groupDialog.group}
           onClose={() => setGroupDialog(null)}
-          onSaved={async () => {
-            await refresh();
-            setGroupDialog(null);
-          }}
+          onSaved={() => setGroupDialog(null)}
         />
       )}
       {categoryDialog && (
@@ -267,10 +283,7 @@ export function CategoryManager() {
           groupId={categoryDialog.groupId}
           category={categoryDialog.category}
           onClose={() => setCategoryDialog(null)}
-          onSaved={async () => {
-            await refresh();
-            setCategoryDialog(null);
-          }}
+          onSaved={() => setCategoryDialog(null)}
         />
       )}
       {archiving && (
@@ -296,30 +309,27 @@ function GroupDialog({
 }: {
   group?: Group;
   onClose: () => void;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
 }) {
-  const [name, setName] = useState(group?.name ?? '');
-  const [kind, setKind] = useState<'income' | 'expense'>(group?.kind ?? 'expense');
-  const [color, setColor] = useState(group?.color ?? Colors.group.blue);
+  const initial = group ?? NewGroup;
+  const [name, setName] = useState(initial.name);
+  const [kind, setKind] = useState<'income' | 'expense'>(initial.kind);
+  const [color, setColor] = useState(initial.color);
 
-  const save = useMutation({
-    mutationFn: () =>
-      group
-        ? updateCategoryGroupAction(group.id, {
-            name,
-            kind,
-            color,
-          })
-        : createCategoryGroupAction({
-            name,
-            kind,
-            color,
-          }),
-    onSuccess: async () => {
-      toast.success(group ? 'Group updated' : 'Group created');
-      await onSaved();
+  const save = useEntityMutation({
+    mutationFn: () => {
+      const values = {
+        color,
+        kind,
+        name,
+      };
+
+      return group
+        ? updateCategoryGroupAction(group.id, values)
+        : createCategoryGroupAction(values);
     },
-    onError: (error: Error) => toast.error(error.message),
+    onSuccess: onSaved,
+    successMessage: group ? 'Group updated' : 'Group created',
   });
 
   return (
@@ -327,13 +337,13 @@ function GroupDialog({
       <DialogContent>
         <DialogTitle>{group ? 'Edit group' : 'New group'}</DialogTitle>
         <form
-          className={f.form}
+          className={formStyles.form}
           onSubmit={event => {
             event.preventDefault();
             save.mutate();
           }}
         >
-          <label className={s.field}>
+          <label className={styles.field}>
             Name
             <Input
               value={name}
@@ -342,14 +352,14 @@ function GroupDialog({
               maxLength={50}
             />
           </label>
-          <label className={s.field}>
+          <label className={styles.field}>
             Kind
             <Select
               value={kind}
               disabled={group?.isSystem}
               onValueChange={value => setKind(value as 'income' | 'expense')}
             >
-              <SelectTrigger className={f.full}>
+              <SelectTrigger className={formStyles.full}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -360,7 +370,7 @@ function GroupDialog({
               </SelectContent>
             </Select>
           </label>
-          <div className={s.field}>
+          <div className={styles.field}>
             Colour (shared by every category in the group)
             <ColorPicker value={color} onChange={setColor} />
           </div>
@@ -374,41 +384,35 @@ function GroupDialog({
 }
 
 function CategoryDialog({
-  groups,
-  groupId,
   category,
+  groupId,
+  groups,
   onClose,
   onSaved,
 }: {
-  groups: Group[];
-  groupId: string;
   category?: Category;
+  groupId: string;
+  groups: Group[];
   onClose: () => void;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
 }) {
   const [name, setName] = useState(category?.name ?? '');
   const [icon, setIcon] = useState<string>(category?.icon ?? 'Shapes');
   const [group, setGroup] = useState(groupId);
-  const color = groups.find(g => g.id === group)?.color;
+  const color = groups.find(candidate => candidate.id === group)?.color;
 
-  const save = useMutation({
-    mutationFn: () =>
-      category
-        ? updateCategoryAction(category.id, {
-            name,
-            icon: icon as IconName,
-            groupId: group,
-          })
-        : createCategoryAction({
-            name,
-            icon: icon as IconName,
-            groupId: group,
-          }),
-    onSuccess: async () => {
-      toast.success(category ? 'Category updated' : 'Category created');
-      await onSaved();
+  const save = useEntityMutation({
+    mutationFn: () => {
+      const values = {
+        groupId: group,
+        icon: icon as IconName,
+        name,
+      };
+
+      return category ? updateCategoryAction(category.id, values) : createCategoryAction(values);
     },
-    onError: (error: Error) => toast.error(error.message),
+    onSuccess: onSaved,
+    successMessage: category ? 'Category updated' : 'Category created',
   });
 
   return (
@@ -416,13 +420,13 @@ function CategoryDialog({
       <DialogContent>
         <DialogTitle>{category ? 'Edit category' : 'New category'}</DialogTitle>
         <form
-          className={f.form}
+          className={formStyles.form}
           onSubmit={event => {
             event.preventDefault();
             save.mutate();
           }}
         >
-          <label className={s.field}>
+          <label className={styles.field}>
             Name
             <Input
               value={name}
@@ -431,24 +435,24 @@ function CategoryDialog({
               maxLength={50}
             />
           </label>
-          <label className={s.field}>
+          <label className={styles.field}>
             Group
             <Select value={group} onValueChange={setGroup}>
-              <SelectTrigger className={f.full}>
+              <SelectTrigger className={formStyles.full}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {groups.map(g => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.name}
+                  {groups.map(group => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
                     </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
           </label>
-          <div className={s.field}>
+          <div className={styles.field}>
             Icon
             <IconPicker value={icon} onChange={setIcon} color={color} />
           </div>
@@ -476,38 +480,34 @@ function ArchiveDialog({
 }) {
   const [moveTo, setMoveTo] = useState('');
 
-  const options = groups.flatMap(g =>
-    g.categories
-      .filter(c => !c.archivedAt && c.id !== category.id)
-      .map(c => ({ id: c.id, label: `${g.name} › ${c.name}` }))
+  const options = groups.flatMap(group =>
+    group.categories
+      .filter(candidate => !candidate.archivedAt && candidate.id !== category.id)
+      .map(candidate => ({ id: candidate.id, label: `${group.name} › ${candidate.name}` }))
   );
 
   const archive = useMutation({
     mutationFn: () => archiveCategoryAction(category.id, moveTo || undefined),
+    onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success(`Archived ${category.name}`);
       await onDone();
     },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
       <DialogContent>
         <DialogTitle>Archive {category.name}?</DialogTitle>
-        <p className={s.muted}>
-          {category.transactionCount
-            ? `${category.transactionCount} transaction${category.transactionCount === 1 ? '' : 's'} use this category in ${group.name}. Move them to another category, or keep them and they will reappear in the review inbox.`
-            : 'This category has no transactions. It disappears from pickers but can be restored later.'}
-        </p>
+        <p className={styles.muted}>{archiveDescription(category.transactionCount, group.name)}</p>
         {category.transactionCount > 0 && (
-          <label className={s.field}>
+          <label className={styles.field}>
             Move transactions to
             <Select
               value={moveTo || '__none'}
               onValueChange={value => setMoveTo(value === '__none' ? '' : value)}
             >
-              <SelectTrigger className={f.full}>
+              <SelectTrigger className={formStyles.full}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -523,7 +523,7 @@ function ArchiveDialog({
             </Select>
           </label>
         )}
-        <div className={s.actions}>
+        <div className={styles.actions}>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

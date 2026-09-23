@@ -1,160 +1,155 @@
 import { Colors } from '@/styles/theme';
 
-/**
- * Default category taxonomy seeded for every new user. Bumping `DEFAULT_TAXONOMY_VERSION`
- * only affects users seeded after the bump; existing users keep their data.
- * Icon names are PascalCase lucide-react exports present in the curated icon registry.
- */
 export const DEFAULT_TAXONOMY_VERSION = 1;
 
 export type TaxonomyGroup = {
-  name: string;
-  kind: 'income' | 'expense';
+  categories: { icon: string; name: string }[];
   color: string;
   isSystem?: boolean;
-  categories: { name: string; icon: string }[];
+  kind: 'income' | 'expense';
+  name: string;
 };
 
 export const DefaultTaxonomy: TaxonomyGroup[] = [
   {
-    name: 'Income',
-    kind: 'income',
+    categories: [
+      { icon: 'Banknote', name: 'Salary' },
+      { icon: 'Briefcase', name: 'Freelance & side income' },
+      { icon: 'TrendingUp', name: 'Investment income' },
+      { icon: 'Receipt', name: 'Refunds & reimbursements' },
+      { icon: 'HandCoins', name: 'Other income' },
+    ],
     color: Colors.group.green,
     isSystem: true,
-    categories: [
-      { name: 'Salary', icon: 'Banknote' },
-      { name: 'Freelance & side income', icon: 'Briefcase' },
-      { name: 'Investment income', icon: 'TrendingUp' },
-      { name: 'Refunds & reimbursements', icon: 'Receipt' },
-      { name: 'Other income', icon: 'HandCoins' },
-    ],
+    kind: 'income',
+    name: 'Income',
   },
   {
-    name: 'Housing',
-    kind: 'expense',
+    categories: [
+      { icon: 'House', name: 'Rent / Mortgage' },
+      { icon: 'Hammer', name: 'Home maintenance' },
+      { icon: 'Sofa', name: 'Furniture & decor' },
+      { icon: 'Shield', name: 'Home insurance' },
+      { icon: 'Landmark', name: 'Property tax / HOA' },
+    ],
     color: Colors.group.violet,
-    categories: [
-      { name: 'Rent / Mortgage', icon: 'House' },
-      { name: 'Home maintenance', icon: 'Hammer' },
-      { name: 'Furniture & decor', icon: 'Sofa' },
-      { name: 'Home insurance', icon: 'Shield' },
-      { name: 'Property tax / HOA', icon: 'Landmark' },
-    ],
+    kind: 'expense',
+    name: 'Housing',
   },
   {
-    name: 'Bills & Utilities',
-    kind: 'expense',
+    categories: [
+      { icon: 'Zap', name: 'Electricity & gas' },
+      { icon: 'Droplets', name: 'Water & waste' },
+      { icon: 'Wifi', name: 'Internet & TV' },
+      { icon: 'Smartphone', name: 'Mobile phone' },
+      { icon: 'Repeat', name: 'Subscriptions' },
+    ],
     color: Colors.group.cyan,
-    categories: [
-      { name: 'Electricity & gas', icon: 'Zap' },
-      { name: 'Water & waste', icon: 'Droplets' },
-      { name: 'Internet & TV', icon: 'Wifi' },
-      { name: 'Mobile phone', icon: 'Smartphone' },
-      { name: 'Subscriptions', icon: 'Repeat' },
-    ],
+    kind: 'expense',
+    name: 'Bills & Utilities',
   },
   {
-    name: 'Transportation',
-    kind: 'expense',
+    categories: [
+      { icon: 'Fuel', name: 'Fuel' },
+      { icon: 'BusFront', name: 'Public transit' },
+      { icon: 'CarFront', name: 'Taxi & rideshare' },
+      { icon: 'TrafficCone', name: 'Parking & tolls' },
+      { icon: 'Car', name: 'Car payment & insurance' },
+      { icon: 'Wrench', name: 'Repairs & maintenance' },
+    ],
     color: Colors.group.orange,
-    categories: [
-      { name: 'Fuel', icon: 'Fuel' },
-      { name: 'Public transit', icon: 'BusFront' },
-      { name: 'Taxi & rideshare', icon: 'CarFront' },
-      { name: 'Parking & tolls', icon: 'TrafficCone' },
-      { name: 'Car payment & insurance', icon: 'Car' },
-      { name: 'Repairs & maintenance', icon: 'Wrench' },
-    ],
+    kind: 'expense',
+    name: 'Transportation',
   },
   {
-    name: 'Food & Dining',
-    kind: 'expense',
+    categories: [
+      { icon: 'ShoppingCart', name: 'Groceries' },
+      { icon: 'Utensils', name: 'Restaurants & bars' },
+      { icon: 'Coffee', name: 'Coffee' },
+      { icon: 'Pizza', name: 'Takeout & delivery' },
+    ],
     color: Colors.group.red,
-    categories: [
-      { name: 'Groceries', icon: 'ShoppingCart' },
-      { name: 'Restaurants & bars', icon: 'Utensils' },
-      { name: 'Coffee', icon: 'Coffee' },
-      { name: 'Takeout & delivery', icon: 'Pizza' },
-    ],
+    kind: 'expense',
+    name: 'Food & Dining',
   },
   {
-    name: 'Shopping',
-    kind: 'expense',
+    categories: [
+      { icon: 'Shirt', name: 'Clothing' },
+      { icon: 'Laptop', name: 'Electronics' },
+      { icon: 'Sprout', name: 'Home & garden' },
+      { icon: 'ShoppingBag', name: 'General merchandise' },
+      { icon: 'BookOpen', name: 'Books & hobbies' },
+    ],
     color: Colors.group.pink,
-    categories: [
-      { name: 'Clothing', icon: 'Shirt' },
-      { name: 'Electronics', icon: 'Laptop' },
-      { name: 'Home & garden', icon: 'Sprout' },
-      { name: 'General merchandise', icon: 'ShoppingBag' },
-      { name: 'Books & hobbies', icon: 'BookOpen' },
-    ],
+    kind: 'expense',
+    name: 'Shopping',
   },
   {
-    name: 'Health & Wellness',
-    kind: 'expense',
+    categories: [
+      { icon: 'Stethoscope', name: 'Doctor & dental' },
+      { icon: 'Pill', name: 'Pharmacy' },
+      { icon: 'Dumbbell', name: 'Fitness' },
+      { icon: 'HeartPulse', name: 'Health insurance' },
+      { icon: 'Scissors', name: 'Personal care' },
+    ],
     color: Colors.group.emerald,
-    categories: [
-      { name: 'Doctor & dental', icon: 'Stethoscope' },
-      { name: 'Pharmacy', icon: 'Pill' },
-      { name: 'Fitness', icon: 'Dumbbell' },
-      { name: 'Health insurance', icon: 'HeartPulse' },
-      { name: 'Personal care', icon: 'Scissors' },
-    ],
+    kind: 'expense',
+    name: 'Health & Wellness',
   },
   {
-    name: 'Entertainment',
-    kind: 'expense',
+    categories: [
+      { icon: 'Tv', name: 'Streaming' },
+      { icon: 'Ticket', name: 'Movies & events' },
+      { icon: 'Gamepad2', name: 'Games' },
+      { icon: 'Music', name: 'Music' },
+      { icon: 'Trophy', name: 'Sports & recreation' },
+    ],
     color: Colors.group.purple,
-    categories: [
-      { name: 'Streaming', icon: 'Tv' },
-      { name: 'Movies & events', icon: 'Ticket' },
-      { name: 'Games', icon: 'Gamepad2' },
-      { name: 'Music', icon: 'Music' },
-      { name: 'Sports & recreation', icon: 'Trophy' },
-    ],
+    kind: 'expense',
+    name: 'Entertainment',
   },
   {
-    name: 'Travel',
-    kind: 'expense',
+    categories: [
+      { icon: 'Plane', name: 'Flights' },
+      { icon: 'Hotel', name: 'Lodging' },
+      { icon: 'TreePalm', name: 'Vacation activities' },
+      { icon: 'Luggage', name: 'Travel misc' },
+    ],
     color: Colors.group.blue,
-    categories: [
-      { name: 'Flights', icon: 'Plane' },
-      { name: 'Lodging', icon: 'Hotel' },
-      { name: 'Vacation activities', icon: 'TreePalm' },
-      { name: 'Travel misc', icon: 'Luggage' },
-    ],
+    kind: 'expense',
+    name: 'Travel',
   },
   {
-    name: 'Personal & Family',
-    kind: 'expense',
+    categories: [
+      { icon: 'Baby', name: 'Childcare' },
+      { icon: 'GraduationCap', name: 'Education' },
+      { icon: 'PawPrint', name: 'Pets' },
+      { icon: 'Users', name: 'Family support' },
+    ],
     color: Colors.group.amber,
-    categories: [
-      { name: 'Childcare', icon: 'Baby' },
-      { name: 'Education', icon: 'GraduationCap' },
-      { name: 'Pets', icon: 'PawPrint' },
-      { name: 'Family support', icon: 'Users' },
-    ],
+    kind: 'expense',
+    name: 'Personal & Family',
   },
   {
-    name: 'Financial',
-    kind: 'expense',
+    categories: [
+      { icon: 'Landmark', name: 'Bank fees' },
+      { icon: 'Percent', name: 'Interest & charges' },
+      { icon: 'Calculator', name: 'Taxes' },
+      { icon: 'PiggyBank', name: 'Savings & investments' },
+      { icon: 'FileText', name: 'Professional services' },
+    ],
     color: Colors.group.slate,
-    categories: [
-      { name: 'Bank fees', icon: 'Landmark' },
-      { name: 'Interest & charges', icon: 'Percent' },
-      { name: 'Taxes', icon: 'Calculator' },
-      { name: 'Savings & investments', icon: 'PiggyBank' },
-      { name: 'Professional services', icon: 'FileText' },
-    ],
+    kind: 'expense',
+    name: 'Financial',
   },
   {
-    name: 'Gifts & Donations',
-    kind: 'expense',
-    color: Colors.group.rose,
     categories: [
-      { name: 'Gifts', icon: 'Gift' },
-      { name: 'Charity', icon: 'HandHeart' },
-      { name: 'Celebrations', icon: 'PartyPopper' },
+      { icon: 'Gift', name: 'Gifts' },
+      { icon: 'HandHeart', name: 'Charity' },
+      { icon: 'PartyPopper', name: 'Celebrations' },
     ],
+    color: Colors.group.rose,
+    kind: 'expense',
+    name: 'Gifts & Donations',
   },
 ];

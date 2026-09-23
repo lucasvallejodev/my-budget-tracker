@@ -1,31 +1,31 @@
 'use client';
 
-import s from '@/components/forms.module.scss';
-
+import { CircleOffIcon } from 'lucide-react';
 import { ComponentProps, useMemo, useState } from 'react';
-import { Button } from './primitives/button';
+
+import styles from '@/components/forms.module.scss';
+
+import { CategoryTree, useCategories } from './finance/use-finance-data';
 import { Icon } from './icon';
+import { Button } from './primitives/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from './primitives/dialog';
 import { Input } from './primitives/input';
-import { CircleOffIcon } from 'lucide-react';
-import { CategoryTree, useCategories } from './finance/use-finance-data';
 
 type CategoryPickerProps = Omit<ComponentProps<'button'>, 'value' | 'onChange'> & {
-  value?: string;
   invalid?: boolean;
-  /** Restrict to income or expense groups; omit for both. */
   kind?: 'income' | 'expense';
   onChange: (categoryId: string | undefined) => void;
+  value?: string;
 };
 
 export type FlatCategory = {
-  id: string;
-  name: string;
-  icon: string;
+  color: string;
   groupId: string;
   groupName: string;
-  color: string;
+  icon: string;
+  id: string;
   kind: 'income' | 'expense';
+  name: string;
 };
 
 export function flattenCategories(tree: CategoryTree[] | undefined): FlatCategory[] {
@@ -33,25 +33,21 @@ export function flattenCategories(tree: CategoryTree[] | undefined): FlatCategor
     group.categories
       .filter(category => !category.archivedAt)
       .map(category => ({
-        id: category.id,
-        name: category.name,
-        icon: category.icon,
+        color: group.color,
         groupId: group.id,
         groupName: group.name,
-        color: group.color,
+        icon: category.icon,
+        id: category.id,
         kind: group.kind,
+        name: category.name,
       }))
   );
 }
 
-export function CategoryChip({
-  category,
-}: {
-  category: Pick<FlatCategory, 'name' | 'icon' | 'color'>;
-}) {
+function CategoryChip({ category }: { category: Pick<FlatCategory, 'name' | 'icon' | 'color'> }) {
   return (
     <>
-      <div className={s.colorIcon} style={{ backgroundColor: category.color }}>
+      <div className={styles.colorIcon} style={{ backgroundColor: category.color }}>
         <Icon icon={category.icon} color="white" size={24} />
       </div>
       <div>{category.name}</div>
@@ -60,10 +56,10 @@ export function CategoryChip({
 }
 
 const CategoryPicker = ({
-  value,
   invalid,
   kind,
   onChange,
+  value,
   ...triggerProps
 }: CategoryPickerProps) => {
   const [open, setOpen] = useState(false);
@@ -79,26 +75,26 @@ const CategoryPicker = ({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={s.categoryTrigger}
+          className={styles.categoryTrigger}
           aria-invalid={invalid}
           {...triggerProps}
         >
           {selected ? (
-            <div className={s.categoryContent}>
+            <div className={styles.categoryContent}>
               <CategoryChip category={selected} />
-              <span className={s.muted}>Click to change</span>
+              <span className={styles.muted}>Click to change</span>
             </div>
           ) : (
-            <div className={s.categoryContent}>
-              <CircleOffIcon className={s.categoryIcon} />
-              <span className={s.muted}>
+            <div className={styles.categoryContent}>
+              <CircleOffIcon className={styles.categoryIcon} />
+              <span className={styles.muted}>
                 {value ? 'Category unavailable' : 'No category (review later)'}
               </span>
             </div>
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className={s.form}>
+      <DialogContent className={styles.form}>
         <DialogTitle>Select a category</DialogTitle>
         <Input
           aria-label="Search categories"
@@ -116,9 +112,9 @@ const CategoryPicker = ({
           if (!visible.length) return null;
 
           return (
-            <div key={group.id} className={s.categoryGroup}>
+            <div key={group.id} className={styles.categoryGroup}>
               <h3 style={{ color: group.color }}>{group.name}</h3>
-              <div className={s.categoryGrid}>
+              <div className={styles.categoryGrid}>
                 {visible.map(category => (
                   <Button
                     key={category.id}
@@ -127,7 +123,7 @@ const CategoryPicker = ({
                       onChange(category.id);
                       setOpen(false);
                     }}
-                    className={s.categoryButton}
+                    className={styles.categoryButton}
                   >
                     <CategoryChip category={{ ...category, color: group.color }} />
                   </Button>

@@ -1,62 +1,63 @@
-import { RouteItem } from '@/types/route-item';
 import {
+  ChartNoAxesColumn,
   ChartPie,
   House,
+  Inbox,
   Landmark,
   ReceiptText,
-  ChartNoAxesColumn,
   Settings,
-  Inbox,
   Upload,
 } from 'lucide-react';
 
+import { RouteItem } from '@/types/route-item';
+
 export const MainRouteItems: RouteItem[] = [
   {
+    icon: House,
     id: 1,
     name: 'Dashboard',
-    icon: House,
     path: '/',
   },
   {
+    icon: ReceiptText,
     id: 2,
     name: 'Transactions',
-    icon: ReceiptText,
     path: '/transactions',
   },
   {
+    icon: Inbox,
     id: 3,
     name: 'Review',
-    icon: Inbox,
     path: '/review',
   },
   {
+    icon: Upload,
     id: 8,
     name: 'Import',
-    icon: Upload,
     path: '/import',
   },
   {
+    icon: ChartNoAxesColumn,
     id: 4,
     name: 'Analytics',
-    icon: ChartNoAxesColumn,
     path: '/analytics',
   },
   {
+    icon: ChartPie,
     id: 5,
     name: 'Budgets',
-    icon: ChartPie,
     path: '/budgets',
   },
   {
+    icon: Landmark,
     id: 6,
     name: 'Accounts',
-    icon: Landmark,
     path: '/accounts',
   },
   {
+    icon: Settings,
     id: 7,
     name: 'Settings',
-    icon: Settings,
     path: '/settings',
   },
 ];

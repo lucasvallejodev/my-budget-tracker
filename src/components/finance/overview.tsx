@@ -1,7 +1,5 @@
 'use client';
 
-import type { Summary } from './use-finance-data';
-import { getPercentage } from '@/lib/math';
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -12,6 +10,18 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+
+import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
+import { getPercentage } from '@/lib/math';
+import { formatMoney } from '@/lib/money';
+
+import { Button } from '../primitives/button';
+import { TransactionTable } from '../transaction-table';
+import { EmptyState, MetricCard, PageHeading, Panel } from './blocks';
+import { CashFlowChart, DistributionChart } from './charts';
+import styles from './finance.module.scss';
+import { NetWorthCards } from './net-worth';
+import type { Summary } from './use-finance-data';
 import {
   currentMonth,
   monthLabel,
@@ -19,14 +29,8 @@ import {
   useSummary,
   useTransactions,
 } from './use-finance-data';
-import { Panel, PageHeading, MetricCard, EmptyState } from './blocks';
-import { CashFlowChart, DistributionChart } from './charts';
-import { Button } from '../primitives/button';
-import { TransactionTable } from '../transaction-table';
-import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
-import { formatMoney } from '@/lib/money';
-import { NetWorthCards } from './net-worth';
-import s from './finance.module.scss';
+
+const MonthAbbreviationLength = 3;
 
 export function MonthPicker({
   month,
@@ -36,7 +40,7 @@ export function MonthPicker({
   onChange: (month: string) => void;
 }) {
   return (
-    <div className={s.actions} role="group" aria-label="Month">
+    <div className={styles.actions} role="group" aria-label="Month">
       <Button
         variant="outline"
         size="icon"
@@ -65,7 +69,7 @@ const describeConversion = (converted: NonNullable<Summary['converted']>): strin
   if (!converted.rates.length) return base;
 
   const rates = converted.rates
-    .map(r => `1 ${r.currency} = ${r.rate} ${converted.currency} from ${r.date}`)
+    .map(rate => `1 ${rate.currency} = ${rate.rate} ${converted.currency} from ${rate.date}`)
     .join(', ');
 
   return `${base} (${rates})`;
@@ -78,7 +82,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
 
   if (summary.isPending) {
     return (
-      <div className={s.page} role="status">
+      <div className={styles.page} role="status">
         Loading your finances…
       </div>
     );
@@ -86,7 +90,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
 
   if (summary.isError || !summary.data) {
     return (
-      <div className={s.page}>
+      <div className={styles.page}>
         <EmptyState
           title="Could not load your finances"
           description={summary.error?.message}
@@ -99,13 +103,18 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
   const data = summary.data;
 
   const currencies = [
-    ...new Set([...data.totals.map(t => t.currency), ...data.netWorth.map(n => n.currency)]),
+    ...new Set([
+      ...data.totals.map(total => total.currency),
+      ...data.netWorth.map(bucket => bucket.currency),
+    ]),
   ];
 
-  const months = [...new Set(data.cashFlow.map(p => p.month))].sort((a, b) => a.localeCompare(b));
+  const months = [...new Set(data.cashFlow.map(point => point.month))].sort((left, right) =>
+    left.localeCompare(right)
+  );
 
   return (
-    <div className={s.page}>
+    <div className={styles.page}>
       <PageHeading
         title={analytics ? 'Analytics' : 'Dashboard Overview'}
         description={
@@ -128,7 +137,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
         }
       />
       {data.needsReviewCount > 0 && (
-        <p className={s.notice} role="status">
+        <p className={styles.notice} role="status">
           <AlertTriangle size={16} /> {data.needsReviewCount} transaction
           {data.needsReviewCount === 1 ? ' needs' : 's need'} a category.{' '}
           <Link href="/review">Review them</Link>
@@ -139,7 +148,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
           title={`≈ Converted totals · ${data.converted.currency}`}
           description={describeConversion(data.converted)}
         >
-          <div className={s.grid}>
+          <div className={styles.grid}>
             <MetricCard
               label="Net worth"
               value={formatMoney(data.converted.netWorthMinor, data.converted.currency)}
@@ -157,7 +166,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
             />
           </div>
           {data.converted.missing.length > 0 && (
-            <p className={s.notice} role="status">
+            <p className={styles.notice} role="status">
               No rate to {data.converted.currency} for {data.converted.missing.join(', ')}; those
               amounts are left out. <Link href="/settings/currencies">Add rates</Link>
             </p>
@@ -171,12 +180,12 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
         />
       )}
       {currencies.map(currency => {
-        const totals = data.totals.find(t => t.currency === currency);
+        const totals = data.totals.find(total => total.currency === currency);
         const income = totals?.incomeMinor ?? 0;
         const spending = totals?.spendingMinor ?? 0;
 
         return (
-          <div className={s.grid} key={currency}>
+          <div className={styles.grid} key={currency}>
             <MetricCard
               label={`Income · ${currency}`}
               value={formatMoney(income, currency)}
@@ -197,20 +206,22 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
           </div>
         );
       })}
-      <div className={s.columns}>
-        <div className={s.stack}>
+      <div className={styles.columns}>
+        <div className={styles.stack}>
           {currencies.map(currency => (
             <CashFlowChart
               key={currency}
               description={`Income vs spending · ${currency}`}
               format={value => formatMoney(value, currency)}
-              data={months.map(m => {
-                const point = data.cashFlow.find(p => p.month === m && p.currency === currency);
+              data={months.map(month => {
+                const point = data.cashFlow.find(
+                  point => point.month === month && point.currency === currency
+                );
 
                 return {
-                  label: monthLabel(m).split(' ')[0].slice(0, 3),
-                  income: point?.incomeMinor ?? 0,
                   expense: point?.spendingMinor ?? 0,
+                  income: point?.incomeMinor ?? 0,
+                  label: monthLabel(month).split(' ')[0].slice(0, MonthAbbreviationLength),
                 };
               })}
             />
@@ -232,7 +243,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
             </Panel>
           )}
         </div>
-        <div className={s.stack}>
+        <div className={styles.stack}>
           <NetWorthCards buckets={data.netWorth} accounts={data.accounts} />
           {currencies.map(currency => (
             <DistributionChart
@@ -242,9 +253,9 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
               data={data.breakdown
                 .filter(slice => slice.currency === currency && slice.spentMinor > 0)
                 .map(slice => ({
+                  color: slice.color,
                   name: slice.groupName,
                   value: slice.spentMinor,
-                  color: slice.color,
                 }))}
             />
           ))}

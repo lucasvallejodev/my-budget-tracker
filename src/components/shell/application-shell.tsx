@@ -1,33 +1,35 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Bell, Menu, Search } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
+import { Bell, Menu, Search } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { ReactNode, useState } from 'react';
+
 import { MainRouteItems } from '@/app/(main)/routes';
-import { useAccounts } from '../finance/use-finance-data';
 import { AccountGroups } from '@/constants/account';
 import { formatMoney } from '@/lib/money';
+
+import { PromotionPanel } from '../finance/blocks';
+import { useAccounts } from '../finance/use-finance-data';
 import Logo from '../logo';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../primitives/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
-import { PromotionPanel } from '../finance/blocks';
+import styles from './shell.module.scss';
 import { ThemeToggle } from './theme-toggle';
-import s from './shell.module.scss';
 
-export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
   const { data: accounts = [] } = useAccounts();
 
   return (
     <nav aria-label="Main navigation">
-      <div className={s.links}>
+      <div className={styles.links}>
         {MainRouteItems.map(item => (
           <Link
             key={item.path}
-            className={s.link}
+            className={styles.link}
             href={item.path}
             aria-current={path === item.path ? 'page' : undefined}
             onClick={onNavigate}
@@ -54,25 +56,25 @@ export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 
         return (
           <div key={group.label}>
-            <h2 className={s.sectionLabel}>
+            <h2 className={styles.sectionLabel}>
               {group.label}
-              <span className={s.sectionTotal}>
+              <span className={styles.sectionTotal}>
                 {[...totals.entries()]
                   .map(([currency, total]) => formatMoney(total, currency))
                   .join(' · ')}
               </span>
             </h2>
-            <div className={s.links}>
+            <div className={styles.links}>
               {members.map(account => (
                 <Link
                   key={account.id}
-                  className={s.link}
+                  className={styles.link}
                   href={`/accounts/${account.id}`}
                   aria-current={path === `/accounts/${account.id}` ? 'page' : undefined}
                   onClick={onNavigate}
                 >
                   <span>{account.name}</span>
-                  <span className={s.linkAmount}>
+                  <span className={styles.linkAmount}>
                     {formatMoney(
                       account.classification === 'liability'
                         ? -account.balanceMinor
@@ -90,35 +92,35 @@ export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function ApplicationHeader() {
+function ApplicationHeader() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const router = useRouter();
 
   return (
-    <header className={s.topbar}>
+    <header className={styles.topbar}>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className={s.mobileButton}
+            className={styles.mobileButton}
             aria-label="Open navigation"
           >
             <Menu />
           </Button>
         </DialogTrigger>
-        <DialogContent className={s.drawer}>
+        <DialogContent className={styles.drawer}>
           <DialogTitle>Navigation</DialogTitle>
           <Logo />
           <Navigation onNavigate={() => setOpen(false)} />
         </DialogContent>
       </Dialog>
       <form
-        className={s.search}
+        className={styles.search}
         role="search"
-        onSubmit={e => {
-          e.preventDefault();
+        onSubmit={event => {
+          event.preventDefault();
           router.push(`/transactions?q=${encodeURIComponent(search)}`);
         }}
       >
@@ -129,10 +131,10 @@ export function ApplicationHeader() {
           aria-label="Search transactions"
           placeholder="Search transactions…"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={event => setSearch(event.target.value)}
         />
       </form>
-      <div className={s.toolbar}>
+      <div className={styles.toolbar}>
         <ThemeToggle />
         <Popover>
           <PopoverTrigger asChild>
@@ -153,27 +155,27 @@ export function ApplicationHeader() {
 
 export function ApplicationShell({ children }: { children: ReactNode }) {
   return (
-    <div className={s.shell}>
-      <a className={s.skip} href="#main-content">
+    <div className={styles.shell}>
+      <a className={styles.skip} href="#main-content">
         Skip to content
       </a>
-      <aside className={s.sidebar}>
+      <aside className={styles.sidebar}>
         <Logo />
         <Navigation />
-        <div className={s.bottom}>
+        <div className={styles.bottom}>
           <PromotionPanel
             title="Your money, in focus"
             description="Explore your spending and build a clearer picture of your finances."
             href="/analytics"
             actionLabel="View analytics"
           />
-          <div className={s.profile}>
+          <div className={styles.profile}>
             <UserButton />
             <span>Manage your account</span>
           </div>
         </div>
       </aside>
-      <div className={s.main}>
+      <div className={styles.main}>
         <ApplicationHeader />
         <main id="main-content">{children}</main>
       </div>

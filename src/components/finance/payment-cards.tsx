@@ -1,18 +1,19 @@
 'use client';
 
-import { useState } from 'react';
 import { ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
-import { Panel, EmptyState, StatusBadge } from './blocks';
+import { useState } from 'react';
+
 import { Button } from '../primitives/button';
-import s from './finance.module.scss';
 import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
 import { Input } from '../primitives/input';
+import { EmptyState, Panel, StatusBadge } from './blocks';
+import styles from './finance.module.scss';
 
 export type PaymentCard = {
-  id: string;
-  name: string;
-  lastFour: string;
   expires: string;
+  id: string;
+  lastFour: string;
+  name: string;
   network?: string;
 };
 
@@ -32,21 +33,21 @@ export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] 
         </Button>
       }
     >
-      <div className={s.stack}>
+      <div className={styles.stack}>
         {cards.map(card => (
-          <article key={card.id} className={s.budget}>
-            <div className={s.card}>
-              <div className={s.balanceTitle}>
+          <article key={card.id} className={styles.budget}>
+            <div className={styles.card}>
+              <div className={styles.balanceTitle}>
                 <CreditCard />
                 <strong>{card.network || 'VISA'}</strong>
               </div>
-              <div className={s.cardNumber}>•••• •••• •••• {card.lastFour}</div>
-              <div className={s.cardMeta}>
+              <div className={styles.cardNumber}>•••• •••• •••• {card.lastFour}</div>
+              <div className={styles.cardMeta}>
                 <span>{card.name}</span>
                 <span>Expires {card.expires}</span>
               </div>
             </div>
-            <div className={s.actions}>
+            <div className={styles.actions}>
               {primary === card.id ? (
                 <StatusBadge>Primary</StatusBadge>
               ) : (
@@ -58,7 +59,7 @@ export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] 
                 variant="destructive"
                 size="sm"
                 onClick={() => {
-                  const remaining = cards.filter(c => c.id !== card.id);
+                  const remaining = cards.filter(other => other.id !== card.id);
 
                   setCards(remaining);
                   if (primary === card.id) setPrimary(remaining[0]?.id);
@@ -76,18 +77,18 @@ export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] 
           <DialogTitle>Add sample card</DialogTitle>
           <p>No payment details are collected. This card lasts for this preview only.</p>
           <form
-            className={s.form}
-            onSubmit={e => {
-              e.preventDefault();
+            className={styles.form}
+            onSubmit={event => {
+              event.preventDefault();
               const id = crypto.randomUUID();
 
               setCards(all => [
                 ...all,
                 {
-                  id,
-                  name,
-                  lastFour: '0000',
                   expires: '12/29',
+                  id,
+                  lastFour: '0000',
+                  name,
                 },
               ]);
               if (!cards.length) setPrimary(id);
@@ -95,9 +96,9 @@ export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] 
               setName('');
             }}
           >
-            <label className={s.field}>
+            <label className={styles.field}>
               Display name
-              <Input value={name} onChange={e => setName(e.target.value)} required />
+              <Input value={name} onChange={event => setName(event.target.value)} required />
             </label>
             <Button type="submit">Add sample card</Button>
           </form>
@@ -108,11 +109,11 @@ export function PaymentCardList({ initialCards }: { initialCards: PaymentCard[] 
 }
 
 export function PaymentCards({
-  cards,
   action,
+  cards,
 }: {
-  cards: PaymentCard[];
   action?: React.ReactNode;
+  cards: PaymentCard[];
 }) {
   const [index, setIndex] = useState(0);
   const card = cards[Math.min(index, cards.length - 1)];
@@ -121,13 +122,13 @@ export function PaymentCards({
     <Panel title="My card" action={action}>
       {card ? (
         <>
-          <div className={s.card}>
-            <div className={s.balanceTitle}>
+          <div className={styles.card}>
+            <div className={styles.balanceTitle}>
               <CreditCard size={24} />
               <strong>{card.network || 'VISA'}</strong>
             </div>
-            <div className={s.cardNumber}>•••• •••• •••• {card.lastFour}</div>
-            <div className={s.cardMeta}>
+            <div className={styles.cardNumber}>•••• •••• •••• {card.lastFour}</div>
+            <div className={styles.cardMeta}>
               <div>
                 <small>Cardholder</small>
                 {card.name}
@@ -138,17 +139,17 @@ export function PaymentCards({
               </div>
             </div>
           </div>
-          <div className={s.pagination}>
+          <div className={styles.pagination}>
             <span>
               {index + 1} / {cards.length}
             </span>
-            <div className={s.actions}>
+            <div className={styles.actions}>
               <Button
                 variant="outline"
                 size="icon"
                 aria-label="Previous card"
                 disabled={index === 0}
-                onClick={() => setIndex(i => i - 1)}
+                onClick={() => setIndex(current => current - 1)}
               >
                 <ChevronLeft />
               </Button>
@@ -157,7 +158,7 @@ export function PaymentCards({
                 size="icon"
                 aria-label="Next card"
                 disabled={index >= cards.length - 1}
-                onClick={() => setIndex(i => i + 1)}
+                onClick={() => setIndex(current => current + 1)}
               >
                 <ChevronRight />
               </Button>

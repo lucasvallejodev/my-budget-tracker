@@ -52,10 +52,9 @@ src/
 │  ├─ index.ts             Lazy node-postgres pool
 │  └─ connection.ts        DATABASE_URL validation
 ├─ schema/                 Zod schemas for form and action input
-├─ lib/                    Pure helpers: money.ts (minor units, parsing, formatting), math.ts, date-helpers.ts, styles.ts
-├─ constants/account.ts    Account type labels and sidebar grouping
+├─ lib/                    Pure helpers: money.ts (minor units, parsing, formatting), math.ts, date-helpers.ts, patterns.ts (every regex), styles.ts
+├─ constants/              Named values: account.ts (types, grouping), field-lengths.ts, http.ts, money.ts, time.ts
 ├─ providers/              React Query provider
-├─ hooks/                  Small React hooks
 ├─ styles/
 │  ├─ tokens.scss          CSS colour tokens (light, dark and theme-independent)
 │  └─ theme.ts             Colours and chart styles needed from TypeScript (Colors, GroupColors, ChartStyle)

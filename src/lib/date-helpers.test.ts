@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
 import { getStartAndEndOfMonth } from './date-helpers';
 
 describe('getStartAndEndOfMonth', () => {
@@ -14,91 +15,91 @@ describe('getStartAndEndOfMonth', () => {
   });
 
   it('should return current month start and end when no parameters are provided', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth();
+    const { endDate, startDate } = getStartAndEndOfMonth();
 
     expect(startDate).toEqual(new Date(2025, 4, 1));
     expect(endDate).toEqual(new Date(2025, 4, 31, 23, 59, 59, 999));
   });
 
   it('should handle undefined month parameter', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(undefined, 2024);
+    const { endDate, startDate } = getStartAndEndOfMonth(undefined, 2024);
 
     expect(startDate).toEqual(new Date(2024, 4, 1));
     expect(endDate).toEqual(new Date(2024, 4, 31, 23, 59, 59, 999));
   });
 
   it('should handle undefined year parameter', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(2);
+    const { endDate, startDate } = getStartAndEndOfMonth(2);
 
     expect(startDate).toEqual(new Date(2025, 2, 1));
     expect(endDate).toEqual(new Date(2025, 2, 31, 23, 59, 59, 999));
   });
 
   it('should use current month when month is less than MIN_MONTH', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(-1, 2024);
+    const { endDate, startDate } = getStartAndEndOfMonth(-1, 2024);
 
     expect(startDate).toEqual(new Date(2024, 4, 1));
     expect(endDate).toEqual(new Date(2024, 4, 31, 23, 59, 59, 999));
   });
 
   it('should use current month when month is greater than MAX_MONTH', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(12, 2024);
+    const { endDate, startDate } = getStartAndEndOfMonth(12, 2024);
 
     expect(startDate).toEqual(new Date(2024, 4, 1));
     expect(endDate).toEqual(new Date(2024, 4, 31, 23, 59, 59, 999));
   });
 
   it('should use current year when year is less than MIN_YEAR', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(2, 1899);
+    const { endDate, startDate } = getStartAndEndOfMonth(2, 1899);
 
     expect(startDate).toEqual(new Date(2025, 2, 1));
     expect(endDate).toEqual(new Date(2025, 2, 31, 23, 59, 59, 999));
   });
 
   it('should use current year when year is greater than MAX_YEAR', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(2, 2101);
+    const { endDate, startDate } = getStartAndEndOfMonth(2, 2101);
 
     expect(startDate).toEqual(new Date(2025, 2, 1));
     expect(endDate).toEqual(new Date(2025, 2, 31, 23, 59, 59, 999));
   });
 
   it('should handle January correctly', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(0, 2024);
+    const { endDate, startDate } = getStartAndEndOfMonth(0, 2024);
 
     expect(startDate).toEqual(new Date(2024, 0, 1));
     expect(endDate).toEqual(new Date(2024, 0, 31, 23, 59, 59, 999));
   });
 
   it('should handle December correctly', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(11, 2024);
+    const { endDate, startDate } = getStartAndEndOfMonth(11, 2024);
 
     expect(startDate).toEqual(new Date(2024, 11, 1));
     expect(endDate).toEqual(new Date(2024, 11, 31, 23, 59, 59, 999));
   });
 
   it('should use valid month when in range', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(6, 2023);
+    const { endDate, startDate } = getStartAndEndOfMonth(6, 2023);
 
     expect(startDate).toEqual(new Date(2023, 6, 1));
     expect(endDate).toEqual(new Date(2023, 6, 31, 23, 59, 59, 999));
   });
 
   it('should use valid year when in range', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(3, 2000);
+    const { endDate, startDate } = getStartAndEndOfMonth(3, 2000);
 
     expect(startDate).toEqual(new Date(2000, 3, 1));
     expect(endDate).toEqual(new Date(2000, 3, 30, 23, 59, 59, 999));
   });
 
   it('should handle February in a leap year', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(1, 2024);
+    const { endDate, startDate } = getStartAndEndOfMonth(1, 2024);
 
     expect(startDate).toEqual(new Date(2024, 1, 1));
     expect(endDate).toEqual(new Date(2024, 1, 29, 23, 59, 59, 999));
   });
 
   it('should handle February in a non-leap year', () => {
-    const { startDate, endDate } = getStartAndEndOfMonth(1, 2023);
+    const { endDate, startDate } = getStartAndEndOfMonth(1, 2023);
 
     expect(startDate).toEqual(new Date(2023, 1, 1));
     expect(endDate).toEqual(new Date(2023, 1, 28, 23, 59, 59, 999));

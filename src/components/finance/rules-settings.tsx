@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { Trash2, Wand2 } from 'lucide-react';
-import { Panel, EmptyState } from './blocks';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import { applyRulesAction, createRuleAction, deleteRuleAction } from '@/app/(main)/actions';
+
+import CategoryPicker from '../category-picker';
+import formStyles from '../forms.module.scss';
 import { Button } from '../primitives/button';
 import { Input } from '../primitives/input';
-import CategoryPicker from '../category-picker';
+import { EmptyState, Panel, QueryContent } from './blocks';
+import styles from './finance.module.scss';
 import { FinanceKeys, useRules } from './use-finance-data';
-import { applyRulesAction, createRuleAction, deleteRuleAction } from '@/app/(main)/actions';
-import s from './finance.module.scss';
-import f from '../forms.module.scss';
 
 export function RulesSettings() {
   const queryClient = useQueryClient();
@@ -23,44 +25,44 @@ export function RulesSettings() {
     Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
 
   const create = useMutation({
-    mutationFn: () => createRuleAction({ pattern, categoryId: categoryId! }),
+    mutationFn: () => createRuleAction({ categoryId: categoryId!, pattern }),
+    onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success('Rule added');
       setPattern('');
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   const remove = useMutation({
     mutationFn: deleteRuleAction,
-    onSuccess: refresh,
     onError: (error: Error) => toast.error(error.message),
+    onSuccess: refresh,
   });
 
   const apply = useMutation({
     mutationFn: applyRulesAction,
+    onError: (error: Error) => toast.error(error.message),
     onSuccess: async ({ updated }) => {
       toast.success(`Categorised ${updated} transaction${updated === 1 ? '' : 's'}`);
       await refresh();
     },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   return (
-    <div className={s.stack}>
+    <div className={styles.stack}>
       <Panel
         title="New rule"
         description="When the payee, bank description or memo contains the text, the category is applied automatically on import."
       >
         <form
-          className={f.form}
+          className={formStyles.form}
           onSubmit={event => {
             event.preventDefault();
             create.mutate();
           }}
         >
-          <label className={s.field}>
+          <label className={styles.field}>
             Text to look for
             <Input
               value={pattern}
@@ -69,7 +71,7 @@ export function RulesSettings() {
               maxLength={120}
             />
           </label>
-          <div className={s.field}>
+          <div className={styles.field}>
             Category
             <CategoryPicker value={categoryId} onChange={setCategoryId} />
           </div>
@@ -90,33 +92,39 @@ export function RulesSettings() {
           </Button>
         }
       >
-        {rules.isPending ? (
-          <p role="status">Loading…</p>
-        ) : !rules.data?.length ? (
-          <EmptyState
-            title="No rules yet"
-            description="Rules run on every import and can be applied to existing entries."
-          />
-        ) : (
-          rules.data.map(rule => (
-            <div key={rule.id} className={s.row}>
-              <div>
-                <h3>{rule.name}</h3>
-                <p>
-                  contains “{rule.pattern}” → {rule.categoryName ?? 'archived category'}
-                </p>
+        <QueryContent
+          pending={rules.isPending}
+          loading="Loading…"
+          empty={
+            !rules.data?.length && (
+              <EmptyState
+                title="No rules yet"
+                description="Rules run on every import and can be applied to existing entries."
+              />
+            )
+          }
+        >
+          {() =>
+            rules.data?.map(rule => (
+              <div key={rule.id} className={styles.row}>
+                <div>
+                  <h3>{rule.name}</h3>
+                  <p>
+                    contains “{rule.pattern}” → {rule.categoryName ?? 'archived category'}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Delete rule ${rule.name}`}
+                  onClick={() => remove.mutate(rule.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Delete rule ${rule.name}`}
-                onClick={() => remove.mutate(rule.id)}
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
-          ))
-        )}
+            ))
+          }
+        </QueryContent>
       </Panel>
     </div>
   );

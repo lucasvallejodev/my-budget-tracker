@@ -1,0 +1,8 @@
+{
+  "threshold": 3,
+  "minTokens": 40,
+  "minLines": 5,
+  "reporters": ["console"],
+  "ignore": ["**/*.test.ts", "**/*.test.tsx", "src/components/icons/registry.ts", "**/node_modules/**"],
+  "gitignore": true
+}

@@ -1,33 +1,34 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
-import Link from 'next/link';
-import * as Tabs from '@radix-ui/react-tabs';
 import { useClerk, useUser } from '@clerk/nextjs';
+import * as Tabs from '@radix-ui/react-tabs';
 import { useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { ReactNode, useState } from 'react';
 import { toast } from 'sonner';
-import { PageHeading, Panel, SettingsSection, LinkedAccount, StatusBadge } from './blocks';
-import { PaymentCardList } from './payment-cards';
-import { SampleCards, SampleTransactions } from './sample-data';
+
+import { Button } from '../primitives/button';
 import { Input } from '../primitives/input';
 import { ToggleSwitch } from '../primitives/preferences';
-import { Button } from '../primitives/button';
+import { applyTheme } from '../shell/theme-toggle';
+import { LinkedAccount, PageHeading, Panel, SettingsSection, StatusBadge } from './blocks';
+import styles from './finance.module.scss';
+import { PaymentCardList } from './payment-cards';
+import { SampleCards, SampleTransactions } from './sample-data';
 import { exportTransactions } from './transaction-explorer';
 import { TransactionRow } from './use-finance-data';
-import { applyTheme } from '../shell/theme-toggle';
-import s from './finance.module.scss';
 
-export function PreferenceRow({
-  title,
-  description,
+function PreferenceRow({
   children,
+  description,
+  title,
 }: {
-  title: string;
-  description: string;
   children: ReactNode;
+  description: string;
+  title: string;
 }) {
   return (
-    <div className={s.row}>
+    <div className={styles.row}>
       <div>
         <h3>{title}</h3>
         <p>{description}</p>
@@ -39,17 +40,17 @@ export function PreferenceRow({
 
 function Choice({
   label,
-  options,
   onChange,
+  options,
 }: {
   label: string;
-  options: string[];
   onChange?: (value: string) => void;
+  options: string[];
 }) {
   return (
-    <label className={s.field}>
+    <label className={styles.field}>
       {label}
-      <select className={s.filter} onChange={e => onChange?.(e.target.value)}>
+      <select className={styles.filter} onChange={event => onChange?.(event.target.value)}>
         {options.map(option => (
           <option key={option}>{option}</option>
         ))}
@@ -58,12 +59,12 @@ function Choice({
   );
 }
 
-export function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: () => void }) {
+function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: () => void }) {
   return (
     <Panel title="Profile Information">
       <SettingsSection title="Profile Photo" description="Basic profile information">
-        <div className={s.actions}>
-          <span className={s.avatar}>AM</span>
+        <div className={styles.actions}>
+          <span className={styles.avatar}>AM</span>
           <Button variant="outline" onClick={onManage}>
             {demo ? 'Preview photo control' : 'Manage profile photo'}
           </Button>
@@ -75,9 +76,9 @@ export function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: (
             title="Personal Information"
             description="Update your personal information"
           >
-            <div className={s.grid}>
+            <div className={styles.grid}>
               {['First name', 'Last name', 'Email', 'Phone', 'Address'].map(label => (
-                <label className={s.field} key={label}>
+                <label className={styles.field} key={label}>
                   {label}
                   <Input type={label === 'Email' ? 'email' : 'text'} />
                 </label>
@@ -85,7 +86,7 @@ export function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: (
             </div>
           </SettingsSection>
           <SettingsSection title="Others" description="Regional information">
-            <div className={s.form}>
+            <div className={styles.form}>
               <Choice label="Currency" options={['USD', 'EUR', 'GBP']} />
               <Choice label="Language" options={['English', 'Spanish', 'French']} />
               <Choice label="Time Zone" options={['Europe/Madrid', 'America/New_York', 'UTC']} />
@@ -107,19 +108,19 @@ export function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: (
   );
 }
 
-export function SessionList() {
+function SessionList() {
   return (
     <section>
       <h3>Active Sessions</h3>
-      {['Chrome on Windows', 'Safari on iPhone', 'Firefox on MacBook'].map((device, i) => (
+      {['Chrome on Windows', 'Safari on iPhone', 'Firefox on MacBook'].map((device, index) => (
         <PreferenceRow
           key={device}
           title={device}
           description={
-            i ? 'Example session · Last active 3 hours ago' : 'Example session · Current device'
+            index ? 'Example session · Last active 3 hours ago' : 'Example session · Current device'
           }
         >
-          {i ? (
+          {index ? (
             <Button
               variant="outline"
               size="sm"
@@ -132,12 +133,12 @@ export function SessionList() {
           )}
         </PreferenceRow>
       ))}
-      <p className={s.muted}>Sample session data for component review.</p>
+      <p className={styles.muted}>Sample session data for component review.</p>
     </section>
   );
 }
 
-export function SecuritySettings({ demo, onManage }: { demo: boolean; onManage: () => void }) {
+function SecuritySettings({ demo, onManage }: { demo: boolean; onManage: () => void }) {
   return (
     <Panel title="Security">
       <PreferenceRow title="Change Password" description="Manage your password and account access">
@@ -175,10 +176,10 @@ export function SecuritySettings({ demo, onManage }: { demo: boolean; onManage: 
   );
 }
 
-export function NotificationSettings() {
+function NotificationSettings() {
   return (
     <Panel title="Notifications">
-      <p className={s.notice}>Preference preview. Notification delivery is not connected.</p>
+      <p className={styles.notice}>Preference preview. Notification delivery is not connected.</p>
       {[
         ['Transaction Alerts', 'Get notified for transactions on your account'],
         ['Budget Limit Alerts', 'Alerts when approaching your budget limits'],
@@ -190,11 +191,11 @@ export function NotificationSettings() {
         </PreferenceRow>
       ))}
       <h3>Delivery Method</h3>
-      <fieldset className={s.form}>
+      <fieldset className={styles.form}>
         <legend>Notification channels</legend>
-        {['Email Only', 'Push Notifications Only', 'Both Email and Push'].map((label, i) => (
-          <label className={s.radio} key={label}>
-            <input type="radio" name="delivery" defaultChecked={i === 0} />
+        {['Email Only', 'Push Notifications Only', 'Both Email and Push'].map((label, index) => (
+          <label className={styles.radio} key={label}>
+            <input type="radio" name="delivery" defaultChecked={index === 0} />
             {label}
           </label>
         ))}
@@ -203,7 +204,7 @@ export function NotificationSettings() {
   );
 }
 
-export function DataSettings({ demo }: { demo: boolean }) {
+function DataSettings({ demo }: { demo: boolean }) {
   const cache = useQueryClient();
 
   const exportData = async () => {
@@ -221,7 +222,7 @@ export function DataSettings({ demo }: { demo: boolean }) {
   return (
     <Panel title="Data Management">
       <PreferenceRow title="Export Transactions" description="Download your transaction history">
-        <div className={s.actions}>
+        <div className={styles.actions}>
           <Button variant="outline" onClick={() => void exportData()}>
             Export as CSV
           </Button>
@@ -253,13 +254,13 @@ export function DataSettings({ demo }: { demo: boolean }) {
   );
 }
 
-export function AppPreferences() {
+function AppPreferences() {
   return (
     <Panel title="App Preferences">
-      <p className={s.notice}>
+      <p className={styles.notice}>
         Appearance applies to the app. Other controls preview future display preferences.
       </p>
-      <div className={s.form}>
+      <div className={styles.form}>
         <Choice label="Default Dashboard View" options={['Monthly', 'Weekly', 'Daily']} />
         <Choice label="Date Format" options={['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']} />
         <Choice label="Number Format" options={['1,234,567.89 (Comma)', '1.234.567,89 (Dot)']} />
@@ -275,7 +276,7 @@ export function AppPreferences() {
   );
 }
 
-export function SupportLinks() {
+function SupportLinks() {
   const [expanded, setExpanded] = useState('');
 
   return (
@@ -304,10 +305,10 @@ export function SupportLinks() {
               View
             </Button>
           </PreferenceRow>
-          {expanded === label && <p className={s.notice}>{description}</p>}
+          {expanded === label && <p className={styles.notice}>{description}</p>}
         </div>
       ))}
-      <p className={s.muted}>CoinKeeper · Personal budget tracker</p>
+      <p className={styles.muted}>CoinKeeper · Personal budget tracker</p>
     </Panel>
   );
 }
@@ -335,16 +336,16 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
   };
 
   return (
-    <div className={s.page}>
+    <div className={styles.page}>
       <PageHeading
         title="Settings"
         description="Manage your account, preferences, and security settings."
       />
-      {demo && <p className={s.notice}>Component preview — sample account information.</p>}
-      <Tabs.Root defaultValue="Profile" className={s.settings} orientation="vertical">
-        <Tabs.List className={s.settingsNav} aria-label="Settings Sections">
+      {demo && <p className={styles.notice}>Component preview — sample account information.</p>}
+      <Tabs.Root defaultValue="Profile" className={styles.settings} orientation="vertical">
+        <Tabs.List className={styles.settingsNav} aria-label="Settings Sections">
           {Sections.map(section => (
-            <Tabs.Trigger className={s.settingsTab} key={section} value={section}>
+            <Tabs.Trigger className={styles.settingsTab} key={section} value={section}>
               {section}
             </Tabs.Trigger>
           ))}
@@ -353,14 +354,14 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
           <Tabs.Content value="Profile">
             <ProfileSettings demo={demo} onManage={manage} />
             {!demo && (
-              <p className={s.muted}>
+              <p className={styles.muted}>
                 Signed in as {user?.fullName || user?.primaryEmailAddress?.emailAddress}
               </p>
             )}
           </Tabs.Content>
           <Tabs.Content value="Categories">
             <Panel title="Categories">
-              <p className={s.muted}>
+              <p className={styles.muted}>
                 Manage the groups and categories used to classify your spending. Groups own the
                 colour; categories own the icon.
               </p>
@@ -371,7 +372,7 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
           </Tabs.Content>
           <Tabs.Content value="Currencies">
             <Panel title="Currencies">
-              <p className={s.muted}>
+              <p className={styles.muted}>
                 Set your primary currency, toggle converted totals and maintain exchange rates by
                 hand.
               </p>
@@ -382,10 +383,10 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
           </Tabs.Content>
           <Tabs.Content value="Rules & Import">
             <Panel title="Rules & Import">
-              <p className={s.muted}>
+              <p className={styles.muted}>
                 Import bank CSV exports and keep rules that categorise entries automatically.
               </p>
-              <div className={s.actions}>
+              <div className={styles.actions}>
                 <Button asChild variant="outline">
                   <Link href="/import">Import transactions</Link>
                 </Button>
@@ -420,7 +421,7 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
                 </>
               ) : (
                 <>
-                  <p className={s.muted}>
+                  <p className={styles.muted}>
                     Manage your tracked accounts. Payment card storage is not connected.
                   </p>
                   <Button asChild variant="outline">

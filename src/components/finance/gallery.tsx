@@ -1,35 +1,38 @@
 'use client';
 
 import { useState } from 'react';
+
+import { Button } from '../primitives/button';
+import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
+import { Input } from '../primitives/input';
+import { TabList, TabPanel, TabRoot, TabTrigger } from '../primitives/preferences';
 import {
-  PageHeading,
-  MetricCard,
   BalanceCard,
-  Panel,
   BudgetProgress,
+  MetricCard,
+  PageHeading,
+  Panel,
   PromotionPanel,
 } from './blocks';
 import { CashFlowChart, DistributionChart, TargetCard } from './charts';
+import styles from './finance.module.scss';
 import { PaymentCards } from './payment-cards';
-import { TransactionExplorer } from './transaction-explorer';
-import { SettingsView } from './settings';
 import { SampleCards, SampleCashFlow, SampleExpenses, SampleTransactions } from './sample-data';
-import { Button } from '../primitives/button';
-import { TabRoot, TabList, TabTrigger, TabPanel } from '../primitives/preferences';
-import { Dialog, DialogContent, DialogTitle } from '../primitives/dialog';
-import { Input } from '../primitives/input';
-import s from './finance.module.scss';
+import { SettingsView } from './settings';
+import { TransactionExplorer } from './transaction-explorer';
+
+const GalleryPreviewRowCount = 4;
 
 export function ComponentGallery() {
   const [action, setAction] = useState('');
 
   return (
-    <div className={s.page}>
+    <div className={styles.page}>
       <PageHeading
         title="Component Gallery"
         description="Fundex-inspired blocks · SCSS modules · Radix accessibility"
       />
-      <p className={s.notice}>
+      <p className={styles.notice}>
         All values in this gallery are sample data. Preview actions do not create financial records.
       </p>
       <TabRoot defaultValue="Dashboard">
@@ -41,9 +44,9 @@ export function ComponentGallery() {
           ))}
         </TabList>
         <TabPanel value="Dashboard">
-          <div className={s.columns}>
-            <div className={s.stack}>
-              <div className={s.grid}>
+          <div className={styles.columns}>
+            <div className={styles.stack}>
+              <div className={styles.grid}>
                 <MetricCard
                   label="Monthly Income"
                   value="$38,420"
@@ -59,9 +62,11 @@ export function ComponentGallery() {
                 />
               </div>
               <CashFlowChart data={SampleCashFlow} />
-              <TransactionExplorer transactions={SampleTransactions.slice(0, 4)} />
+              <TransactionExplorer
+                transactions={SampleTransactions.slice(0, GalleryPreviewRowCount)}
+              />
             </div>
-            <div className={s.stack}>
+            <div className={styles.stack}>
               <BalanceCard
                 amount={124580.45}
                 actions={
@@ -83,7 +88,10 @@ export function ComponentGallery() {
                   </Button>
                 }
               />
-              <DistributionChart title="Budget" data={SampleExpenses.slice(0, 4)} />
+              <DistributionChart
+                title="Budget"
+                data={SampleExpenses.slice(0, GalleryPreviewRowCount)}
+              />
               <PromotionPanel
                 title="Upgrade to pro"
                 description="A reusable promotional block matching the reference design."
@@ -97,8 +105,8 @@ export function ComponentGallery() {
           <TransactionExplorer transactions={SampleTransactions} />
         </TabPanel>
         <TabPanel value="Analytics">
-          <div className={s.stack}>
-            <div className={s.grid}>
+          <div className={styles.stack}>
+            <div className={styles.grid}>
               <MetricCard
                 label="Avg Monthly Income"
                 value="$36,780"
@@ -118,10 +126,10 @@ export function ComponentGallery() {
                 detail="Based on last 6 months"
               />
             </div>
-            <div className={s.columns}>
-              <div className={s.stack}>
+            <div className={styles.columns}>
+              <div className={styles.stack}>
                 <CashFlowChart data={SampleCashFlow} />
-                <div className={s.grid}>
+                <div className={styles.grid}>
                   <Panel title="Budget" description="Monthly expense budget">
                     <MetricCard label="Progress" value="$3,457" />
                     <BudgetProgress spent={3457} limit={10000} />
@@ -136,7 +144,7 @@ export function ComponentGallery() {
         <TabPanel value="Budgets">
           <Panel title="Category budget (sample)">
             <BudgetProgress spent={2224} limit={5000} label="Food & Dining budget" />
-            <p className={s.notice}>
+            <p className={styles.notice}>
               Sample values. Real budgets live on the Budgets page and are compared with the ledger.
             </p>
           </Panel>
@@ -154,7 +162,7 @@ export function ComponentGallery() {
         <DialogContent>
           <DialogTitle>{action} — component preview</DialogTitle>
           <p>This demonstrates the dialog layout only. No banking service is connected.</p>
-          <label className={s.field}>
+          <label className={styles.field}>
             {action === 'Add card' ? 'Card display name' : 'Description'}
             <Input placeholder="Preview text" />
           </label>

@@ -6,7 +6,7 @@
 
 | Kind | Tool | Where | Runs against |
 | --- | --- | --- | --- |
-| Pure unit | Vitest | `src/lib/*.test.ts`, `src/server/import/csv.test.ts` | nothing external |
+| Pure unit | Vitest | `src/lib/*.test.ts`, `src/server/import/csv.test.ts`, `src/server/import/preview.test.ts` | nothing external |
 | Service integration | Vitest + PGlite | `src/server/services.test.ts` | an in-memory PostgreSQL with every migration in `drizzle/` applied |
 | Component | Vitest + Testing Library (jsdom) | `src/components/**/*.test.tsx` | rendered React with a prefilled `QueryClient`; server actions mocked with `vi.mock` |
 | End to end | Playwright | `e2e/` | a running app in a real browser |

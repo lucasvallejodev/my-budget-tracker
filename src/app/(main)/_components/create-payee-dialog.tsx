@@ -1,21 +1,19 @@
 'use client';
 
-import s from '@/components/forms.module.scss';
-
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/primitives/button';
-import { Loader2, PlusSquareIcon } from 'lucide-react';
+
+import CategoryPicker from '@/components/category-picker';
+import { PayeeRow } from '@/components/finance/use-finance-data';
+import styles from '@/components/forms.module.scss';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/primitives/dialog';
+import { CreateNewTrigger, DialogFormFooter, saveLabel } from '@/components/primitives/dialog-form';
 import {
   Form,
   FormControl,
@@ -24,27 +22,25 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/primitives/form';
-import { Input } from '@/components/primitives/input';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { createPayeeAction, updatePayeeAction } from '../actions';
+import { TextField } from '@/components/primitives/form-fields';
 import { payeeFormSchema, PayeeFormValues } from '@/schema/payees';
-import CategoryPicker from '@/components/category-picker';
-import { PayeeRow, QueryKeys } from '@/components/finance/use-finance-data';
+
+import { createPayeeAction, updatePayeeAction } from '../actions';
+import { useEntityMutation } from './use-entity-mutation';
 
 type CreatePayeeDialogProps = {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
   onCloseAutoFocus?: ComponentProps<typeof DialogContent>['onCloseAutoFocus'];
+  onOpenChange?: (open: boolean) => void;
   onSuccessCallback?: (payee: { id: string; name: string }) => void;
+  open?: boolean;
   payee?: PayeeRow;
 };
 
 function CreatePayeeDialog({
+  onCloseAutoFocus,
+  onOpenChange,
   onSuccessCallback,
   open: controlledOpen,
-  onOpenChange,
-  onCloseAutoFocus,
   payee,
 }: CreatePayeeDialogProps) {
   const [localOpen, setLocalOpen] = useState(false);
@@ -56,55 +52,41 @@ function CreatePayeeDialog({
   };
 
   const form = useForm<PayeeFormValues>({
+    defaultValues: { defaultCategoryId: payee?.defaultCategoryId ?? '', name: payee?.name ?? '' },
     resolver: zodResolver(payeeFormSchema),
-    defaultValues: { name: payee?.name ?? '', defaultCategoryId: payee?.defaultCategoryId ?? '' },
   });
 
-  const queryClient = useQueryClient();
-
-  const { mutate, isPending } = useMutation({
+  const { isPending, mutate } = useEntityMutation({
+    errorMessage: 'Error saving payee',
     mutationFn: (values: PayeeFormValues) =>
       payee ? updatePayeeAction({ id: payee.id, ...values }) : createPayeeAction(values),
-    onSuccess: async data => {
-      toast.success(`Payee ${data.name} saved`);
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.payees });
-      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    onSuccess: data => {
       form.reset();
       onSuccessCallback?.(data);
       setOpen(false);
     },
-    onError: (error: Error) => toast.error(error.message || 'Error saving payee'),
+    successMessage: data => `Payee ${data.name} saved`,
   });
+
+  const submit = form.handleSubmit(values => mutate(values));
+  const showTrigger = controlledOpen === undefined && !payee;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {controlledOpen === undefined && !payee && (
-        <DialogTrigger asChild>
-          <Button variant="ghost" className={s.create} onClick={() => setOpen(true)}>
-            <PlusSquareIcon className={s.smallIcon} />
-            Create new
-          </Button>
-        </DialogTrigger>
-      )}
+      {showTrigger && <CreateNewTrigger onClick={() => setOpen(true)} />}
       <DialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <DialogTitle>{payee ? 'Edit payee' : 'Create new payee'}</DialogTitle>
         <DialogDescription>
           Payees are the people and businesses you pay or receive money from.
         </DialogDescription>
         <Form {...form}>
-          <form className={s.form} onSubmit={form.handleSubmit(values => mutate(values))}>
-            <FormField
+          <form className={styles.form} onSubmit={submit}>
+            <TextField
               control={form.control}
               name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="Payee name" {...field} />
-                  </FormControl>
-                  <FormDescription>The name of the payee.</FormDescription>
-                </FormItem>
-              )}
+              label="Name"
+              placeholder="Payee name"
+              description="The name of the payee."
             />
             <FormField
               control={form.control}
@@ -124,20 +106,12 @@ function CreatePayeeDialog({
             />
           </form>
         </Form>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="secondary" onClick={() => form.reset()}>
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button
-            type="submit"
-            disabled={isPending}
-            onClick={form.handleSubmit(values => mutate(values))}
-          >
-            {isPending ? <Loader2 className={s.spinner} /> : payee ? 'Save' : 'Create'}
-          </Button>
-        </DialogFooter>
+        <DialogFormFooter
+          isPending={isPending}
+          submitLabel={saveLabel(!!payee)}
+          onCancel={() => form.reset()}
+          onSubmit={submit}
+        />
       </DialogContent>
     </Dialog>
   );

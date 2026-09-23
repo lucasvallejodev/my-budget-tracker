@@ -1,9 +1,12 @@
-import { Colors } from '@/styles/theme';
 import { sql, SQL } from 'drizzle-orm';
+
+import { isoDateOfMonthStart, toIsoDate } from '@/lib/date-helpers';
 import { convertMinor } from '@/lib/money';
+import { Colors } from '@/styles/theme';
+
 import { Db } from '../db';
-import { monthRange } from '../ledger/service';
 import { createFxService } from '../fx/service';
+import { monthRange } from '../ledger/service';
 
 export type CurrencyTotals = {
   currency: string;
@@ -11,41 +14,41 @@ export type CurrencyTotals = {
   spendingMinor: number;
 };
 export type GroupSlice = {
+  color: string;
   currency: string;
   groupId: string | null;
   groupName: string;
-  color: string;
   spentMinor: number;
 };
 export type NetWorthBucket = {
-  currency: string;
   assetsMinor: number;
+  currency: string;
   liabilitiesMinor: number;
   netMinor: number;
 };
 export type ConvertedTotals = {
-  currency: string;
   asOf: string;
-  netWorthMinor: number;
+  currency: string;
   incomeMinor: number;
-  spendingMinor: number;
-  /** Currencies that could not be converted because no rate exists. */
   missing: string[];
+  netWorthMinor: number;
   rates: {
     currency: string;
-    rate: number;
     date: string;
+    rate: number;
     source: string;
   }[];
+  spendingMinor: number;
 };
 export type CashPoint = {
-  month: string;
   currency: string;
   incomeMinor: number;
+  month: string;
   spendingMinor: number;
 };
 
-/** Spending predicate shared by every report: standard, not excluded, account counts in spending. */
+const DEFAULT_CASH_FLOW_MONTHS = 8;
+
 const spendingWhere = sql`t.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending`;
 
 const query = async <T>(db: Db, statement: SQL): Promise<T[]> => {
@@ -58,18 +61,122 @@ export const createReportService = (db: Db) => {
   const fx = createFxService(db);
 
   return {
-    /**
-     * Optional blended view in the primary currency. Buckets without a rate are listed in
-     * `missing` and left out, never silently converted at 1:1.
-     */
+    async breakdownByCategory(userId: string, month: string, currency: string) {
+      const { end, start } = monthRange(month);
+
+      const rows = await query<{
+        category_id: string | null;
+        category_name: string | null;
+        color: string | null;
+        group_id: string | null;
+        group_name: string | null;
+        icon: string | null;
+        spent_minor: string;
+      }>(
+        db,
+        sql`
+        SELECT c.id AS category_id, c.name AS category_name, c.icon, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
+        FROM transactions t
+        JOIN accounts a ON a.id = t.account_id
+        LEFT JOIN categories c ON c.id = t.category_id
+        LEFT JOIN category_groups g ON g.id = c.group_id
+        WHERE t.user_id = ${userId} AND ${spendingWhere} AND t.currency = ${currency}
+          AND t.date >= ${start} AND t.date < ${end}
+          AND COALESCE(g.kind, 'expense') = 'expense'
+        GROUP BY c.id, c.name, c.icon, g.id, g.name, g.color
+        ORDER BY spent_minor DESC`
+      );
+
+      return rows.map(row => ({
+        categoryId: row.category_id,
+        categoryName: row.category_name ?? 'Uncategorized',
+        color: row.color ?? Colors.uncategorizedFallback,
+        groupId: row.group_id,
+        groupName: row.group_name ?? 'Uncategorized',
+        icon: row.icon ?? 'CircleHelp',
+        spentMinor: Number(row.spent_minor),
+      }));
+    },
+    async breakdownByGroup(userId: string, month: string): Promise<GroupSlice[]> {
+      const { end, start } = monthRange(month);
+
+      const rows = await query<{
+        color: string | null;
+        currency: string;
+        group_id: string | null;
+        group_name: string | null;
+        spent_minor: string;
+      }>(
+        db,
+        sql`
+        SELECT t.currency, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
+        FROM transactions t
+        JOIN accounts a ON a.id = t.account_id
+        LEFT JOIN categories c ON c.id = t.category_id
+        LEFT JOIN category_groups g ON g.id = c.group_id
+        WHERE t.user_id = ${userId} AND ${spendingWhere}
+          AND t.date >= ${start} AND t.date < ${end}
+          AND COALESCE(g.kind, 'expense') = 'expense'
+        GROUP BY t.currency, g.id, g.name, g.color
+        ORDER BY t.currency, spent_minor DESC`
+      );
+
+      return rows.map(row => ({
+        color: row.color ?? Colors.uncategorizedFallback,
+        currency: row.currency,
+        groupId: row.group_id,
+        groupName: row.group_name ?? 'Uncategorized',
+        spentMinor: Number(row.spent_minor),
+      }));
+    },
+
+    async cashFlow(
+      userId: string,
+      month: string,
+      months = DEFAULT_CASH_FLOW_MONTHS
+    ): Promise<CashPoint[]> {
+      const { end } = monthRange(month);
+      const start = isoDateOfMonthStart(month, 1 - months);
+
+      const rows = await query<{
+        currency: string;
+        income_minor: string;
+        month: string;
+        spending_minor: string;
+      }>(
+        db,
+        sql`
+        SELECT to_char(date_trunc('month', t.date), 'YYYY-MM') AS month, t.currency,
+          COALESCE(SUM(t.amount_minor) FILTER (WHERE g.kind = 'income' OR (g.kind IS NULL AND t.amount_minor > 0)), 0) AS income_minor,
+          COALESCE(-SUM(t.amount_minor) FILTER (WHERE g.kind = 'expense' OR (g.kind IS NULL AND t.amount_minor < 0)), 0) AS spending_minor
+        FROM transactions t
+        JOIN accounts a ON a.id = t.account_id
+        LEFT JOIN categories c ON c.id = t.category_id
+        LEFT JOIN category_groups g ON g.id = c.group_id
+        WHERE t.user_id = ${userId} AND ${spendingWhere}
+          AND t.date >= ${start} AND t.date < ${end}
+        GROUP BY 1, 2 ORDER BY 1, 2`
+      );
+
+      return rows.map(row => ({
+        currency: row.currency,
+        incomeMinor: Number(row.income_minor),
+        month: row.month,
+        spendingMinor: Number(row.spending_minor),
+      }));
+    },
+
     async convertedTotals(
       userId: string,
       primary: string,
       data: { netWorth: NetWorthBucket[]; totals: CurrencyTotals[] },
-      asOf = new Date().toISOString().slice(0, 10)
+      asOf = toIsoDate(new Date())
     ): Promise<ConvertedTotals> {
       const currencies = [
-        ...new Set([...data.netWorth.map(b => b.currency), ...data.totals.map(t => t.currency)]),
+        ...new Set([
+          ...data.netWorth.map(balance => balance.currency),
+          ...data.totals.map(total => total.currency),
+        ]),
       ];
 
       const rates = new Map<string, Awaited<ReturnType<typeof fx.getRate>>>();
@@ -80,7 +187,7 @@ export const createReportService = (db: Db) => {
         }
       }
 
-      const missing = currencies.filter(c => c !== primary && !rates.get(c));
+      const missing = currencies.filter(currency => currency !== primary && !rates.get(currency));
 
       const convert = (amountMinor: number, currency: string) => {
         if (currency === primary) return amountMinor;
@@ -90,27 +197,34 @@ export const createReportService = (db: Db) => {
       };
 
       return {
-        currency: primary,
         asOf,
-        netWorthMinor: data.netWorth.reduce((sum, b) => sum + convert(b.netMinor, b.currency), 0),
-        incomeMinor: data.totals.reduce((sum, t) => sum + convert(t.incomeMinor, t.currency), 0),
-        spendingMinor: data.totals.reduce(
-          (sum, t) => sum + convert(t.spendingMinor, t.currency),
+        currency: primary,
+        incomeMinor: data.totals.reduce(
+          (sum, total) => sum + convert(total.incomeMinor, total.currency),
           0
         ),
         missing,
+        netWorthMinor: data.netWorth.reduce(
+          (sum, balance) => sum + convert(balance.netMinor, balance.currency),
+          0
+        ),
         rates: [...rates.entries()]
           .filter((entry): entry is [string, NonNullable<(typeof entry)[1]>] => !!entry[1])
           .map(([currency, rate]) => ({
             currency,
-            rate: rate.rate,
             date: rate.date,
+            rate: rate.rate,
             source: rate.source,
           })),
+        spendingMinor: data.totals.reduce(
+          (sum, total) => sum + convert(total.spendingMinor, total.currency),
+          0
+        ),
       };
     },
+
     async monthlyTotals(userId: string, month: string): Promise<CurrencyTotals[]> {
-      const { start, end } = monthRange(month);
+      const { end, start } = monthRange(month);
 
       const rows = await query<{
         currency: string;
@@ -138,80 +252,10 @@ export const createReportService = (db: Db) => {
       }));
     },
 
-    async breakdownByGroup(userId: string, month: string): Promise<GroupSlice[]> {
-      const { start, end } = monthRange(month);
-
-      const rows = await query<{
-        currency: string;
-        group_id: string | null;
-        group_name: string | null;
-        color: string | null;
-        spent_minor: string;
-      }>(
-        db,
-        sql`
-        SELECT t.currency, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
-        FROM transactions t
-        JOIN accounts a ON a.id = t.account_id
-        LEFT JOIN categories c ON c.id = t.category_id
-        LEFT JOIN category_groups g ON g.id = c.group_id
-        WHERE t.user_id = ${userId} AND ${spendingWhere}
-          AND t.date >= ${start} AND t.date < ${end}
-          AND COALESCE(g.kind, 'expense') = 'expense'
-        GROUP BY t.currency, g.id, g.name, g.color
-        ORDER BY t.currency, spent_minor DESC`
-      );
-
-      return rows.map(row => ({
-        currency: row.currency,
-        groupId: row.group_id,
-        groupName: row.group_name ?? 'Uncategorized',
-        color: row.color ?? Colors.uncategorized,
-        spentMinor: Number(row.spent_minor),
-      }));
-    },
-
-    async breakdownByCategory(userId: string, month: string, currency: string) {
-      const { start, end } = monthRange(month);
-
-      const rows = await query<{
-        category_id: string | null;
-        category_name: string | null;
-        icon: string | null;
-        group_id: string | null;
-        group_name: string | null;
-        color: string | null;
-        spent_minor: string;
-      }>(
-        db,
-        sql`
-        SELECT c.id AS category_id, c.name AS category_name, c.icon, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
-        FROM transactions t
-        JOIN accounts a ON a.id = t.account_id
-        LEFT JOIN categories c ON c.id = t.category_id
-        LEFT JOIN category_groups g ON g.id = c.group_id
-        WHERE t.user_id = ${userId} AND ${spendingWhere} AND t.currency = ${currency}
-          AND t.date >= ${start} AND t.date < ${end}
-          AND COALESCE(g.kind, 'expense') = 'expense'
-        GROUP BY c.id, c.name, c.icon, g.id, g.name, g.color
-        ORDER BY spent_minor DESC`
-      );
-
-      return rows.map(row => ({
-        categoryId: row.category_id,
-        categoryName: row.category_name ?? 'Uncategorized',
-        icon: row.icon ?? 'CircleHelp',
-        groupId: row.group_id,
-        groupName: row.group_name ?? 'Uncategorized',
-        color: row.color ?? Colors.uncategorized,
-        spentMinor: Number(row.spent_minor),
-      }));
-    },
-
     async netWorth(userId: string): Promise<NetWorthBucket[]> {
       const rows = await query<{
-        currency: string;
         assets_minor: string;
+        currency: string;
         liabilities_minor: string;
       }>(
         db,
@@ -226,44 +270,10 @@ export const createReportService = (db: Db) => {
       );
 
       return rows.map(row => ({
-        currency: row.currency,
         assetsMinor: Number(row.assets_minor),
+        currency: row.currency,
         liabilitiesMinor: Number(row.liabilities_minor),
         netMinor: Number(row.assets_minor) + Number(row.liabilities_minor),
-      }));
-    },
-
-    /** Income and spending per month for the last `months` months (inclusive of `month`). */
-    async cashFlow(userId: string, month: string, months = 8): Promise<CashPoint[]> {
-      const { end } = monthRange(month);
-      const [year, monthIndex] = month.split('-').map(Number);
-      const start = new Date(Date.UTC(year, monthIndex - months, 1)).toISOString().slice(0, 10);
-
-      const rows = await query<{
-        month: string;
-        currency: string;
-        income_minor: string;
-        spending_minor: string;
-      }>(
-        db,
-        sql`
-        SELECT to_char(date_trunc('month', t.date), 'YYYY-MM') AS month, t.currency,
-          COALESCE(SUM(t.amount_minor) FILTER (WHERE g.kind = 'income' OR (g.kind IS NULL AND t.amount_minor > 0)), 0) AS income_minor,
-          COALESCE(-SUM(t.amount_minor) FILTER (WHERE g.kind = 'expense' OR (g.kind IS NULL AND t.amount_minor < 0)), 0) AS spending_minor
-        FROM transactions t
-        JOIN accounts a ON a.id = t.account_id
-        LEFT JOIN categories c ON c.id = t.category_id
-        LEFT JOIN category_groups g ON g.id = c.group_id
-        WHERE t.user_id = ${userId} AND ${spendingWhere}
-          AND t.date >= ${start} AND t.date < ${end}
-        GROUP BY 1, 2 ORDER BY 1, 2`
-      );
-
-      return rows.map(row => ({
-        month: row.month,
-        currency: row.currency,
-        incomeMinor: Number(row.income_minor),
-        spendingMinor: Number(row.spending_minor),
       }));
     },
   };

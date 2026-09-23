@@ -37,12 +37,12 @@ Schema    src/db/schema.ts                 Drizzle tables/enums; migrations in d
 | --- | --- |
 | accounts | `list` (balances via subquery), `get`, `create` (opening balance row), `update` (currency lock), `archive`, `remove`, `owned` |
 | categories | `tree`, `createGroup/updateGroup/archiveGroup/reorderGroups`, `createCategory/updateCategory/reorderCategories/archiveCategory/restoreCategory` |
-| ledger | `list` (joins + filters), `get`, `createStandard`, `updateStandard`, `remove`, `setStatus`, `createTransfer`, `updateTransfer`, `linkAsTransfer`, `needsReviewCount` |
+| ledger | `list` (joins + filters), `get`, `createStandard`, `updateStandard`, `remove`, `setStatus`, `createTransfer`, `updateTransfer`, `linkAsTransfer`, `needsReviewCount`. Split across `ledger/service.ts` (factory), `queries.ts` (`list`, `buildListWhere`, `monthRange`), `standard.ts` (standard rows, remove, status), `transfers.ts` (paired legs), `guards.ts` (ownership, editability, amount checks), `types.ts` |
 | payees | `list`, `create`, `findOrCreate`, `update`, `archive`, `learnDefaultCategory` (2 of last 3) |
 | reports | `monthlyTotals`, `breakdownByGroup`, `breakdownByCategory`, `netWorth`, `cashFlow`, `convertedTotals` |
 | fx | `list`, `upsert`, `remove`, `getRate` (direct then inverse, via `RateProvider[]`), `convert` |
 | rules | `list`, `create`, `remove`, `match`, `applyToUncategorized` |
-| imports | `preview` (classify: new/matched/duplicate/invalid, suggest category), `commit`, `transferSuggestions` |
+| imports | `preview` (classify: new/matched/duplicate/invalid, suggest category), `commit`, `transferSuggestions`. `import/service.ts` holds the DB queries and the factory; the pure row helpers (`resolveColumns`, `parseRow`, `buildImportId`, `findMatch`, `classifyRow`) live in `import/preview.ts`, the CSV scanner in `import/csv.ts` |
 | budgets | `list` (with spent), `upsert`, `remove`, `copyFromPreviousMonth` |
 
 ## Bootstrap

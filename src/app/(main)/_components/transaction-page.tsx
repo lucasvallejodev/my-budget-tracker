@@ -1,24 +1,26 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/primitives/button';
-import TransactionDialog from './transaction-dialog';
 import { Plus } from 'lucide-react';
-import { currentMonth, useTransactions } from '@/components/finance/use-finance-data';
-import { PageHeading, EmptyState } from '@/components/finance/blocks';
-import { TransactionExplorer } from '@/components/finance/transaction-explorer';
+import { useState } from 'react';
+
+import { PageHeading, QueryContent } from '@/components/finance/blocks';
+import styles from '@/components/finance/finance.module.scss';
 import { MonthPicker } from '@/components/finance/overview';
-import s from '@/components/finance/finance.module.scss';
+import { TransactionExplorer } from '@/components/finance/transaction-explorer';
+import { currentMonth, useTransactions } from '@/components/finance/use-finance-data';
+import { Button } from '@/components/primitives/button';
+
+import TransactionDialog from './transaction-dialog';
 
 export default function TransactionsPage({ initialSearch = '' }: { initialSearch?: string }) {
   const [month, setMonth] = useState<string | undefined>(
     initialSearch ? undefined : currentMonth()
   );
 
-  const transactions = useTransactions({ month, limit: '2000' });
+  const transactions = useTransactions({ limit: '2000', month });
 
   return (
-    <div className={s.page}>
+    <div className={styles.page}>
       <PageHeading
         title="Transactions"
         description="View, filter, and manage your financial activity in one place."
@@ -47,16 +49,20 @@ export default function TransactionsPage({ initialSearch = '' }: { initialSearch
           </>
         }
       />
-      {transactions.isPending ? (
-        <p role="status">Loading transactions…</p>
-      ) : transactions.isError ? (
-        <EmptyState
-          title="Could not load transactions"
-          action={<Button onClick={() => void transactions.refetch()}>Try again</Button>}
-        />
-      ) : (
-        <TransactionExplorer transactions={transactions.data || []} initialSearch={initialSearch} />
-      )}
+      <QueryContent
+        pending={transactions.isPending}
+        error={transactions.isError}
+        loading="Loading transactions…"
+        errorTitle="Could not load transactions"
+        onRetry={() => void transactions.refetch()}
+      >
+        {() => (
+          <TransactionExplorer
+            transactions={transactions.data ?? []}
+            initialSearch={initialSearch}
+          />
+        )}
+      </QueryContent>
     </div>
   );
 }

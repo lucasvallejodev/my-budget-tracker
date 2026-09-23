@@ -1,10 +1,12 @@
 import { and, desc, eq, lte } from 'drizzle-orm';
+
 import { exchangeRates } from '@/db/schema';
-import { Db, ServiceError } from '../db';
 import { convertMinor } from '@/lib/money';
+import { isIsoDate } from '@/lib/patterns';
+
+import { Db, ServiceError } from '../db';
 import { RateProvider, RateQuote } from './provider';
 
-/** Rates the user typed in by hand (Settings → Currencies). */
 export class ManualRateProvider implements RateProvider {
   readonly name = 'manual';
   constructor(private readonly db: Db) {}
@@ -27,9 +29,9 @@ export class ManualRateProvider implements RateProvider {
 
     return {
       base,
+      date: row.date,
       quote,
       rate: Number(row.rate),
-      date: row.date,
       source: row.source,
     };
   }
@@ -50,16 +52,15 @@ export const createFxService = (
       const direct = await provider.getRate(userId, base, quote, date);
 
       if (direct) return direct;
-      // The inverse pair is looked up on purpose: 1 / (quote->base) gives base->quote.
       // eslint-disable-next-line sonarjs/arguments-order
       const inverse = await provider.getRate(userId, quote, base, date);
 
       if (inverse && inverse.rate !== 0) {
         return {
           base,
+          date: inverse.date,
           quote,
           rate: 1 / inverse.rate,
-          date: inverse.date,
           source: `${inverse.source} (inverse)`,
         };
       }
@@ -69,88 +70,14 @@ export const createFxService = (
   };
 
   return {
-    providers,
-    async list(userId: string) {
-      return (
-        await db
-          .select()
-          .from(exchangeRates)
-          .where(eq(exchangeRates.userId, userId))
-          .orderBy(desc(exchangeRates.date), exchangeRates.base, exchangeRates.quote)
-      ).map(row => ({ ...row, rate: Number(row.rate) }));
-    },
-    async upsert(
-      userId: string,
-      data: {
-        base: string;
-        quote: string;
-        date: string;
-        rate: number;
-        source?: string;
-      }
-    ) {
-      const base = data.base.toUpperCase();
-      const quote = data.quote.toUpperCase();
-
-      if (base === quote) throw new ServiceError('Choose two different currencies');
-
-      if (!Number.isFinite(data.rate) || data.rate <= 0) {
-        throw new ServiceError('The rate must be a positive number');
-      }
-
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) throw new ServiceError('Date must be YYYY-MM-DD');
-
-      const [row] = await db
-        .insert(exchangeRates)
-        .values({
-          userId,
-          base,
-          quote,
-          date: data.date,
-          rate: String(data.rate),
-          source: data.source ?? 'manual',
-        })
-        .onConflictDoUpdate({
-          target: [
-            exchangeRates.userId,
-            exchangeRates.base,
-            exchangeRates.quote,
-            exchangeRates.date,
-          ],
-          set: { rate: String(data.rate), source: data.source ?? 'manual' },
-        })
-        .returning();
-
-      return { ...row, rate: Number(row.rate) };
-    },
-    async remove(
-      userId: string,
-      key: {
-        base: string;
-        quote: string;
-        date: string;
-      }
-    ) {
-      await db
-        .delete(exchangeRates)
-        .where(
-          and(
-            eq(exchangeRates.userId, userId),
-            eq(exchangeRates.base, key.base.toUpperCase()),
-            eq(exchangeRates.quote, key.quote.toUpperCase()),
-            eq(exchangeRates.date, key.date)
-          )
-        );
-    },
-    /** Rate for `date` (most recent on or before), trying direct then inverse pairs across providers. */
-    getRate: lookup,
-    /** Converts an amount; when no rate exists the amount is returned unconverted with `rate: null`. */
     async convert(
       userId: string,
-      amountMinor: number,
-      from: string,
-      to: string,
-      date: string
+      {
+        amountMinor,
+        date,
+        from,
+        to,
+      }: { amountMinor: number; date: string; from: string; to: string }
     ): Promise<Conversion> {
       if (from === to) {
         return {
@@ -175,6 +102,80 @@ export const createFxService = (
         currency: to,
         rate,
       };
+    },
+    getRate: lookup,
+    async list(userId: string) {
+      return (
+        await db
+          .select()
+          .from(exchangeRates)
+          .where(eq(exchangeRates.userId, userId))
+          .orderBy(desc(exchangeRates.date), exchangeRates.base, exchangeRates.quote)
+      ).map(row => ({ ...row, rate: Number(row.rate) }));
+    },
+    providers,
+    async remove(
+      userId: string,
+      key: {
+        base: string;
+        date: string;
+        quote: string;
+      }
+    ) {
+      await db
+        .delete(exchangeRates)
+        .where(
+          and(
+            eq(exchangeRates.userId, userId),
+            eq(exchangeRates.base, key.base.toUpperCase()),
+            eq(exchangeRates.quote, key.quote.toUpperCase()),
+            eq(exchangeRates.date, key.date)
+          )
+        );
+    },
+    async upsert(
+      userId: string,
+      data: {
+        base: string;
+        date: string;
+        quote: string;
+        rate: number;
+        source?: string;
+      }
+    ) {
+      const base = data.base.toUpperCase();
+      const quote = data.quote.toUpperCase();
+
+      if (base === quote) throw new ServiceError('Choose two different currencies');
+
+      if (!Number.isFinite(data.rate) || data.rate <= 0) {
+        throw new ServiceError('The rate must be a positive number');
+      }
+
+      if (!isIsoDate(data.date)) throw new ServiceError('Date must be YYYY-MM-DD');
+
+      const [row] = await db
+        .insert(exchangeRates)
+        .values({
+          base,
+          date: data.date,
+          quote,
+          rate: String(data.rate),
+          source: data.source ?? 'manual',
+          userId,
+        })
+        .onConflictDoUpdate({
+          set: { rate: String(data.rate), source: data.source ?? 'manual' },
+          target: [
+            exchangeRates.userId,
+            exchangeRates.base,
+            exchangeRates.quote,
+            exchangeRates.date,
+          ],
+        })
+        .returning();
+
+      return { ...row, rate: Number(row.rate) };
     },
   };
 };

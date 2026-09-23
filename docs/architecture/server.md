@@ -20,12 +20,12 @@ services.bootstrap(userId) · listCurrencies() · getSettings(userId) · updateS
 | --- | --- | --- |
 | `accounts` | `src/server/accounts/service.ts` | list with computed balances, create (with optional opening balance), update (currency lock), archive, delete, `owned()` guard |
 | `categories` | `src/server/categories/service.ts` | tree with transaction counts, groups and categories CRUD, reorder, archive with move-or-review, restore |
-| `ledger` | `src/server/ledger/service.ts` | list with joins and filters, create/update/delete standard rows, create/update transfers, link two rows as a transfer, status changes, needs-review count |
+| `ledger` | `src/server/ledger/` (`service.ts` composes `queries.ts`, `standard.ts`, `transfers.ts`, `guards.ts`, `types.ts`) | list with joins and filters, create/update/delete standard rows, create/update transfers, link two rows as a transfer, status changes, needs-review count |
 | `payees` | `src/server/payees/service.ts` | list, create, find-or-create (import), update, archive, learn default category |
 | `reports` | `src/server/reports/service.ts` | monthly totals, breakdown by group and by category, net worth, cash flow, converted totals |
 | `fx` | `src/server/fx/service.ts` | manual rates CRUD, rate lookup through providers, conversion |
 | `rules` | `src/server/rules/service.ts` | rules CRUD, match texts, apply to uncategorised rows |
-| `imports` | `src/server/import/service.ts` | CSV preview (classify rows), commit, transfer suggestions |
+| `imports` | `src/server/import/service.ts` (DB access and factory), `preview.ts` (pure mapping, parsing and classification), `csv.ts` (parser) | CSV preview (classify rows), commit, transfer suggestions |
 | `budgets` | `src/server/budgets/service.ts` | monthly limits per category and currency, spent comparison, copy previous month |
 
 Seeding lives in `src/server/categories/seed.ts` with the taxonomy in `default-taxonomy.ts`.

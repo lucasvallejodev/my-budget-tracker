@@ -1,11 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+
 import { getServices } from '../services';
 
-/**
- * Resolves the signed-in Clerk user, makes sure their settings and default categories exist,
- * and returns the user id together with the service layer.
- */
 export const requireUser = async () => {
   const { userId } = await auth();
 
@@ -14,5 +11,5 @@ export const requireUser = async () => {
 
   await services.bootstrap(userId);
 
-  return { userId, services };
+  return { services, userId };
 };

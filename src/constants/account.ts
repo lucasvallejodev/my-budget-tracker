@@ -1,11 +1,11 @@
 export const AccountTypes = [
-  { value: 'checking', label: 'Checking' },
-  { value: 'savings', label: 'Savings' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'credit_card', label: 'Credit card' },
-  { value: 'loan', label: 'Loan' },
-  { value: 'investment', label: 'Investment' },
-  { value: 'other', label: 'Other' },
+  { label: 'Checking', value: 'checking' },
+  { label: 'Savings', value: 'savings' },
+  { label: 'Cash', value: 'cash' },
+  { label: 'Credit card', value: 'credit_card' },
+  { label: 'Loan', value: 'loan' },
+  { label: 'Investment', value: 'investment' },
+  { label: 'Other', value: 'other' },
 ] as const;
 
 export type AccountTypeValue = (typeof AccountTypes)[number]['value'];

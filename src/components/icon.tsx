@@ -1,18 +1,18 @@
 import { Icons, isIconName } from './icons/registry';
 
 type IconProps = {
-  icon?: string | null;
-  color?: string;
-  size?: number;
   className?: string;
+  color?: string;
+  icon?: string | null;
+  size?: number;
   strokeWidth?: number;
 };
 
 export const Icon: React.FC<IconProps> = ({
-  icon,
-  color = 'currentColor',
-  size = 20,
   className = '',
+  color = 'currentColor',
+  icon,
+  size = 20,
   strokeWidth = 2,
 }) => {
   const IconComponent = icon && isIconName(icon) ? Icons[icon] : Icons.CircleHelp;

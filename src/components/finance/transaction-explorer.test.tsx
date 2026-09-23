@@ -1,10 +1,11 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TransactionExplorer } from './transaction-explorer';
-import { SampleTransactions } from './sample-data';
+
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../primitives/dialog';
+import { SampleTransactions } from './sample-data';
+import { TransactionExplorer } from './transaction-explorer';
 
 afterEach(() => {
   cleanup();
@@ -62,7 +63,7 @@ describe('Finance controls', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open test dialog' }));
     expect(screen.getByRole('dialog', { name: 'Test dialog' })).toBeTruthy();
-    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape', code: 'Escape' });
+    fireEvent.keyDown(document.activeElement ?? document.body, { code: 'Escape', key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
   it('does not submit forms from incidental buttons', () => {

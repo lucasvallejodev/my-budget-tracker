@@ -1,29 +1,30 @@
 'use client';
 
-import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
-import { Button } from '../primitives/button';
-import { formatMoney } from '@/lib/money';
-import { AccountSummary } from './use-finance-data';
-import type { NetWorthBucket } from '@/server/reports/service';
-import s from './finance.module.scss';
+import Link from 'next/link';
 
-/** One net-worth card per currency: assets, liabilities and net. Currencies are never summed. */
+import { formatMoney } from '@/lib/money';
+import type { NetWorthBucket } from '@/server/reports/service';
+
+import { Button } from '../primitives/button';
+import styles from './finance.module.scss';
+import { AccountSummary } from './use-finance-data';
+
 export function NetWorthCards({
-  buckets,
   accounts,
+  buckets,
 }: {
-  buckets: NetWorthBucket[];
   accounts: AccountSummary[];
+  buckets: NetWorthBucket[];
 }) {
   if (!buckets.length) {
     return (
-      <section className={s.balance}>
-        <div className={s.balanceTitle}>
+      <section className={styles.balance}>
+        <div className={styles.balanceTitle}>
           <h2>Net worth</h2>
         </div>
-        <p className={s.muted}>Add an account to see your net worth.</p>
-        <div className={s.actions}>
+        <p className={styles.muted}>Add an account to see your net worth.</p>
+        <div className={styles.actions}>
           <Button asChild variant="secondary">
             <Link href="/accounts">
               Accounts
@@ -38,29 +39,31 @@ export function NetWorthCards({
   return (
     <>
       {buckets.map(bucket => {
-        const count = accounts.filter(a => a.currency === bucket.currency).length;
+        const count = accounts.filter(account => account.currency === bucket.currency).length;
 
         return (
-          <section className={s.balance} key={bucket.currency}>
-            <div className={s.balanceTitle}>
+          <section className={styles.balance} key={bucket.currency}>
+            <div className={styles.balanceTitle}>
               <h2>Net worth</h2>
               <span>{bucket.currency}</span>
             </div>
             <div>
-              <p className={s.muted}>
+              <p className={styles.muted}>
                 {count} account{count === 1 ? '' : 's'} in {bucket.currency}
               </p>
-              <div className={s.metricValue}>{formatMoney(bucket.netMinor, bucket.currency)}</div>
+              <div className={styles.metricValue}>
+                {formatMoney(bucket.netMinor, bucket.currency)}
+              </div>
             </div>
-            <div className={s.balanceTitle}>
-              <span className={s.muted}>
+            <div className={styles.balanceTitle}>
+              <span className={styles.muted}>
                 Assets {formatMoney(bucket.assetsMinor, bucket.currency)}
               </span>
-              <span className={s.muted}>
+              <span className={styles.muted}>
                 Owed {formatMoney(-bucket.liabilitiesMinor, bucket.currency)}
               </span>
             </div>
-            <div className={s.actions}>
+            <div className={styles.actions}>
               <Button asChild variant="secondary">
                 <Link href="/accounts">
                   View accounts

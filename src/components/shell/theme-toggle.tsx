@@ -2,6 +2,7 @@
 
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
 import { Button } from '../primitives/button';
 
 export function applyTheme(theme: string) {

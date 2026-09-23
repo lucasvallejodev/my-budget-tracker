@@ -1,7 +1,8 @@
 'use client';
 
-import { EntityPicker, EntityPickerProps } from '@/components/primitives/entity-picker';
 import { useAccounts } from '@/components/finance/use-finance-data';
+import { EntityPicker, EntityPickerProps } from '@/components/primitives/entity-picker';
+
 import CreateAccountDialog from './create-account-dialog';
 
 export default function AccountPicker(props: EntityPickerProps) {
