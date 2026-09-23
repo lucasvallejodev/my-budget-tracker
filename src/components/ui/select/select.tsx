@@ -18,13 +18,24 @@ export function SelectLabel(props: ComponentProps<typeof RadixSelect.Label>) {
   return <RadixSelect.Label className="select__label" {...props} />;
 }
 
+type SelectTriggerVariant = 'field' | 'pill';
+
+const TriggerVariantClassNames: Record<SelectTriggerVariant, string> = {
+  field: '',
+  pill: 'select__trigger--pill',
+};
+
 export function SelectTrigger({
   children,
   className,
+  variant = 'field',
   ...props
-}: ComponentProps<typeof RadixSelect.Trigger>) {
+}: ComponentProps<typeof RadixSelect.Trigger> & { variant?: SelectTriggerVariant }) {
   return (
-    <RadixSelect.Trigger className={cn('select__trigger', className)} {...props}>
+    <RadixSelect.Trigger
+      className={cn('select__trigger', TriggerVariantClassNames[variant], className)}
+      {...props}
+    >
       {children}
       <RadixSelect.Icon>
         <ChevronDown size={16} />

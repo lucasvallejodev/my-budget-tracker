@@ -7,10 +7,17 @@ import { Button, Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/com
 import { SampleTransactions } from '../sample-data';
 import { TransactionExplorer } from './transaction-explorer';
 
+Element.prototype.scrollIntoView = vi.fn();
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
 });
+
+function chooseOption(label: string, option: string) {
+  fireEvent.keyDown(screen.getByRole('combobox', { name: label }), { key: 'Enter' });
+  fireEvent.click(screen.getByRole('option', { name: option }));
+}
 
 function renderExplorer() {
   const client = new QueryClient();
@@ -33,7 +40,7 @@ describe('Finance controls', () => {
     expect(screen.queryAllByRole('row').some(row => row.textContent?.includes('Groceries'))).toBe(
       false
     );
-    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'EXPENSE' } });
+    chooseOption('Type', 'Expense');
     expect(screen.getByText('No transactions found')).toBeTruthy();
   });
   it('combines date and status filters and formats signed amounts', () => {
@@ -42,7 +49,7 @@ describe('Finance controls', () => {
     renderExplorer();
     fireEvent.click(screen.getByLabelText('From'));
     fireEvent.click(screen.getByRole('button', { name: /Sunday, September 27th, 2026/ }));
-    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'cleared' } });
+    chooseOption('Status', 'Cleared');
     expect(screen.queryAllByRole('row').some(row => row.textContent?.includes('Groceries'))).toBe(
       true
     );

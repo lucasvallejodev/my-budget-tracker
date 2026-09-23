@@ -62,11 +62,10 @@ function Choice({
   return (
     <Field>
       {label}
-      <PillSelect onChange={event => onChange?.(event.target.value)}>
-        {options.map(option => (
-          <option key={option}>{option}</option>
-        ))}
-      </PillSelect>
+      <PillSelect
+        onValueChange={onChange}
+        options={options.map(option => ({ label: option, value: option }))}
+      />
     </Field>
   );
 }

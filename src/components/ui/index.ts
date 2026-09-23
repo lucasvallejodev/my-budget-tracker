@@ -53,6 +53,7 @@ export { Page } from './page';
 export { PageHeading } from './page-heading';
 export { Pagination } from './pagination';
 export { Panel } from './panel';
+export type { PillSelectOption, PillSelectProps } from './pill-input';
 export { PillInput, PillSelect } from './pill-input';
 export { Popover, PopoverContent, PopoverTrigger } from './popover';
 export { ProgressBar } from './progress-bar';

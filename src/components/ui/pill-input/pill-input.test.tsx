@@ -15,13 +15,21 @@ describe('PillInput', () => {
     expect(onChange).toHaveBeenCalledOnce();
   });
 
-  it('renders a native select', () => {
+  it('renders a styled select showing the current option', () => {
     render(
-      <PillSelect aria-label="Type">
-        <option>Income</option>
-      </PillSelect>
+      <PillSelect
+        aria-label="Type"
+        value=""
+        options={[
+          { label: 'All types', value: '' },
+          { label: 'Income', value: 'INCOME' },
+        ]}
+      />
     );
 
-    expect(screen.getByRole('combobox', { name: 'Type' })).toBeTruthy();
+    const trigger = screen.getByRole('combobox', { name: 'Type' });
+
+    expect(trigger.textContent).toContain('All types');
+    expect(trigger.className).toContain('select__trigger--pill');
   });
 });

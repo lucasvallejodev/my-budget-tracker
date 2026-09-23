@@ -14,6 +14,7 @@ import {
   Panel,
   PillInput,
   PillSelect,
+  PillSelectOption,
 } from '@/components/ui';
 
 import { exportTransactions } from '../export-transactions';
@@ -35,6 +36,14 @@ const statusOf = (transaction: TransactionRow) =>
   transaction.needsReview ? 'Needs review' : transaction.status;
 
 const capitalize = (label: string) => label[0].toUpperCase() + label.slice(1);
+
+const TypeOptions: PillSelectOption[] = [
+  { label: 'All types', value: '' },
+  { label: 'Income', value: 'INCOME' },
+  { label: 'Expense', value: 'EXPENSE' },
+  { label: 'Transfer', value: 'TRANSFER' },
+  { label: 'Opening balance', value: 'OPENING' },
+];
 
 export function TransactionExplorer({
   initialSearch = '',
@@ -101,35 +110,35 @@ export function TransactionExplorer({
         <DatePicker label="To" value={to} min={from} onChange={value => update(setTo, value)} />
         <Field variant="filter">
           Category
-          <PillSelect value={category} onChange={event => update(setCategory, event.target.value)}>
-            <option value="">All categories</option>
-            {[...new Set(transactions.map(categoryLabel))]
-              .sort((left, right) => left.localeCompare(right))
-              .map(label => (
-                <option key={label}>{label}</option>
-              ))}
-          </PillSelect>
+          <PillSelect
+            value={category}
+            onValueChange={value => update(setCategory, value)}
+            options={[
+              { label: 'All categories', value: '' },
+              ...[...new Set(transactions.map(categoryLabel))]
+                .sort((left, right) => left.localeCompare(right))
+                .map(label => ({ label, value: label })),
+            ]}
+          />
         </Field>
         <Field variant="filter">
           Type
-          <PillSelect value={type} onChange={event => update(setType, event.target.value)}>
-            <option value="">All types</option>
-            <option value="INCOME">Income</option>
-            <option value="EXPENSE">Expense</option>
-            <option value="TRANSFER">Transfer</option>
-            <option value="OPENING">Opening balance</option>
-          </PillSelect>
+          <PillSelect
+            value={type}
+            onValueChange={value => update(setType, value)}
+            options={TypeOptions}
+          />
         </Field>
         <Field variant="filter">
           Status
-          <PillSelect value={status} onChange={event => update(setStatus, event.target.value)}>
-            <option value="">All statuses</option>
-            {Statuses.map(label => (
-              <option key={label} value={label}>
-                {capitalize(label)}
-              </option>
-            ))}
-          </PillSelect>
+          <PillSelect
+            value={status}
+            onValueChange={value => update(setStatus, value)}
+            options={[
+              { label: 'All statuses', value: '' },
+              ...Statuses.map(label => ({ label: capitalize(label), value: label })),
+            ]}
+          />
         </Field>
       </FilterBar>
       {filtered.length ? (

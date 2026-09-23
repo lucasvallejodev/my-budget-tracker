@@ -24,7 +24,7 @@ Decide where a component goes:
 2. Used by two or more components of one module → its own folder in that module.
 3. Domain-free or used outside its module → `ui/<name>/`.
 
-Before writing markup, check `ui/index.ts` for an existing component: layout (`Page`, `PageHeading`, `Stack`, `Cluster`, `Grid`, `Columns`, `Panel`), content (`Text`, `Badge`, `Notice`, `EmptyState`, `MetricValue`, `IconTile`, `ColorSwatch`, `ListRow`, `DescriptionList`, `Table`, `ProgressBar`, `Pagination`), forms (`Field`, `FormStack`, `FilterBar`, `PillInput`, `PillSelect`, `Input`, `Select`, `DatePicker`, `ToggleSwitch`, `form` / `form-fields` helpers), overlays (`Dialog`, `Popover`, `Menu`, `Command`), data (`Amount`, `QueryContent`). Extend a component with a prop or modifier rather than adding a lookalike.
+Before writing markup, check `ui/index.ts` for an existing component: layout (`Page`, `PageHeading`, `Stack`, `Cluster`, `Grid`, `Columns`, `Panel`), content (`Text`, `Badge`, `Notice`, `EmptyState`, `MetricValue`, `IconTile`, `ColorSwatch`, `ListRow`, `DescriptionList`, `Table`, `ProgressBar`, `Pagination`), forms (`Field`, `FormStack`, `FilterBar`, `PillInput`, `PillSelect` (pill `Select`; never a native `<select>`), `Input`, `Select`, `DatePicker`, `ToggleSwitch`, `form` / `form-fields` helpers), overlays (`Dialog`, `Popover`, `Menu`, `Command`), data (`Amount`, `QueryContent`). Extend a component with a prop or modifier rather than adding a lookalike.
 
 ## Folder contract
 
