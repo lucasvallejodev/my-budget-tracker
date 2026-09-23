@@ -1,0 +1,29 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .command {
+    @include flex-column(5px);
+
+    &__input {
+      @include text-field;
+    }
+
+    &__list {
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    &__item {
+      @include option-item("[data-selected='true']");
+
+      padding: space(2) + 2px;
+      border-radius: radius(sm);
+    }
+
+    &__empty {
+      padding: space(5);
+      text-align: center;
+      color: var(--muted);
+    }
+  }
+}

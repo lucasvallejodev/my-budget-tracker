@@ -15,7 +15,7 @@ Full documentation lives in [`docs/`](docs/README.md) and is served as a Docsify
 
 | Folder | What is inside |
 | --- | --- |
-| `src/` | The application. `app/` (Next.js routes, server actions, API route handlers), `components/` (screens, primitives, shell, icons), `server/` (domain services: accounts, categories, ledger, payees, reports, fx, import, rules, budgets), `db/` (Drizzle schema and connection), `schema/` (Zod input schemas), `lib/` (money, dates, styles helpers). Details in [docs/getting-started/project-structure.md](docs/getting-started/project-structure.md). |
+| `src/` | The application. `app/` (Next.js routes, server actions, API route handlers), `components/` (`ui/` shared building blocks, `finance/` components and screens, `shell/`; one folder per component with a BEM stylesheet), `styles/` (colour tokens, breakpoint mixins and SCSS abstractions), `server/` (domain services: accounts, categories, ledger, payees, reports, fx, import, rules, budgets), `db/` (Drizzle schema and connection), `schema/` (Zod input schemas), `lib/` (money, dates, styles helpers). Details in [docs/getting-started/project-structure.md](docs/getting-started/project-structure.md). |
 | `drizzle/` | SQL migrations and Drizzle snapshots. Apply with `npm run db:migrate`. |
 | `scripts/` | Database schema check (`npm run db:check`) and local ESLint rules (`scripts/eslint-rules/`). |
 | `e2e/` | Playwright tests (`npm run test:e2e`) and `playwright.config.ts` at the root. |

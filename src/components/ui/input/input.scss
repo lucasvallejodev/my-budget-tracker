@@ -1,0 +1,7 @@
+@use 'abstracts' as *;
+
+@layer ui.base {
+  .input {
+    @include text-field;
+  }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ISO_MONTH_LENGTH } from '@/constants/time';
 import type { BudgetRow } from '@/server/budgets/service';
@@ -184,4 +184,11 @@ export function monthLabel(month: string) {
     timeZone: 'UTC',
     year: 'numeric',
   });
+}
+
+export function useRefreshFinance() {
+  const queryClient = useQueryClient();
+
+  return () =>
+    Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
 }

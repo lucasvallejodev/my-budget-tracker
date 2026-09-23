@@ -1,0 +1,13 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .menu {
+    @include floating-panel(240px);
+
+    z-index: 90;
+
+    &__item {
+      @include option-item('[data-highlighted]');
+    }
+  }
+}

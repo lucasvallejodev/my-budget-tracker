@@ -4,17 +4,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { AccountSummary, useCurrencies, useSettings } from '@/components/finance/use-finance-data';
-import styles from '@/components/forms.module.scss';
+import { AccountSummary, useCurrencies, useSettings } from '@/components/finance';
 import {
+  CreateNewTrigger,
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFormFooter,
   DialogTitle,
   DialogTrigger,
-} from '@/components/primitives/dialog';
-import { CreateNewTrigger, DialogFormFooter, saveLabel } from '@/components/primitives/dialog-form';
-import { Form } from '@/components/primitives/form';
+  Form,
+  FormStack,
+  saveLabel,
+} from '@/components/ui';
 import { accountFormSchema, AccountFormValues } from '@/schema/accounts';
 
 import { accountDefaults, AccountFormFields, saveAccount } from './account-fields';
@@ -76,13 +78,13 @@ function CreateAccountDialog({
           Each account has one currency. Credit cards and loans are liabilities: money you owe.
         </DialogDescription>
         <Form {...form}>
-          <form className={styles.form} onSubmit={submit}>
+          <FormStack onSubmit={submit}>
             <AccountFormFields
               control={form.control}
               account={account}
               currencies={currencies ?? []}
             />
-          </form>
+          </FormStack>
         </Form>
         <DialogFormFooter
           isPending={isPending}

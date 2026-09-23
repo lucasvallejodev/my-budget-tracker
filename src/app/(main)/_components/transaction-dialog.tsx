@@ -5,12 +5,17 @@ import { format } from 'date-fns';
 import { ReactNode, useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import { TransactionRow, useAccounts, usePayees } from '@/components/finance/use-finance-data';
-import styles from '@/components/forms.module.scss';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/primitives/dialog';
-import { DialogFormFooter, saveLabel } from '@/components/primitives/dialog-form';
-import { Form } from '@/components/primitives/form';
+import { TransactionRow, useAccounts, usePayees } from '@/components/finance';
 import {
+  Dialog,
+  DialogContent,
+  DialogFormFooter,
+  DialogTitle,
+  DialogTrigger,
+  Field,
+  Form,
+  FormStack,
+  saveLabel,
   Select,
   SelectContent,
   SelectGroup,
@@ -18,7 +23,8 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/primitives/select';
+  Stack,
+} from '@/components/ui';
 import { minorToDecimalString } from '@/lib/money';
 import {
   standardTransactionSchema,
@@ -139,12 +145,10 @@ function ModeSelect({
   value: Mode;
 }) {
   return (
-    <div className={styles.field}>
-      <label className={styles.muted} htmlFor="transaction-mode">
-        Type
-      </label>
+    <Field as="div">
+      <label htmlFor="transaction-mode">Type</label>
       <Select value={value} disabled={disabled} onValueChange={mode => onChange(mode as Mode)}>
-        <SelectTrigger id="transaction-mode" className={styles.full}>
+        <SelectTrigger id="transaction-mode">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -156,7 +160,7 @@ function ModeSelect({
           </SelectGroup>
         </SelectContent>
       </Select>
-    </div>
+    </Field>
   );
 }
 
@@ -187,7 +191,7 @@ export default function TransactionDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent>
         <DialogTitle>{editing ? 'Edit transaction' : 'New transaction'}</DialogTitle>
-        <div className={styles.form}>
+        <Stack gap="medium">
           <ModeSelect value={mode} disabled={editing} onChange={setModeOverride} />
           {mode === 'transfer' ? (
             <TransferForm key={formKey} transaction={transaction} preset={preset} onDone={close} />
@@ -200,7 +204,7 @@ export default function TransactionDialog({
               onDone={close}
             />
           )}
-        </div>
+        </Stack>
       </DialogContent>
     </Dialog>
   );
@@ -251,7 +255,7 @@ function StandardForm({
 
   return (
     <Form {...form}>
-      <form className={styles.form} onSubmit={form.handleSubmit(values => mutate(values))}>
+      <FormStack onSubmit={form.handleSubmit(values => mutate(values))}>
         <AccountField
           control={form.control}
           name="accountId"
@@ -281,7 +285,7 @@ function StandardForm({
           submitLabel={saveLabel(!!transaction)}
           onCancel={() => form.reset()}
         />
-      </form>
+      </FormStack>
     </Form>
   );
 }
@@ -327,7 +331,7 @@ function TransferForm({
 
   return (
     <Form {...form}>
-      <form className={styles.form} onSubmit={form.handleSubmit(values => mutate(values))}>
+      <FormStack onSubmit={form.handleSubmit(values => mutate(values))}>
         <AccountField
           control={form.control}
           name="fromAccountId"
@@ -361,7 +365,7 @@ function TransferForm({
           submitLabel={saveLabel(!!transaction, 'Record transfer')}
           onCancel={() => form.reset()}
         />
-      </form>
+      </FormStack>
     </Form>
   );
 }

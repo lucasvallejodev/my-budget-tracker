@@ -1,4 +1,4 @@
-import { BudgetOverview } from '@/components/finance/budgets';
+import { BudgetOverview } from '@/components/finance';
 
 export default function Page() {
   return <BudgetOverview />;

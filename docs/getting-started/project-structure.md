@@ -32,15 +32,12 @@ src/
 │  │  └─ routes.ts         Sidebar navigation entries
 │  ├─ api/                 Route handlers (read endpoints consumed by React Query)
 │  ├─ layout.tsx           Root layout with Clerk and React Query providers
-│  └─ globals.scss         Global styles and theme tokens
-├─ components/
-│  ├─ finance/             Feature screens (overview, budgets, import wizard, category manager, …)
-│  ├─ primitives/          Buttons, inputs, dialogs, selects, calendar, form helpers (Radix-based)
-│  ├─ shell/               Application shell: sidebar, top bar, theme toggle
-│  ├─ icons/               Curated lucide icon registry and icon picker
-│  ├─ money/               The Amount component
-│  ├─ category-picker.tsx  Grouped category picker dialog
-│  └─ transaction-table.tsx Shared transaction table and row labelling helpers
+│  └─ globals.scss         Resets (in @layer reset) and the cascade-layer order
+├─ components/             One folder per component: <name>.tsx, <name>.test.tsx, index.ts, <name>.scss
+│  ├─ ui/                  Project-wide building blocks: layout, content, form controls, dialogs (Radix-based)
+│  ├─ finance/             Finance components and screens, plus use-finance-data.ts and sample-data.ts
+│  ├─ shell/               Application shell, auth screen, logo, theme toggle
+│  └─ structure.test.ts    Checks the folder contract
 ├─ server/                 Domain services (business rules and SQL), one folder per domain
 │  ├─ accounts/ categories/ ledger/ payees/ reports/ fx/ import/ rules/ budgets/
 │  ├─ auth/require-user.ts Resolves the Clerk user and bootstraps their data
@@ -52,10 +49,11 @@ src/
 │  ├─ index.ts             Lazy node-postgres pool
 │  └─ connection.ts        DATABASE_URL validation
 ├─ schema/                 Zod schemas for form and action input
-├─ lib/                    Pure helpers: money.ts (minor units, parsing, formatting), math.ts, date-helpers.ts, patterns.ts (every regex), styles.ts
-├─ constants/              Named values: account.ts (types, grouping), field-lengths.ts, http.ts, money.ts, time.ts
+├─ lib/                    Pure helpers: money.ts (minor units, parsing, formatting), math.ts, date-helpers.ts, patterns.ts (every regex), styles.ts (cn), appearance.ts (theme)
+├─ constants/              Named values: account.ts (types, grouping), field-lengths.ts, http.ts, icons.ts (curated lucide registry), money.ts, time.ts
 ├─ providers/              React Query provider
 ├─ styles/
+│  ├─ abstracts/           Breakpoint mixins, space() and radius() functions, shared mixins (@use 'abstracts' as *)
 │  ├─ tokens.scss          CSS colour tokens (light, dark and theme-independent)
 │  └─ theme.ts             Colours and chart styles needed from TypeScript (Colors, GroupColors, ChartStyle)
 └─ middleware.ts           Clerk route protection
@@ -69,8 +67,10 @@ src/
 | A business rule (what is allowed) | the `service.ts` of that domain in `src/server/` |
 | Input validation for a form | `src/schema/*.ts` and the action in `src/app/(main)/actions.ts` |
 | A read endpoint | `src/app/api/**/route.ts` |
-| A screen | `src/components/finance/*.tsx` and its page under `src/app/(main)/` |
+| A screen | `src/components/finance/<screen>/` and its page under `src/app/(main)/` |
+| A shared layout, control or dialog | `src/components/ui/` (barrel: `src/components/ui/index.ts`) |
+| Breakpoints, spacing and SCSS mixins | `src/styles/abstracts/` |
 | Data fetching hooks and query keys | `src/components/finance/use-finance-data.ts` |
 | Money formatting or parsing | `src/lib/money.ts` |
 | Default categories | `src/server/categories/default-taxonomy.ts` |
-| Available icons | `src/components/icons/registry.ts` |
+| Available icons | `src/constants/icons.ts` |

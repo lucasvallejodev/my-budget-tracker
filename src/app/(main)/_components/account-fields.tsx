@@ -2,17 +2,14 @@
 
 import { Control } from 'react-hook-form';
 
-import { AccountSummary } from '@/components/finance/use-finance-data';
-import styles from '@/components/forms.module.scss';
+import { AccountSummary } from '@/components/finance';
 import {
+  AmountField,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
-} from '@/components/primitives/form';
-import { AmountField, TextField } from '@/components/primitives/form-fields';
-import {
   Select,
   SelectContent,
   SelectGroup,
@@ -20,7 +17,8 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/primitives/select';
+  TextField,
+} from '@/components/ui';
 import { AccountTypes } from '@/constants/account';
 import type { Currency } from '@/db/schema';
 import { AccountFormValues } from '@/schema/accounts';
@@ -73,7 +71,7 @@ function AccountTypeField({ control }: AccountFieldProps) {
           <FormLabel>Account type</FormLabel>
           <Select value={field.value} onValueChange={value => field.onChange(value)}>
             <FormControl>
-              <SelectTrigger className={styles.full}>
+              <SelectTrigger>
                 <SelectValue placeholder="Select a type" />
               </SelectTrigger>
             </FormControl>
@@ -113,7 +111,7 @@ function CurrencyField({
             onValueChange={value => field.onChange(value)}
           >
             <FormControl>
-              <SelectTrigger className={styles.full}>
+              <SelectTrigger>
                 <SelectValue placeholder="Select a currency" />
               </SelectTrigger>
             </FormControl>

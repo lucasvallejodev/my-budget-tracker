@@ -1,0 +1,18 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .promotion-panel {
+    @include flex-column(space(3));
+
+    align-items: start;
+    padding: space(5);
+    border-radius: radius(xl);
+    background: var(--gradient-promotion);
+    color: var(--on-accent);
+
+    &__description {
+      color: var(--on-accent-muted);
+      font-size: 13px;
+    }
+  }
+}

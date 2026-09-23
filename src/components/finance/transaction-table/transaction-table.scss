@@ -1,0 +1,10 @@
+@use 'abstracts' as *;
+
+.transaction-table {
+  &__description {
+    @include flex-row(space(3));
+
+    color: var(--ink);
+    font-weight: 500;
+  }
+}

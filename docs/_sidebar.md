@@ -11,6 +11,7 @@
   - [Money and currencies](architecture/money.md)
   - [Server layer](architecture/server.md)
   - [Frontend](architecture/frontend.md)
+  - [Components and styles](architecture/components.md)
   - [Testing](architecture/testing.md)
   - [Code style](architecture/code-style.md)
 

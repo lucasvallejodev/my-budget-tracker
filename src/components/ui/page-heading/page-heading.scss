@@ -1,0 +1,18 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .page-heading {
+    @include flex-column(space(5));
+
+    align-items: flex-start;
+
+    @include media-up(tablet-landscape) {
+      @include flex-between(space(5));
+    }
+
+    &__description {
+      color: var(--muted);
+      margin-top: 3px;
+    }
+  }
+}

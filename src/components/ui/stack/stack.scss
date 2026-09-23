@@ -1,0 +1,17 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .stack {
+    @include flex-column(space(6));
+
+    min-width: 0;
+
+    &--small {
+      gap: space(2);
+    }
+
+    &--medium {
+      gap: space(4);
+    }
+  }
+}

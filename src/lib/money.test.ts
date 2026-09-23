@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   convertMinor,
+  formatMajorAmount,
   formatMoney,
   minorToDecimalString,
   minorUnits,
@@ -64,5 +65,16 @@ describe('money', () => {
   });
   it('rejects amounts beyond the safe integer range', () => {
     expect(() => parseAmountInput('99999999999999999', 'EUR')).toThrow(/too large/);
+  });
+});
+
+describe('formatMajorAmount', () => {
+  it('formats decimal amounts in en-US by default', () => {
+    expect(formatMajorAmount(124580.45)).toBe('$124,580.45');
+    expect(formatMajorAmount(10, 'EUR')).toBe('€10.00');
+  });
+
+  it('follows the currency exponent', () => {
+    expect(formatMajorAmount(1500, 'JPY')).toBe('¥1,500');
   });
 });

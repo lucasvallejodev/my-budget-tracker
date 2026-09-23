@@ -10,12 +10,17 @@ import sonarjs from 'eslint-plugin-sonarjs';
 import tsdoc from 'eslint-plugin-tsdoc';
 import tseslint from 'typescript-eslint';
 
+import colocatedStyles from './scripts/eslint-rules/colocated-styles.mjs';
 import multilineTypeAlias from './scripts/eslint-rules/multiline-type-alias.mjs';
 import noComments from './scripts/eslint-rules/no-comments.mjs';
 
 /** Rules that exist only in this repository (see scripts/eslint-rules/). */
 const LocalRules = {
-  rules: { 'multiline-type-alias': multilineTypeAlias, 'no-comments': noComments },
+  rules: {
+    'colocated-styles': colocatedStyles,
+    'multiline-type-alias': multilineTypeAlias,
+    'no-comments': noComments,
+  },
 };
 
 /**
@@ -43,6 +48,49 @@ const regexMessage =
 
 /** eslint-plugin-jsdoc's preset for TSDoc: types come from TypeScript, never from comments. */
 const tsdocPreset = jsdoc.configs['flat/recommended-tsdoc-error'];
+
+/** Component modules under src/components (see agents/conventions.md › Components). */
+const ComponentModules = ['finance', 'shell', 'ui'];
+
+const deepImportMessage =
+  'Import a component through its folder (`@/components/finance/account-detail`) or its module barrel (`@/components/finance`), never a file inside the folder.';
+
+const deepComponentImport = {
+  group: ['@/components/*/*/*'],
+  message: deepImportMessage,
+};
+
+/**
+ * Import restrictions for files inside one component module: siblings by folder (`../panel`),
+ * other modules through `@/components/<module>`, never the module's own barrel.
+ */
+const componentModuleImports = moduleName => ({
+  files: [`src/components/${moduleName}/**/*.{ts,tsx}`],
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            message: `Inside ${moduleName}/ import siblings by folder (\`../panel\`); the barrel is for other modules and would create import cycles.`,
+            name: `@/components/${moduleName}`,
+          },
+        ],
+        patterns: [
+          deepComponentImport,
+          {
+            message: deepImportMessage,
+            regex: '^\.\./[^./][^/]*/.+',
+          },
+          {
+            message: 'Import another component module through `@/components/<module>`.',
+            regex: '^\.\./\.\./',
+          },
+        ],
+      },
+    ],
+  },
+});
 
 const colourMessage =
   'Hard-coded colour. Add it to `Colors` in src/styles/theme.ts (or a token in src/styles/tokens.scss) and reference it from there.';
@@ -247,6 +295,7 @@ const config = [
       ],
       'max-params': ['warn', 4],
       // Constants and colours live in one place.
+      'no-restricted-imports': ['error', { patterns: [deepComponentImport] }],
       'no-restricted-syntax': [
         'error',
         {
@@ -358,6 +407,12 @@ const config = [
       'tsdoc/syntax': 'error',
     },
   },
+  ...ComponentModules.map(componentModuleImports),
+  {
+    // Components import only their own stylesheet and write class strings of their own BEM block.
+    files: ['src/components/**/*.tsx'],
+    rules: { 'local/colocated-styles': 'error' },
+  },
   // Plain JS files (scripts, configs) are not part of the TypeScript project.
   { files: ['**/*.{js,mjs,cjs}'], ...tseslint.configs.disableTypeChecked },
   {
@@ -375,7 +430,7 @@ const config = [
     rules: { 'no-restricted-syntax': 'off' },
   },
   {
-    files: ['*.config.{ts,mts,js,mjs}', 'scripts/eslint-rules/**'],
+    files: ['*.config.{ts,mts,js,mjs}', 'scripts/eslint-rules/**', 'scripts/stylelint-rules/**'],
     rules: {
       '@typescript-eslint/no-magic-numbers': 'off',
       'local/no-comments': 'off',

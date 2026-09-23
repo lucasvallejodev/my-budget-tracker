@@ -4,25 +4,24 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import CategoryPicker from '@/components/category-picker';
-import { PayeeRow } from '@/components/finance/use-finance-data';
-import styles from '@/components/forms.module.scss';
+import { CategoryPicker, PayeeRow } from '@/components/finance';
 import {
+  CreateNewTrigger,
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFormFooter,
   DialogTitle,
-} from '@/components/primitives/dialog';
-import { CreateNewTrigger, DialogFormFooter, saveLabel } from '@/components/primitives/dialog-form';
-import {
   Form,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
-} from '@/components/primitives/form';
-import { TextField } from '@/components/primitives/form-fields';
+  FormStack,
+  saveLabel,
+  TextField,
+} from '@/components/ui';
 import { payeeFormSchema, PayeeFormValues } from '@/schema/payees';
 
 import { createPayeeAction, updatePayeeAction } from '../actions';
@@ -80,7 +79,7 @@ function CreatePayeeDialog({
           Payees are the people and businesses you pay or receive money from.
         </DialogDescription>
         <Form {...form}>
-          <form className={styles.form} onSubmit={submit}>
+          <FormStack onSubmit={submit}>
             <TextField
               control={form.control}
               name="name"
@@ -104,7 +103,7 @@ function CreatePayeeDialog({
                 </FormItem>
               )}
             />
-          </form>
+          </FormStack>
         </Form>
         <DialogFormFooter
           isPending={isPending}

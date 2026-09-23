@@ -1,0 +1,13 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+    gap: space(4);
+
+    @include media-up(tablet-landscape) {
+      gap: space(6);
+    }
+  }
+}

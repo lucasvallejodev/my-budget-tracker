@@ -1,0 +1,10 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .color-swatch {
+    @include icon-size(10px);
+
+    flex-shrink: 0;
+    border-radius: radius(round);
+  }
+}

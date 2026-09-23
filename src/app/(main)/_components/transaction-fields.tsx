@@ -2,23 +2,24 @@
 
 import { Control, FieldValues } from 'react-hook-form';
 
-import CategoryPicker from '@/components/category-picker';
+import { CategoryPicker } from '@/components/finance';
 import {
   FormControl,
   FormDescription,
   FormField,
+  FormFieldProps,
   FormItem,
   FormLabel,
-} from '@/components/primitives/form';
-import { FieldProps, TextField } from '@/components/primitives/form-fields';
+  TextField,
+} from '@/components/ui';
 import { StandardTransactionValues } from '@/schema/transaction';
 
 import AccountPicker from './account-picker';
 import PayeePicker from './payee-picker';
 
-export { AmountField, DateField } from '@/components/primitives/form-fields';
+export { AmountField, DateField } from '@/components/ui';
 
-export function MemoField<T extends FieldValues>(props: Omit<FieldProps<T>, 'label'>) {
+export function MemoField<T extends FieldValues>(props: Omit<FormFieldProps<T>, 'label'>) {
   return <TextField label="Memo" {...props} />;
 }
 
@@ -27,7 +28,7 @@ export function AccountField<T extends FieldValues>({
   description,
   label,
   name,
-}: FieldProps<T>) {
+}: FormFieldProps<T>) {
   return (
     <FormField
       control={control}

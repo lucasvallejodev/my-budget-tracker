@@ -1,0 +1,31 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .list-row {
+    @include flex-between(space(5), flex-start);
+    @include divided;
+
+    @include media-up(tablet-landscape) {
+      align-items: center;
+    }
+
+    &__main {
+      @include flex-row(space(3));
+
+      min-width: 0;
+    }
+
+    &__description {
+      @include muted-text;
+
+      margin-top: space(1);
+    }
+
+    &__actions {
+      @include flex-row(space(2) + 2px);
+
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+  }
+}

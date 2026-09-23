@@ -1,15 +1,14 @@
-import { PageHeading } from '@/components/finance/blocks';
-import styles from '@/components/finance/finance.module.scss';
-import { RulesSettings } from '@/components/finance/rules-settings';
+import { RulesSettings } from '@/components/finance';
+import { Page, PageHeading } from '@/components/ui';
 
-export default function Page() {
+export default function RulesSettingsPage() {
   return (
-    <div className={styles.page}>
+    <Page>
       <PageHeading
         title="Categorisation rules"
         description="Simple text rules that assign a category on import and to existing uncategorised entries."
       />
       <RulesSettings />
-    </div>
+    </Page>
   );
 }

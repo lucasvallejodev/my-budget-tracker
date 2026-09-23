@@ -1,0 +1,30 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .switch {
+    flex-shrink: 0;
+    width: 40px;
+    height: 24px;
+    border: 0;
+    border-radius: radius(pill);
+    padding: 3px;
+    background: var(--border);
+
+    &[data-state='checked'] {
+      background: var(--accent);
+    }
+
+    &__thumb {
+      @include icon-size(18px);
+
+      display: block;
+      background: var(--on-accent);
+      border-radius: radius(round);
+      transition: transform 0.15s;
+
+      &[data-state='checked'] {
+        transform: translateX(16px);
+      }
+    }
+  }
+}

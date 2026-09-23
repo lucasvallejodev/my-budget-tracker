@@ -220,3 +220,35 @@ export const convertMinor = (
 
   return Math.sign(converted) * Math.round(Math.abs(converted));
 };
+
+const DisplayLocale = 'en-US';
+
+/**
+ * Formats an amount given in major units (`124580.45`), for sample data and chart axes.
+ *
+ * @remarks
+ * Ledger amounts are minor units and go through {@link formatMoney}; this helper exists for values
+ * that are already decimals, such as the component gallery's sample figures. The locale defaults
+ * to `en-US` so previews render the same everywhere.
+ *
+ * @param amount - Amount in major units of `currency`.
+ * @param currency - ISO 4217 code; defaults to `'USD'`.
+ * @param options - `locale` is a BCP 47 tag such as `'en-US'`.
+ * @returns The localised currency string.
+ *
+ * @example
+ * ```ts
+ * formatMajorAmount(124580.45); // '$124,580.45'
+ * formatMajorAmount(10, 'EUR'); // '€10.00'
+ * ```
+ */
+export const formatMajorAmount = (
+  amount: number,
+  currency = 'USD',
+  options: { locale?: string } = {}
+): string =>
+  new Intl.NumberFormat(options.locale ?? DisplayLocale, {
+    currency,
+    maximumFractionDigits: minorUnits(currency),
+    style: 'currency',
+  }).format(amount);

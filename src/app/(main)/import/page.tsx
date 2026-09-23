@@ -1,4 +1,4 @@
-import { ImportWizard } from '@/components/finance/import-wizard';
+import { ImportWizard } from '@/components/finance';
 
 export default function Page() {
   return <ImportWizard />;

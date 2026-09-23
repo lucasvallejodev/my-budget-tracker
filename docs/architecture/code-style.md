@@ -1,14 +1,14 @@
 # Code style
 
-> Summary: how the code is formatted and named, how utilities are documented with TSDoc, where constants and colours live, the complexity budget, and the tools that enforce all of it.
+> Summary: how the code is formatted and named, how utilities are documented with TSDoc, where constants, colours and style abstractions live, the complexity budget, and the tools that enforce all of it.
 
 The goal is code that reads well for humans. Three tools enforce it, and `npm run lint:fix` applies everything that can be applied automatically:
 
-| Tool                            | Enforces                                                                                                                                                                                                         |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prettier (through ESLint)       | Line width (100), quotes, commas, indentation. Prettier never _adds_ blank lines, which is why the next rule exists.                                                                                             |
-| ESLint (`eslint.config.mjs`)    | Blank lines, object and type layout, naming, colours, function style, complexity budget, TypeScript safety (type-aware rules), React, Next.js and accessibility rules, SonarJS code smells, TSDoc on `src/lib/`. |
-| Stylelint (`.stylelintrc.json`) | No hard-coded colours in SCSS outside `src/styles/tokens.scss`.                                                                                                                                                  |
+| Tool                            | Enforces                                                                                                                                                                                                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Prettier (through ESLint)       | Line width (100), quotes, commas, indentation. Prettier never _adds_ blank lines, which is why the next rule exists.                                                                                                                                               |
+| ESLint (`eslint.config.mjs`)    | Blank lines, object and type layout, naming, colours, function style, complexity budget, TypeScript safety (type-aware rules), React, Next.js and accessibility rules, SonarJS code smells, TSDoc on `src/lib/`.                                                   |
+| Stylelint (`.stylelintrc.json`) | No hard-coded colours in SCSS outside `src/styles/tokens.scss`; BEM class names, one block per stylesheet, `ui` cascade layer, no tag selectors or `@extend`, breakpoints only through mixins, blank lines between rules ([Components and styles](components.md)). |
 
 Two more tools report instead of block: `npm run lint:dupes` (jscpd, fails above 3 % duplicated lines) and `npm run knip` (unused files, exports and dependencies). In CI, the `SonarQube Cloud` workflow publishes duplication, cognitive complexity, coverage and code smells with history at sonarcloud.io (setup in [Setup](../getting-started/setup.md)); its quality gate judges new code only.
 
@@ -72,7 +72,7 @@ export type CashPoint = {
 
 ESLint rejects a module-level `const` holding an object or array literal whose name is not PascalCase (names Next.js reserves, such as `metadata` and `config`, are exempt).
 
-Every name must say what the value is for. One-letter and abbreviated names are out: `import styles from './finance.module.scss'`, not `s`; `transaction => transaction.amountMinor`, not `t => t.amountMinor`; `(left, right) => left - right` in comparators; `index` in loops; a sentinel such as `UnmappedColumnValue` rather than `NONE`. ESLint enforces a minimum of two characters (`id-length`); reviewers enforce the meaning.
+Every name must say what the value is for. One-letter and abbreviated names are out: `ToneClassNames` for a table of class names, not `tc`; `transaction => transaction.amountMinor`, not `t => t.amountMinor`; `(left, right) => left - right` in comparators; `index` in loops; a sentinel such as `UnmappedColumnValue` rather than `NONE`. ESLint enforces a minimum of two characters (`id-length`); reviewers enforce the meaning.
 
 ## No magic values, no comments
 
@@ -128,13 +128,15 @@ TSDoc is allowed only directly above an exported declaration in `src/lib/`. Priv
 
 Before adding a helper, a constant, a colour or a style value, look for an existing one:
 
-| You need…                             | Look in                                                                                                                                   |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| a calculation or formatting helper    | `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`)                                                                        |
-| a lookup table, limit or unit         | `src/constants/` (`account.ts`, `field-lengths.ts`, `http.ts`, `money.ts`, `time.ts`), the `*Keys` / `*Names` exports next to the feature |
-| a regular expression or format check  | `Patterns`, `isIsoDate`, `isIsoMonth`, `isDigitsOnly`, `isHexColor` in `src/lib/patterns.ts`                                              |
-| a colour or chart style in TypeScript | `Colors`, `GroupColors`, `ChartStyle` in `src/styles/theme.ts`                                                                            |
-| a colour, shadow or gradient in SCSS  | the `--tokens` in `src/styles/tokens.scss`                                                                                                |
+| You need…                                              | Look in                                                                                                                                   |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| a calculation or formatting helper                     | `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`)                                                                        |
+| a lookup table, limit or unit                          | `src/constants/` (`account.ts`, `field-lengths.ts`, `http.ts`, `money.ts`, `time.ts`), the `*Keys` / `*Names` exports next to the feature |
+| a regular expression or format check                   | `Patterns`, `isIsoDate`, `isIsoMonth`, `isDigitsOnly`, `isHexColor` in `src/lib/patterns.ts`                                              |
+| a colour or chart style in TypeScript                  | `Colors`, `GroupColors`, `ChartStyle` in `src/styles/theme.ts`                                                                            |
+| a colour, shadow or gradient in SCSS                   | the `--tokens` in `src/styles/tokens.scss`                                                                                                |
+| a breakpoint, spacing, radius or repeated SCSS pattern | `media-up`, `space()`, `radius()` and the mixins in `src/styles/abstracts/`                                                               |
+| a piece of markup or a look                            | the components in `src/components/ui/` ([catalogue](components.md#the-ui-catalogue))                                                      |
 
 If it exists, use or extend it. If the same expression appears twice, move it to `src/lib/` with a test. `npm run lint:dupes` reports larger copies.
 

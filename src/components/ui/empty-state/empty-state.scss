@@ -1,0 +1,12 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .empty-state {
+    @include flex-column(space(3));
+
+    align-items: center;
+    padding: 40px space(5);
+    text-align: center;
+    color: var(--muted);
+  }
+}

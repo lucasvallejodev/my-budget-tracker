@@ -17,7 +17,7 @@ All commands run from the repository root.
 
 | Command | What it does |
 | --- | --- |
-| `npm run lint` | ESLint (Next.js, type-aware TypeScript, SonarJS, blank-line and layout rules, Prettier) plus Stylelint for SCSS. Errors fail; complexity warnings are reported. See [Code style](../architecture/code-style.md). |
+| `npm run lint` | ESLint (Next.js, type-aware TypeScript, SonarJS, blank-line and layout rules, Prettier) plus Stylelint for SCSS (colour tokens, BEM naming, one block per stylesheet, cascade layers, breakpoint mixins). Errors fail; complexity warnings are reported. See [Code style](../architecture/code-style.md). |
 | `npm run lint:fix` | Same, applying every automatic fix (formatting, blank lines, object layout, arrow functions). Run it after editing. |
 | `npm run lint:dupes` | Duplicated-code report with jscpd; fails above 3 % duplicated lines. |
 | `npm run knip` | Unused files, exports, types and dependencies. Advisory. |

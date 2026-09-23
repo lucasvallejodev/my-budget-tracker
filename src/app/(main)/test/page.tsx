@@ -1,4 +1,4 @@
-import { ComponentGallery } from '@/components/finance/gallery';
+import { ComponentGallery } from '@/components/finance';
 
 export default function Page() {
   return <ComponentGallery />;

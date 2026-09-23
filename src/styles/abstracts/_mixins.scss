@@ -1,0 +1,136 @@
+@use 'functions' as *;
+
+@mixin flex-row($gap: space(3), $align: center) {
+  display: flex;
+  align-items: $align;
+  gap: $gap;
+}
+
+@mixin flex-column($gap: space(4)) {
+  display: flex;
+  flex-direction: column;
+  gap: $gap;
+}
+
+@mixin flex-between($gap: space(4), $align: center) {
+  @include flex-row($gap, $align);
+
+  justify-content: space-between;
+}
+
+@mixin grid-center {
+  display: grid;
+  place-items: center;
+}
+
+@mixin surface($padding: space(6)) {
+  padding: $padding;
+  border-radius: radius(panel);
+  background: var(--surface);
+  min-width: 0;
+}
+
+@mixin bordered($radius: radius(lg)) {
+  border: 1px solid var(--border);
+  border-radius: $radius;
+}
+
+@mixin accent-highlight {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+@mixin muted-text($size: 13px) {
+  color: var(--muted);
+  font-size: $size;
+}
+
+@mixin divided($spacing: space(5)) {
+  padding: $spacing 0;
+  border-bottom: 1px solid var(--border);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+@mixin focus-ring {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@mixin reset-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+@mixin reset-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin pill-control {
+  min-height: 38px;
+  padding: space(2) space(3);
+  border: 1px solid var(--border);
+  border-radius: radius(pill);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+@mixin icon-size($size) {
+  width: $size;
+  height: $size;
+}
+
+@mixin text-field {
+  width: 100%;
+  min-height: 44px;
+  padding: space(2) + 2px space(3) + 2px;
+  border: 1px solid var(--border);
+  border-radius: radius(md);
+  background: var(--surface);
+  color: var(--ink);
+
+  &[aria-invalid='true'] {
+    border-color: var(--danger);
+  }
+
+  &::placeholder {
+    color: var(--muted);
+  }
+}
+
+@mixin floating-panel($width: 360px) {
+  padding: space(2);
+  border: 1px solid var(--border);
+  border-radius: radius(lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  width: min(#{$width}, calc(100vw - 40px));
+  max-height: min(400px, var(--radix-popover-content-available-height));
+  overflow-y: auto;
+}
+
+@mixin option-item($highlight-selector) {
+  @include flex-row(space(2));
+
+  padding: 9px space(3);
+  border-radius: 7px;
+  cursor: pointer;
+  outline: none;
+
+  &#{$highlight-selector} {
+    @include accent-highlight;
+  }
+}

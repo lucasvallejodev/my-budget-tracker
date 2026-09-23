@@ -1,0 +1,14 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: space(6);
+    align-items: start;
+
+    @include media-up(laptop) {
+      grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    }
+  }
+}

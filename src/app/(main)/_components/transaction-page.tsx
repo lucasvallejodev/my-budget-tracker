@@ -3,12 +3,13 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
-import { PageHeading, QueryContent } from '@/components/finance/blocks';
-import styles from '@/components/finance/finance.module.scss';
-import { MonthPicker } from '@/components/finance/overview';
-import { TransactionExplorer } from '@/components/finance/transaction-explorer';
-import { currentMonth, useTransactions } from '@/components/finance/use-finance-data';
-import { Button } from '@/components/primitives/button';
+import {
+  currentMonth,
+  MonthPicker,
+  TransactionExplorer,
+  useTransactions,
+} from '@/components/finance';
+import { Button, Page, PageHeading, QueryContent } from '@/components/ui';
 
 import TransactionDialog from './transaction-dialog';
 
@@ -20,7 +21,7 @@ export default function TransactionsPage({ initialSearch = '' }: { initialSearch
   const transactions = useTransactions({ limit: '2000', month });
 
   return (
-    <div className={styles.page}>
+    <Page>
       <PageHeading
         title="Transactions"
         description="View, filter, and manage your financial activity in one place."
@@ -63,6 +64,6 @@ export default function TransactionsPage({ initialSearch = '' }: { initialSearch
           />
         )}
       </QueryContent>
-    </div>
+    </Page>
   );
 }

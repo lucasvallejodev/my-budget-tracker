@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { IconNames } from '@/components/icons/registry';
 import { FieldLengths } from '@/constants/field-lengths';
+import { IconNames } from '@/constants/icons';
 import { Patterns } from '@/lib/patterns';
 
 const hexColor = z.string().regex(Patterns.hexColor, 'Choose a colour');

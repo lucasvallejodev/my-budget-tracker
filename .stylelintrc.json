@@ -1,6 +1,10 @@
 {
   "customSyntax": "postcss-scss",
   "ignoreFiles": ["src/styles/tokens.scss", "node_modules/**", ".next/**"],
+  "plugins": [
+    "./scripts/stylelint-rules/bem-block-matches-file.mjs",
+    "./scripts/stylelint-rules/require-layer.mjs"
+  ],
   "rules": {
     "color-no-hex": [
       true,
@@ -10,11 +14,87 @@
     ],
     "color-named": [
       "never",
-      { "message": "Named colour. Add a token to src/styles/tokens.scss and use var(--token)." }
+      {
+        "message": "Named colour. Add a token to src/styles/tokens.scss and use var(--token)."
+      }
     ],
     "function-disallowed-list": [
       ["rgb", "rgba", "hsl", "hsla"],
-      { "message": "Colour function. Add a token to src/styles/tokens.scss and use var(--token)." }
+      {
+        "message": "Colour function. Add a token to src/styles/tokens.scss and use var(--token)."
+      }
+    ],
+    "rule-empty-line-before": [
+      "always",
+      {
+        "except": ["first-nested"],
+        "ignore": ["after-comment"]
+      }
+    ],
+    "at-rule-empty-line-before": [
+      "always",
+      {
+        "except": ["first-nested", "blockless-after-same-name-blockless"],
+        "ignore": ["after-comment"],
+        "ignoreAtRules": ["else"]
+      }
+    ],
+    "declaration-empty-line-before": [
+      "always",
+      {
+        "except": ["after-declaration", "first-nested"],
+        "ignore": ["after-comment", "inside-single-line-block"]
+      }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/components/**/*.scss"],
+      "rules": {
+        "at-rule-disallowed-list": [
+          ["extend"],
+          {
+            "message": "@extend couples blocks. Reuse a mixin from src/styles/abstracts or compose components."
+          }
+        ],
+        "declaration-no-important": true,
+        "local/bem-block-matches-file": true,
+        "max-nesting-depth": [
+          2,
+          {
+            "ignore": ["pseudo-classes"],
+            "ignoreAtRules": ["include", "media", "layer", "supports"]
+          }
+        ],
+        "media-feature-name-disallowed-list": [
+          ["width", "min-width", "max-width"],
+          {
+            "message": "Use the breakpoint mixins (media-up, media-down, media-between) from src/styles/abstracts."
+          }
+        ],
+        "selector-class-pattern": [
+          "^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$",
+          {
+            "message": "Class names follow BEM in kebab-case: block, block__element, block--modifier, block__element--modifier.",
+            "resolveNestedSelectors": true
+          }
+        ],
+        "selector-max-compound-selectors": 2,
+        "selector-max-id": 0,
+        "selector-max-type": [
+          0,
+          {
+            "ignoreTypes": ["svg"],
+            "message": "Give the element a BEM class (block__element) instead of styling a tag."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/ui/**/*.scss"],
+      "rules": {
+        "local/require-layer": "ui"
+      }
+    }
+  ]
 }

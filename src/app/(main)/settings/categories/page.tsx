@@ -1,15 +1,14 @@
-import { PageHeading } from '@/components/finance/blocks';
-import { CategoryManager } from '@/components/finance/category-manager';
-import styles from '@/components/finance/finance.module.scss';
+import { CategoryManager } from '@/components/finance';
+import { Page, PageHeading } from '@/components/ui';
 
-export default function Page() {
+export default function CategoriesSettingsPage() {
   return (
-    <div className={styles.page}>
+    <Page>
       <PageHeading
         title="Categories"
         description="Groups carry the colour and whether they are income or expense; categories carry the icon. Archive instead of deleting so history stays intact."
       />
       <CategoryManager />
-    </div>
+    </Page>
   );
 }

@@ -1,4 +1,4 @@
-import { AccountDetail } from '@/components/finance/account-detail';
+import { AccountDetail } from '@/components/finance';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -1,0 +1,10 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .create-new-button {
+    width: 100%;
+    justify-content: flex-start;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+  }
+}

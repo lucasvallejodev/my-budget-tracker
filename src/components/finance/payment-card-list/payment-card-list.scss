@@ -1,0 +1,10 @@
+@use 'abstracts' as *;
+
+.payment-card-list {
+  &__item {
+    @include bordered;
+    @include flex-column(18px);
+
+    padding: 22px;
+  }
+}

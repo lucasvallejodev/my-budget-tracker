@@ -1,7 +1,7 @@
 'use client';
 
-import { usePayees } from '@/components/finance/use-finance-data';
-import { EntityPicker, EntityPickerProps } from '@/components/primitives/entity-picker';
+import { usePayees } from '@/components/finance';
+import { EntityPicker, EntityPickerProps } from '@/components/ui';
 
 import CreatePayeeDialog from './create-payee-dialog';
 

@@ -1,15 +1,14 @@
-import { PageHeading } from '@/components/finance/blocks';
-import { CurrencySettings } from '@/components/finance/currency-settings';
-import styles from '@/components/finance/finance.module.scss';
+import { CurrencySettings } from '@/components/finance';
+import { Page, PageHeading } from '@/components/ui';
 
-export default function Page() {
+export default function CurrenciesSettingsPage() {
   return (
-    <div className={styles.page}>
+    <Page>
       <PageHeading
         title="Currencies"
         description="Your primary currency, converted totals and manually maintained exchange rates."
       />
       <CurrencySettings />
-    </div>
+    </Page>
   );
 }

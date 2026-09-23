@@ -1,20 +1,20 @@
 # Workflows
 
-> Summary: checklists for the recurring kinds of change (feature, table, endpoint, screen, migration, docs) including the documentation each one must update.
+> Summary: checklists for the recurring kinds of change (feature, table, endpoint, screen, component, migration, docs) including the documentation each one must update.
 
 ## Start of any task
 
 1. Read `CLAUDE.md`, then `agents/README.md`, then only the agent docs the task needs.
 2. Write plans, scratch diagrams and intermediate output to `temp/` (never to `docs/`, `agents/` or the source tree).
 3. Check the existing tests for the area you touch; they encode the invariants.
-4. Before writing a helper, constant, colour or style value, search `src/lib/`, `src/constants/`, `src/styles/theme.ts` and `src/styles/tokens.scss` and extend what exists (`agents/conventions.md` > Reuse first).
+4. Before writing a helper, constant, colour or style value, search `src/lib/`, `src/constants/`, `src/styles/theme.ts`, `src/styles/tokens.scss` and `src/styles/abstracts/` and extend what exists (`agents/conventions.md` > Reuse first). Before writing markup, check `src/components/ui/index.ts`.
 
 ## Add a feature (end to end)
 
 1. **Schema** (if needed): edit `src/db/schema.ts` → `npm run db:generate` → review and, if needed, hand-edit the SQL → `npm run db:migrate`. Update `agents/data-model.md` and `docs/architecture/data-model.md`, and add the migration to `docs/reference/migrations.md`.
 2. **Service**: add functions to `src/server/<domain>/service.ts` (new domains: create the folder, register in `src/server/services.ts`). Enforce ownership and invariants there.
 3. **Validation + entry points**: Zod schema in `src/schema/`, server action in `src/app/(main)/actions.ts`, route handler in `src/app/api/...` for reads.
-4. **Client**: hook + query key in `use-finance-data.ts` (add to `FinanceKeys`), screen in `src/components/finance/`, page in `src/app/(main)/`, sidebar entry in `routes.ts` if needed.
+4. **Client**: hook + query key in `use-finance-data.ts` (add to `FinanceKeys`), screen in `src/components/finance/<screen>/` built from `ui` components (`agents/components.md`), page in `src/app/(main)/`, sidebar entry in `routes.ts` if needed.
 5. **Tests**: service test(s) in `services.test.ts`, helper unit tests, a component test for the main interaction.
 6. **Gates**: `npm run lint && npx tsc --noEmit && npm test -- --run && npm run build`.
 7. **Docs**: feature page in `docs/features/` (step-by-step + "How it works" + screenshot placeholders), sidebar entry in `docs/_sidebar.md`, `docs/reference/api.md` rows, and `agents/architecture.md` service catalogue if a service changed. Update `README.md` if commands or folders changed.
@@ -36,11 +36,15 @@ Zod schema → function in `actions.ts` inside `run()` → row in `docs/referenc
 
 ## Add a screen
 
-Component in `src/components/finance/` → page → optional `routes.ts` entry → component test → `docs/features/<name>.md` with `<!-- screenshot: … -->` placeholders → `docs/_sidebar.md`.
+Folder `src/components/finance/<screen>/` (component, test, `index.ts`, stylesheet only if it needs its own look) → export it from `finance/index.ts` → page importing `@/components/finance` → optional `routes.ts` entry → `docs/features/<name>.md` with `<!-- screenshot: … -->` placeholders → `docs/_sidebar.md`.
+
+## Add or change a component
+
+Follow the checklist in `agents/components.md`: search `ui/` first, pick the module by the placement rule, create the folder (`<name>.tsx`, `<name>.test.tsx`, `index.ts`, optional `<name>.scss` with one BEM block, `@use 'abstracts' as *;`, `@layer ui` for `ui/`), write mobile-first with `media-up`, add it to the module barrel, run `npm run lint:fix` and the gates. A new `ui` component, mixin, function or breakpoint goes into the catalogue in `docs/architecture/components.md`.
 
 ## Add default categories or icons
 
-Icons: add the lucide import and key to `src/components/icons/registry.ts`. Taxonomy: edit `src/server/categories/default-taxonomy.ts`, bump `DEFAULT_TAXONOMY_VERSION`, update `docs/reference/default-taxonomy.md`. The seeding test validates icon names.
+Icons: add the lucide import and key to `src/constants/icons.ts`. Taxonomy: edit `src/server/categories/default-taxonomy.ts`, bump `DEFAULT_TAXONOMY_VERSION`, update `docs/reference/default-taxonomy.md`. The seeding test validates icon names.
 
 ## Add a helper or constant
 
@@ -48,7 +52,7 @@ Search first (`grep -rn "<idea>" src/lib src/constants src/styles`). Name it for
 
 ## Add a colour or style value
 
-SCSS: add a `--token` to `src/styles/tokens.scss` (light and dark, or the theme-independent block) and use `var(--token)`. TypeScript: add it to `Colors` / `ChartStyle` in `src/styles/theme.ts`. Never write a literal colour anywhere else; `npm run lint` rejects it. Document new tokens in `docs/architecture/code-style.md` only if they introduce a new concept.
+SCSS: add a `--token` to `src/styles/tokens.scss` (light and dark, or the theme-independent block) and use `var(--token)`. Spacing, radii, breakpoints and repeated declaration groups belong in `src/styles/abstracts/` (`_functions.scss`, `_breakpoints.scss`, `_mixins.scss`), each documented in `docs/architecture/components.md`. TypeScript: add it to `Colors` / `ChartStyle` in `src/styles/theme.ts`. Never write a literal colour anywhere else; `npm run lint` rejects it. Document new tokens in `docs/architecture/code-style.md` only if they introduce a new concept.
 
 ## Add an exchange-rate provider
 

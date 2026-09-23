@@ -8,7 +8,8 @@ import { type ClassValue, clsx } from 'clsx';
  *
  * @example
  * ```ts
- * cn(styles.row, isActive && styles.active); // 'row active' or 'row'
+ * cn('badge', isDanger && 'badge--danger'); // 'badge badge--danger' or 'badge'
+ * cn('badge', { 'badge--danger': false }); // 'badge'
  * ```
  */
 export const cn = (...inputs: ClassValue[]): string => clsx(inputs);

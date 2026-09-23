@@ -1,0 +1,11 @@
+@use 'abstracts' as *;
+
+.auth-screen {
+  @include flex-column(space(8));
+
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: space(6);
+  background: radial-gradient(ellipse at top, var(--accent-soft), var(--canvas) 70%);
+}

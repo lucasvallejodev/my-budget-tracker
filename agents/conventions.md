@@ -1,6 +1,6 @@
 # Conventions and style guide
 
-> Summary: the coding rules an agent must follow in this repository: reuse first, formatting, TypeScript, naming, constants and colours, server and client patterns, money, styling, complexity budget, tests, commits.
+> Summary: the coding rules an agent must follow in this repository: reuse first, formatting, TypeScript, naming, constants and colours, server and client patterns, components, money, styling, complexity budget, tests, commits.
 
 ## Tooling gates (run before finishing any change)
 
@@ -17,7 +17,9 @@ Before writing a helper, constant, colour or style value, search for an existing
 - helpers: `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts` with `toIsoDate` / `toIsoMonth`, `patterns.ts`, `styles.ts`);
 - lookup tables, limits and units: `src/constants/` (`account.ts`, `field-lengths.ts`, `http.ts`, `money.ts`, `time.ts`), the `*Keys` / `*Names` exports next to the feature;
 - colours and chart styles in TypeScript: `Colors`, `GroupColors`, `ChartStyle` in `src/styles/theme.ts`;
-- colours, shadows and gradients in SCSS: the tokens in `src/styles/tokens.scss`.
+- colours, shadows and gradients in SCSS: the tokens in `src/styles/tokens.scss`;
+- breakpoints, spacing, radii and repeated SCSS patterns: `src/styles/abstracts/` (`media-up`, `space()`, `radius()`, mixins);
+- markup patterns: the components in `src/components/ui/` (`ui/index.ts` lists them) and the module barrels.
 
 `grep -rn "<idea>" src/lib src/constants src/styles` is the minimum check. An expression that appears twice (`Math.round((a / b) * 100)`) becomes a tested helper in `src/lib/`.
 
@@ -42,7 +44,7 @@ Before writing a helper, constant, colour or style value, search for an existing
 - Database: snake_case tables and columns; Drizzle properties camelCase. Enums are singular nouns (`account_type`).
 - Server actions end in `Action` (`createTransferAction`). Hooks start with `use`. Zod schemas end in `Schema`, their types in `Values`.
 - Money fields end in `Minor` (`amountMinor`, `balanceMinor`, `spentMinor`).
-- Every name says what the value is for. No one-letter or abbreviated identifiers (`s`, `t`, `a`/`b`, `f`, `n`, `NONE`): style-module imports are `styles` / `formStyles` / `controlStyles`, callback parameters are named after the item (`transaction => transaction.amountMinor`), comparators use `(left, right)`, loop indexes `index`, and a sentinel says what it stands for (`UnmappedColumnValue`, not `NONE`). ESLint enforces a minimum length of two characters (`id-length`); the meaning is a review rule.
+- Every name says what the value is for. No one-letter or abbreviated identifiers (`s`, `t`, `a`/`b`, `f`, `n`, `NONE`): lookup tables of class names end in `ClassNames` (`ToneClassNames`), callback parameters are named after the item (`transaction => transaction.amountMinor`), comparators use `(left, right)`, loop indexes `index`, and a sentinel says what it stands for (`UnmappedColumnValue`, not `NONE`). ESLint enforces a minimum length of two characters (`id-length`); the meaning is a review rule.
 - No magic values. Every number, string with meaning beyond display text, and regular expression gets a named `const` that says what it is (`MaxCsvRows`, `UnmappedColumnValue`, `Patterns.isoDate`), placed next to its use or in `src/constants/` when shared. `@typescript-eslint/no-magic-numbers` allows only -1, 0, 1, array indexes and default values; regular expressions may appear only in `src/lib/patterns.ts` (`Patterns` plus `isIsoDate`, `isDigitsOnly`, `isHexColor`, `isIsoMonth` helpers), which ESLint enforces everywhere else. Sentinel and lookup strings become constants; user-facing copy (labels, messages) stays inline. Exception: values Next.js parses at build time (`export const config = { matcher: [...] }` in `middleware.ts`, route segment config) must stay inline literals, since the compiler cannot follow a constant.
 - No code comments. `local/no-comments` rejects every comment except tool directives (`eslint-`, `@ts-`, `@vitest-environment`), the `keep order` marker and, in `src/lib/` only, a TSDoc block directly above an exported declaration (see Documentation comments). When something needs explaining, express it with a better name, a small named helper or a type; if an external quirk genuinely cannot be named, write a test that documents it.
 - Imports: external packages first, then `@/` modules, then relative files, each group separated by a blank line and sorted naturally; named imports and exports, object properties, destructured parameters and type members are sorted alphabetically (`perfectionist/*`, fixable). When order carries meaning (a display sequence), put a `// keep order` comment above the first entry; the sorter leaves everything after it as written. Ordinary comments travel with their property. Nothing but imports goes in the import block: types and constants come after it.
@@ -86,22 +88,33 @@ Every exported function in `src/lib/` has a TSDoc block; ESLint (`jsdoc/*`, `tsd
 
 ## Client patterns
 
-- Screens are `'use client'` components in `src/components/finance/`; pages under `src/app/(main)/` only render them.
-- Data via hooks in `use-finance-data.ts`; new endpoints get a hook and their key is added to `FinanceKeys`.
+- Screens are `'use client'` components in `src/components/finance/<screen>/`; pages under `src/app/(main)/` only render them and import from `@/components/finance`. Folder, placement, import and BEM rules: `agents/components.md`.
+- Data via hooks in `src/components/finance/use-finance-data.ts`; new endpoints get a hook and their key is added to `FinanceKeys`. After a mutation call `useRefreshFinance()` (invalidates every `FinanceKeys` query) instead of writing the loop again.
 - Mutations from a dialog form: `useEntityMutation({ mutationFn: someAction, successMessage, errorMessage, onSuccess: reset + close })` (`src/app/(main)/_components/use-entity-mutation.ts`); it toasts, invalidates every `FinanceKeys` query and then runs `onSuccess`. Elsewhere use `useMutation` with the same toast + invalidate shape.
-- Forms: React Hook Form + `zodResolver`; amount inputs are text with `inputMode="decimal"`. Build dialog forms from `TextField` / `AmountField` / `DateField` (`src/components/primitives/form-fields.tsx`) and end them with `DialogFormFooter` + `saveLabel(editing)` (`src/components/primitives/dialog-form.tsx`); do not hand-write a `FormField` + `FormItem` block for a plain input, and do not nest ternaries for the submit label.
+- Forms: React Hook Form + `zodResolver`; amount inputs are text with `inputMode="decimal"`. Build dialog forms from `TextField` / `AmountField` / `DateField` (`src/components/ui/form-fields/`) inside a `FormStack`, and end them with `DialogFormFooter` + `saveLabel(editing)` (`src/components/ui/dialog-form/`); do not hand-write a `FormField` + `FormItem` block for a plain input, and do not nest ternaries for the submit label.
 - Default values and create/update branching live in small module-level helpers (`standardDefaults`, `accountDefaults`, `saveAccount`), not inline in the component.
 - Define every component at module scope; never create components inside another component's body (React Compiler rule). Do not call `setState` synchronously inside `useEffect`; derive state or reset on user events instead.
 - Accessible names on every interactive control (`aria-label` on icon buttons) so tests can query by role.
-- Loading / error / empty rendering goes through `QueryContent` (`blocks.tsx`); no `a ? x : b ? y : z` chains in JSX. Label selection with more than two branches becomes a small `if` helper (`TransactionStatus`, `budgetStatus`, `suggestionLabel`).
+- Loading / error / empty rendering goes through `QueryContent` (`src/components/ui/query-content/`); no `a ? x : b ? y : z` chains in JSX. Label selection with more than two branches becomes a small `if` helper (`TransactionStatus`, `budgetStatus`, `suggestionLabel`).
+
+## Components
+
+Full rules and the enforcement table: `agents/components.md`. In short:
+
+- One folder per component (`finance/budget-card/` with `budget-card.tsx`, `budget-card.test.tsx`, `index.ts`, optional `budget-card.scss`); modules `ui/`, `finance/`, `shell/`, each with a named-export barrel.
+- Placement: used by one component → private file in its folder; by two in a module → own folder in the module; domain-free or cross-module → `ui/`.
+- Imports: siblings by folder (`../panel`), other modules by barrel (`@/components/ui`); never a file inside another folder, never a stylesheet that is not your own.
+- Shared looks are shared components (`Stack`, `Cluster`, `Panel`, `Text`, `Field`, `ListRow`, `Table`, …), never shared stylesheets or utility classes.
 
 ## Styling
 
-- SCSS modules beside the component; shared classes live in `finance.module.scss` (layout blocks), `forms.module.scss` (form pieces), `controls.module.scss` (primitives), `shell.module.scss`.
+- One stylesheet per component (`import './budget-card.scss'`), named like it, holding one BEM block: `.budget-card`, `.budget-card__actions`, `.budget-card--compact`. Class names are written in full as plain strings (`className="budget-card__actions"`), combined with `cn()`; variant props map through a typed `Record<Variant, string>` named `…ClassNames`. Stylesheets are global, so block names must be unique.
+- No tag selectors (except `svg`), IDs, `@extend`, `!important` or classes of other blocks; nesting depth 2; blank line between rules. `ui/` stylesheets live in `@layer ui` (atoms in `@layer ui.base`), so feature classes override them without specificity hacks.
+- Mobile-first: base styles for phones, then `@include media-up(tablet-landscape)` (breakpoints `phone-landscape` 481, `tablet` 601, `tablet-landscape` 769, `laptop` 1025, `desktop` 1281, `wide` 1441). Every stylesheet starts with `@use 'abstracts' as *;` and reuses `space()`, `radius()` and the mixins in `src/styles/abstracts/`.
 - Colours in SCSS come only from `src/styles/tokens.scss` (`var(--muted)`, `var(--surface)`, `var(--on-accent)`, gradients, overlay); Stylelint rejects hex, named and `rgb()` colours in any other stylesheet. Add a token rather than a literal.
 - Colours in TypeScript come only from `Colors` in `src/styles/theme.ts` (chart palette, category-group palette `Colors.group`, `Colors.uncategorized`); ESLint rejects hex, `rgb()` and `hsl()` literals elsewhere. In JSX prefer `var(--token)` strings when a CSS token exists. Recharts style objects come from `ChartStyle`; the colour-picker swatches from `GroupColors`.
 - Group colours chosen by users are data and are applied inline (`style={{ background: group.color }}`).
-- Icons: add to `src/components/icons/registry.ts`, render with `<Icon icon={name} />`. Never `import * as` from lucide.
+- Icons: add to `src/constants/icons.ts` (also used by the category schema), render with `<Icon icon={name} />` from `@/components/ui`. Never `import * as` from lucide.
 
 ## Money
 
@@ -117,6 +130,7 @@ Cyclomatic complexity 10 and cognitive complexity 15 per function, 80 lines per 
 
 - Service rules → `src/server/services.test.ts` (PGlite; truncates and bootstraps two users before each test). Always add an ownership case.
 - Pure helpers → colocated `*.test.ts`.
+- Components → `<name>/<name>.test.tsx`, required for every component folder (`src/components/structure.test.ts` fails otherwise). Query by role and label, not by class names.
 - Screens → `*.test.tsx` with `QueryClientProvider`, `client.setQueryData` for fixtures and `vi.mock('@/app/(main)/actions')`.
 - Playwright specs in `e2e/` are excluded from Vitest.
 

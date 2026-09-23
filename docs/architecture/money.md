@@ -26,7 +26,7 @@ Floats never appear: forms submit the amount as a **string**, the server parses 
 | `formatMoney(minor, currency, { locale, signDisplay })` | Localised display string via `Intl.NumberFormat`. |
 | `convertMinor(minor, from, to, rate)` | Converts between currencies with different exponents, rounding half away from zero. |
 
-The `Amount` component (`src/components/money/amount.tsx`) wraps `formatMoney`, colours inflows and outflows when `signed`, and can flip the sign for liabilities.
+The `Amount` component (`src/components/ui/amount/`) wraps `formatMoney`, colours inflows and outflows when `signed`, and can flip the sign for liabilities.
 
 ## Currency rules
 

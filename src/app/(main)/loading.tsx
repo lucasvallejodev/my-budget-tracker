@@ -1,9 +1,5 @@
-import styles from '@/components/finance/finance.module.scss';
+import { Page } from '@/components/ui';
 
 export default function Loading() {
-  return (
-    <div className={styles.page} role="status">
-      Loading your finances…
-    </div>
-  );
+  return <Page role="status">Loading your finances…</Page>;
 }

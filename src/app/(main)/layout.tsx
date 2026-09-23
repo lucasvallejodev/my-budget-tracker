@@ -1,4 +1,4 @@
-import { ApplicationShell } from '@/components/shell/application-shell';
+import { ApplicationShell } from '@/components/shell';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return <ApplicationShell>{children}</ApplicationShell>;

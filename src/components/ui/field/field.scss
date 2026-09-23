@@ -1,0 +1,17 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .field {
+    @include flex-column(space(2));
+
+    font-size: 13px;
+
+    &--filter {
+      @include muted-text(12px);
+
+      flex: 1;
+      gap: 5px;
+      min-width: 130px;
+    }
+  }
+}

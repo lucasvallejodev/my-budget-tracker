@@ -1,0 +1,11 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .notice {
+    @include accent-highlight;
+
+    padding: 14px 18px;
+    border-radius: radius(lg);
+    font-size: 13px;
+  }
+}

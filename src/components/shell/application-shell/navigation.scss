@@ -1,0 +1,49 @@
+@use 'abstracts' as *;
+
+.navigation {
+  &__links {
+    @include flex-column(space(2) + 2px);
+  }
+
+  &__link {
+    @include flex-row(space(3));
+
+    border-radius: radius(sm);
+    padding: 11px 14px;
+    color: var(--muted);
+    font-size: 14px;
+
+    &:hover,
+    &[aria-current='page'] {
+      @include accent-highlight;
+    }
+
+    svg {
+      @include icon-size(18px);
+    }
+  }
+
+  &__section-label {
+    @include muted-text(11px);
+
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    padding: 0 14px;
+    margin: space(5) 0 space(2);
+  }
+
+  &__section-total {
+    @include muted-text(11px);
+
+    display: block;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  &__link-amount {
+    @include muted-text(12px);
+
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}

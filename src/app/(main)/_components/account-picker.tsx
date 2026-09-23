@@ -1,7 +1,7 @@
 'use client';
 
-import { useAccounts } from '@/components/finance/use-finance-data';
-import { EntityPicker, EntityPickerProps } from '@/components/primitives/entity-picker';
+import { useAccounts } from '@/components/finance';
+import { EntityPicker, EntityPickerProps } from '@/components/ui';
 
 import CreateAccountDialog from './create-account-dialog';
 

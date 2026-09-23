@@ -1,4 +1,4 @@
-import { SettingsView } from '@/components/finance/settings';
+import { SettingsView } from '@/components/finance';
 
 export default function Page() {
   return <SettingsView />;

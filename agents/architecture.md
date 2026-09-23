@@ -26,7 +26,7 @@ Schema    src/db/schema.ts                 Drizzle tables/enums; migrations in d
 3. `kind`: `standard` counts for reports (unless `excluded` or account `counts_in_spending = false`); `transfer` and `opening` count only for balances. DB CHECKs: non-standard rows have no category; `transfer_id` iff `kind='transfer'`.
 4. A transfer is exactly two live legs, opposite signs, different accounts, same `transfer_id`, no category or payee. Create/edit/delete both together (`ledger.createTransfer/updateTransfer/remove`).
 5. Currency lives on the account (locked once it has transactions) and is copied onto each transaction. Never sum across currencies; group by currency. Conversion only via `fx` and only for the optional converted totals.
-6. Categories: `category_groups` own colour + kind; `categories` own icon (name must exist in `src/components/icons/registry.ts`). Archive, never hard-delete; `archiveCategory(id, moveToId?)` moves rows or flags them `needs_review`.
+6. Categories: `category_groups` own colour + kind; `categories` own icon (name must exist in `src/constants/icons.ts`). Archive, never hard-delete; `archiveCategory(id, moveToId?)` moves rows or flags them `needs_review`.
 7. Uncategorised = `category_id IS NULL` + `needs_review = true`. No "Uncategorized" category row.
 8. Every query filters by `user_id`; foreign ids → `ServiceError('X not found', 404)`. Every multi-row write is one `db.transaction` with row locks.
 9. Drizzle renders unjoined columns unqualified: inside correlated subqueries write `"accounts"."id"` explicitly.
@@ -51,10 +51,10 @@ Schema    src/db/schema.ts                 Drizzle tables/enums; migrations in d
 
 ## Frontend essentials
 
-- Pages are thin; screens live in `src/components/finance/`. Shared dialogs/pickers in `src/app/(main)/_components/`.
+- Pages are thin; screens live in `src/components/finance/<screen>/`. Components are organised in three modules (`ui`, `finance`, `shell`), one folder per component, imported through barrels (`agents/components.md`). Route-level dialogs/pickers stay in `src/app/(main)/_components/`.
 - Hooks + query keys in `use-finance-data.ts`; after mutations invalidate every key in `FinanceKeys`.
 - Types for API rows are `import type`d from the services.
-- Styling: SCSS modules per component, tokens in `src/styles/tokens.scss`, `cn()` from `src/lib/styles.ts`. Group colour applied inline.
+- Styling: one global `.scss` per component holding one BEM block, class names written as plain strings (`cn()` from `src/lib/styles.ts` to combine); cascade layers `reset < ui.base < ui < feature`; mobile-first breakpoint mixins and helpers in `src/styles/abstracts/`; colour tokens in `src/styles/tokens.scss`. Group colour applied inline.
 - Define components at module scope (React Compiler lint forbids components created inside render); avoid `setState` inside `useEffect`.
 
 ## Diagrams

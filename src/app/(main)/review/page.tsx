@@ -1,4 +1,4 @@
-import { ReviewInbox } from '@/components/finance/review-inbox';
+import { ReviewInbox } from '@/components/finance';
 
 export default function Page() {
   return <ReviewInbox />;

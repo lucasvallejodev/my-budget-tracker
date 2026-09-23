@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { FinanceKeys } from '@/components/finance/use-finance-data';
+import { FinanceKeys } from '@/components/finance';
 
 type EntityMutationOptions<TVariables, TData> = {
   errorMessage?: string;
