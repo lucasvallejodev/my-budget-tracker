@@ -52,6 +52,26 @@ const tsdocPreset = jsdoc.configs['flat/recommended-tsdoc-error'];
 /** Component modules under src/components (see agents/conventions.md › Components). */
 const ComponentModules = ['finance', 'shell', 'ui'];
 
+/** Which modules each component module may import: shell → finance → ui, and ui imports none. */
+const ModuleDependencies = {
+  finance: ['ui'],
+  shell: ['finance', 'ui'],
+  ui: [],
+};
+
+const forbiddenModules = moduleName =>
+  ComponentModules.filter(
+    other => other !== moduleName && !ModuleDependencies[moduleName].includes(other)
+  );
+
+const allowedModules = moduleName =>
+  ModuleDependencies[moduleName].map(other => `@/components/${other}`).join(' and ');
+
+const dependencyMessage = moduleName =>
+  ModuleDependencies[moduleName].length
+    ? `${moduleName}/ may only import ${allowedModules(moduleName)} (dependency direction: shell → finance → ui). Move shared code down instead.`
+    : `${moduleName}/ must not import other component modules (dependency direction: shell → finance → ui). Pass data and callbacks in through props.`;
+
 const deepImportMessage =
   'Import a component through its folder (`@/components/finance/account-detail`) or its module barrel (`@/components/finance`), never a file inside the folder.';
 
@@ -75,16 +95,24 @@ const componentModuleImports = moduleName => ({
             message: `Inside ${moduleName}/ import siblings by folder (\`../panel\`); the barrel is for other modules and would create import cycles.`,
             name: `@/components/${moduleName}`,
           },
+          ...forbiddenModules(moduleName).map(other => ({
+            message: dependencyMessage(moduleName),
+            name: `@/components/${other}`,
+          })),
         ],
         patterns: [
           deepComponentImport,
+          ...forbiddenModules(moduleName).map(other => ({
+            group: [`@/components/${other}/*`],
+            message: dependencyMessage(moduleName),
+          })),
           {
             message: deepImportMessage,
-            regex: '^\.\./[^./][^/]*/.+',
+            regex: String.raw`^\.\./[^./][^/]*/.+`,
           },
           {
             message: 'Import another component module through `@/components/<module>`.',
-            regex: '^\.\./\.\./',
+            regex: String.raw`^\.\./\.\./`,
           },
         ],
       },
@@ -409,9 +437,13 @@ const config = [
   },
   ...ComponentModules.map(componentModuleImports),
   {
-    // Components import only their own stylesheet and write class strings of their own BEM block.
-    files: ['src/components/**/*.tsx'],
-    rules: { 'local/colocated-styles': 'error' },
+    // Components import only their own stylesheet and write class strings of their own BEM block;
+    // they are named exports so barrels, imports and searches all use the same name.
+    files: ['src/components/**/*.{ts,tsx}'],
+    rules: {
+      'import/no-default-export': 'error',
+      'local/colocated-styles': 'error',
+    },
   },
   // Plain JS files (scripts, configs) are not part of the TypeScript project.
   { files: ['**/*.{js,mjs,cjs}'], ...tseslint.configs.disableTypeChecked },

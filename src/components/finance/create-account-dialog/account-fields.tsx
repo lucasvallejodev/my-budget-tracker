@@ -2,7 +2,7 @@
 
 import { Control } from 'react-hook-form';
 
-import { AccountSummary } from '@/components/finance';
+import { createAccountAction, updateAccountAction } from '@/app/(main)/actions';
 import {
   AmountField,
   FormControl,
@@ -22,8 +22,6 @@ import {
 import { AccountTypes } from '@/constants/account';
 import type { Currency } from '@/db/schema';
 import { AccountFormValues } from '@/schema/accounts';
-
-import { createAccountAction, updateAccountAction } from '../actions';
 
 type AccountFieldProps = { control: Control<AccountFormValues> };
 
@@ -60,6 +58,7 @@ export const saveAccount = (
   account
     ? updateAccountAction({ id: account.id, ...values })
     : createAccountAction({ ...values, openingBalance });
+import { AccountSummary } from '../use-finance-data';
 
 function AccountTypeField({ control }: AccountFieldProps) {
   return (

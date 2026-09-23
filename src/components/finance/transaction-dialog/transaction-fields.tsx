@@ -2,7 +2,6 @@
 
 import { Control, FieldValues } from 'react-hook-form';
 
-import { CategoryPicker } from '@/components/finance';
 import {
   FormControl,
   FormDescription,
@@ -14,8 +13,9 @@ import {
 } from '@/components/ui';
 import { StandardTransactionValues } from '@/schema/transaction';
 
-import AccountPicker from './account-picker';
-import PayeePicker from './payee-picker';
+import { AccountPicker } from '../account-picker';
+import { CategoryPicker } from '../category-picker';
+import { PayeePicker } from '../payee-picker';
 
 export { AmountField, DateField } from '@/components/ui';
 

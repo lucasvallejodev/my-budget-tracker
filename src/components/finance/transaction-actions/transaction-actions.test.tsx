@@ -6,7 +6,7 @@ import { SampleTransactions } from '../sample-data';
 import { TransactionActions } from './transaction-actions';
 
 vi.mock('@/app/(main)/actions', () => ({ deleteTransactionAction: vi.fn(async () => ({})) }));
-vi.mock('@/app/(main)/_components/transaction-dialog', () => ({ default: () => null }));
+vi.mock('@/components/finance/transaction-dialog', () => ({ TransactionDialog: () => null }));
 
 afterEach(cleanup);
 

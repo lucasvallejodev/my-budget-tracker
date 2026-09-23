@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { AccountSummary, useCurrencies, useSettings } from '@/components/finance';
 import {
   CreateNewTrigger,
   Dialog,
@@ -19,8 +18,9 @@ import {
 } from '@/components/ui';
 import { accountFormSchema, AccountFormValues } from '@/schema/accounts';
 
+import { useEntityMutation } from '../use-entity-mutation';
+import { AccountSummary, useCurrencies, useSettings } from '../use-finance-data';
 import { accountDefaults, AccountFormFields, saveAccount } from './account-fields';
-import { useEntityMutation } from './use-entity-mutation';
 
 type CreateAccountDialogProps = {
   account?: AccountSummary;
@@ -31,7 +31,7 @@ type CreateAccountDialogProps = {
   trigger?: React.ReactNode;
 };
 
-function CreateAccountDialog({
+export function CreateAccountDialog({
   account,
   onCloseAutoFocus,
   onOpenChange,
@@ -102,5 +102,3 @@ function Trigger({ onClick, trigger }: { onClick: () => void; trigger?: React.Re
 
   return <CreateNewTrigger onClick={onClick} />;
 }
-
-export default CreateAccountDialog;

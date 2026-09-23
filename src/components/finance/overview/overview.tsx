@@ -4,7 +4,6 @@ import { AlertTriangle, ArrowDownRight, ArrowUpRight, Plus } from 'lucide-react'
 import Link from 'next/link';
 import { useState } from 'react';
 
-import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
 import {
   Button,
   Columns,
@@ -24,6 +23,7 @@ import { DistributionChart } from '../distribution-chart';
 import { MetricCard } from '../metric-card';
 import { MonthPicker } from '../month-picker';
 import { NetWorthCards } from '../net-worth-cards';
+import { TransactionDialog } from '../transaction-dialog';
 import { TransactionTable } from '../transaction-table';
 import type { Summary } from '../use-finance-data';
 import { currentMonth, monthLabel, useSummary, useTransactions } from '../use-finance-data';

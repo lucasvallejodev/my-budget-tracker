@@ -3,17 +3,14 @@
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
-import {
-  currentMonth,
-  MonthPicker,
-  TransactionExplorer,
-  useTransactions,
-} from '@/components/finance';
 import { Button, Page, PageHeading, QueryContent } from '@/components/ui';
 
-import TransactionDialog from './transaction-dialog';
+import { MonthPicker } from '../month-picker';
+import { TransactionDialog } from '../transaction-dialog';
+import { TransactionExplorer } from '../transaction-explorer';
+import { currentMonth, useTransactions } from '../use-finance-data';
 
-export default function TransactionsPage({ initialSearch = '' }: { initialSearch?: string }) {
+export function TransactionsPage({ initialSearch = '' }: { initialSearch?: string }) {
   const [month, setMonth] = useState<string | undefined>(
     initialSearch ? undefined : currentMonth()
   );

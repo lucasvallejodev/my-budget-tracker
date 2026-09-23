@@ -51,7 +51,7 @@ Schema    src/db/schema.ts                 Drizzle tables/enums; migrations in d
 
 ## Frontend essentials
 
-- Pages are thin; screens live in `src/components/finance/<screen>/`. Components are organised in three modules (`ui`, `finance`, `shell`), one folder per component, imported through barrels (`agents/components.md`). Route-level dialogs/pickers stay in `src/app/(main)/_components/`.
+- Pages are thin; screens live in `src/components/finance/<screen>/`. Components are organised in three modules (`ui`, `finance`, `shell`), one folder per component, imported through barrels and depending in one direction, `shell → finance → ui` (`agents/components.md`). Dialogs and pickers are finance components too (`transaction-dialog/`, `account-picker/`, …); `src/app/` holds only routes, actions and API handlers.
 - Hooks + query keys in `use-finance-data.ts`; after mutations invalidate every key in `FinanceKeys`.
 - Types for API rows are `import type`d from the services.
 - Styling: one global `.scss` per component holding one BEM block, class names written as plain strings (`cn()` from `src/lib/styles.ts` to combine); cascade layers `reset < ui.base < ui < feature`; mobile-first breakpoint mixins and helpers in `src/styles/abstracts/`; colour tokens in `src/styles/tokens.scss`. Group colour applied inline.

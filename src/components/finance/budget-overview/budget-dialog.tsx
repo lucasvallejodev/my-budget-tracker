@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import { useEntityMutation } from '@/app/(main)/_components/use-entity-mutation';
 import { upsertBudgetAction } from '@/app/(main)/actions';
 import {
   Button,
@@ -22,6 +21,7 @@ import {
 import { minorToDecimalString } from '@/lib/money';
 
 import { CategoryPicker } from '../category-picker';
+import { useEntityMutation } from '../use-entity-mutation';
 import { BudgetRow, monthLabel } from '../use-finance-data';
 
 const FallbackCurrency = 'EUR';

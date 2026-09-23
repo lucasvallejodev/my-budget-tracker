@@ -4,7 +4,6 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import CreateAccountDialog from '@/app/(main)/_components/create-account-dialog';
 import {
   Amount,
   Badge,
@@ -19,6 +18,7 @@ import {
 } from '@/components/ui';
 import { AccountGroups, accountTypeLabel } from '@/constants/account';
 
+import { CreateAccountDialog } from '../create-account-dialog';
 import { LinkedAccount } from '../linked-account';
 import { AccountSummary, useAccounts } from '../use-finance-data';
 

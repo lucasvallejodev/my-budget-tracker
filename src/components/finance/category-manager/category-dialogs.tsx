@@ -4,7 +4,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { useEntityMutation } from '@/app/(main)/_components/use-entity-mutation';
 import {
   archiveCategoryAction,
   createCategoryAction,
@@ -34,6 +33,7 @@ import {
 import { IconName } from '@/constants/icons';
 import { Colors } from '@/styles/theme';
 
+import { useEntityMutation } from '../use-entity-mutation';
 import type { Category, Group, GroupKind } from './category-types';
 
 const NameMaxLength = 50;

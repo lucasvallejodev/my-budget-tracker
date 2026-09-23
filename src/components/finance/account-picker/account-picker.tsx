@@ -1,11 +1,11 @@
 'use client';
 
-import { useAccounts } from '@/components/finance';
 import { EntityPicker, EntityPickerProps } from '@/components/ui';
 
-import CreateAccountDialog from './create-account-dialog';
+import { CreateAccountDialog } from '../create-account-dialog';
+import { useAccounts } from '../use-finance-data';
 
-export default function AccountPicker(props: EntityPickerProps) {
+export function AccountPicker(props: EntityPickerProps) {
   const query = useAccounts();
 
   return (

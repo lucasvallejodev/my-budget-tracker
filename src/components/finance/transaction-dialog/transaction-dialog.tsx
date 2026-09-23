@@ -5,7 +5,12 @@ import { format } from 'date-fns';
 import { ReactNode, useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import { TransactionRow, useAccounts, usePayees } from '@/components/finance';
+import {
+  createTransactionAction,
+  createTransferAction,
+  updateTransactionAction,
+  updateTransferAction,
+} from '@/app/(main)/actions';
 import {
   Dialog,
   DialogContent,
@@ -33,12 +38,8 @@ import {
   TransferValues,
 } from '@/schema/transaction';
 
-import {
-  createTransactionAction,
-  createTransferAction,
-  updateTransactionAction,
-  updateTransferAction,
-} from '../actions';
+import { useEntityMutation } from '../use-entity-mutation';
+import { TransactionRow, useAccounts, usePayees } from '../use-finance-data';
 import {
   AccountField,
   AmountField,
@@ -47,7 +48,6 @@ import {
   MemoField,
   PayeeField,
 } from './transaction-fields';
-import { useEntityMutation } from './use-entity-mutation';
 
 type Mode = 'expense' | 'income' | 'transfer';
 type Direction = Exclude<Mode, 'transfer'>;
@@ -164,7 +164,7 @@ function ModeSelect({
   );
 }
 
-export default function TransactionDialog({
+export function TransactionDialog({
   onOpenChange,
   open: controlledOpen,
   preset,

@@ -1,9 +1,9 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { FinanceKeys } from '@/components/finance';
+import { useRefreshFinance } from './use-finance-data';
 
 type EntityMutationOptions<TVariables, TData> = {
   errorMessage?: string;
@@ -12,20 +12,13 @@ type EntityMutationOptions<TVariables, TData> = {
   successMessage: string | ((data: TData) => string);
 };
 
-function useInvalidateFinance() {
-  const queryClient = useQueryClient();
-
-  return () =>
-    Promise.all(FinanceKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
-}
-
 export function useEntityMutation<TVariables, TData>({
   errorMessage,
   mutationFn,
   onSuccess,
   successMessage,
 }: EntityMutationOptions<TVariables, TData>) {
-  const invalidate = useInvalidateFinance();
+  const invalidate = useRefreshFinance();
 
   return useMutation({
     mutationFn,

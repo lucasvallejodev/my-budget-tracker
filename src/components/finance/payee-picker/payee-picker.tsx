@@ -1,11 +1,11 @@
 'use client';
 
-import { usePayees } from '@/components/finance';
 import { EntityPicker, EntityPickerProps } from '@/components/ui';
 
-import CreatePayeeDialog from './create-payee-dialog';
+import { CreatePayeeDialog } from '../create-payee-dialog';
+import { usePayees } from '../use-finance-data';
 
-export default function PayeePicker(props: EntityPickerProps) {
+export function PayeePicker(props: EntityPickerProps) {
   const query = usePayees();
 
   return (

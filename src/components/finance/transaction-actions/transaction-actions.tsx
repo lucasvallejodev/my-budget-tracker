@@ -5,7 +5,6 @@ import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
 import { deleteTransactionAction } from '@/app/(main)/actions';
 import {
   Button,
@@ -21,6 +20,7 @@ import {
 } from '@/components/ui';
 import { formatMoney } from '@/lib/money';
 
+import { TransactionDialog } from '../transaction-dialog';
 import { categoryLabel, describeTransaction } from '../transaction-labels';
 import { TransactionRow, useRefreshFinance } from '../use-finance-data';
 

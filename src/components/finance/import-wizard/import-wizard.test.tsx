@@ -42,8 +42,8 @@ const preview: Preview = {
   ],
 };
 
-vi.mock('@/app/(main)/_components/account-picker', () => ({
-  default: ({ onChange, value }: { onChange?: (value: string) => void; value?: string }) => (
+vi.mock('@/components/finance/account-picker', () => ({
+  AccountPicker: ({ onChange, value }: { onChange?: (value: string) => void; value?: string }) => (
     <select aria-label="Account" value={value} onChange={event => onChange?.(event.target.value)}>
       <option value="">Select accounts</option>
       <option value="a-checking">Main checking · EUR</option>

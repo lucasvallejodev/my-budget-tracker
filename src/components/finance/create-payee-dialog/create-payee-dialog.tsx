@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { CategoryPicker, PayeeRow } from '@/components/finance';
+import { createPayeeAction, updatePayeeAction } from '@/app/(main)/actions';
 import {
   CreateNewTrigger,
   Dialog,
@@ -24,8 +24,9 @@ import {
 } from '@/components/ui';
 import { payeeFormSchema, PayeeFormValues } from '@/schema/payees';
 
-import { createPayeeAction, updatePayeeAction } from '../actions';
-import { useEntityMutation } from './use-entity-mutation';
+import { CategoryPicker } from '../category-picker';
+import { useEntityMutation } from '../use-entity-mutation';
+import { PayeeRow } from '../use-finance-data';
 
 type CreatePayeeDialogProps = {
   onCloseAutoFocus?: ComponentProps<typeof DialogContent>['onCloseAutoFocus'];
@@ -35,7 +36,7 @@ type CreatePayeeDialogProps = {
   payee?: PayeeRow;
 };
 
-function CreatePayeeDialog({
+export function CreatePayeeDialog({
   onCloseAutoFocus,
   onOpenChange,
   onSuccessCallback,
@@ -115,5 +116,3 @@ function CreatePayeeDialog({
     </Dialog>
   );
 }
-
-export default CreatePayeeDialog;

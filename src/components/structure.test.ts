@@ -4,6 +4,8 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const ComponentsRoot = path.join(process.cwd(), 'src', 'components');
+const CatalogueDocument = path.join(process.cwd(), 'docs', 'architecture', 'components.md');
+const ValueExport = /^export \{([^}]*)\} from/gm;
 const Modules = ['finance', 'shell', 'ui'];
 const RootFiles = ['structure.test.ts'];
 const KebabCase = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
@@ -106,5 +108,21 @@ describe('src/components layout', () => {
 
       expect(problems).toEqual([]);
     });
+  });
+
+  it('lists every ui component in the catalogue of docs/architecture/components.md', () => {
+    const catalogue = readFileSync(CatalogueDocument, 'utf8');
+
+    const missing = componentFolders('ui').filter(folder => {
+      const barrel = readFileSync(path.join(ComponentsRoot, 'ui', folder, 'index.ts'), 'utf8');
+
+      const names = [...barrel.matchAll(ValueExport)].flatMap(match =>
+        match[1].split(',').map(name => name.trim())
+      );
+
+      return !names.some(name => catalogue.includes(`\`${name}`));
+    });
+
+    expect(missing).toEqual([]);
   });
 });

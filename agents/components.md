@@ -14,7 +14,11 @@ src/components/
   structure.test.ts
 ```
 
-Nothing else lives in `src/components/`. Decide where a component goes:
+Nothing else lives in `src/components/`, and components do not live anywhere else: there is no `_components/` folder under `src/app/`; pages only render components from the barrels.
+
+Modules depend in one direction: `shell` → `finance` → `ui`. `ui/` imports no other component module (it takes data and callbacks through props), `finance/` imports only `ui`, `shell/` may import both. Shared code moves down, never up.
+
+Decide where a component goes:
 
 1. Used by one component only → a private file inside that component's folder (`category-manager/category-dialogs.tsx`).
 2. Used by two or more components of one module → its own folder in that module.
@@ -38,7 +42,7 @@ finance/budget-card/
 - Module roots hold only `index.ts` and plain `.ts` modules (`use-finance-data.ts`, `sample-data.ts`, `transaction-labels.ts`, `export-transactions.ts`); no `.tsx` or stylesheets.
 - The module barrel (`ui/index.ts`, `finance/index.ts`, `shell/index.ts`) re-exports every folder with named exports (no `export *`: Next.js client boundaries need names).
 - `'use client'` goes in the component file, never in `index.ts`.
-- Components are named exports (no default exports).
+- Components, hooks and helpers in `src/components/` are named exports; default exports are rejected (`import/no-default-export`).
 
 ## Imports
 
@@ -102,8 +106,9 @@ Start every stylesheet with `@use 'abstracts' as *;` (resolved through `sassOpti
 | Every class in a stylesheet belongs to the file's block                                                                                                                                 | Stylelint `local/bem-block-matches-file` (`scripts/stylelint-rules/`) |
 | `ui/**` rules inside `@layer ui` / `ui.*`                                                                                                                                               | Stylelint `local/require-layer`                                       |
 | Component imports only `./<same-name>.scss`; class strings in `className` and `…ClassNames` tables belong to its block                                                                  | ESLint `local/colocated-styles` (`scripts/eslint-rules/`)             |
-| No deep component imports, no own-barrel imports, no `../../` across modules                                                                                                            | ESLint `no-restricted-imports` (`eslint.config.mjs`)                  |
-| Folder contract, barrels list every folder, no stray stylesheets                                                                                                                        | Vitest `src/components/structure.test.ts`                             |
+| No deep component imports, no own-barrel imports, no `../../` across modules, dependency direction `shell → finance → ui`                                                               | ESLint `no-restricted-imports` (`eslint.config.mjs`)                  |
+| Folder contract, barrels list every folder, no stray stylesheets, unique block names, every `ui` component in the docs catalogue                                                        | Vitest `src/components/structure.test.ts`                             |
+| Named exports only in `src/components/`                                                                                                                                                 | ESLint `import/no-default-export`                                     |
 
 ## Checklist: adding a component
 

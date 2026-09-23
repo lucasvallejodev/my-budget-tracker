@@ -27,7 +27,6 @@ src/
 ├─ app/                    Next.js App Router
 │  ├─ (auth)/              Clerk sign-in and sign-up pages
 │  ├─ (main)/              Authenticated pages (dashboard, transactions, accounts, …)
-│  │  ├─ _components/      Dialogs and pickers used by several pages
 │  │  ├─ actions.ts        Every server action (mutations), grouped by domain
 │  │  └─ routes.ts         Sidebar navigation entries
 │  ├─ api/                 Route handlers (read endpoints consumed by React Query)

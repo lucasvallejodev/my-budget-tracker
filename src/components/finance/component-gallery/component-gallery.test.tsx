@@ -15,7 +15,7 @@ vi.mock('@clerk/nextjs', () => ({
   useUser: () => ({ user: null }),
 }));
 
-vi.mock('@/app/(main)/_components/transaction-dialog', () => ({ default: () => null }));
+vi.mock('@/components/finance/transaction-dialog', () => ({ TransactionDialog: () => null }));
 vi.mock('@/app/(main)/actions', () => ({ deleteTransactionAction: vi.fn() }));
 
 afterEach(cleanup);

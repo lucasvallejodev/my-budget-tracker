@@ -6,14 +6,14 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import CreateAccountDialog from '@/app/(main)/_components/create-account-dialog';
-import TransactionDialog from '@/app/(main)/_components/transaction-dialog';
 import { archiveAccountAction } from '@/app/(main)/actions';
 import { Amount, Button, EmptyState, Grid, Page, PageHeading, Panel, Text } from '@/components/ui';
 import { accountTypeLabel } from '@/constants/account';
 import { formatMoney, minorToDecimalString } from '@/lib/money';
 
+import { CreateAccountDialog } from '../create-account-dialog';
 import { MetricCard } from '../metric-card';
+import { TransactionDialog } from '../transaction-dialog';
 import { TransactionExplorer } from '../transaction-explorer';
 import {
   AccountSummary,

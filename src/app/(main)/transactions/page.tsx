@@ -1,4 +1,4 @@
-import TransactionsPage from '../_components/transaction-page';
+import { TransactionsPage } from '@/components/finance';
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q: query = '' } = await searchParams;

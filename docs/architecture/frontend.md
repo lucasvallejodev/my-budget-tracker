@@ -9,7 +9,6 @@ src/app/(main)/<route>/page.tsx                 thin page, renders one feature c
 src/components/finance/<screen>/<screen>.tsx    client component with the screen's state and mutations
 src/components/finance/<part>/                  finance building blocks (MetricCard, BudgetCard, charts, …)
 src/components/ui/<component>/                  project-wide building blocks (Page, Panel, Stack, Button, Dialog, …)
-src/app/(main)/_components/*.tsx                dialogs and pickers shared across screens
 ```
 
 Every component is a folder with its component, test, `index.ts` and optional BEM stylesheet; pages import from the module barrels (`@/components/finance`, `@/components/ui`). The rules are in [Components and styles](components.md).
@@ -49,15 +48,15 @@ Dialog forms are assembled from shared pieces rather than written field by field
 | --- | --- | --- |
 | `TextField`, `AmountField`, `DateField` | `src/components/ui/form-fields/` | A `FormField` wrapper taking `control`, `name`, `label` and `description`; `AmountField` is the decimal text input, `DateField` the calendar popover. |
 | `DialogFormFooter`, `saveLabel`, `CreateNewTrigger` | `src/components/ui/dialog-form/` | The Cancel + submit row (spinner while pending; `saveLabel(editing, 'Create')` yields "Save" or the create label) and the "Create new" row pickers use to open a dialog. |
-| `useEntityMutation` | `src/app/(main)/_components/use-entity-mutation.ts` | `useMutation` plus the success toast, invalidation of every `FinanceKeys` query and the caller's follow-up (reset, close, callback). |
-| `AccountField`, `PayeeField`, `CategoryField`, `MemoField` | `src/app/(main)/_components/transaction-fields.tsx` | The transaction pickers as form fields. |
-| `AccountFormFields`, `accountDefaults`, `saveAccount` | `src/app/(main)/_components/account-fields.tsx` | The account form's type, currency and detail fields and its create/update wiring. |
+| `useEntityMutation` | `src/components/finance/use-entity-mutation.ts` | `useMutation` plus the success toast, invalidation of every `FinanceKeys` query and the caller's follow-up (reset, close, callback). |
+| `AccountField`, `PayeeField`, `CategoryField`, `MemoField` | `src/components/finance/transaction-dialog/transaction-fields.tsx` (private to the dialog) | The transaction pickers as form fields. |
+| `AccountFormFields`, `accountDefaults`, `saveAccount` | `src/components/finance/create-account-dialog/account-fields.tsx` (private to the dialog) | The account form's type, currency and detail fields and its create/update wiring. |
 
-The transaction dialog (`transaction-dialog.tsx`) has three modes, expense, income and transfer, and works for both creating and editing; editing a transfer leg edits the whole transfer. Its default values come from `standardDefaults` and `transferDefaults`, which merge an existing row or a caller preset with blank values.
+The transaction dialog (`src/components/finance/transaction-dialog/`) has three modes, expense, income and transfer, and works for both creating and editing; editing a transfer leg edits the whole transfer. Its default values come from `standardDefaults` and `transferDefaults`, which merge an existing row or a caller preset with blank values.
 
 ## Pickers
 
-- `AccountPicker` and `PayeePicker` wrap `EntityPicker` (searchable popover with a "Create new" dialog).
+- `AccountPicker` and `PayeePicker` (`src/components/finance/`) wrap `EntityPicker` (searchable popover with a "Create new" dialog).
 - `CategoryPicker` opens a dialog grouped by category group, filtered by kind (income/expense) when the caller knows the direction, with a "Leave uncategorized" option.
 - `IconPicker` shows the curated registry as a searchable grid; `ColorPicker` offers a palette plus a custom colour input. Both live in `src/components/ui/`; `CategoryPicker` lives in `src/components/finance/category-picker/`.
 

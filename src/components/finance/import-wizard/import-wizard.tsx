@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import AccountPicker from '@/app/(main)/_components/account-picker';
 import { commitImportAction, linkTransferAction, previewImportAction } from '@/app/(main)/actions';
 import {
   Amount,
@@ -30,6 +29,7 @@ import {
 import { parseCsv } from '@/server/import/csv';
 import type { ColumnMapping, Preview, TransferSuggestion } from '@/server/import/service';
 
+import { AccountPicker } from '../account-picker';
 import { flattenCategories } from '../category-picker';
 import { useCategories, useRefreshFinance } from '../use-finance-data';
 import { ColumnSelect, guessMapping } from './column-select';

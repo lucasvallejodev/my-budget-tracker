@@ -16,6 +16,10 @@ src/components/
 └─ structure.test.ts   checks the rules below
 ```
 
+Modules depend in one direction: `shell` → `finance` → `ui`. `ui` components never import `finance` or `shell`; they receive data and callbacks through props. `finance` imports only `ui`, and `shell` may use both. When two modules need the same thing, it moves down to `ui`.
+
+Components live only here. `src/app/` holds routes, server actions and API handlers; its pages render components from the barrels (the transactions page renders `TransactionsPage`, dialogs such as `TransactionDialog` and `CreateAccountDialog` are finance components).
+
 Where does a new component go?
 
 | It is used by…                               | Put it in                                                                               |
@@ -184,8 +188,9 @@ Colours still come only from `var(--token)` in `src/styles/tokens.scss`. When th
 | every class belongs to the stylesheet's block                                                                                                       | `local/bem-block-matches-file` (`scripts/stylelint-rules/`) |
 | `ui` stylesheets inside `@layer ui`                                                                                                                 | `local/require-layer` (`scripts/stylelint-rules/`)          |
 | a component imports only its own stylesheet and writes class strings of its own block                                                               | `local/colocated-styles` (`scripts/eslint-rules/`)          |
-| no deep component imports, no own-barrel imports, no `../../` across modules                                                                        | `no-restricted-imports` in `eslint.config.mjs`              |
-| folder contract, test file present, barrels complete, block names unique                                                                            | `src/components/structure.test.ts`                          |
+| no deep component imports, no own-barrel imports, no `../../` across modules, dependency direction `shell → finance → ui`                           | `no-restricted-imports` in `eslint.config.mjs`              |
+| folder contract, test file present, barrels complete, block names unique, every `ui` component listed in this catalogue                             | `src/components/structure.test.ts`                          |
+| named exports only in `src/components/`                                                                                                             | `import/no-default-export` in `eslint.config.mjs`           |
 
 `npm run lint:fix` fixes the spacing rules; everything else fails `npm run lint` or `npm test` with a message that names the rule to follow.
 

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type AccountSummary, QueryKeys } from '../use-finance-data';
 import { AccountsOverview } from './accounts-overview';
 
-vi.mock('@/app/(main)/_components/create-account-dialog', () => ({ default: () => null }));
+vi.mock('@/components/finance/create-account-dialog', () => ({ CreateAccountDialog: () => null }));
 
 afterEach(cleanup);
 
