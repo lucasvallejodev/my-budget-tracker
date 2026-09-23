@@ -1,23 +1,5 @@
-import Header from '@/components/header';
-import { SideNavbar, MobileNavbar } from './_components/navbar';
+import { ApplicationShell } from '@/components/shell';
 
-async function DashboardLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <div>
-      <MobileNavbar />
-      <div className="fixed md:w-56 hidden md:block ">
-        <SideNavbar />
-      </div>
-      <div className="md:ml-56">
-        <Header />
-        {children}
-      </div>
-    </div>
-  );
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <ApplicationShell>{children}</ApplicationShell>;
 }
-
-export default DashboardLayout;

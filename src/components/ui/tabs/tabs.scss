@@ -1,0 +1,30 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .tabs {
+    @include flex-row(6px);
+
+    flex-wrap: wrap;
+    padding: 5px;
+    background: var(--surface-soft);
+    border-radius: radius(lg);
+
+    &__trigger {
+      @include reset-button;
+
+      color: var(--muted);
+      padding: space(2) + 2px 15px;
+      border-radius: radius(sm);
+      text-align: left;
+
+      &[data-state='active'] {
+        @include accent-highlight;
+      }
+    }
+
+    &__panel {
+      padding-top: space(6);
+      min-width: 0;
+    }
+  }
+}

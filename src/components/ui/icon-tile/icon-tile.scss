@@ -1,0 +1,16 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .icon-tile {
+    @include grid-center;
+    @include icon-size(42px);
+    @include accent-highlight;
+
+    flex-shrink: 0;
+    border-radius: radius(md);
+
+    &--filled {
+      color: var(--on-accent);
+    }
+  }
+}

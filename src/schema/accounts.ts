@@ -1,18 +1,31 @@
 import { z } from 'zod';
 
-export const createAccountSchema = z.object({
-  name: z.string().min(1).max(50),
-  type: z.enum(['CHECKING', 'SAVINGS', 'CREDIT_CARD', 'CASH', 'INVESTMENT', 'OTHER']),
-  institution: z.string().max(50).optional(),
-  accountNumber: z.string().max(20).optional(),
-  color: z.string().max(20).optional(),
-  icon: z.string().max(20).optional(),
-  notes: z.string().max(500).optional(),
-});
+import { FieldLengths } from '@/constants/field-lengths';
 
-export const createAccountWithUserSchema = createAccountSchema.extend({
-  userId: z.string().uuid(),
-});
+const AccountTypeValues = [
+  'checking',
+  'savings',
+  'cash',
+  'credit_card',
+  'loan',
+  'investment',
+  'other',
+] as const;
 
-export type CreateAccountSchemaType = z.infer<typeof createAccountSchema>;
-export type CreateAccountWithUserSchemaType = z.infer<typeof createAccountWithUserSchema>;
+export const accountFormSchema = z.object({
+  accountNumber: z.string().max(FieldLengths.accountNumber).optional(),
+  countsInSpending: z.boolean().optional(),
+  currency: z.string().length(FieldLengths.currencyCode, 'Choose a currency'),
+  institution: z.string().max(FieldLengths.institution).optional(),
+  name: z.string().trim().min(1, 'Name is required').max(FieldLengths.name),
+  notes: z.string().max(FieldLengths.notes).optional(),
+  openingBalance: z.string().max(FieldLengths.amountInput).optional(),
+  type: z.enum(AccountTypeValues),
+});
+export type AccountFormValues = z.infer<typeof accountFormSchema>;
+
+export const updateAccountSchema = accountFormSchema
+  .omit({ openingBalance: true })
+  .partial()
+  .extend({ id: z.string().min(1) });
+export type UpdateAccountValues = z.infer<typeof updateAccountSchema>;

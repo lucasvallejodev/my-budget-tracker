@@ -1,0 +1,60 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .dialog {
+    @include flex-column(18px);
+
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(540px, calc(100vw - 32px));
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    padding: space(5);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+
+    @include media-up(tablet) {
+      padding: space(7);
+    }
+
+    &__overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      backdrop-filter: blur(3px);
+    }
+
+    &__close {
+      @include reset-button;
+
+      position: absolute;
+      right: space(3);
+      top: space(2) + 2px;
+      color: var(--muted);
+      padding: 6px;
+      border-radius: radius(sm);
+    }
+
+    &__title {
+      padding-right: 25px;
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    &__description {
+      @include muted-text;
+    }
+
+    &__footer {
+      @include flex-row(space(2) + 2px);
+
+      justify-content: flex-end;
+      padding-top: space(3);
+    }
+  }
+}

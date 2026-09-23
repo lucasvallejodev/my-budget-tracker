@@ -1,0 +1,23 @@
+'use client';
+
+import { EntityPicker, EntityPickerProps } from '@/components/ui';
+
+import { CreatePayeeDialog } from '../create-payee-dialog';
+import { usePayees } from '../use-finance-data';
+
+export function PayeePicker(props: EntityPickerProps) {
+  const query = usePayees();
+
+  return (
+    <EntityPicker
+      {...props}
+      label="payees"
+      items={query.data ?? []}
+      pending={query.isPending}
+      error={query.isError}
+      create={(onCreated, dialogProps) => (
+        <CreatePayeeDialog {...dialogProps} onSuccessCallback={onCreated} />
+      )}
+    />
+  );
+}

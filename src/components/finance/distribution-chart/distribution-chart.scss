@@ -1,0 +1,20 @@
+@use 'abstracts' as *;
+
+.distribution-chart {
+  &__legend {
+    display: grid;
+    gap: space(3);
+    margin-top: 18px;
+  }
+
+  &__legend-row {
+    @include flex-row(space(2) + 2px);
+    @include muted-text;
+  }
+
+  &__legend-value {
+    color: var(--ink);
+    margin-left: auto;
+    font-weight: 500;
+  }
+}

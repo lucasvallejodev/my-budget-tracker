@@ -1,0 +1,68 @@
+@use 'abstracts' as *;
+
+$sidebar-width: 260px;
+
+.application-shell {
+  min-height: 100dvh;
+
+  &__sidebar {
+    @include flex-column(space(8));
+
+    display: none;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: $sidebar-width;
+    padding: space(6) space(5);
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+
+    @include media-up(laptop) {
+      display: flex;
+    }
+
+    @media print {
+      display: none;
+    }
+  }
+
+  &__sidebar-footer {
+    @include flex-column(space(5));
+
+    margin-top: auto;
+  }
+
+  &__profile {
+    @include flex-row(space(2) + 2px);
+
+    padding-top: space(2) + 2px;
+    min-width: 0;
+  }
+
+  &__main {
+    min-width: 0;
+
+    @include media-up(laptop) {
+      margin-left: $sidebar-width;
+    }
+
+    @media print {
+      margin-left: 0;
+    }
+  }
+
+  &__skip-link {
+    position: fixed;
+    top: -100px;
+    left: space(5);
+    z-index: 100;
+    padding: space(3);
+    background: var(--surface);
+    color: var(--ink);
+
+    &:focus {
+      top: space(2) + 2px;
+    }
+  }
+}

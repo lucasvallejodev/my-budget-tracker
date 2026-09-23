@@ -1,0 +1,27 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    border: 0;
+    border-radius: radius(pill);
+    overflow: hidden;
+    background: var(--canvas);
+    appearance: none;
+
+    &::-webkit-progress-bar {
+      background: var(--canvas);
+    }
+
+    &::-webkit-progress-value {
+      background: var(--accent);
+      border-radius: radius(pill);
+    }
+
+    &::-moz-progress-bar {
+      background: var(--accent);
+      border-radius: radius(pill);
+    }
+  }
+}

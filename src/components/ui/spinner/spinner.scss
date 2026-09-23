@@ -1,0 +1,13 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  @keyframes spinner-rotation {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .spinner {
+    animation: spinner-rotation 1s linear infinite;
+  }
+}

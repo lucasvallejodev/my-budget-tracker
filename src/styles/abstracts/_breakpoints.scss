@@ -1,0 +1,38 @@
+@use 'sass:map';
+
+$breakpoints: (
+  phone-landscape: 481px,
+  tablet: 601px,
+  tablet-landscape: 769px,
+  laptop: 1025px,
+  desktop: 1281px,
+  wide: 1441px,
+);
+
+$breakpoint-gap: 0.02px;
+
+@function breakpoint($name) {
+  @if not map.has-key($breakpoints, $name) {
+    @error 'Unknown breakpoint `#{$name}`. Use one of: #{map.keys($breakpoints)}.';
+  }
+
+  @return map.get($breakpoints, $name);
+}
+
+@mixin media-up($name) {
+  @media (min-width: breakpoint($name)) {
+    @content;
+  }
+}
+
+@mixin media-down($name) {
+  @media (max-width: breakpoint($name) - $breakpoint-gap) {
+    @content;
+  }
+}
+
+@mixin media-between($from, $to) {
+  @media (min-width: breakpoint($from)) and (max-width: breakpoint($to) - $breakpoint-gap) {
+    @content;
+  }
+}

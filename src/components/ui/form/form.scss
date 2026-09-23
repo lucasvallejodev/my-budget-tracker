@@ -1,0 +1,25 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .form {
+    @include flex-column(18px);
+
+    &__item {
+      @include flex-column(7px);
+    }
+
+    &__label {
+      font-weight: 550;
+      font-size: 13px;
+    }
+
+    &__error {
+      color: var(--danger);
+      font-size: 12px;
+    }
+
+    &__description {
+      @include muted-text;
+    }
+  }
+}

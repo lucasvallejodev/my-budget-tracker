@@ -1,0 +1,35 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .table {
+    @include bordered(14px);
+
+    overflow-x: auto;
+
+    &__grid {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    &__header-cell {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 18px;
+    }
+
+    &__cell {
+      padding: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    &__row:hover &__cell {
+      background: var(--surface-soft);
+    }
+  }
+}

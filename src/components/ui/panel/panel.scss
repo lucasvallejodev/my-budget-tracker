@@ -1,0 +1,23 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .panel {
+    @include surface(18px);
+
+    @include media-up(tablet-landscape) {
+      padding: space(6);
+    }
+
+    &__head {
+      @include flex-between(space(4), flex-start);
+
+      margin-bottom: space(6);
+    }
+
+    &__description {
+      @include muted-text;
+
+      margin-top: 3px;
+    }
+  }
+}

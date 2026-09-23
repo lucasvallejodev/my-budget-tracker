@@ -1,0 +1,9 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .pill-input {
+    @include pill-control;
+
+    min-width: 0;
+  }
+}

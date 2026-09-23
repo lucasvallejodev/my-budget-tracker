@@ -1,0 +1,17 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .cluster {
+    @include flex-row(space(2) + 2px);
+
+    flex-wrap: wrap;
+
+    &--end {
+      justify-content: flex-end;
+    }
+
+    &--between {
+      justify-content: space-between;
+    }
+  }
+}

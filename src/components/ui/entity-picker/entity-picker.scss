@@ -1,0 +1,24 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .entity-picker {
+    width: 100%;
+    justify-content: space-between;
+
+    &__icon {
+      @include icon-size(16px);
+
+      opacity: 0.55;
+      margin-left: space(2);
+    }
+
+    &__content {
+      padding: space(2);
+    }
+
+    &__check {
+      margin-left: auto;
+      width: 16px;
+    }
+  }
+}

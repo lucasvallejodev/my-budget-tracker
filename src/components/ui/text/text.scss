@@ -1,0 +1,21 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .text {
+    &--muted {
+      @include muted-text;
+    }
+
+    &--positive {
+      color: var(--success);
+    }
+
+    &--negative {
+      color: var(--danger);
+    }
+
+    &--small {
+      font-size: 12px;
+    }
+  }
+}

@@ -1,0 +1,117 @@
+@use 'abstracts' as *;
+
+@mixin calendar-nav-button {
+  @include grid-center;
+
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--accent-soft);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+@layer ui {
+  .calendar {
+    padding: space(3);
+    position: relative;
+    width: fit-content;
+    color: var(--ink);
+
+    &__months {
+      position: relative;
+    }
+
+    &__month-caption {
+      @include flex-row;
+
+      height: 42px;
+      font-weight: 600;
+    }
+
+    &__nav {
+      @include flex-row(space(2));
+
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+
+    &__button-previous,
+    &__button-next {
+      @include calendar-nav-button;
+    }
+
+    &__chevron {
+      fill: var(--accent);
+      width: 16px;
+    }
+
+    &__month-grid {
+      border-collapse: separate;
+      border-spacing: 3px;
+    }
+
+    &__weekday {
+      @include muted-text(12px);
+
+      font-weight: 400;
+    }
+
+    &__day-button {
+      @include reset-button;
+
+      width: 36px;
+      height: 36px;
+      border-radius: radius(sm);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      transition: background 120ms ease;
+
+      &:focus-visible {
+        @include focus-ring;
+      }
+
+      &:hover {
+        background: var(--accent-soft);
+      }
+    }
+
+    &__day--selected &__day-button {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+
+    &__day--today &__day-button {
+      border: 1px solid var(--accent);
+    }
+
+    &__day--outside {
+      opacity: 0.4;
+    }
+
+    &__day--disabled {
+      opacity: 0.3;
+    }
+
+    &__day--disabled &__day-button {
+      cursor: not-allowed;
+    }
+  }
+}

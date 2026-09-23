@@ -1,13 +1,5 @@
-import Logo from '@/components/logo';
-import { ReactNode } from 'react';
+import { AuthScreen } from '@/components/shell';
 
-function Layout({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative flex h-screen w-full flex-col items-center justify-center">
-      <Logo />
-      <div className="m-12">{children}</div>
-    </div>
-  );
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <AuthScreen>{children}</AuthScreen>;
 }
-
-export default Layout;

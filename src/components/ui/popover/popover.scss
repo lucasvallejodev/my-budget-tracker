@@ -1,0 +1,7 @@
+@use 'abstracts' as *;
+
+@layer ui.base {
+  .popover {
+    @include floating-panel;
+  }
+}

@@ -1,0 +1,13 @@
+@use 'abstracts' as *;
+
+.budget-card {
+  @include bordered;
+  @include flex-column(18px);
+
+  padding: 22px;
+
+  &__actions {
+    padding-top: space(4);
+    border-top: 1px solid var(--border);
+  }
+}

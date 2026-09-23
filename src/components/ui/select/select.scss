@@ -1,0 +1,35 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .select {
+    &__trigger {
+      @include text-field;
+      @include flex-between(space(2));
+
+      text-align: left;
+
+      &--pill {
+        @include pill-control;
+
+        width: auto;
+        min-width: 0;
+      }
+    }
+
+    &__content {
+      @include floating-panel;
+
+      width: var(--radix-select-trigger-width);
+      max-height: var(--radix-select-content-available-height);
+    }
+
+    &__item {
+      @include option-item('[data-highlighted]');
+    }
+
+    &__label {
+      font-weight: 550;
+      font-size: 13px;
+    }
+  }
+}

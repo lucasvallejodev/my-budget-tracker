@@ -1,0 +1,31 @@
+@use 'abstracts' as *;
+
+.balance-card {
+  @include surface(18px);
+  @include flex-column(22px);
+
+  min-height: 236px;
+  color: var(--on-accent);
+  background: var(--gradient-balance);
+
+  @include media-up(tablet-landscape) {
+    padding: space(6);
+  }
+
+  &__header {
+    @include flex-between;
+  }
+
+  &__caption,
+  &__details {
+    color: var(--on-accent);
+    opacity: 0.85;
+    font-size: 13px;
+  }
+
+  &__details {
+    @include flex-between;
+
+    flex-wrap: wrap;
+  }
+}

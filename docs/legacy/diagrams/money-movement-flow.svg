@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="money-flow-title money-flow-desc">
+      <title id="money-flow-title">Recording money movement: where each entry lands</title>
+      <desc id="money-flow-desc">Flowchart showing that a transfer between the user's own accounts, such as paying a credit card, is written as two linked legs that update account ledgers and net worth but never spending reports, while any other entry is written as one signed transaction that feeds both, and an entry without a category is flagged for review.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;family=Noto+Serif:ital@0;1&amp;family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400&amp;family=Noto+Sans+TC:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- Arrows first -->
+      <line x1="480" y1="96" x2="480" y2="128" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="560" y1="164" x2="640" y2="164" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <line x1="480" y1="200" x2="480" y2="244" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="560" y1="280" x2="640" y2="280" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="480" y1="316" x2="480" y2="350" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 740,308 V 348 Q 740,356 732,356 H 488" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="480" y1="362" x2="480" y2="380" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="480" y1="436" x2="480" y2="468" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 580,408 H 732 Q 740,408 740,416 V 468" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 840,164 H 864 Q 872,164 872,172 V 488 Q 872,496 864,496 H 840" fill="none" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+      <!-- Arrow labels -->
+      <rect x="588" y="146" width="24" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="600" y="155" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES</text>
+      <rect x="490" y="216" width="20" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="500" y="225" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+      <rect x="592" y="262" width="20" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="602" y="271" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+      <rect x="490" y="326" width="24" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="502" y="335" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES</text>
+      <rect x="630" y="390" width="48" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="654" y="399" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BALANCE</text>
+      <rect x="880" y="320" width="40" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="900" y="329" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">2 LEGS</text>
+
+      <!-- Start -->
+      <rect x="400" y="56" width="160" height="40" rx="20" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="480" y="80" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">New entry</text>
+
+      <!-- Decision 1 -->
+      <polygon points="480,128 560,164 480,200 400,164" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="480" y="161" fill="#2d3142" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Between your</text>
+      <text x="480" y="174" fill="#2d3142" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">own accounts?</text>
+
+      <!-- Transfer legs (focal) -->
+      <rect x="640" y="136" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="640" y="136" width="200" height="56" rx="6" fill="#eb6c36" fill-opacity="0.08" stroke="#eb6c36" stroke-width="1"/>
+      <text x="740" y="158" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Write two linked legs</text>
+      <text x="740" y="176" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">−src · +dst · shared transfer_id</text>
+
+      <!-- Decision 2 -->
+      <polygon points="480,244 560,280 480,316 400,280" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="480" y="277" fill="#2d3142" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Category</text>
+      <text x="480" y="290" fill="#2d3142" font-size="10" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">chosen?</text>
+
+      <!-- Flag for review -->
+      <rect x="640" y="252" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="640" y="252" width="200" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="740" y="274" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Flag for review</text>
+      <text x="740" y="292" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">needs_review · shows in inbox</text>
+
+      <!-- Merge point -->
+      <circle cx="480" cy="356" r="4" fill="#2d3142"/>
+
+      <!-- Single signed entry -->
+      <rect x="380" y="380" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="380" y="380" width="200" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="480" y="402" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Write one signed entry</text>
+      <text x="480" y="420" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">amount_minor ± · currency · category</text>
+
+      <!-- Reports -->
+      <rect x="380" y="468" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="380" y="468" width="200" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="480" y="490" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Spending &amp; income reports</text>
+      <text x="480" y="508" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">by group · by month · per currency</text>
+
+      <!-- Ledgers & net worth (store) -->
+      <rect x="640" y="468" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="640" y="468" width="200" height="56" rx="6" fill="#2d3142" fill-opacity="0.05" stroke="#4f5d75" stroke-width="1"/>
+      <text x="740" y="490" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Account ledgers &amp; net worth</text>
+      <text x="740" y="508" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per account · per currency</text>
+
+      <!-- Editorial asides -->
+      <text x="60" y="152" fill="#4f5d75" font-size="14" font-style="italic" font-family="'Instrument Serif', serif">Paying the card is a transfer:</text>
+      <text x="60" y="170" fill="#4f5d75" font-size="14" font-style="italic" font-family="'Instrument Serif', serif">money moves, nothing new is spent.</text>
+      <text x="60" y="188" fill="#4f5d75" font-size="14" font-style="italic" font-family="'Instrument Serif', serif">The purchases were already counted.</text>
+
+      <text x="60" y="276" fill="#4f5d75" font-size="14" font-style="italic" font-family="'Instrument Serif', serif">Uncategorized entries still post;</text>
+      <text x="60" y="294" fill="#4f5d75" font-size="14" font-style="italic" font-family="'Instrument Serif', serif">they wait in the review inbox.</text>
+
+      <!-- Legend strip -->
+      <line x1="40" y1="548" x2="920" y2="548" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+      <text x="40" y="564" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <rect x="40" y="576" width="18" height="10" rx="5" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="64" y="584" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Start</text>
+
+      <polygon points="120,576 129,581 120,586 111,581" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="136" y="584" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Decision</text>
+
+      <rect x="196" y="576" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="216" y="584" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Step</text>
+
+      <rect x="264" y="576" width="14" height="10" rx="2" fill="#eb6c36" fill-opacity="0.08" stroke="#eb6c36" stroke-width="1"/>
+      <text x="284" y="584" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Transfer path (excluded from spending)</text>
+
+      <rect x="476" y="576" width="14" height="10" rx="2" fill="#2d3142" fill-opacity="0.05" stroke="#4f5d75" stroke-width="1"/>
+      <text x="496" y="584" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Balances</text>
+
+      <circle cx="568" cy="581" r="4" fill="#2d3142"/>
+      <text x="580" y="584" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Merge</text>
+    </svg>

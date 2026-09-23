@@ -1,29 +1,63 @@
-import { RouteItem } from '@/types/route-item';
-import { ChartPie, House, Landmark, ReceiptText } from 'lucide-react';
+import {
+  ChartNoAxesColumn,
+  ChartPie,
+  House,
+  Inbox,
+  Landmark,
+  ReceiptText,
+  Settings,
+  Upload,
+} from 'lucide-react';
 
-export const MAIN_ROUTE_ITEMS: RouteItem[] = [
+import { RouteItem } from '@/types/route-item';
+
+export const MainRouteItems: RouteItem[] = [
   {
+    icon: House,
     id: 1,
     name: 'Dashboard',
-    icon: House,
     path: '/',
   },
   {
-    id: 2,
-    name: 'Budgets',
-    icon: ChartPie,
-    path: '/budgets',
-  },
-  {
-    id: 3,
-    name: 'Transactions',
     icon: ReceiptText,
+    id: 2,
+    name: 'Transactions',
     path: '/transactions',
   },
   {
+    icon: Inbox,
+    id: 3,
+    name: 'Review',
+    path: '/review',
+  },
+  {
+    icon: Upload,
+    id: 8,
+    name: 'Import',
+    path: '/import',
+  },
+  {
+    icon: ChartNoAxesColumn,
     id: 4,
-    name: 'Accounts',
+    name: 'Analytics',
+    path: '/analytics',
+  },
+  {
+    icon: ChartPie,
+    id: 5,
+    name: 'Budgets',
+    path: '/budgets',
+  },
+  {
     icon: Landmark,
+    id: 6,
+    name: 'Accounts',
     path: '/accounts',
+  },
+  {
+    icon: Settings,
+    id: 7,
+    name: 'Settings',
+    path: '/settings',
   },
 ];

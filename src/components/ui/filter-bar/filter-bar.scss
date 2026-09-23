@@ -1,0 +1,10 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .filter-bar {
+    @include flex-row(space(3), end);
+
+    flex-wrap: wrap;
+    margin-bottom: space(6);
+  }
+}

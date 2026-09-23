@@ -1,29 +1,5 @@
-import { getUserOrRedirect } from '@/lib/auth';
-import { prisma } from '@/prisma';
+import { handle, param } from '@/server/http';
 
-export async function GET() {
-  const user = await getUserOrRedirect();
-
-  const accounts = await prisma.account.findMany({
-    select: {
-      id: true,
-      type: true,
-      name: true,
-      icon: true,
-      color: true,
-      balance: true,
-      institution: true,
-      accountNumber: true,
-    },
-    where: {
-      userId: user.id,
-    },
-    orderBy: {
-      createdAt: 'asc',
-    },
-  });
-
-  return Response.json(accounts, {
-    status: 200,
-  });
-}
+export const GET = handle(({ request, services, userId }) =>
+  services.accounts.list(userId, { includeArchived: param(request, 'includeArchived') === '1' })
+);

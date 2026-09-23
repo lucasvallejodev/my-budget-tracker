@@ -1,5 +1,5 @@
-function Loading() {
-  return <div>Loading...</div>;
-}
+import { Page } from '@/components/ui';
 
-export default Loading;
+export default function Loading() {
+  return <Page role="status">Loading your finances…</Page>;
+}

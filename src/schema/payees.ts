@@ -1,13 +1,11 @@
 import { z } from 'zod';
 
-export const createPayeeSchema = z.object({
-  name: z.string().min(1).max(50),
-  categoryId: z.string().max(50).optional(),
-});
+import { FieldLengths } from '@/constants/field-lengths';
 
-export const createPayeeWithUserSchema = createPayeeSchema.extend({
-  userId: z.string().uuid(),
+export const payeeFormSchema = z.object({
+  defaultCategoryId: z.string().optional(),
+  name: z.string().trim().min(1, 'Name is required').max(FieldLengths.payeeName),
 });
+export type PayeeFormValues = z.infer<typeof payeeFormSchema>;
 
-export type CreatePayeeSchemaType = z.infer<typeof createPayeeSchema>;
-export type CreatePayeeWithUserSchemaType = z.infer<typeof createPayeeWithUserSchema>;
+export const updatePayeeSchema = payeeFormSchema.partial().extend({ id: z.string().min(1) });

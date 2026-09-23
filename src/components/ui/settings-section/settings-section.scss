@@ -1,0 +1,21 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .settings-section {
+    @include divided(space(6));
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: space(6);
+
+    @include media-up(laptop) {
+      grid-template-columns: minmax(130px, 1fr) minmax(0, 2fr);
+    }
+
+    &__description {
+      @include muted-text;
+
+      margin-top: 5px;
+    }
+  }
+}

@@ -1,0 +1,10 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .pagination {
+    @include flex-between(space(2) + 2px);
+
+    margin-top: space(5);
+    color: var(--muted);
+  }
+}

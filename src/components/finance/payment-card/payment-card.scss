@@ -1,0 +1,33 @@
+@use 'abstracts' as *;
+
+.payment-card {
+  @include flex-column(space(6));
+
+  justify-content: space-between;
+  padding: space(6);
+  aspect-ratio: 1.65;
+  border-radius: radius(xl);
+  color: var(--on-accent);
+  background: var(--gradient-card);
+  box-shadow: var(--card-shadow);
+
+  &__header,
+  &__meta {
+    @include flex-between;
+  }
+
+  &__number {
+    font-size: 19px;
+    letter-spacing: 2px;
+  }
+
+  &__meta {
+    font-size: 12px;
+  }
+
+  &__meta-label {
+    display: block;
+    opacity: 0.7;
+    margin-bottom: space(1);
+  }
+}

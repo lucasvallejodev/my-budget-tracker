@@ -1,0 +1,10 @@
+@use 'abstracts' as *;
+
+.budget-progress {
+  @include flex-column(space(2));
+
+  &__meta {
+    @include flex-between(space(3));
+    @include muted-text;
+  }
+}

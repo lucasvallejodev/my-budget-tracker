@@ -1,0 +1,13 @@
+@use 'abstracts' as *;
+
+.budget-insights {
+  @include reset-list;
+
+  display: grid;
+  gap: space(4);
+
+  &__item {
+    @include flex-row(space(2) + 2px, start);
+    @include muted-text;
+  }
+}

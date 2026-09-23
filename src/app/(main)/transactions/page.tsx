@@ -1,11 +1,7 @@
-import TransactionsPage from '../_components/transaction-page';
+import { TransactionsPage } from '@/components/finance';
 
-async function Transactions() {
-  return (
-    <div className="h-full p-5 flex gap-5 flex-col">
-      <TransactionsPage />
-    </div>
-  );
+export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q: query = '' } = await searchParams;
+
+  return <TransactionsPage key={query} initialSearch={query} />;
 }
-
-export default Transactions;

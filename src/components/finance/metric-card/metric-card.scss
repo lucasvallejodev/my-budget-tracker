@@ -1,0 +1,19 @@
+@use 'abstracts' as *;
+
+.metric-card {
+  &__label {
+    @include flex-row(space(3));
+
+    color: var(--muted);
+    margin-bottom: space(4);
+  }
+
+  &__trend {
+    @include flex-row(7px);
+
+    flex-wrap: wrap;
+    margin-top: 7px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+}

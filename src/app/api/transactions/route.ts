@@ -1,48 +1,15 @@
-import { getUserOrRedirect } from '@/lib/auth';
-import { prisma } from '@/prisma';
-// import { z } from 'zod';
+import { handle, param } from '@/server/http';
 
-export async function GET() {
-  const user = await getUserOrRedirect();
-
-  // const { searchParams } = new URL(request.url);
-  // const paramType = searchParams.get('type');
-
-  // const validator = z.enum(['INCOME', 'EXPENSE']).nullable();
-  // const queryParams = validator.safeParse(paramType);
-
-  // if (!queryParams.success) {
-  //   return Response.json(queryParams.error, {
-  //     status: 400,
-  //   });
-  // }
-
-  // const type = queryParams.data;
-  const transactions = await prisma.transaction.findMany({
-    select: {
-      id: true,
-      amount: true,
-      date: true,
-      type: true,
-      description: true,
-      // payee: true,
-      payeeId: true,
-      // account: true,
-      accountId: true,
-      categoryId: true,
-      categoryGroupId: true,
-    },
-    where: {
-      userId: user.id,
-      // type: type || undefined,
-    },
-    orderBy: {
-      date: 'desc',
-    },
-    take: 20,
-  });
-
-  return Response.json(transactions, {
-    status: 200,
-  });
-}
+export const GET = handle(({ request, services, userId }) =>
+  services.ledger.list(userId, {
+    accountId: param(request, 'accountId'),
+    categoryId: param(request, 'categoryId'),
+    from: param(request, 'from'),
+    limit: param(request, 'limit') ? Number(param(request, 'limit')) : undefined,
+    month: param(request, 'month'),
+    needsReview: param(request, 'needsReview') === '1',
+    offset: param(request, 'offset') ? Number(param(request, 'offset')) : undefined,
+    search: param(request, 'q'),
+    to: param(request, 'to'),
+  })
+);
