@@ -8,15 +8,15 @@ import { formatMoney } from '@coinkeeper/shared/lib/money';
 import { currentMonth, monthLabel, QueryKeys, shiftMonth, type Summary } from '../use-finance-data';
 import { Overview } from './overview';
 
-vi.mock('@/app/(main)/actions', () => ({
-  createAccountAction: vi.fn(async () => ({})),
-  createPayeeAction: vi.fn(async () => ({})),
-  createTransactionAction: vi.fn(async () => ({})),
-  createTransferAction: vi.fn(async () => ({})),
-  updateAccountAction: vi.fn(async () => ({})),
-  updatePayeeAction: vi.fn(async () => ({})),
-  updateTransactionAction: vi.fn(async () => ({})),
-  updateTransferAction: vi.fn(async () => ({})),
+vi.mock('@/api/mutations', () => ({
+  createAccount: vi.fn(async () => ({})),
+  createPayee: vi.fn(async () => ({})),
+  createTransaction: vi.fn(async () => ({})),
+  createTransfer: vi.fn(async () => ({})),
+  updateAccount: vi.fn(async () => ({})),
+  updatePayee: vi.fn(async () => ({})),
+  updateTransaction: vi.fn(async () => ({})),
+  updateTransfer: vi.fn(async () => ({})),
 }));
 
 vi.mock('recharts', async importOriginal => ({

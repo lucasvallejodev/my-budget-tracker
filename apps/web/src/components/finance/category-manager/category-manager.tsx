@@ -6,11 +6,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  archiveCategoryGroupAction,
-  reorderCategoriesAction,
-  reorderCategoryGroupsAction,
-  restoreCategoryAction,
-} from '@/app/(main)/actions';
+  archiveCategoryGroup,
+  reorderCategories,
+  reorderCategoryGroups,
+  unarchiveCategory,
+} from '@/api/mutations';
 import { Button, Cluster, EmptyState, Stack } from '@/components/ui';
 
 import { useCategories, useRefreshFinance } from '../use-finance-data';
@@ -59,7 +59,7 @@ export function CategoryManager() {
       delta
     );
 
-    if (ordered) run.mutate({ fn: () => reorderCategoryGroupsAction(ordered) });
+    if (ordered) run.mutate({ fn: () => reorderCategoryGroups(ordered) });
   };
 
   const moveCategory = (group: Group, index: number, delta: number) => {
@@ -71,7 +71,7 @@ export function CategoryManager() {
       delta
     );
 
-    if (ordered) run.mutate({ fn: () => reorderCategoriesAction(group.id, ordered) });
+    if (ordered) run.mutate({ fn: () => reorderCategories(group.id, ordered) });
   };
 
   if (tree.isPending) return <p role="status">Loading categories…</p>;
@@ -103,13 +103,13 @@ export function CategoryManager() {
           onArchiveGroup={() =>
             run.mutate({
               done: `Archived ${group.name}`,
-              fn: () => archiveCategoryGroupAction(group.id),
+              fn: () => archiveCategoryGroup(group.id),
             })
           }
           onRestoreCategory={category =>
             run.mutate({
               done: `Restored ${category.name}`,
-              fn: () => restoreCategoryAction(category.id),
+              fn: () => unarchiveCategory(category.id),
             })
           }
         />

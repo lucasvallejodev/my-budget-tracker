@@ -8,7 +8,6 @@ import { ApplicationShell } from './application-shell';
 
 const push = vi.fn();
 
-vi.mock('@clerk/nextjs', () => ({ UserButton: () => null }));
 vi.mock('next/navigation', () => ({
   usePathname: () => '/budgets',
   useRouter: () => ({ push }),

@@ -6,11 +6,11 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import {
-  createTransactionAction,
-  createTransferAction,
-  updateTransactionAction,
-  updateTransferAction,
-} from '@/app/(main)/actions';
+  createTransaction,
+  createTransfer,
+  updateTransaction,
+  updateTransfer,
+} from '@/api/mutations';
 import {
   Dialog,
   DialogContent,
@@ -235,9 +235,7 @@ function StandardForm({
   const { isPending, mutate } = useEntityMutation({
     errorMessage: 'Could not save the transaction',
     mutationFn: (values: StandardTransactionValues) =>
-      transaction
-        ? updateTransactionAction(transaction.id, values)
-        : createTransactionAction(values),
+      transaction ? updateTransaction(transaction.id, values) : createTransaction(values),
     onSuccess: () => {
       form.reset();
       onDone();
@@ -320,8 +318,8 @@ function TransferForm({
     errorMessage: 'Could not save the transfer',
     mutationFn: (values: TransferValues) =>
       transaction?.transferId
-        ? updateTransferAction(transaction.transferId, values)
-        : createTransferAction(values),
+        ? updateTransfer(transaction.transferId, values)
+        : createTransfer(values),
     onSuccess: () => {
       form.reset();
       onDone();

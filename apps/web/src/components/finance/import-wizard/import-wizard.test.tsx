@@ -51,8 +51,8 @@ vi.mock('@/components/finance/account-picker', () => ({
   ),
 }));
 
-vi.mock('@/app/(main)/actions', () => ({
-  commitImportAction: vi.fn(async () => ({
+vi.mock('@/api/mutations', () => ({
+  commitImport: vi.fn(async () => ({
     inserted: 1,
     insertedIds: ['t1'],
     matched: 0,
@@ -68,10 +68,10 @@ vi.mock('@/app/(main)/actions', () => ({
       },
     ],
   })),
-  createAccountAction: vi.fn(async () => ({})),
-  linkTransferAction: vi.fn(async () => ({})),
-  previewImportAction: vi.fn(async () => preview),
-  updateAccountAction: vi.fn(async () => ({})),
+  createAccount: vi.fn(async () => ({})),
+  linkTransfer: vi.fn(async () => ({})),
+  previewImport: vi.fn(async () => preview),
+  updateAccount: vi.fn(async () => ({})),
 }));
 
 const account: AccountSummary = {
@@ -186,7 +186,7 @@ describe('ImportWizard', () => {
   });
 
   it('previews, imports and offers transfer links', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderWizard();
     uploadCsv();
@@ -199,7 +199,7 @@ describe('ImportWizard', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     await waitFor(() =>
-      expect(actions.previewImportAction).toHaveBeenCalledWith(
+      expect(actions.previewImport).toHaveBeenCalledWith(
         expect.objectContaining({
           accountId: 'a-checking',
           csv,
@@ -216,11 +216,11 @@ describe('ImportWizard', () => {
     expect(screen.getByText('Groceries (rule)')).toBeTruthy();
     expect(screen.getByText('Already imported')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Import 1 new' }));
-    await waitFor(() => expect(actions.commitImportAction).toHaveBeenCalledWith(preview));
+    await waitFor(() => expect(actions.commitImport).toHaveBeenCalledWith(preview));
     expect(await screen.findByRole('heading', { name: 'Done' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Main checking → Savings' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Link as transfer' }));
-    await waitFor(() => expect(actions.linkTransferAction).toHaveBeenCalledWith('t1', 't2'));
+    await waitFor(() => expect(actions.linkTransfer).toHaveBeenCalledWith('t1', 't2'));
     await waitFor(() =>
       expect(screen.queryByRole('heading', { name: 'Main checking → Savings' })).toBeNull()
     );

@@ -2,7 +2,6 @@
 
 import './application-header.scss';
 
-import { UserButton } from '@clerk/nextjs';
 import { Bell, Menu, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -20,6 +19,7 @@ import {
 
 import { Logo } from '../logo';
 import { ThemeToggle } from '../theme-toggle';
+import { UserMenu } from '../user-menu';
 import { Navigation } from './navigation';
 
 const SearchIconSize = 16;
@@ -80,7 +80,7 @@ export function ApplicationHeader() {
             <p>You’re all caught up.</p>
           </PopoverContent>
         </Popover>
-        <UserButton />
+        <UserMenu />
       </div>
     </header>
   );

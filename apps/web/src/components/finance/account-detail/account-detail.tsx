@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { archiveAccountAction } from '@/app/(main)/actions';
+import { setAccountArchived } from '@/api/mutations';
 import { Amount, Button, EmptyState, Grid, Page, PageHeading, Panel, Text } from '@/components/ui';
 import { accountTypeLabel } from '@/constants/account';
 import { formatMoney, minorToDecimalString } from '@coinkeeper/shared/lib/money';
@@ -38,7 +38,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
   );
 
   const archive = useMutation({
-    mutationFn: (archived: boolean) => archiveAccountAction(accountId, archived),
+    mutationFn: (archived: boolean) => setAccountArchived(accountId, archived),
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async (result, archived) => {
       toast.success(archived ? 'Account archived' : 'Account restored');

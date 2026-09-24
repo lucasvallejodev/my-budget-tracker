@@ -393,7 +393,7 @@ const config = [
     // Utilities and server code: arrow functions with explicit return types.
     files: [
       'apps/*/src/lib/**/*.ts',
-      'apps/*/src/server/**/*.ts',
+      'apps/api/src/**/*.ts',
       'apps/*/src/constants/**/*.ts',
       'packages/shared/src/lib/**/*.ts',
       'packages/shared/src/constants/**/*.ts',
@@ -506,7 +506,7 @@ const config = [
     rules: { 'no-restricted-syntax': 'off' },
   },
   {
-    files: ['*.config.{ts,mts,js,mjs}', 'scripts/eslint-rules/**', 'scripts/stylelint-rules/**'],
+    files: ['**/*.config.{ts,mts,js,mjs}', 'scripts/eslint-rules/**', 'scripts/stylelint-rules/**'],
     rules: {
       '@typescript-eslint/no-magic-numbers': 'off',
       'local/no-comments': 'off',
@@ -514,7 +514,7 @@ const config = [
     },
   },
   {
-    files: ['**/*.test.{ts,tsx}', 'e2e/**', 'scripts/**', '*.config.{ts,mts,js,mjs}'],
+    files: ['**/*.test.{ts,tsx}', 'e2e/**', '**/scripts/**', '**/*.config.{ts,mts,js,mjs}'],
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',

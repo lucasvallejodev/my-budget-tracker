@@ -65,3 +65,23 @@ export const sessionSchema = z.object({
 });
 
 export type Session = z.infer<typeof sessionSchema>;
+
+const PasswordsDifferMessage = 'The passwords do not match';
+
+export const signUpFormSchema = signUpSchema
+  .extend({ confirmPassword: z.string() })
+  .refine(values => values.password === values.confirmPassword, {
+    message: PasswordsDifferMessage,
+    path: ['confirmPassword'],
+  });
+
+export type SignUpFormValues = z.input<typeof signUpFormSchema>;
+
+export const changePasswordFormSchema = changePasswordSchema
+  .extend({ confirmPassword: z.string() })
+  .refine(values => values.newPassword === values.confirmPassword, {
+    message: PasswordsDifferMessage,
+    path: ['confirmPassword'],
+  });
+
+export type ChangePasswordFormValues = z.input<typeof changePasswordFormSchema>;

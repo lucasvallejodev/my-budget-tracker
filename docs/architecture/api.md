@@ -59,13 +59,13 @@ Routes that need a user are registered inside one scope with an `onRequest` hook
 
 ### The session cookie
 
-| Attribute | Value | Why |
-| --- | --- | --- |
-| Name | `__Host-ck_session` (production), `ck_session` (plain-HTTP development) | The `__Host-` prefix makes browsers accept the cookie only when it is `Secure`, has `Path=/` and no `Domain`, so a subdomain cannot set or read it. |
-| `HttpOnly` | yes | Page JavaScript cannot read the token, so an injected script cannot steal it. |
-| `Secure` | in production (`COOKIE_SECURE`) | Only sent over HTTPS. |
-| `SameSite` | `Lax` | The browser does not attach the cookie to requests started by other sites (forms, `fetch`, images); it only sends it on our own pages and on top-level navigation to us. |
-| `Expires` | session expiry | Renewed with the session. |
+| Attribute  | Value                                                                   | Why                                                                                                                                                                      |
+| ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Name       | `__Host-ck_session` (production), `ck_session` (plain-HTTP development) | The `__Host-` prefix makes browsers accept the cookie only when it is `Secure`, has `Path=/` and no `Domain`, so a subdomain cannot set or read it.                      |
+| `HttpOnly` | yes                                                                     | Page JavaScript cannot read the token, so an injected script cannot steal it.                                                                                            |
+| `Secure`   | in production (`COOKIE_SECURE`)                                         | Only sent over HTTPS.                                                                                                                                                    |
+| `SameSite` | `Lax`                                                                   | The browser does not attach the cookie to requests started by other sites (forms, `fetch`, images); it only sends it on our own pages and on top-level navigation to us. |
+| `Expires`  | session expiry                                                          | Renewed with the session.                                                                                                                                                |
 
 ## Who can reach the API, and what stops them
 
@@ -76,25 +76,25 @@ Browser ──► https://app.example.com   (Next.js, the only public entry poin
                └─ /api/* forwarded ──► Fastify on a private network ──► PostgreSQL
 ```
 
-| Layer | What it does | Where |
-| --- | --- | --- |
-| 1. Network | Fastify is not published to the internet; Next.js forwards `/api/*` to it. In development it listens on `127.0.0.1`. | `API_HOST`, Docker Compose network |
-| 2. Session check | Every route except health and sign-up/in/out needs a valid session: no cookie, an unknown token or an expired one → `401`. This is what stops a stranger. | `plugins/authentication.ts`, `routes/index.ts` |
-| 3. Cookie attributes | `HttpOnly`, `Secure`, `SameSite=Lax`, `__Host-` prefix (table above). | `plugins/authentication.ts` |
-| 4. Origin check (CSRF) | For `POST`, `PUT`, `PATCH` and `DELETE`, a browser always sends `Origin`; if it is not in `ALLOWED_ORIGINS`, or `Sec-Fetch-Site` says `cross-site`, the answer is `403 ORIGIN_NOT_ALLOWED`. Requests without either header (scripts, `curl`) still need a session. | `plugins/security.ts` |
-| 5. CORS | Registered with the `CORS_ORIGINS` allow-list, empty by default: no `Access-Control-Allow-Origin` header, so no other site's JavaScript can read a response. | `plugins/security.ts` |
-| 6. Security headers | `@fastify/helmet`: `X-Frame-Options`, `X-Content-Type-Options`, HSTS and friends. | `plugins/security.ts` |
-| 7. Rate limiting | Sign-up, sign-in and password change: `AUTH_ATTEMPTS_PER_MINUTE` per client IP (10 by default) → `429 RATE_LIMITED`. `TRUST_PROXY` makes the real IP come from `X-Forwarded-For`. | `routes/auth.ts` |
-| 8. Ownership | Every service filters by `user_id`; ids of other users answer `404`. | `modules/*` |
+| Layer                  | What it does                                                                                                                                                                                                                                                       | Where                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| 1. Network             | Fastify is not published to the internet; Next.js forwards `/api/*` to it. In development it listens on `127.0.0.1`.                                                                                                                                               | `API_HOST`, Docker Compose network             |
+| 2. Session check       | Every route except health and sign-up/in/out needs a valid session: no cookie, an unknown token or an expired one → `401`. This is what stops a stranger.                                                                                                          | `plugins/authentication.ts`, `routes/index.ts` |
+| 3. Cookie attributes   | `HttpOnly`, `Secure`, `SameSite=Lax`, `__Host-` prefix (table above).                                                                                                                                                                                              | `plugins/authentication.ts`                    |
+| 4. Origin check (CSRF) | For `POST`, `PUT`, `PATCH` and `DELETE`, a browser always sends `Origin`; if it is not in `ALLOWED_ORIGINS`, or `Sec-Fetch-Site` says `cross-site`, the answer is `403 ORIGIN_NOT_ALLOWED`. Requests without either header (scripts, `curl`) still need a session. | `plugins/security.ts`                          |
+| 5. CORS                | Registered with the `CORS_ORIGINS` allow-list, empty by default: no `Access-Control-Allow-Origin` header, so no other site's JavaScript can read a response.                                                                                                       | `plugins/security.ts`                          |
+| 6. Security headers    | `@fastify/helmet`: `X-Frame-Options`, `X-Content-Type-Options`, HSTS and friends.                                                                                                                                                                                  | `plugins/security.ts`                          |
+| 7. Rate limiting       | Sign-up, sign-in and password change: `AUTH_ATTEMPTS_PER_MINUTE` per client IP (10 by default) → `429 RATE_LIMITED`. `TRUST_PROXY` makes the real IP come from `X-Forwarded-For`.                                                                                  | `routes/auth.ts`                               |
+| 8. Ownership           | Every service filters by `user_id`; ids of other users answer `404`.                                                                                                                                                                                               | `modules/*`                                    |
 
 What each kind of caller meets:
 
-| Caller | Result |
-| --- | --- |
-| A stranger with `curl` | `401` on everything except sign-up/in (rate limited). |
+| Caller                                                 | Result                                                                                                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A stranger with `curl`                                 | `401` on everything except sign-up/in (rate limited).                                                                                                 |
 | `evil.example` calling `fetch` while you are signed in | The browser leaves the cookie off (`SameSite`), the origin check answers `403`, and without CORS headers the script could not read a response anyway. |
-| `evil.example` submitting a hidden form | No cookie, wrong `Origin`, and the endpoints only accept JSON. |
-| You, from a script | Allowed: sign in, keep the cookie, send it back. |
+| `evil.example` submitting a hidden form                | No cookie, wrong `Origin`, and the endpoints only accept JSON.                                                                                        |
+| You, from a script                                     | Allowed: sign in, keep the cookie, send it back.                                                                                                      |
 
 Other applications (a mobile app, integrations) should get personal access tokens sent as `Authorization: Bearer …` rather than cookies; that is future work. To let a web app on another origin call the API, add it to `CORS_ORIGINS` (it is then also accepted by the origin check).
 
@@ -103,19 +103,25 @@ Other applications (a mobile app, integrations) should get personal access token
 Every error has the same body:
 
 ```json
-{ "error": { "code": "INVALID_REQUEST", "message": "Use YYYY-MM-DD", "fields": { "date": "Use YYYY-MM-DD" } } }
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "Use YYYY-MM-DD",
+    "fields": { "date": "Use YYYY-MM-DD" }
+  }
+}
 ```
 
-| Status | `code` | When |
-| --- | --- | --- |
-| 400 | `INVALID_REQUEST` | The request does not match its schema (`fields` names each problem), an amount cannot be parsed, a cursor is invalid. |
-| 401 | `UNAUTHENTICATED`, `INVALID_CREDENTIALS` | No valid session; wrong email or password. |
-| 403 | `ORIGIN_NOT_ALLOWED`, `FORBIDDEN` | Cross-site write; wrong current password. |
-| 404 | `NOT_FOUND` | Unknown route, or a record that does not exist or belongs to someone else. |
-| 409 | `CONFLICT`, `EMAIL_TAKEN` | Duplicate payee name or email, account currency locked, account with transactions, transfer leg edited as a plain transaction, restoring into a deleted account, unarchiving a category of an archived group. |
-| 422 | `RULE_VIOLATION` | A business rule refused the change (unknown currency, archived account, system group, amounts that do not pair up). |
-| 429 | `RATE_LIMITED` | Too many sign-in attempts. |
-| 500 | `INTERNAL` | Anything unexpected; the details are logged, never returned. |
+| Status | `code`                                   | When                                                                                                                                                                                                          |
+| ------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | `INVALID_REQUEST`                        | The request does not match its schema (`fields` names each problem), an amount cannot be parsed, a cursor is invalid.                                                                                         |
+| 401    | `UNAUTHENTICATED`, `INVALID_CREDENTIALS` | No valid session; wrong email or password.                                                                                                                                                                    |
+| 403    | `ORIGIN_NOT_ALLOWED`, `FORBIDDEN`        | Cross-site write; wrong current password.                                                                                                                                                                     |
+| 404    | `NOT_FOUND`                              | Unknown route, or a record that does not exist or belongs to someone else.                                                                                                                                    |
+| 409    | `CONFLICT`, `EMAIL_TAKEN`                | Duplicate payee name or email, account currency locked, account with transactions, transfer leg edited as a plain transaction, restoring into a deleted account, unarchiving a category of an archived group. |
+| 422    | `RULE_VIOLATION`                         | A business rule refused the change (unknown currency, archived account, system group, amounts that do not pair up).                                                                                           |
+| 429    | `RATE_LIMITED`                           | Too many sign-in attempts.                                                                                                                                                                                    |
+| 500    | `INTERNAL`                               | Anything unexpected; the details are logged, never returned.                                                                                                                                                  |
 
 Services throw `ServiceError(message, status, code)`; `plugins/error-handler.ts` turns it, Zod validation errors and PostgreSQL unique or foreign-key violations into the body above.
 
@@ -123,14 +129,14 @@ Services throw `ServiceError(message, status, code)`; `plugins/error-handler.ts`
 
 Financial data is never removed from the database. `DELETE` sets `deleted_at` and the row disappears from every list, balance, report, budget and conversion; the matching `POST …/restore` clears it again.
 
-| Resource | Delete | Restore | See deleted rows |
-| --- | --- | --- | --- |
-| Transactions | `DELETE /transactions/:id` | `POST /transactions/:id/restore` | `GET /transactions?deleted=true` |
-| Transfers (both legs) | `DELETE /transfers/:transferId` | `POST /transfers/:transferId/restore` | `GET /transactions?deleted=true&kind=transfer` |
-| Accounts (only without live transactions; archive otherwise) | `DELETE /accounts/:id` | `POST /accounts/:id/restore` | `GET /accounts?deleted=true` |
-| Rules | `DELETE /rules/:id` | `POST /rules/:id/restore` | `GET /rules?deleted=true` |
-| Budgets | `DELETE /budgets/:id` | `POST /budgets/:id/restore` (upserting the same month, category and currency also revives it) | `GET /budgets?month=…&deleted=true` |
-| Exchange rates | `DELETE /exchange-rates/:base/:quote/:date` | `POST …/restore` (or `PUT` the rate again) | `GET /exchange-rates?deleted=true` |
+| Resource                                                     | Delete                                      | Restore                                                                                       | See deleted rows                               |
+| ------------------------------------------------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Transactions                                                 | `DELETE /transactions/:id`                  | `POST /transactions/:id/restore`                                                              | `GET /transactions?deleted=true`               |
+| Transfers (both legs)                                        | `DELETE /transfers/:transferId`             | `POST /transfers/:transferId/restore`                                                         | `GET /transactions?deleted=true&kind=transfer` |
+| Accounts (only without live transactions; archive otherwise) | `DELETE /accounts/:id`                      | `POST /accounts/:id/restore`                                                                  | `GET /accounts?deleted=true`                   |
+| Rules                                                        | `DELETE /rules/:id`                         | `POST /rules/:id/restore`                                                                     | `GET /rules?deleted=true`                      |
+| Budgets                                                      | `DELETE /budgets/:id`                       | `POST /budgets/:id/restore` (upserting the same month, category and currency also revives it) | `GET /budgets?month=…&deleted=true`            |
+| Exchange rates                                               | `DELETE /exchange-rates/:base/:quote/:date` | `POST …/restore` (or `PUT` the rate again)                                                    | `GET /exchange-rates?deleted=true`             |
 
 Categories, category groups and payees are archived instead (`POST …/archive`, `POST …/unarchive`), because history keeps pointing at them. Restoring checks the rules again: a transaction whose account was deleted cannot come back until the account does (`409`); a transaction whose category was archived meanwhile comes back uncategorised and waiting for review; a bank row that was deleted and then imported again cannot be restored twice (`409`). Only sessions are deleted for real, and users are removed with everything they own (`ON DELETE CASCADE`) — there is no endpoint for that yet.
 
@@ -138,18 +144,18 @@ Categories, category groups and payees are archived instead (`POST …/archive`,
 
 Read from the environment (and the root `.env` in development):
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `DATABASE_URL` | — (required) | Direct PostgreSQL URL. |
-| `API_HOST`, `API_PORT` | `127.0.0.1`, `4000` | Where Fastify listens. Use `0.0.0.0` inside a container. |
-| `ALLOWED_ORIGINS` | `http://localhost:3000` | Comma-separated origins allowed to send writes (the web app's public URL). |
-| `CORS_ORIGINS` | empty | Comma-separated origins allowed to read responses cross-origin. |
-| `COOKIE_SECURE` | `true` in production | Adds `Secure` and switches to the `__Host-` cookie name. |
-| `SESSION_DAYS` | `30` | Session lifetime. |
-| `AUTH_ATTEMPTS_PER_MINUTE` | `10` | Rate limit for sign-up, sign-in and password change. |
-| `TRUST_PROXY` | `true` | Read the client IP from `X-Forwarded-For` (Next.js or a reverse proxy sits in front). |
-| `API_DOCS` | `true` outside production | Serve Swagger UI at `/api/docs` (the JSON document is at `/api/docs/json`). |
-| `LOG_LEVEL` | `info` | Pino log level. |
+| Variable                   | Default                   | Meaning                                                                               |
+| -------------------------- | ------------------------- | ------------------------------------------------------------------------------------- |
+| `DATABASE_URL`             | — (required)              | Direct PostgreSQL URL.                                                                |
+| `API_HOST`, `API_PORT`     | `127.0.0.1`, `4000`       | Where Fastify listens. Use `0.0.0.0` inside a container.                              |
+| `ALLOWED_ORIGINS`          | `http://localhost:3000`   | Comma-separated origins allowed to send writes (the web app's public URL).            |
+| `CORS_ORIGINS`             | empty                     | Comma-separated origins allowed to read responses cross-origin.                       |
+| `COOKIE_SECURE`            | `true` in production      | Adds `Secure` and switches to the `__Host-` cookie name.                              |
+| `SESSION_DAYS`             | `30`                      | Session lifetime.                                                                     |
+| `AUTH_ATTEMPTS_PER_MINUTE` | `10`                      | Rate limit for sign-up, sign-in and password change.                                  |
+| `TRUST_PROXY`              | `true`                    | Read the client IP from `X-Forwarded-For` (Next.js or a reverse proxy sits in front). |
+| `API_DOCS`                 | `true` outside production | Serve Swagger UI at `/api/docs` (the JSON document is at `/api/docs/json`).           |
+| `LOG_LEVEL`                | `info`                    | Pino log level.                                                                       |
 
 ## Adding an endpoint
 
@@ -158,7 +164,3 @@ Read from the environment (and the root `.env` in development):
 3. Register the route in `apps/api/src/routes/<resource>.ts` with `schema: { params, querystring, body, response: withErrors({ 200: … }), tags }`. Use `userIdOf(request)` for the user. Commands are `POST /<resource>/:id/<verb>`; deletes answer `204` and are soft.
 4. Test it in `apps/api/src/routes/*.test.ts` with `createTestApp()` and `signUp()` (`src/test/app.ts`): the happy path, validation (`400`), another user's id (`404`) and the rule it enforces.
 5. Add the row to the [REST API reference](../reference/rest-api.md).
-
-## Transition
-
-The web app still reads through its own route handlers and writes through server actions (`apps/web/src/app/api`, `apps/web/src/app/(main)/actions.ts`) with Clerk sign-in, against its own copy of the services. Switching it to this API and removing Clerk is the next step; until then both exist side by side.

@@ -5,7 +5,7 @@ import { Trash2, Wand2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { applyRulesAction, createRuleAction, deleteRuleAction } from '@/app/(main)/actions';
+import { applyRules, createRule, deleteRule } from '@/api/mutations';
 import {
   Button,
   EmptyState,
@@ -31,7 +31,7 @@ export function RulesSettings() {
   const [categoryId, setCategoryId] = useState<string | undefined>();
 
   const create = useMutation({
-    mutationFn: () => createRuleAction({ categoryId: categoryId!, pattern }),
+    mutationFn: () => createRule({ categoryId: categoryId!, pattern }),
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success('Rule added');
@@ -41,13 +41,13 @@ export function RulesSettings() {
   });
 
   const remove = useMutation({
-    mutationFn: deleteRuleAction,
+    mutationFn: deleteRule,
     onError: (error: Error) => toast.error(error.message),
     onSuccess: refresh,
   });
 
   const apply = useMutation({
-    mutationFn: applyRulesAction,
+    mutationFn: applyRules,
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async ({ updated }) => {
       toast.success(`Categorised ${updated} transaction${updated === 1 ? '' : 's'}`);

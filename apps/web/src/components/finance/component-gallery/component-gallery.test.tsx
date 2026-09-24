@@ -10,13 +10,8 @@ vi.mock('recharts', async importOriginal => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@clerk/nextjs', () => ({
-  useClerk: () => ({ openUserProfile: vi.fn() }),
-  useUser: () => ({ user: null }),
-}));
-
 vi.mock('@/components/finance/transaction-dialog', () => ({ TransactionDialog: () => null }));
-vi.mock('@/app/(main)/actions', () => ({ deleteTransactionAction: vi.fn() }));
+vi.mock('@/api/mutations', () => ({ deleteTransaction: vi.fn() }));
 
 afterEach(cleanup);
 

@@ -4,10 +4,10 @@
 
 The goal is code that reads well for humans. Three tools enforce it, and `npm run lint:fix` applies everything that can be applied automatically:
 
-| Tool                            | Enforces                                                                                                                                                                                                                                                           |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Prettier (through ESLint)       | Line width (100), quotes, commas, indentation. Prettier never _adds_ blank lines, which is why the next rule exists.                                                                                                                                               |
-| ESLint (`eslint.config.mjs`)    | Blank lines, object and type layout, naming, colours, function style, complexity budget, TypeScript safety (type-aware rules), React, Next.js and accessibility rules, SonarJS code smells, TSDoc on `apps/web/src/lib/`.                                                   |
+| Tool                            | Enforces                                                                                                                                                                                                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prettier (through ESLint)       | Line width (100), quotes, commas, indentation. Prettier never _adds_ blank lines, which is why the next rule exists.                                                                                                                                                        |
+| ESLint (`eslint.config.mjs`)    | Blank lines, object and type layout, naming, colours, function style, complexity budget, TypeScript safety (type-aware rules), React, Next.js and accessibility rules, SonarJS code smells, TSDoc on `apps/web/src/lib/` and `packages/shared/src/lib/`.                    |
 | Stylelint (`.stylelintrc.json`) | No hard-coded colours in SCSS outside `apps/web/src/styles/tokens.scss`; BEM class names, one block per stylesheet, `ui` cascade layer, no tag selectors or `@extend`, breakpoints only through mixins, blank lines between rules ([Components and styles](components.md)). |
 
 Two more tools report instead of block: `npm run lint:dupes` (jscpd, fails above 3 % duplicated lines) and `npm run knip` (unused files, exports and dependencies). In CI, the `SonarQube Cloud` workflow publishes duplication, cognitive complexity, coverage and code smells with history at sonarcloud.io (setup in [Setup](../getting-started/setup.md)); its quality gate judges new code only.
@@ -24,11 +24,10 @@ A blank line separates the parts of a file that a reader scans separately:
 - around multi-line blocks (`if`, loops, `try`).
 
 ```ts
-import { handle, param } from '@/server/http';
+import { apiList } from '@/api/client';
 
-export const GET = handle(({ userId, services, request }) =>
-  services.accounts.list(userId, { includeArchived: param(request, 'includeArchived') === '1' })
-);
+export const listAccounts = (includeArchived: boolean): Promise<AccountSummary[]> =>
+  apiList<AccountSummary>('/accounts', { includeArchived });
 ```
 
 ## Objects and types
@@ -47,7 +46,7 @@ export type CashPoint = {
 
 ## Functions
 
-- Helpers in `apps/web/src/lib/`, `apps/web/src/constants/` and `apps/web/src/server/` are arrow functions assigned to a `const`, with an explicit return type in `apps/web/src/lib/` and `apps/web/src/constants/`:
+- Helpers in the `lib/` and `constants/` folders (`apps/web/src/`, `packages/shared/src/`) are arrow functions assigned to a `const` with an explicit return type (ESLint enforces both there). API services, route helpers and plugins in `apps/api/src/` follow the same arrow-function style:
 
   ```ts
   export const getPercentage = (value: number, target: number): number => {
@@ -57,7 +56,7 @@ export type CashPoint = {
   };
   ```
 
-- React components, pages, route handlers and server actions stay `function` declarations (`export function Overview()`), which keeps component names in stack traces and follows the Next.js conventions.
+- React components and pages stay `function` declarations (`export function Overview()`), which keeps component names in stack traces and follows the Next.js conventions. Fastify route plugins are `const` arrow functions typed `FastifyPluginAsyncZod`.
 - Single-line guards do not need braces (`if (!value) return 0;`); anything spanning lines does.
 
 ## Naming
@@ -82,7 +81,7 @@ Every name must say what the value is for. One-letter and abbreviated names are 
 
 ## Documenting utilities with TSDoc
 
-Every exported function in `apps/web/src/lib/` carries a [TSDoc](https://tsdoc.org/) comment. It states the contract that a name cannot: units, accepted input formats, rounding, fallbacks, errors. Editors show it on hover wherever the function is used, so `formatMoney` explains itself inside a component without opening `money.ts`.
+Every exported function in `apps/web/src/lib/` and `packages/shared/src/lib/` carries a [TSDoc](https://tsdoc.org/) comment. It states the contract that a name cannot: units, accepted input formats, rounding, fallbacks, errors. Editors show it on hover wherever the function is used, so `formatMoney` explains itself inside a component without opening `money.ts`.
 
 ````ts
 /**
@@ -112,7 +111,7 @@ export const convertMinor = (amountMinor: number, from: string, to: string, rate
 - **`@example`** in a fenced block with the result as a trailing `// value`. Every example must be asserted by a test in the colocated `*.test.ts`.
 - Link related helpers with `{@link otherHelper}`.
 
-TSDoc is allowed only directly above an exported declaration in `apps/web/src/lib/`. Private helpers, function bodies and other folders stay comment-free, and a `/** … */` block anywhere else is rejected. ESLint enforces the rest: `jsdoc/require-jsdoc` (every exported function), `jsdoc/require-param`, `jsdoc/require-returns`, `jsdoc/require-throws`, `jsdoc/check-param-names` (keeps names in sync after a rename), `jsdoc/no-types` and `tsdoc/syntax` (valid TSDoc tags and escaping).
+TSDoc is allowed only directly above an exported declaration in `apps/web/src/lib/` or `packages/shared/src/lib/`. Private helpers, function bodies and other folders stay comment-free, and a `/** … */` block anywhere else is rejected. ESLint enforces the rest: `jsdoc/require-jsdoc` (every exported function), `jsdoc/require-param`, `jsdoc/require-returns`, `jsdoc/require-throws`, `jsdoc/check-param-names` (keeps names in sync after a rename), `jsdoc/no-types` and `tsdoc/syntax` (valid TSDoc tags and escaping).
 
 <!-- screenshot: editor hover on a formatMoney call showing its TSDoc (docs/assets/screenshots/tsdoc-hover.png) -->
 
@@ -128,17 +127,17 @@ TSDoc is allowed only directly above an exported declaration in `apps/web/src/li
 
 Before adding a helper, a constant, a colour or a style value, look for an existing one:
 
-| You need…                                              | Look in                                                                                                                                   |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| a calculation or formatting helper                     | `apps/web/src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`)                                                                        |
-| a lookup table, limit or unit                          | `apps/web/src/constants/` (`account.ts`, `field-lengths.ts`, `http.ts`, `money.ts`, `time.ts`), the `*Keys` / `*Names` exports next to the feature |
-| a regular expression or format check                   | `Patterns`, `isIsoDate`, `isIsoMonth`, `isDigitsOnly`, `isHexColor` in `packages/shared/src/lib/patterns.ts`                                              |
-| a colour or chart style in TypeScript                  | `Colors`, `GroupColors`, `ChartStyle` in `apps/web/src/styles/theme.ts`                                                                            |
-| a colour, shadow or gradient in SCSS                   | the `--tokens` in `apps/web/src/styles/tokens.scss`                                                                                                |
-| a breakpoint, spacing, radius or repeated SCSS pattern | `media-up`, `space()`, `radius()` and the mixins in `apps/web/src/styles/abstracts/`                                                               |
-| a piece of markup or a look                            | the components in `apps/web/src/components/ui/` ([catalogue](components.md#the-ui-catalogue))                                                      |
+| You need…                                              | Look in                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| a calculation or formatting helper                     | `packages/shared/src/lib/` (`money.ts`, `date-helpers.ts`, `csv.ts`) for code both sides use, `apps/web/src/lib/` (`math.ts`, `styles.ts`, `appearance.ts`, `hydration.ts`) for the web app only                                                                         |
+| a lookup table, limit or unit                          | `packages/shared/src/constants/` (`field-lengths.ts`, `money.ts`, `time.ts`, `pagination.ts`, `palette.ts`, `icon-names.ts`), `apps/web/src/constants/` (`account.ts`, `icons.ts`), `apps/api/src/constants/http.ts`, the `*Keys` / `*Names` exports next to the feature |
+| a regular expression or format check                   | `Patterns`, `isIsoDate`, `isIsoMonth`, `isDigitsOnly`, `isHexColor` in `packages/shared/src/lib/patterns.ts`                                                                                                                                                             |
+| a colour or chart style in TypeScript                  | `Colors`, `GroupColors`, `ChartStyle` in `apps/web/src/styles/theme.ts`                                                                                                                                                                                                  |
+| a colour, shadow or gradient in SCSS                   | the `--tokens` in `apps/web/src/styles/tokens.scss`                                                                                                                                                                                                                      |
+| a breakpoint, spacing, radius or repeated SCSS pattern | `media-up`, `space()`, `radius()` and the mixins in `apps/web/src/styles/abstracts/`                                                                                                                                                                                     |
+| a piece of markup or a look                            | the components in `apps/web/src/components/ui/` ([catalogue](components.md#the-ui-catalogue))                                                                                                                                                                            |
 
-If it exists, use or extend it. If the same expression appears twice, move it to `apps/web/src/lib/` with a test. `npm run lint:dupes` reports larger copies.
+If it exists, use or extend it. If the same expression appears twice, move it to `apps/web/src/lib/` (or `packages/shared/src/lib/` when the API needs it too) with a test. `npm run lint:dupes` reports larger copies.
 
 ## Colours and theme
 

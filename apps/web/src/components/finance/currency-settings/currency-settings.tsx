@@ -5,11 +5,7 @@ import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import {
-  deleteExchangeRateAction,
-  updateSettingsAction,
-  upsertExchangeRateAction,
-} from '@/app/(main)/actions';
+import { deleteExchangeRate, updateSettings, upsertExchangeRate } from '@/api/mutations';
 import {
   Button,
   DatePicker,
@@ -139,7 +135,7 @@ export function CurrencySettings() {
   });
 
   const save = useMutation({
-    mutationFn: updateSettingsAction,
+    mutationFn: updateSettings,
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success('Currency settings saved');
@@ -148,7 +144,7 @@ export function CurrencySettings() {
   });
 
   const addRate = useMutation({
-    mutationFn: () => upsertExchangeRateAction(form),
+    mutationFn: () => upsertExchangeRate(form),
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success('Rate saved');
@@ -158,7 +154,7 @@ export function CurrencySettings() {
   });
 
   const removeRate = useMutation({
-    mutationFn: deleteExchangeRateAction,
+    mutationFn: deleteExchangeRate,
     onError: (error: Error) => toast.error(error.message),
     onSuccess: refresh,
   });

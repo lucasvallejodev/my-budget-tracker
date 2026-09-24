@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ComponentProps, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { createPayeeAction, updatePayeeAction } from '@/app/(main)/actions';
+import { createPayee, updatePayee } from '@/api/mutations';
 import {
   CreateNewTrigger,
   Dialog,
@@ -59,7 +59,7 @@ export function CreatePayeeDialog({
   const { isPending, mutate } = useEntityMutation({
     errorMessage: 'Error saving payee',
     mutationFn: (values: PayeeFormValues) =>
-      payee ? updatePayeeAction({ id: payee.id, ...values }) : createPayeeAction(values),
+      payee ? updatePayee(payee.id, values) : createPayee(values),
     onSuccess: data => {
       form.reset();
       onSuccessCallback?.(data);

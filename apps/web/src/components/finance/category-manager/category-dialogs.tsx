@@ -5,12 +5,12 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  archiveCategoryAction,
-  createCategoryAction,
-  createCategoryGroupAction,
-  updateCategoryAction,
-  updateCategoryGroupAction,
-} from '@/app/(main)/actions';
+  archiveCategory,
+  createCategory,
+  createCategoryGroup,
+  updateCategory,
+  updateCategoryGroup,
+} from '@/api/mutations';
 import {
   Button,
   Cluster,
@@ -92,9 +92,7 @@ export function GroupDialog({
         name,
       };
 
-      return group
-        ? updateCategoryGroupAction(group.id, values)
-        : createCategoryGroupAction(values);
+      return group ? updateCategoryGroup(group.id, values) : createCategoryGroup(values);
     },
     onSuccess: onSaved,
     successMessage: group ? 'Group updated' : 'Group created',
@@ -168,7 +166,7 @@ export function CategoryDialog({
         name,
       };
 
-      return category ? updateCategoryAction(category.id, values) : createCategoryAction(values);
+      return category ? updateCategory(category.id, values) : createCategory(values);
     },
     onSuccess: onSaved,
     successMessage: category ? 'Category updated' : 'Category created',
@@ -240,7 +238,7 @@ export function ArchiveDialog({
   );
 
   const archive = useMutation({
-    mutationFn: () => archiveCategoryAction(category.id, moveTo || undefined),
+    mutationFn: () => archiveCategory(category.id, moveTo || undefined),
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success(`Archived ${category.name}`);

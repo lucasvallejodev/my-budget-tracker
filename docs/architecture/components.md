@@ -11,14 +11,14 @@ Before this structure, most screens imported one shared `finance.module.scss` fu
 ```
 apps/web/src/components/
 ├─ ui/          project-wide building blocks with no domain knowledge
-├─ finance/     finance components and screens
-├─ shell/       the application frame: sidebar, header, logo, theme toggle, auth screen
+├─ finance/     finance components and screens, including ProfileForm, PasswordForm, SessionList and DeletedItems
+├─ shell/       the application frame: sidebar, header, logo, theme toggle, auth screen, AuthForm (sign-in and sign-up), UserMenu
 └─ structure.test.ts   checks the rules below
 ```
 
 Modules depend in one direction: `shell` → `finance` → `ui`. `ui` components never import `finance` or `shell`; they receive data and callbacks through props. `finance` imports only `ui`, and `shell` may use both. When two modules need the same thing, it moves down to `ui`.
 
-Components live only here. `apps/web/src/app/` holds routes, server actions and API handlers; its pages render components from the barrels (the transactions page renders `TransactionsPage`, dialogs such as `TransactionDialog` and `CreateAccountDialog` are finance components).
+Components live only here. `apps/web/src/app/` holds only routes (pages and layouts); its pages render components from the barrels (the transactions page renders `TransactionsPage`, dialogs such as `TransactionDialog` and `CreateAccountDialog` are finance components).
 
 Where does a new component go?
 
@@ -41,7 +41,7 @@ apps/web/src/components/finance/budget-card/
 
 - The folder, the component file, the stylesheet and the BEM block share one kebab-case name.
 - A component without its own look has no stylesheet; it composes `ui` components.
-- Module roots hold only the barrel (`index.ts`) and plain TypeScript modules such as `finance/use-finance-data.ts`, `finance/sample-data.ts`, `finance/transaction-labels.ts` and `finance/export-transactions.ts`.
+- Module roots hold only the barrel (`index.ts`) and plain TypeScript modules such as `finance/use-finance-data.ts`, `finance/sample-data.ts`, `finance/transaction-labels.ts`, `finance/export-transactions.ts` and `finance/use-entity-mutation.ts`.
 - Barrels use named re-exports, never `export *`, because Next.js needs explicit names across client boundaries. `'use client'` goes in the component file.
 
 ## Importing components
@@ -193,8 +193,8 @@ Focus outlines are drawn with CSS only, no JavaScript. `globals.scss` styles `:f
 | `ui` stylesheets inside `@layer ui`                                                                                                                 | `local/require-layer` (`scripts/stylelint-rules/`)          |
 | a component imports only its own stylesheet and writes class strings of its own block                                                               | `local/colocated-styles` (`scripts/eslint-rules/`)          |
 | no deep component imports, no own-barrel imports, no `../../` across modules, dependency direction `shell → finance → ui`                           | `no-restricted-imports` in `eslint.config.mjs`              |
-| folder contract, test file present, barrels complete, block names unique, every `ui` component listed in this catalogue                             | `apps/web/src/components/structure.test.ts`                          |
-| named exports only in `apps/web/src/components/`                                                                                                             | `import/no-default-export` in `eslint.config.mjs`           |
+| folder contract, test file present, barrels complete, block names unique, every `ui` component listed in this catalogue                             | `apps/web/src/components/structure.test.ts`                 |
+| named exports only in `apps/web/src/components/`                                                                                                    | `import/no-default-export` in `eslint.config.mjs`           |
 
 `npm run lint:fix` fixes the spacing rules; everything else fails `npm run lint` or `npm test` with a message that names the rule to follow.
 

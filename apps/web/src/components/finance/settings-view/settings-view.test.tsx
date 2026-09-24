@@ -2,27 +2,27 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { QueryKeys } from '../use-finance-data';
 import { SettingsView } from './settings-view';
 
-const openUserProfile = vi.fn();
-
-vi.mock('@clerk/nextjs', () => ({
-  useClerk: () => ({ openUserProfile }),
-  useUser: () => ({
-    user: {
-      fullName: 'Ada Lovelace',
-      primaryEmailAddress: { emailAddress: 'ada@example.com' },
-    },
-  }),
+vi.mock('@/api/mutations', () => ({
+  changePassword: vi.fn(async () => undefined),
+  revokeSession: vi.fn(async () => undefined),
+  updateProfile: vi.fn(async () => ({})),
 }));
 
-afterEach(() => {
-  cleanup();
-  openUserProfile.mockClear();
-});
+afterEach(cleanup);
 
 function renderSettings(demo = false) {
   const client = new QueryClient();
+
+  client.setQueryData(QueryKeys.me, {
+    createdAt: '2026-09-01T00:00:00.000Z',
+    email: 'ada@example.com',
+    id: 'user-1',
+    name: 'Ada Lovelace',
+  });
+  client.setQueryData(QueryKeys.sessions, []);
 
   return render(
     <QueryClientProvider client={client}>
@@ -36,16 +36,22 @@ describe('SettingsView', () => {
     renderSettings();
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeTruthy();
     expect(screen.getByRole('tablist', { name: 'Settings Sections' })).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(10);
+    expect(screen.getAllByRole('tab')).toHaveLength(11);
     expect(screen.getByRole('heading', { name: 'Profile Information' })).toBeTruthy();
     expect(screen.getByText('Signed in as Ada Lovelace')).toBeTruthy();
     expect(screen.queryByText(/Component preview/)).toBeNull();
   });
 
-  it('opens the Clerk profile from the profile actions', () => {
+  it('edits the profile and offers password change, sessions and deleted items', () => {
     renderSettings();
-    fireEvent.click(screen.getByRole('button', { name: 'Manage your profile' }));
-    expect(openUserProfile).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText<HTMLInputElement>('Email').value).toBe('ada@example.com');
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Security' }), { button: 0 });
+    expect(screen.getByRole('button', { name: 'Change password' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'No active sessions' })).toBeTruthy();
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Deleted items' }), { button: 0 });
+    expect(screen.getByRole('link', { name: 'Open deleted items' }).getAttribute('href')).toBe(
+      '/settings/deleted'
+    );
   });
 
   it('switches sections when a tab is activated', () => {
@@ -60,8 +66,7 @@ describe('SettingsView', () => {
   it('shows the demo notice and keeps account services untouched in demo mode', () => {
     renderSettings(true);
     expect(screen.getByText('Component preview — sample account information.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Preview photo control' }));
-    expect(openUserProfile).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Preview photo control' })).toBeTruthy();
     expect(screen.queryByText(/Signed in as/)).toBeNull();
   });
 });

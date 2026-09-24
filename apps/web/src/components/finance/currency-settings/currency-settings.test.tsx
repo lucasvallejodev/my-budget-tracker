@@ -7,10 +7,10 @@ import { CurrencySettings } from './currency-settings';
 
 const MutationContextArgument = expect.anything();
 
-vi.mock('@/app/(main)/actions', () => ({
-  deleteExchangeRateAction: vi.fn(async () => {}),
-  updateSettingsAction: vi.fn(async () => ({})),
-  upsertExchangeRateAction: vi.fn(async () => ({})),
+vi.mock('@/api/mutations', () => ({
+  deleteExchangeRate: vi.fn(async () => {}),
+  updateSettings: vi.fn(async () => ({})),
+  upsertExchangeRate: vi.fn(async () => ({})),
 }));
 
 const rates: ExchangeRateRow[] = [
@@ -92,12 +92,12 @@ describe('CurrencySettings', () => {
   });
 
   it('saves the converted-totals preference when the switch is toggled', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderSettings();
     fireEvent.click(screen.getByRole('switch', { name: 'Show converted totals' }));
     await vi.waitFor(() =>
-      expect(actions.updateSettingsAction).toHaveBeenCalledWith(
+      expect(actions.updateSettings).toHaveBeenCalledWith(
         { showConvertedTotals: true },
         MutationContextArgument
       )
@@ -105,15 +105,12 @@ describe('CurrencySettings', () => {
   });
 
   it('deletes a rate by its key', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderSettings();
     fireEvent.click(screen.getByRole('button', { name: 'Delete rate GBP to EUR from 2026-08-15' }));
     await vi.waitFor(() =>
-      expect(actions.deleteExchangeRateAction).toHaveBeenCalledWith(
-        rates[1],
-        MutationContextArgument
-      )
+      expect(actions.deleteExchangeRate).toHaveBeenCalledWith(rates[1], MutationContextArgument)
     );
   });
 });

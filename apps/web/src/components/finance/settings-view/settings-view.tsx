@@ -2,16 +2,17 @@
 
 import './settings-view.scss';
 
-import { useClerk, useUser } from '@clerk/nextjs';
 import * as Tabs from '@radix-ui/react-tabs';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
 import { Badge, Button, Cluster, Notice, Page, PageHeading, Panel, Text } from '@/components/ui';
+import { useHydrated } from '@/lib/hydration';
 
 import { LinkedAccount } from '../linked-account';
 import { PaymentCardList } from '../payment-card-list';
 import { SampleCards } from '../sample-data';
+import { useCurrentUser } from '../use-finance-data';
 import {
   AppPreferences,
   DataSettings,
@@ -29,6 +30,7 @@ const Sections = [
   'Rules & Import',
   'Cards & Accounts',
   'Security',
+  'Deleted items',
   'Notifications',
   'Data Management',
   'App Preferences',
@@ -49,6 +51,51 @@ function LinkPanel({
       <Text tone="muted">{description}</Text>
       {children}
     </Panel>
+  );
+}
+
+const LinkSections = [
+  {
+    description:
+      'Manage the groups and categories used to classify your spending. Groups own the colour; categories own the icon.',
+    links: [{ href: '/settings/categories', label: 'Open the category manager' }],
+    title: 'Categories',
+  },
+  {
+    description:
+      'Set your primary currency, toggle converted totals and maintain exchange rates by hand.',
+    links: [{ href: '/settings/currencies', label: 'Open currency settings' }],
+    title: 'Currencies',
+  },
+  {
+    description: 'Import bank CSV exports and keep rules that categorise entries automatically.',
+    links: [
+      { href: '/import', label: 'Import transactions' },
+      { href: '/settings/rules', label: 'Manage rules' },
+    ],
+    title: 'Rules & Import',
+  },
+  {
+    description:
+      'Deleted transactions, transfers, accounts, rules and exchange rates are kept. Review them and bring any of them back.',
+    links: [{ href: '/settings/deleted', label: 'Open deleted items' }],
+    title: 'Deleted items',
+  },
+];
+
+function LinkSection({ section }: { section: (typeof LinkSections)[number] }) {
+  return (
+    <Tabs.Content value={section.title}>
+      <LinkPanel title={section.title} description={section.description}>
+        <Cluster>
+          {section.links.map(link => (
+            <Button asChild variant="outline" key={link.href}>
+              <Link href={link.href}>{link.label}</Link>
+            </Button>
+          ))}
+        </Cluster>
+      </LinkPanel>
+    </Tabs.Content>
   );
 }
 
@@ -88,13 +135,8 @@ function CardsAndAccounts({ demo }: { demo: boolean }) {
 }
 
 export function SettingsView({ demo = false }: { demo?: boolean }) {
-  const { openUserProfile } = useClerk();
-  const { user } = useUser();
-
-  const manage = () => {
-    if (demo) toast.info('Component preview — account services are not changed.');
-    else openUserProfile();
-  };
+  const currentUser = useCurrentUser({ enabled: !demo });
+  const user = useHydrated() ? currentUser.data : undefined;
 
   return (
     <Page>
@@ -113,53 +155,17 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
         </Tabs.List>
         <div>
           <Tabs.Content value="Profile">
-            <ProfileSettings demo={demo} onManage={manage} />
-            {!demo && (
-              <Text tone="muted">
-                Signed in as {user?.fullName || user?.primaryEmailAddress?.emailAddress}
-              </Text>
-            )}
+            <ProfileSettings demo={demo} user={user} />
+            {!demo && user && <Text tone="muted">Signed in as {user.name || user.email}</Text>}
           </Tabs.Content>
-          <Tabs.Content value="Categories">
-            <LinkPanel
-              title="Categories"
-              description="Manage the groups and categories used to classify your spending. Groups own the colour; categories own the icon."
-            >
-              <Button asChild variant="outline">
-                <Link href="/settings/categories">Open the category manager</Link>
-              </Button>
-            </LinkPanel>
-          </Tabs.Content>
-          <Tabs.Content value="Currencies">
-            <LinkPanel
-              title="Currencies"
-              description="Set your primary currency, toggle converted totals and maintain exchange rates by hand."
-            >
-              <Button asChild variant="outline">
-                <Link href="/settings/currencies">Open currency settings</Link>
-              </Button>
-            </LinkPanel>
-          </Tabs.Content>
-          <Tabs.Content value="Rules & Import">
-            <LinkPanel
-              title="Rules & Import"
-              description="Import bank CSV exports and keep rules that categorise entries automatically."
-            >
-              <Cluster>
-                <Button asChild variant="outline">
-                  <Link href="/import">Import transactions</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/settings/rules">Manage rules</Link>
-                </Button>
-              </Cluster>
-            </LinkPanel>
-          </Tabs.Content>
+          {LinkSections.map(section => (
+            <LinkSection key={section.title} section={section} />
+          ))}
           <Tabs.Content value="Cards & Accounts">
             <CardsAndAccounts demo={demo} />
           </Tabs.Content>
           <Tabs.Content value="Security">
-            <SecuritySettings demo={demo} onManage={manage} />
+            <SecuritySettings demo={demo} />
           </Tabs.Content>
           <Tabs.Content value="Notifications">
             <NotificationSettings />

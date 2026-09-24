@@ -2,12 +2,12 @@
 
 import './application-shell.scss';
 
-import { UserButton } from '@clerk/nextjs';
 import { ReactNode } from 'react';
 
 import { PromotionPanel } from '@/components/ui';
 
 import { Logo } from '../logo';
+import { UserMenu } from '../user-menu';
 import { ApplicationHeader } from './application-header';
 import { Navigation } from './navigation';
 
@@ -28,8 +28,7 @@ export function ApplicationShell({ children }: { children: ReactNode }) {
             actionLabel="View analytics"
           />
           <div className="application-shell__profile">
-            <UserButton />
-            <span>Manage your account</span>
+            <UserMenu showName />
           </div>
         </div>
       </aside>

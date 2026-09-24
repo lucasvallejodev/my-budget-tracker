@@ -1,4 +1,4 @@
-export function databaseUrl(value = process.env.DATABASE_URL): string {
+export const databaseUrl = (value = process.env.DATABASE_URL): string => {
   if (!value) {
     throw new Error('DATABASE_URL is required. Set a direct PostgreSQL connection URL in .env.');
   }
@@ -24,4 +24,4 @@ export function databaseUrl(value = process.env.DATABASE_URL): string {
   }
 
   return value;
-}
+};

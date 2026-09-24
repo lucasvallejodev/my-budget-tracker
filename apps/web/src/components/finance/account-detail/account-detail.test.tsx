@@ -17,16 +17,16 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/app/(main)/actions', () => ({
-  archiveAccountAction: vi.fn(async () => {}),
-  createAccountAction: vi.fn(async () => ({})),
-  createPayeeAction: vi.fn(async () => ({})),
-  createTransactionAction: vi.fn(async () => ({})),
-  createTransferAction: vi.fn(async () => ({})),
-  updateAccountAction: vi.fn(async () => ({})),
-  updatePayeeAction: vi.fn(async () => ({})),
-  updateTransactionAction: vi.fn(async () => ({})),
-  updateTransferAction: vi.fn(async () => ({})),
+vi.mock('@/api/mutations', () => ({
+  createAccount: vi.fn(async () => ({})),
+  createPayee: vi.fn(async () => ({})),
+  createTransaction: vi.fn(async () => ({})),
+  createTransfer: vi.fn(async () => ({})),
+  setAccountArchived: vi.fn(async () => {}),
+  updateAccount: vi.fn(async () => ({})),
+  updatePayee: vi.fn(async () => ({})),
+  updateTransaction: vi.fn(async () => ({})),
+  updateTransfer: vi.fn(async () => ({})),
 }));
 
 const base: AccountSummary = {
@@ -109,12 +109,12 @@ describe('AccountDetail', () => {
   });
 
   it('archives the account and navigates back to the list', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderDetail('a-checking');
     fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
     await vi.waitFor(() =>
-      expect(actions.archiveAccountAction).toHaveBeenCalledWith('a-checking', true)
+      expect(actions.setAccountArchived).toHaveBeenCalledWith('a-checking', true)
     );
     await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/accounts'));
   });

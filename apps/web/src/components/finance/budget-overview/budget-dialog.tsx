@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { upsertBudgetAction } from '@/app/(main)/actions';
+import { upsertBudget } from '@/api/mutations';
 import {
   Button,
   Dialog,
@@ -79,7 +79,7 @@ export function BudgetDialog({
 
   const save = useEntityMutation({
     mutationFn: () =>
-      upsertBudgetAction({
+      upsertBudget({
         amount,
         categoryId: categoryId!,
         currency,

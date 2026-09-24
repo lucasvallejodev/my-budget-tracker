@@ -1,6 +1,5 @@
 import './globals.scss';
 
-import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
 import { Toaster } from 'sonner';
@@ -21,12 +20,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className={`${dmSans.variable}`}>
-        <ClerkProvider>
-          <RootProvider>
-            <Toaster richColors position="bottom-right" />
-            {children}
-          </RootProvider>
-        </ClerkProvider>
+        <RootProvider>
+          <Toaster richColors position="bottom-right" />
+          {children}
+        </RootProvider>
       </body>
     </html>
   );

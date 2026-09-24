@@ -13,7 +13,7 @@ The **Income** group is a system group: it cannot be archived and always stays a
 
 ## Defaults
 
-On your first sign-in the app seeds 12 groups and 55 categories from `apps/web/src/server/categories/default-taxonomy.ts` (listed in [Default categories](../reference/default-taxonomy.md)). Seeding runs once per user and is versioned; future changes to the defaults never rewrite your data.
+When you create your account the app seeds 12 groups and 55 categories from `apps/api/src/modules/categories/default-taxonomy.ts` (listed in [Default categories](../reference/default-taxonomy.md)). Seeding runs once per user and is versioned; future changes to the defaults never rewrite your data.
 
 ## Step by step
 
@@ -57,7 +57,7 @@ Each payee remembers a **usual category**. It is pre-filled in the transaction f
 
 ## How it works
 
-- Tree, CRUD, reorder, archive and restore live in `apps/web/src/server/categories/service.ts`; seeding in `seed.ts`.
+- Tree, CRUD, reorder, archive and restore live in `apps/api/src/modules/categories/service.ts`; seeding in `seed.ts`, called by sign-up inside the same database transaction.
 - `archiveCategory(userId, id, moveToId?)` re-points transactions and payee defaults inside one database transaction, or flags them with `needs_review`.
 - Icon names are validated by `z.enum(IconNames)` from `packages/shared/src/constants/icon-names.ts`; colours by a hex regex. Both in `packages/shared/src/schema/categories.ts`.
 - Payee memory is `payees.learnDefaultCategory`, called after every categorised create or update in the ledger service.

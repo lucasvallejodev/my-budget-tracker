@@ -1,0 +1,22 @@
+@use 'abstracts' as *;
+
+.auth-form {
+  @include flex-column(space(5));
+  @include surface;
+  @include bordered;
+
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow);
+
+  &__title {
+    font-size: 22px;
+    font-weight: 650;
+    color: var(--ink);
+  }
+
+  &__link {
+    font-weight: 600;
+    color: var(--accent);
+  }
+}

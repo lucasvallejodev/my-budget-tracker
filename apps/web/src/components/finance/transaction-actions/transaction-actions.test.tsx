@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SampleTransactions } from '../sample-data';
 import { TransactionActions } from './transaction-actions';
 
-vi.mock('@/app/(main)/actions', () => ({ deleteTransactionAction: vi.fn(async () => ({})) }));
+vi.mock('@/api/mutations', () => ({ deleteTransaction: vi.fn(async () => ({})) }));
 vi.mock('@/components/finance/transaction-dialog', () => ({ TransactionDialog: () => null }));
 
 afterEach(cleanup);

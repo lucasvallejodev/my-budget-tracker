@@ -5,16 +5,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CategoryTree } from '../use-finance-data';
 import { CategoryManager } from './category-manager';
 
-vi.mock('@/app/(main)/actions', () => ({
-  archiveCategoryAction: vi.fn(async () => {}),
-  archiveCategoryGroupAction: vi.fn(async () => {}),
-  createCategoryAction: vi.fn(async () => ({})),
-  createCategoryGroupAction: vi.fn(async () => ({})),
-  reorderCategoriesAction: vi.fn(async () => {}),
-  reorderCategoryGroupsAction: vi.fn(async () => {}),
-  restoreCategoryAction: vi.fn(async () => {}),
-  updateCategoryAction: vi.fn(async () => ({})),
-  updateCategoryGroupAction: vi.fn(async () => ({})),
+vi.mock('@/api/mutations', () => ({
+  archiveCategory: vi.fn(async () => {}),
+  archiveCategoryGroup: vi.fn(async () => {}),
+  createCategory: vi.fn(async () => ({})),
+  createCategoryGroup: vi.fn(async () => ({})),
+  reorderCategories: vi.fn(async () => {}),
+  reorderCategoryGroups: vi.fn(async () => {}),
+  unarchiveCategory: vi.fn(async () => {}),
+  updateCategory: vi.fn(async () => ({})),
+  updateCategoryGroup: vi.fn(async () => ({})),
 }));
 
 const tree: CategoryTree[] = [
@@ -103,7 +103,7 @@ describe('CategoryManager', () => {
   });
 
   it('offers a destination when archiving a category that has transactions', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderManager();
     fireEvent.click(screen.getByRole('button', { name: 'Archive Groceries' }));
@@ -111,20 +111,17 @@ describe('CategoryManager', () => {
     expect(screen.getByText(/5 transactions use this category/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
     await vi.waitFor(() =>
-      expect(actions.archiveCategoryAction).toHaveBeenCalledWith('c-groceries', undefined)
+      expect(actions.archiveCategory).toHaveBeenCalledWith('c-groceries', undefined)
     );
   });
 
   it('reorders categories with the arrow buttons', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderManager();
     fireEvent.click(screen.getByRole('button', { name: 'Move Coffee up' }));
     await vi.waitFor(() =>
-      expect(actions.reorderCategoriesAction).toHaveBeenCalledWith('g-food', [
-        'c-coffee',
-        'c-groceries',
-      ])
+      expect(actions.reorderCategories).toHaveBeenCalledWith('g-food', ['c-coffee', 'c-groceries'])
     );
     expect(
       screen.getByRole<HTMLButtonElement>('button', { name: 'Move Groceries up' }).disabled

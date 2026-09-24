@@ -6,15 +6,15 @@
 
 For the selected month (month picker in the header) and for each currency you use:
 
-| Block | What it shows | Source |
-| --- | --- | --- |
-| Income · Spending · Savings rate | totals for the month | `reports.monthlyTotals` |
-| Cash flow chart | income and spending for the last 8 months | `reports.cashFlow` |
-| Recent transactions | the six latest rows across all accounts | `/api/transactions?limit=6` |
-| Net worth card | assets, amounts owed and net per currency, with the number of accounts | `reports.netWorth` |
-| Spending by group | donut coloured with group colours, plus an "Uncategorized" slice | `reports.breakdownByGroup` |
-| Review notice | count of rows needing a category, linking to the inbox | `ledger.needsReviewCount` |
-| Converted totals (optional) | approximate totals in the primary currency with the rates used | `reports.convertedTotals` |
+| Block                            | What it shows                                                          | Source                             |
+| -------------------------------- | ---------------------------------------------------------------------- | ---------------------------------- |
+| Income · Spending · Savings rate | totals for the month                                                   | `reports.monthlyTotals`            |
+| Cash flow chart                  | income and spending for the last 8 months                              | `reports.cashFlow`                 |
+| Recent transactions              | the six latest rows across all accounts                                | `GET /api/v1/transactions?limit=6` |
+| Net worth card                   | assets, amounts owed and net per currency, with the number of accounts | `reports.netWorth`                 |
+| Spending by group                | donut coloured with group colours, plus an "Uncategorized" slice       | `reports.breakdownByGroup`         |
+| Review notice                    | count of rows needing a category, linking to the inbox                 | `ledger.needsReviewCount`          |
+| Converted totals (optional)      | approximate totals in the primary currency with the rates used         | `reports.convertedTotals`          |
 
 <!-- screenshot: full dashboard for one currency with all blocks visible (docs/assets/screenshots/dashboard-full.png) -->
 
@@ -24,7 +24,7 @@ The Analytics page reuses the same data with the cash-flow chart, net worth and 
 
 ## How the numbers are computed
 
-All report queries share one predicate (`spendingWhere` in `apps/web/src/server/reports/service.ts`):
+All report queries share one predicate (`spendingWhere` in `apps/api/src/modules/reports/service.ts`):
 
 ```sql
 t.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending

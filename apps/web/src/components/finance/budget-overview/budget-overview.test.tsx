@@ -10,10 +10,10 @@ import { BudgetOverview } from './budget-overview';
 
 const MutationContextArgument = expect.anything();
 
-vi.mock('@/app/(main)/actions', () => ({
-  copyBudgetsAction: vi.fn(async () => ({ copied: 2 })),
-  deleteBudgetAction: vi.fn(async () => {}),
-  upsertBudgetAction: vi.fn(async () => ({})),
+vi.mock('@/api/mutations', () => ({
+  copyBudgets: vi.fn(async () => ({ copied: 2 })),
+  deleteBudget: vi.fn(async () => {}),
+  upsertBudget: vi.fn(async () => ({})),
 }));
 
 vi.mock('recharts', async importOriginal => ({
@@ -93,25 +93,22 @@ describe('BudgetOverview', () => {
   });
 
   it('confirms before deleting a budget and calls the action', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderBudgets();
     fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
     expect(screen.getByRole('dialog', { name: 'Delete the Groceries budget?' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Delete budget' }));
     await vi.waitFor(() =>
-      expect(actions.deleteBudgetAction).toHaveBeenCalledWith(
-        'b-groceries',
-        MutationContextArgument
-      )
+      expect(actions.deleteBudget).toHaveBeenCalledWith('b-groceries', MutationContextArgument)
     );
   });
 
   it('copies last month’s budgets for the selected month', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderBudgets();
     fireEvent.click(screen.getByRole('button', { name: 'Copy last month' }));
-    await vi.waitFor(() => expect(actions.copyBudgetsAction).toHaveBeenCalledWith(month));
+    await vi.waitFor(() => expect(actions.copyBudgets).toHaveBeenCalledWith(month));
   });
 });

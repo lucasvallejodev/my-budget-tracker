@@ -7,11 +7,7 @@
         "e2e/**/*.ts"
       ]
     },
-    "apps/web": {
-      "entry": [
-        "scripts/*.mjs"
-      ]
-    },
+    "apps/web": {},
     "packages/shared": {
       "entry": [
         "src/**/*.ts"

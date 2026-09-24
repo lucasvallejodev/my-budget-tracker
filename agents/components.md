@@ -9,8 +9,8 @@ Read this before creating, moving or styling any component. The human version is
 ```
 apps/web/src/components/
   ui/        project-wide building blocks, no domain knowledge (Button, Panel, Stack, Table, Field, Badge, …)
-  finance/   finance components and screens (MetricCard, BudgetCard, TransactionTable, Overview, …)
-  shell/     application frame (ApplicationShell, AuthScreen, Logo, ThemeToggle)
+  finance/   finance components and screens (MetricCard, BudgetCard, TransactionTable, Overview, ProfileForm, PasswordForm, SessionList, DeletedItems, …)
+  shell/     application frame (ApplicationShell, AuthScreen, AuthForm, UserMenu, Logo, ThemeToggle)
   structure.test.ts
 ```
 
@@ -39,18 +39,18 @@ finance/budget-card/
 
 - Folder, file and block share one kebab-case name. No nested folders.
 - Every folder has `<name>.tsx`, `<name>.test.tsx` and `index.ts`; every stylesheet is `<file>.scss` next to a `<file>.tsx` of the same name, and its name is unique across all modules (class names are global).
-- Module roots hold only `index.ts` and plain `.ts` modules (`use-finance-data.ts`, `sample-data.ts`, `transaction-labels.ts`, `export-transactions.ts`); no `.tsx` or stylesheets.
+- Module roots hold only `index.ts` and plain `.ts` modules (`use-finance-data.ts`, `use-entity-mutation.ts`, `sample-data.ts`, `transaction-labels.ts`, `export-transactions.ts`); no `.tsx` or stylesheets.
 - The module barrel (`ui/index.ts`, `finance/index.ts`, `shell/index.ts`) re-exports every folder with named exports (no `export *`: Next.js client boundaries need names).
 - `'use client'` goes in the component file, never in `index.ts`.
 - Components, hooks and helpers in `apps/web/src/components/` are named exports; default exports are rejected (`import/no-default-export`).
 
 ## Imports
 
-| From                   | To                           | Write                                                           |
-| ---------------------- | ---------------------------- | --------------------------------------------------------------- |
-| a component            | its stylesheet               | `import './budget-card.scss';` (only its own)                   |
-| a component            | a sibling in the same module | `import { Panel } from '../panel';`                             |
-| a component            | another module               | `import { Button, Stack } from '@/components/ui';`              |
+| From                            | To                           | Write                                                           |
+| ------------------------------- | ---------------------------- | --------------------------------------------------------------- |
+| a component                     | its stylesheet               | `import './budget-card.scss';` (only its own)                   |
+| a component                     | a sibling in the same module | `import { Panel } from '../panel';`                             |
+| a component                     | another module               | `import { Button, Stack } from '@/components/ui';`              |
 | a page or `apps/web/src/app/**` | any component                | `@/components/finance` or `@/components/finance/account-detail` |
 
 Never import a file inside another component's folder (`../panel/panel`, `@/components/ui/button/button`), never import a module's own barrel from inside it, never reach another module with `../../`. Data that server code also needs lives outside components (`packages/shared/src/constants/icon-names.ts` for the icon names, `packages/shared/src/constants/palette.ts` for the category-group palette).
@@ -108,8 +108,8 @@ Start every stylesheet with `@use 'abstracts' as *;` (resolved through `sassOpti
 | `ui/**` rules inside `@layer ui` / `ui.*`                                                                                                                                               | Stylelint `local/require-layer`                                       |
 | Component imports only `./<same-name>.scss`; class strings in `className` and `…ClassNames` tables belong to its block                                                                  | ESLint `local/colocated-styles` (`scripts/eslint-rules/`)             |
 | No deep component imports, no own-barrel imports, no `../../` across modules, dependency direction `shell → finance → ui`                                                               | ESLint `no-restricted-imports` (`eslint.config.mjs`)                  |
-| Folder contract, barrels list every folder, no stray stylesheets, unique block names, every `ui` component in the docs catalogue                                                        | Vitest `apps/web/src/components/structure.test.ts`                             |
-| Named exports only in `apps/web/src/components/`                                                                                                                                                 | ESLint `import/no-default-export`                                     |
+| Folder contract, barrels list every folder, no stray stylesheets, unique block names, every `ui` component in the docs catalogue                                                        | Vitest `apps/web/src/components/structure.test.ts`                    |
+| Named exports only in `apps/web/src/components/`                                                                                                                                        | ESLint `import/no-default-export`                                     |
 
 ## Checklist: adding a component
 

@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { apiPages } from '@/api/client';
 import {
   Badge,
   Button,
@@ -23,10 +24,14 @@ import {
   ToggleSwitch,
 } from '@/components/ui';
 import { applyTheme } from '@/lib/appearance';
+import { MAX_PAGE_SIZE } from '@coinkeeper/shared/constants/pagination';
 
 import { exportTransactions } from '../export-transactions';
+import { PasswordForm } from '../password-form';
+import { ProfileForm } from '../profile-form';
 import { SampleTransactions } from '../sample-data';
-import { TransactionRow } from '../use-finance-data';
+import { SessionList } from '../session-list';
+import { TransactionRow, User } from '../use-finance-data';
 
 const AppearancePlaceholder = 'Choose appearance';
 const PersonalFields = ['First name', 'Last name', 'Email', 'Phone', 'Address'];
@@ -70,17 +75,21 @@ function Choice({
   );
 }
 
-export function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: () => void }) {
+const previewOnly = () => toast.info('Component preview — account services are not changed.');
+
+export function ProfileSettings({ demo, user }: { demo: boolean; user?: User }) {
   return (
     <Panel title="Profile Information">
-      <SettingsSection title="Profile Photo" description="Basic profile information">
-        <Cluster>
-          <span className="settings-panels__avatar">AM</span>
-          <Button variant="outline" onClick={onManage}>
-            {demo ? 'Preview photo control' : 'Manage profile photo'}
-          </Button>
-        </Cluster>
-      </SettingsSection>
+      {demo && (
+        <SettingsSection title="Profile Photo" description="Basic profile information">
+          <Cluster>
+            <span className="settings-panels__avatar">AM</span>
+            <Button variant="outline" onClick={previewOnly}>
+              Preview photo control
+            </Button>
+          </Cluster>
+        </SettingsSection>
+      )}
       {demo ? (
         <>
           <SettingsSection
@@ -110,16 +119,16 @@ export function ProfileSettings({ demo, onManage }: { demo: boolean; onManage: (
       ) : (
         <SettingsSection
           title="Personal information"
-          description="Your profile is securely managed by Clerk."
+          description="Your name and the email address you sign in with."
         >
-          <Button onClick={onManage}>Manage your profile</Button>
+          {user ? <ProfileForm user={user} /> : <Text tone="muted">Loading your profile…</Text>}
         </SettingsSection>
       )}
     </Panel>
   );
 }
 
-function SessionList() {
+function SampleSessionList() {
   return (
     <section>
       <h3>Active Sessions</h3>
@@ -149,16 +158,16 @@ function SessionList() {
   );
 }
 
-export function SecuritySettings({ demo, onManage }: { demo: boolean; onManage: () => void }) {
+export function SecuritySettings({ demo }: { demo: boolean }) {
   return (
     <Panel title="Security">
-      <ListRow title="Change Password" description="Manage your password and account access">
-        <Button variant="outline" onClick={onManage}>
-          Manage
-        </Button>
-      </ListRow>
       {demo ? (
         <>
+          <ListRow title="Change Password" description="Manage your password and account access">
+            <Button variant="outline" onClick={previewOnly}>
+              Manage
+            </Button>
+          </ListRow>
           <ListRow
             title="Two-Factor Authentication"
             description="Preview of the security preference control"
@@ -171,17 +180,23 @@ export function SecuritySettings({ demo, onManage }: { demo: boolean; onManage: 
           >
             <ToggleSwitch aria-label="Preview biometric login" />
           </ListRow>
-          <SessionList />
+          <SampleSessionList />
         </>
       ) : (
-        <ListRow
-          title="Authentication & sessions"
-          description="Manage authentication and active sessions through your account provider."
-        >
-          <Button variant="outline" onClick={onManage}>
-            Open account security
-          </Button>
-        </ListRow>
+        <>
+          <SettingsSection
+            title="Change password"
+            description="Changing it signs you out on every other device."
+          >
+            <PasswordForm />
+          </SettingsSection>
+          <SettingsSection
+            title="Active sessions"
+            description="Devices where you are signed in. Sign out of any you do not recognise."
+          >
+            <SessionList />
+          </SettingsSection>
+        </>
       )}
     </Panel>
   );
@@ -221,10 +236,7 @@ export function DataSettings({ demo }: { demo: boolean }) {
   const exportData = async () => {
     try {
       if (demo) return exportTransactions(SampleTransactions);
-      const response = await fetch('/api/transactions');
-
-      if (!response.ok) throw new Error();
-      exportTransactions((await response.json()) as TransactionRow[]);
+      exportTransactions(await apiPages<TransactionRow>('/transactions', { limit: MAX_PAGE_SIZE }));
     } catch {
       toast.error('Unable to export transactions. Please try again.');
     }

@@ -2,13 +2,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { categorizeTransactionAction } from '@/app/(main)/actions';
+import { categorizeTransaction } from '@/api/mutations';
 
 import { SampleTransactions } from '../sample-data';
 import { QueryKeys } from '../use-finance-data';
 import { ReviewInbox } from './review-inbox';
 
-vi.mock('@/app/(main)/actions', () => ({ categorizeTransactionAction: vi.fn(async () => ({})) }));
+vi.mock('@/api/mutations', () => ({ categorizeTransaction: vi.fn(async () => ({})) }));
 
 afterEach(cleanup);
 
@@ -28,10 +28,7 @@ describe('ReviewInbox', () => {
     fireEvent.click(screen.getByRole('button', { name: /as reviewed/ }));
 
     await waitFor(() =>
-      expect(categorizeTransactionAction).toHaveBeenCalledWith(
-        transaction.id,
-        transaction.categoryId
-      )
+      expect(categorizeTransaction).toHaveBeenCalledWith(transaction.id, transaction.categoryId)
     );
   });
 

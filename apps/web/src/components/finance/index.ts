@@ -1,3 +1,7 @@
+export { DeletedItems } from './deleted-items';
+export { PasswordForm } from './password-form';
+export { ProfileForm } from './profile-form';
+export { describeDevice, SessionList } from './session-list';
 export { AccountDetail } from './account-detail';
 export { AccountPicker } from './account-picker';
 export { AccountsOverview } from './accounts-overview';
@@ -49,8 +53,10 @@ export type {
   ExchangeRateRow,
   PayeeRow,
   RuleRow,
+  Session,
   Summary,
   TransactionRow,
+  User,
 } from './use-finance-data';
 export { useEntityMutation } from './use-entity-mutation';
 export {
@@ -63,10 +69,16 @@ export {
   useBudgets,
   useCategories,
   useCurrencies,
+  useCurrentUser,
+  useDeletedAccounts,
+  useDeletedExchangeRates,
+  useDeletedRules,
+  useDeletedTransactions,
   useExchangeRates,
   usePayees,
   useRefreshFinance,
   useRules,
+  useSessions,
   useSettings,
   useSummary,
   useTransactions,

@@ -5,7 +5,7 @@ import { Copy, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { copyBudgetsAction, deleteBudgetAction } from '@/app/(main)/actions';
+import { copyBudgets, deleteBudget } from '@/api/mutations';
 import {
   Button,
   Cluster,
@@ -141,7 +141,7 @@ export function BudgetOverview() {
   );
 
   const remove = useMutation({
-    mutationFn: deleteBudgetAction,
+    mutationFn: deleteBudget,
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async () => {
       toast.success('Budget removed');
@@ -151,7 +151,7 @@ export function BudgetOverview() {
   });
 
   const copy = useMutation({
-    mutationFn: () => copyBudgetsAction(month),
+    mutationFn: () => copyBudgets(month),
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async ({ copied }) => {
       toast.success(`Copied ${copied} budget${copied === 1 ? '' : 's'} from last month`);

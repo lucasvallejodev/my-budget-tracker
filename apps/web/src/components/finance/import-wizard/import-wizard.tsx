@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { commitImportAction, linkTransferAction, previewImportAction } from '@/app/(main)/actions';
+import { commitImport, linkTransfer, previewImport } from '@/api/mutations';
 import {
   Amount,
   Button,
@@ -116,7 +116,7 @@ export function ImportWizard() {
 
   const runPreview = useMutation({
     mutationFn: () =>
-      previewImportAction({
+      previewImport({
         accountId,
         csv,
         mapping,
@@ -126,7 +126,7 @@ export function ImportWizard() {
   });
 
   const commit = useMutation({
-    mutationFn: () => commitImportAction(preview!),
+    mutationFn: () => commitImport(preview!),
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async data => {
       toast.success(`Imported ${data.inserted} transaction${data.inserted === 1 ? '' : 's'}`);
@@ -137,8 +137,7 @@ export function ImportWizard() {
   });
 
   const link = useMutation({
-    mutationFn: (suggestion: TransferSuggestion) =>
-      linkTransferAction(suggestion.outId, suggestion.inId),
+    mutationFn: (suggestion: TransferSuggestion) => linkTransfer(suggestion.outId, suggestion.inId),
     onError: (error: Error) => toast.error(error.message),
     onSuccess: async (linked, suggestion) => {
       toast.success('Linked as a transfer');

@@ -56,8 +56,11 @@ export type AppConfig = {
   trustProxy: boolean;
 };
 
+const withoutEmptyValues = (environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv =>
+  Object.fromEntries(Object.entries(environment).filter(([, value]) => value !== ''));
+
 export const loadConfig = (environment: NodeJS.ProcessEnv = process.env): AppConfig => {
-  const parsed = environmentSchema.parse(environment);
+  const parsed = environmentSchema.parse(withoutEmptyValues(environment));
   const production = parsed.NODE_ENV === 'production';
   const cookieSecure = parsed.COOKIE_SECURE ?? production;
 

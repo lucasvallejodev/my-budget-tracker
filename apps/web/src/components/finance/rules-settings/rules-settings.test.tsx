@@ -7,10 +7,10 @@ import { RulesSettings } from './rules-settings';
 
 const MutationContextArgument = expect.anything();
 
-vi.mock('@/app/(main)/actions', () => ({
-  applyRulesAction: vi.fn(async () => ({ updated: 3 })),
-  createRuleAction: vi.fn(async () => ({})),
-  deleteRuleAction: vi.fn(async () => {}),
+vi.mock('@/api/mutations', () => ({
+  applyRules: vi.fn(async () => ({ updated: 3 })),
+  createRule: vi.fn(async () => ({})),
+  deleteRule: vi.fn(async () => {}),
 }));
 
 const rules: RuleRow[] = [
@@ -89,19 +89,19 @@ describe('RulesSettings', () => {
   });
 
   it('applies rules and deletes a rule through the actions', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderRules();
     fireEvent.click(screen.getByRole('button', { name: 'Apply to uncategorized' }));
-    await vi.waitFor(() => expect(actions.applyRulesAction).toHaveBeenCalled());
+    await vi.waitFor(() => expect(actions.applyRules).toHaveBeenCalled());
     fireEvent.click(screen.getByRole('button', { name: 'Delete rule Old shop' }));
     await vi.waitFor(() =>
-      expect(actions.deleteRuleAction).toHaveBeenCalledWith('r-old', MutationContextArgument)
+      expect(actions.deleteRule).toHaveBeenCalledWith('r-old', MutationContextArgument)
     );
   });
 
   it('creates a rule from the pattern and the picked category', async () => {
-    const actions = await import('@/app/(main)/actions');
+    const actions = await import('@/api/mutations');
 
     renderRules();
     fireEvent.change(screen.getByLabelText('Text to look for'), { target: { value: 'LIDL' } });
@@ -109,7 +109,7 @@ describe('RulesSettings', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Groceries' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add rule' }));
     await vi.waitFor(() =>
-      expect(actions.createRuleAction).toHaveBeenCalledWith({
+      expect(actions.createRule).toHaveBeenCalledWith({
         categoryId: 'c-groceries',
         pattern: 'LIDL',
       })

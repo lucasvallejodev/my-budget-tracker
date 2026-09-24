@@ -4,18 +4,18 @@ Operating rules for AI agents in the CoinKeeper repository. `AGENTS.md` points h
 
 ## What this project is
 
-A personal budget and spending tracker: Next.js 16 App Router, React 19, TanStack Query, Drizzle ORM on PostgreSQL 17, Clerk auth, Zod, SCSS modules, Vitest + PGlite, Playwright. Money is stored as signed integer minor units with a currency code; balances and reports are SQL over the `transactions` ledger; transfers are paired rows that never count as spending; categories are per-user data in coloured groups.
+A personal budget and spending tracker in npm workspaces: a Fastify 5 REST API (`apps/api`: Drizzle ORM on PostgreSQL 17, self-hosted auth with argon2id passwords and HttpOnly cookie sessions, Zod), a Next.js 16 App Router client with no server code (`apps/web`: React 19, TanStack Query, SCSS) and shared Zod contracts and helpers (`packages/shared`); Vitest + PGlite, Playwright. Money is stored as signed integer minor units with a currency code; balances and reports are SQL over the `transactions` ledger; transfers are paired rows that never count as spending; categories are per-user data in coloured groups.
 
 ## Where things live
 
-| Path                                   | Purpose                                                                                                                                                                                                                       |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `agents/`                              | Documentation written for agents. **Start at `agents/README.md`**, an index with a one-line description per file. Every file begins with a `> Summary:` line, so `head -3 <file>` reveals its content without reading it all. |
-| `docs/`                                | Human documentation, a Docsify site (`npm run docs`). `docs/_sidebar.md` is its index; every page also starts with a `> Summary:` line. `docs/legacy/` is frozen history: never edit, only add.                               |
-| `temp/`                                | The only place for temporary files: plans, scratch diagrams, intermediate outputs, exports, screenshots before they are placed. Git-ignored except `temp/README.md`.                                                          |
-| `README.md`                            | Repository layout, setup, commands, pointers to the docs.                                                                                                                                                                     |
-| `apps/api/`, `apps/web/`, `packages/shared/` | npm workspaces: the Fastify API (`src/`, `drizzle/` migrations, `scripts/` DB check), the Next.js app and the code shared by both (Zod contracts, money/date/CSV helpers, constants). See `agents/architecture.md`. |
-| `scripts/`, `e2e/`                     | Local lint rules and Playwright tests.                                                                                                                                                                                        |
+| Path                                         | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agents/`                                    | Documentation written for agents. **Start at `agents/README.md`**, an index with a one-line description per file. Every file begins with a `> Summary:` line, so `head -3 <file>` reveals its content without reading it all.                                                                                                                                                                                                 |
+| `docs/`                                      | Human documentation, a Docsify site (`npm run docs`). `docs/_sidebar.md` is its index; every page also starts with a `> Summary:` line. `docs/legacy/` is frozen history: never edit, only add.                                                                                                                                                                                                                               |
+| `temp/`                                      | The only place for temporary files: plans, scratch diagrams, intermediate outputs, exports, screenshots before they are placed. Git-ignored except `temp/README.md`.                                                                                                                                                                                                                                                          |
+| `README.md`                                  | Repository layout, setup, commands, pointers to the docs.                                                                                                                                                                                                                                                                                                                                                                     |
+| `apps/api/`, `apps/web/`, `packages/shared/` | npm workspaces: the Fastify API, which owns the database (`src/modules/` services, `src/routes/`, `src/auth/`, `drizzle/` migrations, `scripts/` DB check); the Next.js client (`src/app/` pages, `src/api/` client and mutations, `src/components/`, `src/proxy.ts`), which reaches data only through the API; and the code shared by both (Zod contracts, money/date/CSV helpers, constants). See `agents/architecture.md`. |
+| `scripts/`, `e2e/`                           | Local lint rules and Playwright tests.                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Rules for every prompt
 
@@ -36,7 +36,7 @@ A personal budget and spending tracker: Next.js 16 App Router, React 19, TanStac
 ## Quick commands
 
 ```bash
-npm run dev            # app on :3000
+npm run dev            # API on :4000 and web app on :3000 (dev:api, dev:web for one)
 npm run docs           # documentation site on :3010
 npm run db:up && npm run db:migrate && npm run db:check
 npm run lint && npm run typecheck && npm test -- --run && npm run build
@@ -46,7 +46,7 @@ npm run lint:dupes     # duplicated code (jscpd); npm run knip for dead code
 
 ## Known constraints
 
-- The app requires a Clerk sign-in; agents cannot authenticate, so UI verification is limited to tests and the build unless the user provides a session.
-- `npm run db:generate` may need an interactive terminal for ambiguous schema diffs; write the SQL by hand in that case and keep `apps/web/drizzle/meta` consistent.
+- The app requires a sign-in, but accounts are local: to check the UI end to end, run `npm run dev` and sign up a throwaway account in the browser (`/sign-up`) or with `POST /api/v1/auth/sign-up` (JSON `{ email, password (12–128 chars), name }`, header `Origin: http://localhost:3000`), then keep the session cookie. Never use or ask for the user's real credentials. A forgotten password is reset with `npm run user:reset-password -- <email>`.
+- `npm run db:generate` may need an interactive terminal for ambiguous schema diffs; write the SQL by hand in that case and keep `apps/api/drizzle/meta` consistent. The migration commands run in the API workspace.
 - For diagram creation, use the `diagram-design@diagram-design` plugin ([cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design/tree/main)) when it is available; fall back to hand-written SVG only when it is not installed.
 - Diagram sources are in `docs/legacy/diagrams/*.html` (diagram-design plugin); exported SVGs used by the docs are in `docs/assets/diagrams/`.

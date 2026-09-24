@@ -5,7 +5,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { deleteTransactionAction } from '@/app/(main)/actions';
+import { deleteTransaction, restoreTransaction } from '@/api/mutations';
 import {
   Button,
   Cluster,
@@ -42,6 +42,16 @@ const transactionDetails = (transaction: TransactionRow) => [
   { detail: transaction.status, term: 'Status' },
 ];
 
+const restoreWithToast = async (transaction: TransactionRow, refresh: () => Promise<unknown>) => {
+  try {
+    await restoreTransaction(transaction);
+    toast.success('Restored');
+    await refresh();
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : 'Could not restore');
+  }
+};
+
 export function TransactionActions({ transaction }: { transaction: TransactionRow }) {
   const [details, setDetails] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -50,10 +60,13 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
   const isTransfer = transaction.kind === 'transfer';
 
   const remove = useMutation({
-    mutationFn: () => deleteTransactionAction(transaction.id),
+    mutationFn: () => deleteTransaction(transaction),
     onError: (error: Error) => toast.error(error.message || 'Could not delete'),
     onSuccess: async () => {
-      toast.success(isTransfer ? 'Transfer deleted' : 'Transaction deleted');
+      toast.success(isTransfer ? 'Transfer deleted' : 'Transaction deleted', {
+        action: { label: 'Undo', onClick: () => void restoreWithToast(transaction, refresh) },
+        description: 'You can also restore it later from Settings › Deleted items.',
+      });
       await refresh();
       setDeleting(false);
     },
@@ -93,8 +106,9 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
           <DialogTitle>Delete this {isTransfer ? 'transfer' : 'transaction'}?</DialogTitle>
           <p>
             {isTransfer
-              ? 'Both legs of the transfer are removed and both account balances update.'
-              : 'The account balance and reports update immediately. This cannot be undone.'}
+              ? 'Both legs of the transfer leave both account balances and reports.'
+              : 'It leaves the account balance and reports immediately.'}{' '}
+            You can restore it from Settings › Deleted items.
           </p>
           <Cluster>
             <Button variant="outline" onClick={() => setDeleting(false)}>

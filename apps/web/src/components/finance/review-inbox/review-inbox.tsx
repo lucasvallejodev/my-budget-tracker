@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { categorizeTransactionAction } from '@/app/(main)/actions';
+import { categorizeTransaction } from '@/api/mutations';
 import {
   Amount,
   Button,
@@ -35,7 +35,7 @@ export function ReviewInbox() {
 
   const categorize = useMutation({
     mutationFn: ({ categoryId, id }: { categoryId: string | null; id: string }) =>
-      categorizeTransactionAction(id, categoryId),
+      categorizeTransaction(id, categoryId),
     onError: (error: Error) => toast.error(error.message),
     onSuccess: refresh,
   });

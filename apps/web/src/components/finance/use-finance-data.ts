@@ -2,10 +2,13 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { apiGet, apiList } from '@/api/client';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
 import type { AccountSummary } from '@coinkeeper/shared/schema/accounts';
+import type { Session, User } from '@coinkeeper/shared/schema/auth';
 import type { BudgetRow } from '@coinkeeper/shared/schema/budgets';
 import type { CategoryTree } from '@coinkeeper/shared/schema/categories';
+import type { PageResponse } from '@coinkeeper/shared/schema/common';
 import type { Currency } from '@coinkeeper/shared/schema/currencies';
 import type { ExchangeRateRow } from '@coinkeeper/shared/schema/exchange-rates';
 import type { PayeeRow } from '@coinkeeper/shared/schema/payees';
@@ -21,66 +24,54 @@ export type {
   ExchangeRateRow,
   PayeeRow,
   RuleRow,
+  Session,
   Summary,
   TransactionRow,
+  User,
 };
 
-async function fetchFinance<T>(url: string): Promise<T> {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    let message = 'Unable to load financial data. Please try again.';
-
-    try {
-      message = ((await response.json()) as { error?: string }).error ?? message;
-    } catch {}
-
-    throw new Error(message);
-  }
-
-  return (await response.json()) as T;
-}
+type TransactionParams = Record<string, string | undefined>;
 
 export const QueryKeys = {
   accounts: ['accounts'] as const,
   budgets: (month: string) => ['budgets', month] as const,
   categories: ['categories'] as const,
   currencies: ['currencies'] as const,
+  deleted: (resource: string) => ['deleted', resource] as const,
   exchangeRates: ['exchange-rates'] as const,
+  me: ['me'] as const,
   payees: ['payees'] as const,
   rules: ['rules'] as const,
+  sessions: ['sessions'] as const,
   settings: ['settings'] as const,
   summary: (month?: string) => ['summary', month ?? 'current'] as const,
-  transactions: (params: Record<string, string | undefined> = {}) =>
-    ['transactions', params] as const,
+  transactions: (params: TransactionParams = {}) => ['transactions', params] as const,
 };
 
 export function useAccounts(includeArchived = false) {
   return useQuery({
-    queryFn: () =>
-      fetchFinance<AccountSummary[]>(`/api/accounts${includeArchived ? '?includeArchived=1' : ''}`),
+    queryFn: () => apiList<AccountSummary>('/accounts', { includeArchived }),
     queryKey: [...QueryKeys.accounts, includeArchived],
   });
 }
 
 export function usePayees() {
   return useQuery({
-    queryFn: () => fetchFinance<PayeeRow[]>('/api/payees'),
+    queryFn: () => apiList<PayeeRow>('/payees'),
     queryKey: QueryKeys.payees,
   });
 }
 
 export function useCategories(includeArchived = false) {
   return useQuery({
-    queryFn: () =>
-      fetchFinance<CategoryTree[]>(`/api/categories${includeArchived ? '?includeArchived=1' : ''}`),
+    queryFn: () => apiList<CategoryTree>('/category-groups', { includeArchived }),
     queryKey: [...QueryKeys.categories, includeArchived],
   });
 }
 
 export function useCurrencies() {
   return useQuery({
-    queryFn: () => fetchFinance<Currency[]>('/api/currencies'),
+    queryFn: () => apiList<Currency>('/currencies'),
     queryKey: QueryKeys.currencies,
     staleTime: Infinity,
   });
@@ -88,49 +79,89 @@ export function useCurrencies() {
 
 export function useSettings() {
   return useQuery({
-    queryFn: () => fetchFinance<UserSettings>('/api/settings'),
+    queryFn: () => apiGet<UserSettings>('/settings'),
     queryKey: QueryKeys.settings,
   });
 }
 
 export function useBudgets(month: string) {
   return useQuery({
-    queryFn: () => fetchFinance<BudgetRow[]>(`/api/budgets?month=${month}`),
+    queryFn: () => apiList<BudgetRow>('/budgets', { month }),
     queryKey: QueryKeys.budgets(month),
   });
 }
 
 export function useRules() {
   return useQuery({
-    queryFn: () => fetchFinance<RuleRow[]>('/api/rules'),
+    queryFn: () => apiList<RuleRow>('/rules'),
     queryKey: QueryKeys.rules,
   });
 }
 
 export function useExchangeRates() {
   return useQuery({
-    queryFn: () => fetchFinance<ExchangeRateRow[]>('/api/exchange-rates'),
+    queryFn: () => apiList<ExchangeRateRow>('/exchange-rates'),
     queryKey: QueryKeys.exchangeRates,
   });
 }
 
-export function useTransactions(params: Record<string, string | undefined> = {}) {
-  const query = new URLSearchParams(
-    Object.entries(params).filter((entry): entry is [string, string] => !!entry[1])
-  ).toString();
-
+export function useTransactions(params: TransactionParams = {}) {
   return useQuery({
-    queryFn: () =>
-      fetchFinance<TransactionRow[]>(query ? `/api/transactions?${query}` : '/api/transactions'),
+    queryFn: async () =>
+      (await apiGet<PageResponse<TransactionRow>>('/transactions', params)).items,
     queryKey: QueryKeys.transactions(params),
   });
 }
 
 export function useSummary(month?: string) {
   return useQuery({
-    queryFn: () =>
-      fetchFinance<Summary>(month ? `/api/reports/summary?month=${month}` : '/api/reports/summary'),
+    queryFn: () => apiGet<Summary>('/reports/summary', { month }),
     queryKey: QueryKeys.summary(month),
+  });
+}
+
+export function useCurrentUser({ enabled = true } = {}) {
+  return useQuery({
+    enabled,
+    queryFn: () => apiGet<User>('/me'),
+    queryKey: QueryKeys.me,
+    staleTime: Infinity,
+  });
+}
+
+export function useSessions() {
+  return useQuery({
+    queryFn: () => apiList<Session>('/me/sessions'),
+    queryKey: QueryKeys.sessions,
+  });
+}
+
+export function useDeletedTransactions() {
+  return useQuery({
+    queryFn: async () =>
+      (await apiGet<PageResponse<TransactionRow>>('/transactions', { deleted: true })).items,
+    queryKey: QueryKeys.deleted('transactions'),
+  });
+}
+
+export function useDeletedAccounts() {
+  return useQuery({
+    queryFn: () => apiList<AccountSummary>('/accounts', { deleted: true }),
+    queryKey: QueryKeys.deleted('accounts'),
+  });
+}
+
+export function useDeletedRules() {
+  return useQuery({
+    queryFn: () => apiList<RuleRow>('/rules', { deleted: true }),
+    queryKey: QueryKeys.deleted('rules'),
+  });
+}
+
+export function useDeletedExchangeRates() {
+  return useQuery({
+    queryFn: () => apiList<ExchangeRateRow>('/exchange-rates', { deleted: true }),
+    queryKey: QueryKeys.deleted('exchange-rates'),
   });
 }
 
@@ -138,6 +169,7 @@ export const FinanceKeys = [
   'accounts',
   'budgets',
   'categories',
+  'deleted',
   'exchange-rates',
   'payees',
   'rules',
