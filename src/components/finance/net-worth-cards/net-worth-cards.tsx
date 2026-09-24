@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui';
 import { formatMoney } from '@/lib/money';
-import type { NetWorthBucket } from '@/server/reports/service';
+import type { NetWorthBucket } from '@/schema/reports';
 
 import { BalanceCard } from '../balance-card';
 import { AccountSummary } from '../use-finance-data';

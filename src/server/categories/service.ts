@@ -1,26 +1,9 @@
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 
 import { categories, categoryGroups, payees, transactions } from '@/db/schema';
+import type { CategoryTree } from '@/schema/categories';
 
 import { Db, notFound, ServiceError } from '../db';
-
-export type CategoryTree = {
-  archivedAt: string | null;
-  categories: {
-    archivedAt: string | null;
-    icon: string;
-    id: string;
-    name: string;
-    sortOrder: number;
-    transactionCount: number;
-  }[];
-  color: string;
-  id: string;
-  isSystem: boolean;
-  kind: 'income' | 'expense';
-  name: string;
-  sortOrder: number;
-};
 
 export const ownedActiveCategory = async (db: Db, userId: string, id: string) => {
   const [category] = await db

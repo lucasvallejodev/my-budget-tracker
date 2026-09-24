@@ -4,7 +4,7 @@ import './icon-picker.scss';
 
 import { useState } from 'react';
 
-import { IconName, IconNames } from '@/constants/icons';
+import { IconName, IconNames } from '@/constants/icon-names';
 
 import { Button } from '../button';
 import { Icon } from '../icon';

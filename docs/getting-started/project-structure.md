@@ -72,4 +72,4 @@ src/
 | Data fetching hooks and query keys | `src/components/finance/use-finance-data.ts` |
 | Money formatting or parsing | `src/lib/money.ts` |
 | Default categories | `src/server/categories/default-taxonomy.ts` |
-| Available icons | `src/constants/icons.ts` |
+| Available icons | `src/constants/icon-names.ts` (names) and `src/constants/icons.ts` (lucide components) |

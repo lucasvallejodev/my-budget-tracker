@@ -2,31 +2,13 @@ import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 
 import { accounts, currencies, transactions } from '@/db/schema';
 import { toIsoDate } from '@/lib/date-helpers';
+import type { AccountSummary } from '@/schema/accounts';
+import type { AccountClassification, AccountType } from '@/schema/enums';
 
 import { Db, notFound, ServiceError } from '../db';
 
-export type AccountType = (typeof accounts.$inferSelect)['type'];
-export type Classification = (typeof accounts.$inferSelect)['classification'];
-
-const classificationFor = (type: AccountType): Classification =>
+const classificationFor = (type: AccountType): AccountClassification =>
   type === 'credit_card' || type === 'loan' ? 'liability' : 'asset';
-
-export type AccountSummary = {
-  accountNumber: string | null;
-  archivedAt: string | null;
-  balanceMinor: number;
-  classification: Classification;
-  color: string | null;
-  countsInSpending: boolean;
-  currency: string;
-  icon: string | null;
-  id: string;
-  institution: string | null;
-  name: string;
-  notes: string | null;
-  transactionCount: number;
-  type: AccountType;
-};
 
 export const createAccountService = (db: Db) => {
   const owned = async (userId: string, id: string) => {

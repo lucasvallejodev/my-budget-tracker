@@ -34,7 +34,7 @@ Seeding lives in `src/server/categories/seed.ts` with the taxonomy in `default-t
 
 - A service function takes `userId` first. Anything it touches is filtered by `user_id`; a foreign id resolves to a `ServiceError('… not found', 404)` rather than leaking existence.
 - Writes that touch more than one row run inside `db.transaction(...)` and lock the rows they depend on (`FOR UPDATE` on the account, the transaction, or the transfer legs).
-- Services return plain data (rows or DTOs such as `TransactionRow`), never Drizzle query builders.
+- Services return plain data typed by the response contracts in `src/schema/` (`TransactionRow`, `AccountSummary`, …), never Drizzle query builders.
 - Reports are raw SQL through `db.execute` for readability; ledger and CRUD use the query builder.
 - Correlated subqueries in a query with no joins must qualify columns explicitly (`"accounts"."id"`), because Drizzle renders unjoined columns unqualified.
 

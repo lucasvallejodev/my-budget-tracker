@@ -5,7 +5,7 @@ import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { IconNames } from '@/constants/icons';
+import { IconNames } from '@/constants/icon-names';
 import * as schema from '@/db/schema';
 
 import { DefaultTaxonomy } from './categories/default-taxonomy';

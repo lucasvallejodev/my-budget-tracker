@@ -2,25 +2,12 @@ import { and, eq } from 'drizzle-orm';
 
 import { budgets, categories, categoryGroups } from '@/db/schema';
 import { isoDateOfMonthStart } from '@/lib/date-helpers';
+import type { BudgetRow } from '@/schema/budgets';
 
 import { ownedActiveCategory } from '../categories/service';
 import { Db, notFound, ServiceError } from '../db';
 import { monthRange } from '../ledger/service';
 import { createReportService } from '../reports/service';
-
-export type BudgetRow = {
-  amountMinor: number;
-  categoryId: string;
-  categoryName: string;
-  color: string;
-  currency: string;
-  groupId: string;
-  groupName: string;
-  icon: string;
-  id: string;
-  month: string;
-  spentMinor: number;
-};
 
 export const createBudgetService = (db: Db) => {
   const reports = createReportService(db);

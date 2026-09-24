@@ -85,6 +85,9 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+import type { IconName } from './icon-names';
 
 export const Icons = {
   Activity,
@@ -172,9 +175,4 @@ export const Icons = {
   Wine,
   Wrench,
   Zap,
-} as const;
-
-export type IconName = keyof typeof Icons;
-export const IconNames = Object.keys(Icons) as [IconName, ...IconName[]];
-
-export const isIconName = (value: string): value is IconName => value in Icons;
+} satisfies Record<IconName, LucideIcon>;

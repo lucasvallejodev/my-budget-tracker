@@ -1,4 +1,5 @@
-import { Icons, isIconName } from '@/constants/icons';
+import { isIconName } from '@/constants/icon-names';
+import { Icons } from '@/constants/icons';
 
 type IconProps = {
   className?: string;

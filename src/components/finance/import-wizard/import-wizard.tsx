@@ -26,8 +26,8 @@ import {
   Stack,
   Text,
 } from '@/components/ui';
-import { parseCsv } from '@/server/import/csv';
-import type { ColumnMapping, Preview, TransferSuggestion } from '@/server/import/service';
+import { parseCsv } from '@/lib/csv';
+import type { ColumnMapping, Preview, TransferSuggestion } from '@/schema/imports';
 
 import { AccountPicker } from '../account-picker';
 import { flattenCategories } from '../category-picker';

@@ -26,7 +26,7 @@ Schema    src/db/schema.ts                 Drizzle tables/enums; migrations in d
 3. `kind`: `standard` counts for reports (unless `excluded` or account `counts_in_spending = false`); `transfer` and `opening` count only for balances. DB CHECKs: non-standard rows have no category; `transfer_id` iff `kind='transfer'`.
 4. A transfer is exactly two live legs, opposite signs, different accounts, same `transfer_id`, no category or payee. Create/edit/delete both together (`ledger.createTransfer/updateTransfer/remove`).
 5. Currency lives on the account (locked once it has transactions) and is copied onto each transaction. Never sum across currencies; group by currency. Conversion only via `fx` and only for the optional converted totals.
-6. Categories: `category_groups` own colour + kind; `categories` own icon (name must exist in `src/constants/icons.ts`). Archive, never hard-delete; `archiveCategory(id, moveToId?)` moves rows or flags them `needs_review`.
+6. Categories: `category_groups` own colour + kind; `categories` own icon (name must exist in `src/constants/icon-names.ts`). Archive, never hard-delete; `archiveCategory(id, moveToId?)` moves rows or flags them `needs_review`.
 7. Uncategorised = `category_id IS NULL` + `needs_review = true`. No "Uncategorized" category row.
 8. Every query filters by `user_id`; foreign ids → `ServiceError('X not found', 404)`. Every multi-row write is one `db.transaction` with row locks.
 9. Drizzle renders unjoined columns unqualified: inside correlated subqueries write `"accounts"."id"` explicitly.
@@ -53,7 +53,7 @@ Schema    src/db/schema.ts                 Drizzle tables/enums; migrations in d
 
 - Pages are thin; screens live in `src/components/finance/<screen>/`. Components are organised in three modules (`ui`, `finance`, `shell`), one folder per component, imported through barrels and depending in one direction, `shell → finance → ui` (`agents/components.md`). Dialogs and pickers are finance components too (`transaction-dialog/`, `account-picker/`, …); `src/app/` holds only routes, actions and API handlers.
 - Hooks + query keys in `use-finance-data.ts`; after mutations invalidate every key in `FinanceKeys`.
-- Types for API rows are `import type`d from the services.
+- Request and response contracts live in `src/schema/<domain>.ts`: input schemas (`…FormSchema`) and response schemas (`…Schema`) with inferred types (`AccountSummary`, `TransactionRow`, …). Services return those types; the client `import type`s them from `@/schema`, never from `@/server` or `@/db` (ESLint enforces it). Enum value lists live in `src/schema/enums.ts` and feed `pgEnum`.
 - Styling: one global `.scss` per component holding one BEM block, class names written as plain strings (`cn()` from `src/lib/styles.ts` to combine); cascade layers `reset < ui.base < ui < feature`; mobile-first breakpoint mixins and helpers in `src/styles/abstracts/`; colour tokens in `src/styles/tokens.scss`. Group colour applied inline.
 - Define components at module scope (React Compiler lint forbids components created inside render); avoid `setState` inside `useEffect`.
 

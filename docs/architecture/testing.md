@@ -6,7 +6,7 @@
 
 | Kind | Tool | Where | Runs against |
 | --- | --- | --- | --- |
-| Pure unit | Vitest | `src/lib/*.test.ts`, `src/server/import/csv.test.ts`, `src/server/import/preview.test.ts` | nothing external |
+| Pure unit | Vitest | `src/lib/*.test.ts`, `src/server/import/preview.test.ts` | nothing external |
 | Service integration | Vitest + PGlite | `src/server/services.test.ts` | an in-memory PostgreSQL with every migration in `drizzle/` applied |
 | Component | Vitest + Testing Library (jsdom) | `src/components/<module>/<name>/<name>.test.tsx`, one per component folder | rendered React with a prefilled `QueryClient`; server actions mocked with `vi.mock` |
 | Structure | Vitest (node) | `src/components/structure.test.ts` | the component folder contract: files present, barrels complete, stylesheets named after their component |

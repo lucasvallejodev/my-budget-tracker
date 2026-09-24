@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui';
-import type { ColumnMapping } from '@/server/import/service';
+import type { ColumnMapping } from '@/schema/imports';
 
 const UnmappedColumnValue = '__none';
 

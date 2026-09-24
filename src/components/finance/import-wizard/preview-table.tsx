@@ -1,7 +1,7 @@
 'use client';
 
 import { Amount, Badge, Table, TableCell, TableHeaderCell, TableRow } from '@/components/ui';
-import type { Preview } from '@/server/import/service';
+import type { Preview } from '@/schema/imports';
 
 import type { FlatCategory } from '../category-picker';
 

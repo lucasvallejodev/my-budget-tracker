@@ -1,51 +1,19 @@
 import { sql, SQL } from 'drizzle-orm';
 
+import { UNCATEGORIZED_COLOR } from '@/constants/palette';
 import { isoDateOfMonthStart, toIsoDate } from '@/lib/date-helpers';
 import { convertMinor } from '@/lib/money';
-import { Colors } from '@/styles/theme';
+import type {
+  CashPoint,
+  ConvertedTotals,
+  CurrencyTotals,
+  GroupSlice,
+  NetWorthBucket,
+} from '@/schema/reports';
 
 import { Db } from '../db';
 import { createFxService } from '../fx/service';
 import { monthRange } from '../ledger/service';
-
-export type CurrencyTotals = {
-  currency: string;
-  incomeMinor: number;
-  spendingMinor: number;
-};
-export type GroupSlice = {
-  color: string;
-  currency: string;
-  groupId: string | null;
-  groupName: string;
-  spentMinor: number;
-};
-export type NetWorthBucket = {
-  assetsMinor: number;
-  currency: string;
-  liabilitiesMinor: number;
-  netMinor: number;
-};
-export type ConvertedTotals = {
-  asOf: string;
-  currency: string;
-  incomeMinor: number;
-  missing: string[];
-  netWorthMinor: number;
-  rates: {
-    currency: string;
-    date: string;
-    rate: number;
-    source: string;
-  }[];
-  spendingMinor: number;
-};
-export type CashPoint = {
-  currency: string;
-  incomeMinor: number;
-  month: string;
-  spendingMinor: number;
-};
 
 const DEFAULT_CASH_FLOW_MONTHS = 8;
 
@@ -90,7 +58,7 @@ export const createReportService = (db: Db) => {
       return rows.map(row => ({
         categoryId: row.category_id,
         categoryName: row.category_name ?? 'Uncategorized',
-        color: row.color ?? Colors.uncategorizedFallback,
+        color: row.color ?? UNCATEGORIZED_COLOR,
         groupId: row.group_id,
         groupName: row.group_name ?? 'Uncategorized',
         icon: row.icon ?? 'CircleHelp',
@@ -122,7 +90,7 @@ export const createReportService = (db: Db) => {
       );
 
       return rows.map(row => ({
-        color: row.color ?? Colors.uncategorizedFallback,
+        color: row.color ?? UNCATEGORIZED_COLOR,
         currency: row.currency,
         groupId: row.group_id,
         groupName: row.group_name ?? 'Uncategorized',

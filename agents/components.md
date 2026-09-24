@@ -53,7 +53,7 @@ finance/budget-card/
 | a component            | another module               | `import { Button, Stack } from '@/components/ui';`              |
 | a page or `src/app/**` | any component                | `@/components/finance` or `@/components/finance/account-detail` |
 
-Never import a file inside another component's folder (`../panel/panel`, `@/components/ui/button/button`), never import a module's own barrel from inside it, never reach another module with `../../`. Data that server code also needs lives outside components (`src/constants/icons.ts` for the icon registry).
+Never import a file inside another component's folder (`../panel/panel`, `@/components/ui/button/button`), never import a module's own barrel from inside it, never reach another module with `../../`. Data that server code also needs lives outside components (`src/constants/icon-names.ts` for the icon names, `src/constants/palette.ts` for the category-group palette).
 
 ## BEM
 

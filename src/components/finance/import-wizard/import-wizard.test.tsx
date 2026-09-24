@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { Preview } from '@/server/import/service';
+import type { Preview } from '@/schema/imports';
 
 import { type AccountSummary, type CategoryTree, QueryKeys } from '../use-finance-data';
 import { ImportWizard } from './import-wizard';

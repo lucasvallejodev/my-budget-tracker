@@ -35,7 +35,7 @@ Before writing a helper, constant, colour or style value, search for an existing
 
 - `strict` is on. No `any` except where the ESLint config already allows it; prefer `unknown` + narrowing.
 - Use `import type` for types shared between server and client.
-- Derive row types from Drizzle (`typeof table.$inferSelect`) or export DTO types from the service file; never duplicate shapes on the client.
+- Response shapes are Zod schemas in `src/schema/<domain>.ts` with inferred types; services return them and the client imports them from `@/schema`. Never send `$inferSelect` rows to the client (Drizzle types claim `Date` where JSON has strings) and never duplicate a shape on the client. Client code (`src/components`, `src/providers`, pages) must not import `@/server` or `@/db`; ESLint rejects it.
 - Dates are `YYYY-MM-DD` strings end to end; months are `YYYY-MM`. Use `date('…', { mode: 'string' })` in the schema.
 
 ## Naming
@@ -112,9 +112,9 @@ Full rules and the enforcement table: `agents/components.md`. In short:
 - No tag selectors (except `svg`), IDs, `@extend`, `!important` or classes of other blocks; nesting depth 2; blank line between rules. `ui/` stylesheets live in `@layer ui` (atoms in `@layer ui.base`), so feature classes override them without specificity hacks.
 - Mobile-first: base styles for phones, then `@include media-up(tablet-landscape)` (breakpoints `phone-landscape` 481, `tablet` 601, `tablet-landscape` 769, `laptop` 1025, `desktop` 1281, `wide` 1441). Every stylesheet starts with `@use 'abstracts' as *;` and reuses `space()`, `radius()` and the mixins in `src/styles/abstracts/`.
 - Colours in SCSS come only from `src/styles/tokens.scss` (`var(--muted)`, `var(--surface)`, `var(--on-accent)`, gradients, overlay); Stylelint rejects hex, named and `rgb()` colours in any other stylesheet. Add a token rather than a literal.
-- Colours in TypeScript come only from `Colors` in `src/styles/theme.ts` (chart palette, category-group palette `Colors.group`, `Colors.uncategorized`); ESLint rejects hex, `rgb()` and `hsl()` literals elsewhere. In JSX prefer `var(--token)` strings when a CSS token exists. Recharts style objects come from `ChartStyle`; the colour-picker swatches from `GroupColors`.
+- Colours in TypeScript come only from `Colors` in `src/styles/theme.ts` (chart palette, category-group palette `Colors.group`, `Colors.uncategorizedFallback`) and, for values the server also needs, from `src/constants/palette.ts` (`GroupPalette`, `UNCATEGORIZED_COLOR`), which `theme.ts` re-exports; ESLint rejects hex, `rgb()` and `hsl()` literals elsewhere. In JSX prefer `var(--token)` strings when a CSS token exists. Recharts style objects come from `ChartStyle`; the colour-picker swatches from `GroupColors`.
 - Group colours chosen by users are data and are applied inline (`style={{ background: group.color }}`).
-- Icons: add to `src/constants/icons.ts` (also used by the category schema), render with `<Icon icon={name} />` from `@/components/ui`. Never `import * as` from lucide.
+- Icons: add the name to `src/constants/icon-names.ts` (used by the category schema) and the lucide component to `src/constants/icons.ts` (TypeScript fails if the two disagree), render with `<Icon icon={name} />` from `@/components/ui`. Never `import * as` from lucide.
 
 ## Money
 

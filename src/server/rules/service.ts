@@ -1,18 +1,10 @@
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 
 import { categories, rules, transactions } from '@/db/schema';
+import type { RuleRow } from '@/schema/rules';
 
 import { ownedActiveCategory } from '../categories/service';
 import { Db, notFound, ServiceError } from '../db';
-
-export type RuleRow = {
-  categoryId: string;
-  categoryName: string | null;
-  id: string;
-  name: string;
-  pattern: string;
-  priority: number;
-};
 
 export const createRuleService = (db: Db) => {
   const owned = async (userId: string, id: string) => {

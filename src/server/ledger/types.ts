@@ -1,33 +1,7 @@
 import type { transactions } from '@/db/schema';
+import type { TransactionRow } from '@/schema/transaction';
 
-export type TransactionRow = {
-  accountCurrency: string;
-  accountId: string;
-  accountName: string;
-  amountMinor: number;
-  categoryIcon: string | null;
-  categoryId: string | null;
-  categoryName: string | null;
-  counterpartAccountId: string | null;
-  counterpartAccountName: string | null;
-  currency: string;
-  date: string;
-  excluded: boolean;
-  groupColor: string | null;
-  groupId: string | null;
-  groupKind: 'income' | 'expense' | null;
-  groupName: string | null;
-  id: string;
-  importId: string | null;
-  kind: 'standard' | 'transfer' | 'opening';
-  memo: string;
-  needsReview: boolean;
-  originalPayee: string | null;
-  payeeId: string | null;
-  payeeName: string | null;
-  status: 'pending' | 'cleared' | 'reconciled';
-  transferId: string | null;
-};
+export type { TransactionRow };
 
 export type ListFilters = {
   accountId?: string;

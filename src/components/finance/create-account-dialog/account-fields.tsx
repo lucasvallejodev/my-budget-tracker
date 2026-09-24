@@ -20,8 +20,8 @@ import {
   TextField,
 } from '@/components/ui';
 import { AccountTypes } from '@/constants/account';
-import type { Currency } from '@/db/schema';
 import { AccountFormValues } from '@/schema/accounts';
+import type { Currency } from '@/schema/currencies';
 
 type AccountFieldProps = { control: Control<AccountFormValues> };
 

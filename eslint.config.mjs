@@ -80,6 +80,13 @@ const deepComponentImport = {
   message: deepImportMessage,
 };
 
+/** Client code reaches the server only over HTTP; shapes and rules are shared through `@/schema` and `@/lib`. */
+const clientServerImport = {
+  group: ['@/server', '@/server/*', '@/db', '@/db/*'],
+  message:
+    'Client code must not import server or database modules. Share types and Zod schemas through `@/schema` and pure helpers through `@/lib`.',
+};
+
 /**
  * Import restrictions for files inside one component module: siblings by folder (`../panel`),
  * other modules through `@/components/<module>`, never the module's own barrel.
@@ -102,6 +109,7 @@ const componentModuleImports = moduleName => ({
         ],
         patterns: [
           deepComponentImport,
+          clientServerImport,
           ...forbiddenModules(moduleName).map(other => ({
             group: [`@/components/${other}/*`],
             message: dependencyMessage(moduleName),
@@ -437,6 +445,13 @@ const config = [
   },
   ...ComponentModules.map(componentModuleImports),
   {
+    files: ['src/app/**/*.{ts,tsx}', 'src/providers/**/*.{ts,tsx}'],
+    ignores: ['src/app/api/**', 'src/app/(main)/actions.ts', 'src/app/(main)/actions.test.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [deepComponentImport, clientServerImport] }],
+    },
+  },
+  {
     // Components import only their own stylesheet and write class strings of their own BEM block;
     // they are named exports so barrels, imports and searches all use the same name.
     files: ['src/components/**/*.{ts,tsx}'],
@@ -458,7 +473,7 @@ const config = [
     rules: { 'perfectionist/sort-objects': 'off' },
   },
   {
-    files: ['src/styles/theme.ts', 'src/lib/patterns.ts'],
+    files: ['src/styles/theme.ts', 'src/constants/palette.ts', 'src/lib/patterns.ts'],
     rules: { 'no-restricted-syntax': 'off' },
   },
   {

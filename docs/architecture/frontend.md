@@ -36,7 +36,7 @@ After any mutation, components invalidate every key in `FinanceKeys`, through `u
 
 Screens render a query's lifecycle through `QueryContent` from `@/components/ui` (`pending`, `error` with a retry button, an optional `empty` state, then the children render function) instead of chained ternaries. Budget badges take their tone and label from `budgetStatus(ratio)` in `finance/budget-card/`.
 
-Types for rows (`TransactionRow`, `AccountSummary`, `CategoryTree`, …) are imported from the server services with `import type`, so the client and server never drift.
+Types for rows (`TransactionRow`, `AccountSummary`, `CategoryTree`, …) are the response contracts in `src/schema/` (Zod schemas plus inferred types). Services return those types and the client imports them with `import type`, so the two never drift. ESLint rejects any import of `@/server` or `@/db` from components, providers and pages.
 
 ## Forms
 
@@ -66,7 +66,7 @@ The transaction dialog (`src/components/finance/transaction-dialog/`) has three 
 - Colours needed from TypeScript (chart palette, category-group palette, fallbacks) come from `Colors` in `src/styles/theme.ts`; Recharts style objects from `ChartStyle`. ESLint rejects literal colours in any other file. See [Code style](code-style.md).
 - Everything else is a stylesheet named after its component, holding one BEM block (`budget-card.scss` → `.budget-card`, `.budget-card__actions`). Components write the class names as plain strings and combine them with `cn()` from `src/lib/styles.ts`. Layouts are mobile-first with the breakpoint mixins in `src/styles/abstracts/`. See [Components and styles](components.md).
 - Group colours come from the database and are applied inline (`style={{ background: group.color }}`); no per-category colours exist.
-- Icons render through `Icon` (`src/components/ui/icon/`), which only knows the names in `src/constants/icons.ts`. Unknown names fall back to a question mark. Add icons to the registry, never import the whole lucide package.
+- Icons render through `Icon` (`src/components/ui/icon/`), which only knows the names in `src/constants/icon-names.ts` (the lucide component map in `src/constants/icons.ts` must cover exactly those names). Unknown names fall back to a question mark. Add icons to the registry, never import the whole lucide package.
 
 ## Sample data and the gallery
 

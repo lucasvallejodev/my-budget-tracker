@@ -4,20 +4,34 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { parseAmountInput } from '@/lib/money';
-import { Patterns } from '@/lib/patterns';
 import {
   accountFormSchema,
   AccountFormValues,
   updateAccountSchema,
   UpdateAccountValues,
 } from '@/schema/accounts';
+import { budgetFormSchema, BudgetFormValues } from '@/schema/budgets';
 import {
   categoryFormSchema,
   CategoryFormValues,
   categoryGroupFormSchema,
   CategoryGroupFormValues,
 } from '@/schema/categories';
-import { payeeFormSchema, PayeeFormValues, updatePayeeSchema } from '@/schema/payees';
+import {
+  exchangeRateFormSchema,
+  ExchangeRateFormValues,
+  ExchangeRateKey,
+  exchangeRateKeySchema,
+} from '@/schema/exchange-rates';
+import { ColumnMapping, columnMappingSchema, Preview, previewSchema } from '@/schema/imports';
+import {
+  payeeFormSchema,
+  PayeeFormValues,
+  updatePayeeSchema,
+  UpdatePayeeValues,
+} from '@/schema/payees';
+import { ruleFormSchema, RuleFormValues } from '@/schema/rules';
+import { settingsFormSchema, SettingsFormValues } from '@/schema/settings';
 import {
   standardTransactionSchema,
   StandardTransactionValues,
@@ -26,13 +40,7 @@ import {
 } from '@/schema/transaction';
 import { requireUser } from '@/server/auth/require-user';
 import { ServiceError } from '@/server/db';
-import type { ColumnMapping, Preview } from '@/server/import/service';
 
-const MinLocaleLength = 2;
-const MaxLocaleLength = 20;
-const CurrencyCodeLength = 3;
-const MaxRuleNameLength = 80;
-const MaxRulePatternLength = 120;
 const MaxImportCsvLength = 2_000_000;
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
@@ -106,7 +114,7 @@ export async function createPayeeAction(form: PayeeFormValues) {
   });
 }
 
-export async function updatePayeeAction(form: z.infer<typeof updatePayeeSchema>) {
+export async function updatePayeeAction(form: UpdatePayeeValues) {
   return run(async () => {
     const { services, userId } = await requireUser();
     const { id, ...data } = parse(updatePayeeSchema, form);
@@ -351,22 +359,11 @@ export async function restoreCategoryAction(id: string) {
   });
 }
 
-export async function updateSettingsAction(data: {
-  locale?: string;
-  primaryCurrency?: string;
-  showConvertedTotals?: boolean;
-}) {
+export async function updateSettingsAction(data: SettingsFormValues) {
   return run(async () => {
     const { services, userId } = await requireUser();
 
-    const parsed = parse(
-      z.object({
-        locale: z.string().min(MinLocaleLength).max(MaxLocaleLength).optional(),
-        primaryCurrency: z.string().length(CurrencyCodeLength).optional(),
-        showConvertedTotals: z.boolean().optional(),
-      }),
-      data
-    );
+    const parsed = parse(settingsFormSchema, data);
 
     const settings = await services.updateSettings(userId, parsed);
 
@@ -376,24 +373,11 @@ export async function updateSettingsAction(data: {
   });
 }
 
-export async function upsertExchangeRateAction(data: {
-  base: string;
-  date: string;
-  quote: string;
-  rate: string;
-}) {
+export async function upsertExchangeRateAction(data: ExchangeRateFormValues) {
   return run(async () => {
     const { services, userId } = await requireUser();
 
-    const parsed = parse(
-      z.object({
-        base: z.string().length(CurrencyCodeLength),
-        date: z.string().regex(Patterns.isoDate, 'Choose a date'),
-        quote: z.string().length(CurrencyCodeLength),
-        rate: z.string().trim().min(1, 'Rate is required'),
-      }),
-      data
-    );
+    const parsed = parse(exchangeRateFormSchema, data);
 
     const rate = Number(parsed.rate.replace(',', '.'));
 
@@ -409,31 +393,20 @@ export async function upsertExchangeRateAction(data: {
   });
 }
 
-export async function deleteExchangeRateAction(key: { base: string; date: string; quote: string }) {
+export async function deleteExchangeRateAction(key: ExchangeRateKey) {
   return run(async () => {
     const { services, userId } = await requireUser();
 
-    await services.fx.remove(userId, key);
+    await services.fx.remove(userId, parse(exchangeRateKeySchema, key));
     refresh();
   });
 }
 
-export async function createRuleAction(data: {
-  categoryId: string;
-  name?: string;
-  pattern: string;
-}) {
+export async function createRuleAction(data: RuleFormValues) {
   return run(async () => {
     const { services, userId } = await requireUser();
 
-    const parsed = parse(
-      z.object({
-        categoryId: z.string().min(1, 'Choose a category'),
-        name: z.string().max(MaxRuleNameLength).optional(),
-        pattern: z.string().trim().min(1, 'Pattern is required').max(MaxRulePatternLength),
-      }),
-      data
-    );
+    const parsed = parse(ruleFormSchema, data);
 
     return services.rules.create(userId, parsed);
   });
@@ -470,14 +443,17 @@ export async function previewImportAction(input: {
       throw new ServiceError('File is too large (2 MB max)');
     }
 
-    return services.imports.preview(userId, input);
+    return services.imports.preview(userId, {
+      ...input,
+      mapping: parse(columnMappingSchema, input.mapping),
+    });
   });
 }
 
 export async function commitImportAction(preview: Preview) {
   return run(async () => {
     const { services, userId } = await requireUser();
-    const result = await services.imports.commit(userId, preview);
+    const result = await services.imports.commit(userId, parse(previewSchema, preview));
     const suggestions = await services.imports.transferSuggestions(userId, result.insertedIds);
 
     refresh();
@@ -505,24 +481,11 @@ export async function linkTransferAction(outId: string, inId: string) {
   });
 }
 
-export async function upsertBudgetAction(data: {
-  amount: string;
-  categoryId: string;
-  currency: string;
-  month: string;
-}) {
+export async function upsertBudgetAction(data: BudgetFormValues) {
   return run(async () => {
     const { services, userId } = await requireUser();
 
-    const parsed = parse(
-      z.object({
-        amount: z.string().trim().min(1, 'Amount is required'),
-        categoryId: z.string().min(1, 'Choose a category'),
-        currency: z.string().length(CurrencyCodeLength),
-        month: z.string().regex(Patterns.isoMonth, 'Month must be YYYY-MM'),
-      }),
-      data
-    );
+    const parsed = parse(budgetFormSchema, data);
 
     const amountMinor = Math.abs(parseAmountInput(parsed.amount, parsed.currency));
     const row = await services.budgets.upsert(userId, { ...parsed, amountMinor });

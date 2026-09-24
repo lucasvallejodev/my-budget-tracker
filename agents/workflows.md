@@ -44,7 +44,7 @@ Follow the checklist in `agents/components.md`: search `ui/` first, pick the mod
 
 ## Add default categories or icons
 
-Icons: add the lucide import and key to `src/constants/icons.ts`. Taxonomy: edit `src/server/categories/default-taxonomy.ts`, bump `DEFAULT_TAXONOMY_VERSION`, update `docs/reference/default-taxonomy.md`. The seeding test validates icon names.
+Icons: add the name to `src/constants/icon-names.ts` and the lucide import and key to `src/constants/icons.ts`. Taxonomy: edit `src/server/categories/default-taxonomy.ts`, bump `DEFAULT_TAXONOMY_VERSION`, update `docs/reference/default-taxonomy.md`. The seeding test validates icon names.
 
 ## Add a helper or constant
 

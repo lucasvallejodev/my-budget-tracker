@@ -3,43 +3,26 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ISO_MONTH_LENGTH } from '@/constants/time';
-import type { BudgetRow } from '@/server/budgets/service';
+import type { AccountSummary } from '@/schema/accounts';
+import type { BudgetRow } from '@/schema/budgets';
+import type { CategoryTree } from '@/schema/categories';
+import type { Currency } from '@/schema/currencies';
+import type { ExchangeRateRow } from '@/schema/exchange-rates';
+import type { PayeeRow } from '@/schema/payees';
+import type { Summary } from '@/schema/reports';
+import type { RuleRow } from '@/schema/rules';
+import type { UserSettings } from '@/schema/settings';
+import type { TransactionRow } from '@/schema/transaction';
 
-export type { BudgetRow };
-import type { Currency, UserSettings } from '@/db/schema';
-import type { AccountSummary } from '@/server/accounts/service';
-import type { CategoryTree } from '@/server/categories/service';
-import type { TransactionRow } from '@/server/ledger/service';
-import type {
-  CashPoint,
-  ConvertedTotals,
-  CurrencyTotals,
-  GroupSlice,
-  NetWorthBucket,
-} from '@/server/reports/service';
-
-export type { AccountSummary, CategoryTree, TransactionRow };
-export type PayeeRow = {
-  defaultCategoryId: string | null;
-  id: string;
-  name: string;
-};
-export type Summary = {
-  accounts: AccountSummary[];
-  breakdown: GroupSlice[];
-  cashFlow: CashPoint[];
-  converted: ConvertedTotals | null;
-  month: string;
-  needsReviewCount: number;
-  netWorth: NetWorthBucket[];
-  totals: CurrencyTotals[];
-};
-export type ExchangeRateRow = {
-  base: string;
-  date: string;
-  quote: string;
-  rate: number;
-  source: string;
+export type {
+  AccountSummary,
+  BudgetRow,
+  CategoryTree,
+  ExchangeRateRow,
+  PayeeRow,
+  RuleRow,
+  Summary,
+  TransactionRow,
 };
 
 async function fetchFinance<T>(url: string): Promise<T> {
@@ -60,10 +43,12 @@ async function fetchFinance<T>(url: string): Promise<T> {
 
 export const QueryKeys = {
   accounts: ['accounts'] as const,
+  budgets: (month: string) => ['budgets', month] as const,
   categories: ['categories'] as const,
   currencies: ['currencies'] as const,
   exchangeRates: ['exchange-rates'] as const,
   payees: ['payees'] as const,
+  rules: ['rules'] as const,
   settings: ['settings'] as const,
   summary: (month?: string) => ['summary', month ?? 'current'] as const,
   transactions: (params: Record<string, string | undefined> = {}) =>
@@ -108,24 +93,18 @@ export function useSettings() {
   });
 }
 
-export type RuleRow = {
-  categoryId: string;
-  categoryName: string | null;
-  id: string;
-  name: string;
-  pattern: string;
-  priority: number;
-};
-
 export function useBudgets(month: string) {
   return useQuery({
     queryFn: () => fetchFinance<BudgetRow[]>(`/api/budgets?month=${month}`),
-    queryKey: ['budgets', month],
+    queryKey: QueryKeys.budgets(month),
   });
 }
 
 export function useRules() {
-  return useQuery({ queryFn: () => fetchFinance<RuleRow[]>('/api/rules'), queryKey: ['rules'] });
+  return useQuery({
+    queryFn: () => fetchFinance<RuleRow[]>('/api/rules'),
+    queryKey: QueryKeys.rules,
+  });
 }
 
 export function useExchangeRates() {
@@ -157,11 +136,14 @@ export function useSummary(month?: string) {
 
 export const FinanceKeys = [
   'accounts',
-  'payees',
+  'budgets',
   'categories',
-  'transactions',
-  'summary',
+  'exchange-rates',
+  'payees',
+  'rules',
   'settings',
+  'summary',
+  'transactions',
 ];
 
 export function currentMonth() {

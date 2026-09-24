@@ -1,43 +1,11 @@
 import { MILLISECONDS_PER_DAY } from '@/constants/time';
+import { parseDateCell } from '@/lib/csv';
 import { parseAmountInput } from '@/lib/money';
+import type { ColumnMapping, Preview, PreviewRow, PreviewStatus } from '@/schema/imports';
 
 import { ServiceError } from '../db';
-import { DateFormat, parseDateCell } from './csv';
 
-export type ColumnMapping = {
-  amount?: string;
-  credit?: string;
-  date: string;
-  dateFormat?: DateFormat;
-  debit?: string;
-  externalId?: string;
-  invertSign?: boolean;
-  memo?: string;
-  payee?: string;
-};
-
-export type PreviewStatus = 'new' | 'duplicate' | 'matched' | 'invalid';
-
-export type PreviewRow = {
-  amountMinor: number | null;
-  date: string | null;
-  error?: string;
-  importId: string;
-  index: number;
-  matchedTransactionId?: string;
-  memo: string;
-  payee: string;
-  status: PreviewStatus;
-  suggestedBy: 'rule' | 'payee' | null;
-  suggestedCategoryId: string | null;
-};
-
-export type Preview = {
-  accountId: string;
-  counts: Record<PreviewStatus, number>;
-  currency: string;
-  rows: PreviewRow[];
-};
+export type { ColumnMapping, Preview, PreviewRow, PreviewStatus };
 
 export type ResolvedColumns = {
   amount: number;

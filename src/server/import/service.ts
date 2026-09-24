@@ -2,15 +2,16 @@ import { and, eq, gte, isNull, lte, ne, sql } from 'drizzle-orm';
 
 import { MILLISECONDS_PER_DAY } from '@/constants/time';
 import { accounts, transactions } from '@/db/schema';
+import { parseCsv } from '@/lib/csv';
 import { toIsoDate } from '@/lib/date-helpers';
 import { Patterns } from '@/lib/patterns';
+import type { TransferSuggestion } from '@/schema/imports';
 
 import { createAccountService } from '../accounts/service';
 import { Db, ServiceError } from '../db';
 import { createLedgerService } from '../ledger/service';
 import { createPayeeService } from '../payees/service';
 import { createRuleService } from '../rules/service';
-import { parseCsv } from './csv';
 import {
   buildImportId,
   ClassifyContext,
@@ -25,16 +26,7 @@ import {
 } from './preview';
 
 export type { ColumnMapping, Preview } from './preview';
-
-export type TransferSuggestion = {
-  amountMinor: number;
-  currency: string;
-  date: string;
-  inAccount: string;
-  inId: string;
-  outAccount: string;
-  outId: string;
-};
+export type { TransferSuggestion };
 
 type ImportContext = {
   db: Db;

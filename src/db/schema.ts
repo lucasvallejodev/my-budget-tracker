@@ -16,21 +16,21 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
+import {
+  AccountClassificationValues,
+  AccountTypeValues,
+  CategoryKindValues,
+  TransactionKindValues,
+  TransactionStatusValues,
+} from '@/schema/enums';
+
 const DEFAULT_MINOR_UNITS = 2;
 
-export const accountType = pgEnum('account_type', [
-  'checking',
-  'savings',
-  'cash',
-  'credit_card',
-  'loan',
-  'investment',
-  'other',
-]);
-export const accountClassification = pgEnum('account_classification', ['asset', 'liability']);
-export const categoryKind = pgEnum('category_kind', ['income', 'expense']);
-export const transactionKind = pgEnum('transaction_kind', ['standard', 'transfer', 'opening']);
-export const transactionStatus = pgEnum('transaction_status', ['pending', 'cleared', 'reconciled']);
+export const accountType = pgEnum('account_type', AccountTypeValues);
+export const accountClassification = pgEnum('account_classification', AccountClassificationValues);
+export const categoryKind = pgEnum('category_kind', CategoryKindValues);
+export const transactionKind = pgEnum('transaction_kind', TransactionKindValues);
+export const transactionStatus = pgEnum('transaction_status', TransactionStatusValues);
 
 const id = () =>
   text('id')

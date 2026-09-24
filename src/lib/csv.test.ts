@@ -59,3 +59,17 @@ describe('csv scanner helpers', () => {
     expect(parseDateCell('2026-09-05', 'DD/MM/YYYY')).toBeNull();
   });
 });
+
+describe('csv documentation examples', () => {
+  it('matches the TSDoc examples', () => {
+    expect(sniffDelimiter('Date;Payee;Amount')).toBe(';');
+    expect(isBlankRow([' ', ''])).toBe(true);
+    expect(parseCsv('a,b\n1,2')).toEqual({
+      delimiter: ',',
+      headers: ['a', 'b'],
+      rows: [['1', '2']],
+    });
+    expect(buildIsoDate('2026', '9', '1')).toBe('2026-09-01');
+    expect(parseDateCell('31/12/2026')).toBe('2026-12-31');
+  });
+});

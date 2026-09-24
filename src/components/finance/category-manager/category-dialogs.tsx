@@ -30,7 +30,7 @@ import {
   SelectValue,
   Text,
 } from '@/components/ui';
-import { IconName } from '@/constants/icons';
+import { IconName } from '@/constants/icon-names';
 import { Colors } from '@/styles/theme';
 
 import { useEntityMutation } from '../use-entity-mutation';
