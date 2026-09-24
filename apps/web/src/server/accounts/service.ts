@@ -127,6 +127,7 @@ export const createAccountService = (db: Db) => {
         ...row,
         archivedAt: row.archivedAt?.toISOString() ?? null,
         balanceMinor: Number(row.balanceMinor),
+        deletedAt: null,
         transactionCount: Number(row.transactionCount),
       }));
     },

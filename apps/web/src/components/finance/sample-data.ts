@@ -23,6 +23,7 @@ const SampleBase: Omit<
   counterpartAccountId: null,
   counterpartAccountName: null,
   currency: 'USD',
+  deletedAt: null,
   excluded: false,
   groupId: 'demo-group',
   importId: null,

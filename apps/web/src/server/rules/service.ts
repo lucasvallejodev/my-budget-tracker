@@ -95,7 +95,7 @@ export const createRuleService = (db: Db) => {
       return rule;
     },
     async list(userId: string): Promise<RuleRow[]> {
-      return db
+      const rows = await db
         .select({
           categoryId: rules.categoryId,
           categoryName: categories.name,
@@ -108,6 +108,8 @@ export const createRuleService = (db: Db) => {
         .leftJoin(categories, eq(categories.id, rules.categoryId))
         .where(eq(rules.userId, userId))
         .orderBy(asc(rules.priority), asc(rules.createdAt));
+
+      return rows.map(row => ({ ...row, deletedAt: null }));
     },
     async match(userId: string, texts: (string | null | undefined)[]) {
       const haystack = texts

@@ -291,7 +291,7 @@ const config = [
         'error',
         { checksVoidReturn: { attributes: false } },
       ],
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
       '@typescript-eslint/prefer-nullish-coalescing': [
         'error',
         {
@@ -483,6 +483,16 @@ const config = [
     rules: { '@typescript-eslint/unbound-method': 'off' },
   },
   {
+    // Fastify plugins and hooks are async by contract even when their body never awaits, and a
+    // route plugin is a declarative list of routes rather than one long function.
+    files: ['apps/api/src/routes/**/*.ts', 'apps/api/src/plugins/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/require-await': 'off',
+      'max-lines-per-function': 'off',
+    },
+  },
+  {
     // Column order in the schema is part of the Drizzle snapshot; keep it as written.
     files: ['apps/*/src/db/schema.ts'],
     rules: { 'perfectionist/sort-objects': 'off' },
@@ -510,7 +520,9 @@ const config = [
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
       'max-lines': 'off',
       'max-lines-per-function': 'off',
       'prefer-arrow-functions/prefer-arrow-functions': 'off',

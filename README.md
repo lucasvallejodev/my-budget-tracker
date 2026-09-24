@@ -15,6 +15,7 @@ Full documentation lives in [`docs/`](docs/README.md) and is served as a Docsify
 
 | Folder | What is inside |
 | --- | --- |
+| `apps/api/` | Workspace `@coinkeeper/api`, the Fastify REST API: sessions and sign-in, every business rule and query, the Drizzle schema and migrations. See [docs/architecture/api.md](docs/architecture/api.md). |
 | `apps/web/` | Workspace `@coinkeeper/web`, the Next.js application. `src/app/` (routes, server actions, API route handlers), `src/components/` (`ui/` shared building blocks, `finance/` components and screens, `shell/`; one folder per component with a BEM stylesheet), `src/styles/` (colour tokens, breakpoint mixins and SCSS abstractions), `src/server/` (domain services: accounts, categories, ledger, payees, reports, fx, import, rules, budgets), `src/db/` (Drizzle schema and connection), `drizzle/` (migrations), `scripts/` (`db:check`). Details in [docs/getting-started/project-structure.md](docs/getting-started/project-structure.md). |
 | `packages/shared/` | Workspace `@coinkeeper/shared`: Zod request and response contracts, money, date, pattern and CSV helpers, and constants used by both client and server. |
 | `apps/web/drizzle/` | SQL migrations and Drizzle snapshots. Apply with `npm run db:migrate`. |
@@ -52,6 +53,8 @@ docker compose --profile app up -d --build
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Development server with Turbopack |
+| `npm run dev:api` | Fastify API on http://127.0.0.1:4000 (Swagger UI at `/api/docs`) |
+| `npm run user:reset-password -- <email>` | Set a new password for a user and sign them out everywhere |
 | `npm run build` / `npm start` | Production build of every workspace and the web server |
 | `npm run typecheck` | TypeScript check of the root files and every workspace |
 | `npm run lint` / `npm run lint:fix` | ESLint (Next.js, type-aware TypeScript, SonarJS, layout and Prettier rules) and Stylelint; `lint:fix` applies every automatic fix |

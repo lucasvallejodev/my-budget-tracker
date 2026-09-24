@@ -120,7 +120,11 @@ export const list = async (
     .limit(Math.min(filters.limit ?? DEFAULT_LIMIT, MAX_LIMIT))
     .offset(filters.offset ?? 0);
 
-  return rows.map(row => ({ ...row, amountMinor: Number(row.amountMinor) }));
+  return rows.map(row => ({
+    ...row,
+    amountMinor: Number(row.amountMinor),
+    deletedAt: null,
+  }));
 };
 
 export const get = async (db: Db, userId: string, id: string): Promise<TransactionRow> => {

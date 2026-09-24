@@ -2,6 +2,14 @@
 
 > Summary: how migrations are written, generated and applied, and what each existing migration did.
 
+## Two histories during the move to the API
+
+The Fastify API (`apps/api`) owns the database from now on. Its schema is `apps/api/src/db/schema.ts` and its history starts again at `apps/api/drizzle/0000_init.sql`, which creates the whole schema (including `users` and `sessions`) and seeds the currencies; there was no production data to carry over. Run its commands with `npm run db:generate -w @coinkeeper/api`, `npm run db:migrate -w @coinkeeper/api` and `npm run db:check -w @coinkeeper/api`. The web app's history below (`apps/web/drizzle/`) is used only by the web app's own server code until the web app is switched to the API; point the two at different databases in the meantime.
+
+| File (`apps/api/drizzle/`) | What it does |
+| --- | --- |
+| `0000_init.sql` | Every table, enum, constraint and index of the current model: `users`, `sessions`, `currencies`, `user_settings`, `accounts`, `category_groups`, `categories`, `payees`, `transactions`, `exchange_rates`, `budgets`, `rules`. Every `user_id` references `users(id) ON DELETE CASCADE`; `rules`, `budgets` and `exchange_rates` gain `deleted_at`; the import de-duplication index ignores deleted rows. Seeds 27 currencies. |
+
 ## Workflow
 
 1. Edit `apps/web/src/db/schema.ts`.

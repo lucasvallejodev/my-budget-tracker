@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
+import { FieldLengths } from '../constants/field-lengths';
 import { accountSummarySchema } from './accounts';
+import { isoMonthSchema } from './common';
 
 export const currencyTotalsSchema = z.object({
   currency: z.string(),
@@ -69,3 +71,37 @@ export const summarySchema = z.object({
 });
 
 export type Summary = z.infer<typeof summarySchema>;
+
+const MAX_CASH_FLOW_MONTHS = 24;
+
+export const BreakdownDimensionValues = ['group', 'category'] as const;
+
+const cashFlowMonthsSchema = z.coerce.number().int().min(1).max(MAX_CASH_FLOW_MONTHS);
+
+export const summaryQuerySchema = z.object({
+  cashFlowMonths: cashFlowMonthsSchema.optional(),
+  month: isoMonthSchema.optional(),
+});
+
+export const monthQuerySchema = z.object({ month: isoMonthSchema });
+
+export const breakdownQuerySchema = monthQuerySchema.extend({
+  by: z.enum(BreakdownDimensionValues).default('group'),
+  currency: z.string().length(FieldLengths.currencyCode).optional(),
+});
+
+export const cashFlowQuerySchema = monthQuerySchema.extend({
+  months: cashFlowMonthsSchema.optional(),
+});
+
+export const categorySliceSchema = z.object({
+  categoryId: z.string().nullable(),
+  categoryName: z.string(),
+  color: z.string(),
+  groupId: z.string().nullable(),
+  groupName: z.string(),
+  icon: z.string(),
+  spentMinor: z.number().int(),
+});
+
+export type CategorySlice = z.infer<typeof categorySliceSchema>;

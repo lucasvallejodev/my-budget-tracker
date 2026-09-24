@@ -76,6 +76,7 @@ export const createBudgetService = (db: Db) => {
         .map(row => ({
           ...row,
           amountMinor: Number(row.amountMinor),
+          deletedAt: null,
           spentMinor: spent.get(`${row.currency}:${row.categoryId}`) ?? 0,
         }))
         .sort(

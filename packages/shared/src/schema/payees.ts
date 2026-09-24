@@ -14,9 +14,14 @@ export const updatePayeeSchema = payeeFormSchema.partial().extend({ id: z.string
 export type UpdatePayeeValues = z.infer<typeof updatePayeeSchema>;
 
 export const payeeSchema = z.object({
+  archivedAt: z.string().nullable(),
   defaultCategoryId: z.string().nullable(),
   id: z.string(),
   name: z.string(),
 });
 
 export type PayeeRow = z.infer<typeof payeeSchema>;
+
+export const payeePatchSchema = payeeFormSchema.partial();
+
+export type PayeePatchValues = z.infer<typeof payeePatchSchema>;

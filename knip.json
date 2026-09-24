@@ -2,13 +2,27 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["scripts/**/*.mjs", "e2e/**/*.ts"]
+      "entry": [
+        "scripts/**/*.mjs",
+        "e2e/**/*.ts"
+      ]
     },
     "apps/web": {
-      "entry": ["scripts/*.mjs"]
+      "entry": [
+        "scripts/*.mjs"
+      ]
     },
     "packages/shared": {
-      "entry": ["src/**/*.ts"]
+      "entry": [
+        "src/**/*.ts"
+      ]
+    },
+    "apps/api": {
+      "entry": [
+        "src/server.ts",
+        "src/cli/*.ts",
+        "scripts/*.mjs"
+      ]
     }
   }
 }

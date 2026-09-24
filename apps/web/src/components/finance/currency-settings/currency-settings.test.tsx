@@ -17,6 +17,7 @@ const rates: ExchangeRateRow[] = [
   {
     base: 'USD',
     date: '2026-09-01',
+    deletedAt: null,
     quote: 'EUR',
     rate: 0.92,
     source: 'manual',
@@ -24,6 +25,7 @@ const rates: ExchangeRateRow[] = [
   {
     base: 'GBP',
     date: '2026-08-15',
+    deletedAt: null,
     quote: 'EUR',
     rate: 1.17,
     source: 'manual',

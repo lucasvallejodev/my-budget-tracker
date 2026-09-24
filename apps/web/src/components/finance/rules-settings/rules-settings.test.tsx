@@ -17,6 +17,7 @@ const rules: RuleRow[] = [
   {
     categoryId: 'c-groceries',
     categoryName: 'Groceries',
+    deletedAt: null,
     id: 'r-mercadona',
     name: 'Mercadona',
     pattern: 'MERCADONA',
@@ -25,6 +26,7 @@ const rules: RuleRow[] = [
   {
     categoryId: 'c-gone',
     categoryName: null,
+    deletedAt: null,
     id: 'r-old',
     name: 'Old shop',
     pattern: 'OLDSHOP',

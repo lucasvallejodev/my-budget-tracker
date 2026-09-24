@@ -30,6 +30,13 @@ Schema    apps/web/src/db/schema.ts                 Drizzle tables/enums; migrat
 7. Uncategorised = `category_id IS NULL` + `needs_review = true`. No "Uncategorized" category row.
 8. Every query filters by `user_id`; foreign ids → `ServiceError('X not found', 404)`. Every multi-row write is one `db.transaction` with row locks.
 9. Drizzle renders unjoined columns unqualified: inside correlated subqueries write `"accounts"."id"` explicitly.
+10. Soft delete, never hard-delete, financial data: `DELETE` sets `deleted_at` on transactions (both legs for transfers), accounts (only without live transactions), rules, budgets and exchange rates; every read, balance, report, budget and conversion filters `deleted_at IS NULL`; `POST …/restore` brings a row back after re-checking the rules (live account, active category, no re-imported duplicate). Categories, groups and payees are archived instead. Only sessions are hard-deleted.
+
+## API service (`apps/api`)
+
+Fastify 5 + `fastify-type-provider-zod`. `buildApp({ config, db })` (`src/app.ts`) registers the Zod compilers, `services` and `config` decorators, the error handler, security (helmet, CORS allow-list `CORS_ORIGINS`, `@fastify/rate-limit`, origin check on writes against `ALLOWED_ORIGINS`), authentication (cookie → `sessions` → `request.auth`), OpenAPI (`/api/docs`) and `routes/` under `/api/v1`. Every route except `/health` and `/auth/sign-up|sign-in|sign-out` sits in one scope with the `requireSession` hook. Handlers call `userIdOf(request)` and a service; request and response schemas come from `packages/shared/src/schema/`. Services throw `ServiceError(message, status, code)`; the handler answers `{ error: { code, message, fields? } }`. Users and sessions: `src/auth/` (argon2id, SHA-256 token hashes, 30-day sliding sessions, `__Host-ck_session` cookie `HttpOnly; SameSite=Lax; Secure` in production). Sign-up seeds settings and taxonomy in the same transaction. Full description: `docs/architecture/api.md`; endpoints: `docs/reference/rest-api.md`. Tests: `src/routes/*.test.ts` with `createTestApp()` / `signUp()` from `src/test/app.ts` on PGlite.
+
+Until the web app is switched over, `apps/web` keeps its own copy of the services (`apps/web/src/server`), schema and migrations, used by its route handlers and server actions with Clerk.
 
 ## Service catalogue
 

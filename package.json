@@ -15,6 +15,7 @@
     "db:studio": "npm run db:studio -w @coinkeeper/web",
     "db:up": "docker compose up -d postgres",
     "dev": "npm run dev -w @coinkeeper/web",
+    "dev:api": "npm run dev -w @coinkeeper/api",
     "docs": "npx -y docsify-cli serve docs --port 3010",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -26,7 +27,8 @@
     "test": "vitest",
     "test:coverage": "vitest --run --coverage.enabled --coverage.provider=v8 --coverage.reporter=lcov --coverage.reporter=text-summary",
     "test:e2e": "playwright test",
-    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present"
+    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "user:reset-password": "npm run user:reset-password -w @coinkeeper/api --"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

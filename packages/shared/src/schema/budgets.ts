@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { FieldLengths } from '../constants/field-lengths';
 import { Patterns } from '../lib/patterns';
+import { deletedQuerySchema, isoMonthSchema } from './common';
 
 export const budgetFormSchema = z.object({
   amount: z.string().trim().min(1, 'Amount is required').max(FieldLengths.amountInput),
@@ -18,6 +19,7 @@ export const budgetRowSchema = z.object({
   categoryName: z.string(),
   color: z.string(),
   currency: z.string(),
+  deletedAt: z.string().nullable(),
   groupId: z.string(),
   groupName: z.string(),
   icon: z.string(),
@@ -27,3 +29,17 @@ export const budgetRowSchema = z.object({
 });
 
 export type BudgetRow = z.infer<typeof budgetRowSchema>;
+
+export const budgetAmountSchema = budgetFormSchema.pick({ amount: true });
+
+export const budgetKeyParamsSchema = z.object({
+  categoryId: z.uuid(),
+  currency: z.string().length(FieldLengths.currencyCode),
+  month: isoMonthSchema,
+});
+
+export const budgetListQuerySchema = deletedQuerySchema.extend({ month: isoMonthSchema });
+
+export const copyBudgetsSchema = z.object({ month: isoMonthSchema });
+
+export const copyBudgetsResultSchema = z.object({ copied: z.number().int() });

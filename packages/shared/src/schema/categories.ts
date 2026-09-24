@@ -44,3 +44,34 @@ export const categoryTreeSchema = z.object({
 });
 
 export type CategoryTree = z.infer<typeof categoryTreeSchema>;
+
+export const categoryGroupPatchSchema = categoryGroupFormSchema.partial();
+
+export const categoryPatchSchema = categoryFormSchema.partial();
+
+export const archiveCategorySchema = z.object({ moveToId: z.uuid().optional() });
+
+export type ArchiveCategoryValues = z.infer<typeof archiveCategorySchema>;
+
+export const categoryGroupSchema = z.object({
+  archivedAt: z.string().nullable(),
+  color: z.string(),
+  id: z.string(),
+  isSystem: z.boolean(),
+  kind: z.enum(CategoryKindValues),
+  name: z.string(),
+  sortOrder: z.number().int(),
+});
+
+export type CategoryGroup = z.infer<typeof categoryGroupSchema>;
+
+export const categorySchema = z.object({
+  archivedAt: z.string().nullable(),
+  groupId: z.string(),
+  icon: z.string(),
+  id: z.string(),
+  name: z.string(),
+  sortOrder: z.number().int(),
+});
+
+export type Category = z.infer<typeof categorySchema>;

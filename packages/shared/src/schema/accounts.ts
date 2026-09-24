@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { FieldLengths } from '../constants/field-lengths';
+import { deletedQuerySchema, includeArchivedQuerySchema } from './common';
 import { AccountClassificationValues, AccountTypeValues } from './enums';
 
 export const accountFormSchema = z.object({
@@ -31,6 +32,7 @@ export const accountSummarySchema = z.object({
   color: z.string().nullable(),
   countsInSpending: z.boolean(),
   currency: z.string(),
+  deletedAt: z.string().nullable(),
   icon: z.string().nullable(),
   id: z.string(),
   institution: z.string().nullable(),
@@ -41,3 +43,9 @@ export const accountSummarySchema = z.object({
 });
 
 export type AccountSummary = z.infer<typeof accountSummarySchema>;
+
+export const accountPatchSchema = accountFormSchema.omit({ openingBalance: true }).partial();
+
+export type AccountPatchValues = z.infer<typeof accountPatchSchema>;
+
+export const accountListQuerySchema = includeArchivedQuerySchema.extend(deletedQuerySchema.shape);

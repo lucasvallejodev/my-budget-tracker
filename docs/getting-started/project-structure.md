@@ -8,6 +8,7 @@ The repository is an npm workspaces monorepo (`workspaces` in the root `package.
 
 | Path | Contents |
 | --- | --- |
+| `apps/api/` | Workspace `@coinkeeper/api`: the Fastify REST API (`src/`), its migrations (`drizzle/`), `drizzle.config.ts`, `tsup.config.ts` and the database check script. Details in [API service](../architecture/api.md). |
 | `apps/web/` | Workspace `@coinkeeper/web`: the Next.js application (`src/`), its migrations (`drizzle/`), `next.config.ts`, `drizzle.config.ts`, `vitest.config.mts`, `tsconfig.json` and database scripts (`scripts/database.mjs` for `db:check`, `schema-signature.mjs`). |
 | `packages/shared/` | Workspace `@coinkeeper/shared`: code used by both the client and the server. `src/schema/` (Zod request and response contracts, enum value lists), `src/lib/` (money, patterns, dates, CSV parser) and `src/constants/` (field lengths, money and time units, icon names, category-group palette). Imported by path: `@coinkeeper/shared/lib/money`. No build step; consumers compile the TypeScript sources. |
 | `apps/web/drizzle/` | SQL migrations and Drizzle snapshots. `0000_initial.sql` is the legacy schema, `0001_ledger.sql` the current one. |

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { FieldLengths } from '../constants/field-lengths';
 import { DateFormats } from '../lib/csv';
 
 export const PreviewStatusValues = ['new', 'duplicate', 'matched', 'invalid'] as const;
@@ -58,3 +59,27 @@ export const transferSuggestionSchema = z.object({
 });
 
 export type TransferSuggestion = z.infer<typeof transferSuggestionSchema>;
+
+export const importPreviewRequestSchema = z.object({
+  accountId: z.uuid(),
+  csv: z
+    .string()
+    .min(1, 'The file is empty')
+    .max(FieldLengths.importCsv, 'File is too large (2 MB max)'),
+  mapping: columnMappingSchema,
+});
+
+export type ImportPreviewRequest = z.infer<typeof importPreviewRequestSchema>;
+
+export const importCommitResultSchema = z.object({
+  inserted: z.number().int(),
+  insertedIds: z.array(z.string()),
+  matched: z.number().int(),
+  suggestions: z.array(transferSuggestionSchema),
+});
+
+export type ImportCommitResult = z.infer<typeof importCommitResultSchema>;
+
+export const transferSuggestionQuerySchema = z.object({
+  transactionIds: z.string().optional(),
+});

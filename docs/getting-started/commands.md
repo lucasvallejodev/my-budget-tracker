@@ -9,7 +9,9 @@ All commands run from the repository root. The repository is an npm workspaces m
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Starts Next.js with Turbopack on http://localhost:3000 with hot reload. |
-| `npm run build` | Production build of every workspace that has a build script. Also the most complete type and route check. |
+| `npm run dev:api` | Starts the Fastify API with `tsx watch` on http://127.0.0.1:4000 (Swagger UI at `/api/docs`). |
+| `npm run user:reset-password -- <email>` | Sets a new password for a user (prompts for it, or reads `NEW_PASSWORD`) and signs them out everywhere. |
+| `npm run build` | Production build of every workspace that has a build script: `next build` for the web app, `tsup` for the API (`apps/api/dist/`). |
 | `npm start` | Serves the production build. |
 | `npm run docs` | Serves this documentation with Docsify on http://localhost:3010. |
 

@@ -9,6 +9,7 @@
   - [Overview](architecture/overview.md)
   - [Data model](architecture/data-model.md)
   - [Money and currencies](architecture/money.md)
+  - [API service](architecture/api.md)
   - [Server layer](architecture/server.md)
   - [Frontend](architecture/frontend.md)
   - [Components and styles](architecture/components.md)
@@ -28,6 +29,7 @@
   - [Dashboard and analytics](features/dashboard.md)
 
 - Reference
+  - [REST API](reference/rest-api.md)
   - [API and server actions](reference/api.md)
   - [Database migrations](reference/migrations.md)
   - [Default categories](reference/default-taxonomy.md)

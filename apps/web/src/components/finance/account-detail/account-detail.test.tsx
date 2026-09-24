@@ -37,6 +37,7 @@ const base: AccountSummary = {
   color: null,
   countsInSpending: true,
   currency: 'EUR',
+  deletedAt: null,
   icon: null,
   id: 'a-checking',
   institution: 'Example Bank',
