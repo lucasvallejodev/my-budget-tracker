@@ -18,29 +18,39 @@ services:
     networks:
       - app-network
 
-  budget-tracker:
+  # The API is not published to the host: only the web container reaches it (see
+  # docs/architecture/api.md › Who can reach the API). It applies migrations when it starts.
+  api:
     profiles: ['app']
     build:
       context: .
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-        NEXT_PUBLIC_CLERK_SIGN_IN_URL: ${NEXT_PUBLIC_CLERK_SIGN_IN_URL:-/sign-in}
-        NEXT_PUBLIC_CLERK_SIGN_UP_URL: ${NEXT_PUBLIC_CLERK_SIGN_UP_URL:-/sign-up}
-        NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: ${NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL:-/}
-        NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: ${NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL:-/}
-    ports:
-      - '3000:3000'
+      target: api
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-budget_tracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-budget_tracker}
-      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: ${NEXT_PUBLIC_CLERK_SIGN_IN_URL:-/sign-in}
-      NEXT_PUBLIC_CLERK_SIGN_UP_URL: ${NEXT_PUBLIC_CLERK_SIGN_UP_URL:-/sign-up}
-      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: ${NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL:-/}
-      NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: ${NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL:-/}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SESSION_DAYS: ${SESSION_DAYS:-30}
+      AUTH_ATTEMPTS_PER_MINUTE: ${AUTH_ATTEMPTS_PER_MINUTE:-10}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  web:
+    profiles: ['app']
+    build:
+      context: .
+      target: web
+      args:
+        API_URL: http://api:4000
+    ports:
+      - '3000:3000'
+    depends_on:
+      api:
         condition: service_healthy
     restart: unless-stopped
     networks:

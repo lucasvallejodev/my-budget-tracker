@@ -1,6 +1,6 @@
 # Testing
 
-> Summary: the kinds of tests and the Vitest projects (api, web, shared, tooling), how the API route and service tests run on PGlite without Docker, how component tests mock `@/api/mutations`, and what to cover when adding a feature.
+> Summary: the kinds of tests and the Vitest projects (api, web, shared, tooling), how the API route and service tests run on PGlite without Docker, how component tests mock `@/api/mutations`, the Playwright end-to-end suite against the real API and web app, and what to cover when adding a feature.
 
 ## Kinds of tests
 
@@ -58,7 +58,15 @@ Render inside `QueryClientProvider`, prefill the cache with `client.setQueryData
 
 ## End to end
 
-Playwright runs against a real app (`npm run test:e2e`). Because authentication is local, a test can create its own user through the sign-up page or with `POST /api/v1/auth/sign-up` and keep the cookie. `e2e/` currently holds only the Playwright example spec.
+Playwright runs against the real API and web app (`npm run test:e2e`). `playwright.config.ts` starts both through `webServer` (`npm run dev:api`, waiting for `/api/v1/health`, and `npm run dev:web`, waiting for `/sign-in`), or reuses servers that are already running outside CI. The database is the one in `DATABASE_URL`, migrated beforehand. Only Chromium runs.
+
+`e2e/ledger.spec.ts` signs up a fresh user per test (`e2e-<uuid>@example.com`) and covers:
+
+- the route guard and `next` redirect: sign out, open `/budgets`, land on `/sign-in?next=%2Fbudgets`, sign in, return to `/budgets`;
+- soft delete: create an account and a transaction through the API with the page's cookie, delete it from the transactions table, find it in Settings › Deleted items, restore it and see it back in the list;
+- the origin check: a write with `Origin: https://evil.example` answers `403`.
+
+Tests leave their users in the database; use a throwaway local database. In CI (`.github/workflows/playwright.yml`) a PostgreSQL service container is migrated with `npm run db:migrate` before the run.
 
 ## What to cover for a new feature
 

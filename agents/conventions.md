@@ -134,7 +134,7 @@ Cyclomatic complexity 10 and cognitive complexity 15 per function, 80 lines per 
 - Pure helpers → colocated `*.test.ts`.
 - Components → `<name>/<name>.test.tsx`, required for every component folder (`apps/web/src/components/structure.test.ts` fails otherwise). Query by role and label, not by class names.
 - Screens → `*.test.tsx` with `QueryClientProvider`, `client.setQueryData(QueryKeys.…, data)` for fixtures and `vi.mock('@/api/mutations', () => ({ … }))` for writes.
-- Playwright specs in `e2e/` are excluded from Vitest.
+- Playwright specs in `e2e/` are excluded from Vitest. They sign up their own user (`e2e-<uuid>@example.com`), may create data through `page.request` with the page's cookie, and query the UI by role and label. `npm run test:e2e` starts the API and the web app.
 
 ## Documentation
 

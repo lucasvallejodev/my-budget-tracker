@@ -112,7 +112,15 @@ The database tests run against an in-memory PostgreSQL (PGlite); they never touc
 docker compose --profile app up -d --build
 ```
 
-This runs three services: `postgres`, `api` (applies pending migrations when it starts and is not published to the host) and `web` on port 3000, which forwards `/api/*` to the API over the Compose network.
+This runs three services from one multi-stage `Dockerfile`:
+
+| Service | Image target | What it does |
+| --- | --- | --- |
+| `postgres` | `postgres:17-alpine` | The database, bound to `127.0.0.1:5432` on the host. |
+| `api` | `--target api` | Runs `node dist/cli/migrate.js` (applies pending migrations with Drizzle's migrator) and then the Fastify server on port 4000 inside the Compose network. It is **not** published to the host; its health check calls `/api/v1/health`. |
+| `web` | `--target web` | The Next.js standalone server on http://localhost:3000. It is built with `API_URL=http://api:4000`, so `/api/*` is forwarded to the API container. It starts once the API is healthy. |
+
+The API reads `ALLOWED_ORIGINS`, `CORS_ORIGINS`, `COOKIE_SECURE` (default `false` in Compose because the stack runs on plain HTTP), `SESSION_DAYS`, `AUTH_ATTEMPTS_PER_MINUTE` and `LOG_LEVEL` from `.env`. Behind HTTPS in production, set `COOKIE_SECURE=true` and `ALLOWED_ORIGINS` to the public URL. Stop the app containers with `docker compose --profile app down`; the database volume survives.
 
 ## SonarQube Cloud (optional, CI only)
 

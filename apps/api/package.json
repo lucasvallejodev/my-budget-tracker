@@ -10,6 +10,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "dev": "tsx watch src/server.ts",
+    "migrate:deploy": "node dist/cli/migrate.js",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "user:reset-password": "tsx src/cli/reset-password.ts"
