@@ -9,16 +9,16 @@ Before this structure, most screens imported one shared `finance.module.scss` fu
 ## Three modules
 
 ```
-src/components/
+apps/web/src/components/
 ├─ ui/          project-wide building blocks with no domain knowledge
-├─ finance/     finance components and screens
-├─ shell/       the application frame: sidebar, header, logo, theme toggle, auth screen
+├─ finance/     finance components and screens, including ProfileForm, PasswordForm, SessionList and DeletedItems
+├─ shell/       the application frame: sidebar, header, logo, theme toggle, auth screen, AuthForm (sign-in and sign-up), UserMenu
 └─ structure.test.ts   checks the rules below
 ```
 
 Modules depend in one direction: `shell` → `finance` → `ui`. `ui` components never import `finance` or `shell`; they receive data and callbacks through props. `finance` imports only `ui`, and `shell` may use both. When two modules need the same thing, it moves down to `ui`.
 
-Components live only here. `src/app/` holds routes, server actions and API handlers; its pages render components from the barrels (the transactions page renders `TransactionsPage`, dialogs such as `TransactionDialog` and `CreateAccountDialog` are finance components).
+Components live only here. `apps/web/src/app/` holds only routes (pages and layouts); its pages render components from the barrels (the transactions page renders `TransactionsPage`, dialogs such as `TransactionDialog` and `CreateAccountDialog` are finance components).
 
 Where does a new component go?
 
@@ -31,7 +31,7 @@ Where does a new component go?
 ## One folder per component
 
 ```
-src/components/finance/budget-card/
+apps/web/src/components/finance/budget-card/
 ├─ budget-card.tsx           the component (named export BudgetCard)
 ├─ budget-card.scss          its styles: one BEM block, .budget-card
 ├─ budget-card.test.tsx      its tests (required)
@@ -41,7 +41,7 @@ src/components/finance/budget-card/
 
 - The folder, the component file, the stylesheet and the BEM block share one kebab-case name.
 - A component without its own look has no stylesheet; it composes `ui` components.
-- Module roots hold only the barrel (`index.ts`) and plain TypeScript modules such as `finance/use-finance-data.ts`, `finance/sample-data.ts`, `finance/transaction-labels.ts` and `finance/export-transactions.ts`.
+- Module roots hold only the barrel (`index.ts`) and plain TypeScript modules such as `finance/use-finance-data.ts`, `finance/sample-data.ts`, `finance/transaction-labels.ts`, `finance/export-transactions.ts` and `finance/use-entity-mutation.ts`.
 - Barrels use named re-exports, never `export *`, because Next.js needs explicit names across client boundaries. `'use client'` goes in the component file.
 
 ## Importing components
@@ -95,7 +95,7 @@ Rules for selectors:
 - every styled element gets a class: no tag selectors (`p`, `li`, `th`), except `svg` for icons rendered as children;
 - no IDs, no `@extend`, no `!important`, at most two compound selectors (`&__day--selected &__day-button`) and at most two levels of nesting.
 
-In TypeScript, class names are plain strings, combined with `cn()` from `src/lib/styles.ts`:
+In TypeScript, class names are plain strings, combined with `cn()` from `apps/web/src/lib/styles.ts`:
 
 ```tsx
 import { cn } from '@/lib/styles';
@@ -119,7 +119,7 @@ Every class is written in full, so a search for `badge--danger` finds both the s
 
 ## Cascade layers
 
-`src/app/globals.scss` declares the layer order and puts the resets in the lowest layer:
+`apps/web/src/app/globals.scss` declares the layer order and puts the resets in the lowest layer:
 
 ```scss
 @layer reset, ui;
@@ -160,7 +160,7 @@ Layouts are mobile-first: base styles target phones, larger screens add `min-wid
 
 ## SCSS abstractions
 
-Everything lives in `src/styles/abstracts/` and is loaded with `@use 'abstracts' as *;` (`next.config.ts` adds `src/styles` to Sass's load paths).
+Everything lives in `apps/web/src/styles/abstracts/` and is loaded with `@use 'abstracts' as *;` (`next.config.ts` adds `apps/web/src/styles` to Sass's load paths).
 
 | File                | Provides                                                                                                                                                                                                                                                         |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -168,7 +168,7 @@ Everything lives in `src/styles/abstracts/` and is loaded with `@use 'abstracts'
 | `_functions.scss`   | `space($step)`: 1 = 4 px, 2 = 8, 3 = 12, 4 = 16, 5 = 20, 6 = 24, 7 = 28, 8 = 32; `radius($size)`: `sm` 8, `md` 10, `lg` 12, `xl` 16, `panel` 18, `pill` 999 px, `round` 50 %. Unknown keys stop the build with a message.                                        |
 | `_mixins.scss`      | `flex-row`, `flex-column`, `flex-between`, `grid-center`, `surface`, `bordered`, `accent-highlight`, `muted-text`, `divided`, `focus-ring`, `reset-button`, `reset-list`, `truncate`, `pill-control`, `icon-size`, `text-field`, `floating-panel`, `option-item` |
 
-Colours still come only from `var(--token)` in `src/styles/tokens.scss`. When the same group of declarations appears in two stylesheets, turn it into a mixin; when the same markup appears in two components, turn it into a component.
+Colours still come only from `var(--token)` in `apps/web/src/styles/tokens.scss`. When the same group of declarations appears in two stylesheets, turn it into a mixin; when the same markup appears in two components, turn it into a component.
 
 ### Focus outlines
 
@@ -193,16 +193,16 @@ Focus outlines are drawn with CSS only, no JavaScript. `globals.scss` styles `:f
 | `ui` stylesheets inside `@layer ui`                                                                                                                 | `local/require-layer` (`scripts/stylelint-rules/`)          |
 | a component imports only its own stylesheet and writes class strings of its own block                                                               | `local/colocated-styles` (`scripts/eslint-rules/`)          |
 | no deep component imports, no own-barrel imports, no `../../` across modules, dependency direction `shell → finance → ui`                           | `no-restricted-imports` in `eslint.config.mjs`              |
-| folder contract, test file present, barrels complete, block names unique, every `ui` component listed in this catalogue                             | `src/components/structure.test.ts`                          |
-| named exports only in `src/components/`                                                                                                             | `import/no-default-export` in `eslint.config.mjs`           |
+| folder contract, test file present, barrels complete, block names unique, every `ui` component listed in this catalogue                             | `apps/web/src/components/structure.test.ts`                 |
+| named exports only in `apps/web/src/components/`                                                                                                    | `import/no-default-export` in `eslint.config.mjs`           |
 
 `npm run lint:fix` fixes the spacing rules; everything else fails `npm run lint` or `npm test` with a message that names the rule to follow.
 
 ## Adding a component
 
-1. Look in `src/components/ui/index.ts` and the module barrel first; prefer a new prop or modifier over a lookalike.
+1. Look in `apps/web/src/components/ui/index.ts` and the module barrel first; prefer a new prop or modifier over a lookalike.
 2. Choose the module with the placement table and create the folder: `<name>.tsx`, `<name>.test.tsx`, `index.ts` and, if it has its own look, `<name>.scss` starting with `@use 'abstracts' as *;` (wrapped in `@layer ui { … }` inside `ui/`).
 3. Name classes after the block, write the phone layout first and add `media-up` steps.
 4. Export it from the module barrel.
-5. Run `npm run lint:fix`, then `npm run lint && npx tsc --noEmit && npm test -- --run`.
+5. Run `npm run lint:fix`, then `npm run lint && npm run typecheck && npm test -- --run`.
 6. Add it to the catalogue above if it is a `ui` component.

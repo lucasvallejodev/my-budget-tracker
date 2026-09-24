@@ -2,9 +2,9 @@ name: Quality
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
   quality:
@@ -14,15 +14,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 24
           cache: npm
       - name: Install dependencies
         run: npm ci
       - name: Lint (ESLint + Stylelint)
         run: npm run lint
       - name: Type check
-        run: npx tsc --noEmit
+        run: npm run typecheck
       - name: Unit, component and database tests
         run: npm test -- --run
       - name: Duplicated code
         run: npm run lint:dupes
+      - name: Build (API bundle and Next.js)
+        run: npm run build

@@ -1,18 +1,18 @@
 # Accounts
 
-> Summary: creating, editing, archiving accounts; asset versus liability; how balances are computed.
+> Summary: creating, editing, archiving and (through the API) deleting and restoring accounts; asset versus liability; how balances are computed.
 
 An account is a place money lives: a checking account, a savings account, cash, a credit card, a loan, an investment account. Each account has exactly one currency.
 
 ## Account types
 
-| Type | Classification | Sidebar group | Notes |
-| --- | --- | --- | --- |
-| Checking, Cash | asset | Cash | everyday money |
-| Savings, Investment | asset | Savings & investments | investment accounts do not count in spending by default |
-| Credit card | liability | Credit cards | balance is negative when you owe; shown as "owed" |
-| Loan | liability | Loans | same as credit cards |
-| Other | asset | Other | anything else |
+| Type                | Classification | Sidebar group         | Notes                                                   |
+| ------------------- | -------------- | --------------------- | ------------------------------------------------------- |
+| Checking, Cash      | asset          | Cash                  | everyday money                                          |
+| Savings, Investment | asset          | Savings & investments | investment accounts do not count in spending by default |
+| Credit card         | liability      | Credit cards          | balance is negative when you owe; shown as "owed"       |
+| Loan                | liability      | Loans                 | same as credit cards                                    |
+| Other               | asset          | Other                 | anything else                                           |
 
 ## Step by step
 
@@ -37,7 +37,7 @@ The opening balance becomes a transaction of kind `opening` dated today; it coun
 1. On the account page click **Archive**. Archived accounts leave the sidebar and pickers, keep their history and can be shown on the Accounts page with **Show archived**.
 2. Click **Restore** to bring it back.
 
-Accounts with transactions cannot be deleted; archive them instead.
+The app offers archiving only. The API can also delete an account (`DELETE /api/v1/accounts/:id`), but only while it has no live transactions; deleting is soft, and a deleted account can be restored from **Settings › Deleted items** (see [Deleted items](deleted-items.md)). Transactions of a deleted account cannot be restored until the account is.
 
 <!-- screenshot: Accounts page grouped by type with balances and an archived account visible (docs/assets/screenshots/accounts-list.png) -->
 
@@ -50,8 +50,8 @@ The account page shows the balance (or amount owed), the number of transactions,
 ## How it works
 
 - Balances are `SUM(amount_minor)` over the account's live transactions, computed in `accounts.list` as a correlated subquery. Nothing is cached.
-- `classification` is derived from the type in `classificationFor()` (`src/server/accounts/service.ts`).
-- The currency lock and the delete guard are enforced in `accounts.update` and `accounts.remove`.
-- The sidebar grouping comes from `AccountGroups` in `src/constants/account.ts`; subtotals are computed per currency and liabilities are sign-flipped for display.
+- `classification` is derived from the type in `classificationFor()` (`apps/api/src/modules/accounts/service.ts`).
+- The currency lock and the delete guard are enforced in `accounts.update` and `accounts.remove`; `remove` sets `deleted_at` and `restore` clears it. Deleted accounts are left out of lists, balances and net worth.
+- The sidebar grouping comes from `AccountGroups` in `apps/web/src/constants/account.ts`; subtotals are computed per currency and liabilities are sign-flipped for display.
 
 Related: [Data model › accounts](../architecture/data-model.md#accounts), [Money and currencies](../architecture/money.md).

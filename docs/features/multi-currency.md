@@ -26,7 +26,7 @@ Create an account as usual and choose its currency. See [Accounts](accounts.md).
 
 1. On the same settings page, under **Exchange rates**, choose the base currency (1 unit of…), the quote currency (equals … in), the rate and the date from which it applies.
 2. Click **Save rate**. Saving the same pair and date again overwrites the rate.
-3. The table lists rates newest first; delete one with the bin icon.
+3. The table lists rates newest first; delete one with the bin icon. A deleted rate stops being used for conversions and can be restored from **Settings › Deleted items** (see [Deleted items](deleted-items.md)); saving the same pair and date again also brings it back with the new value.
 
 A rate stays in force until a newer one exists for the same pair. Inverse pairs are derived automatically (if you saved EUR→USD, USD→EUR works too).
 
@@ -40,10 +40,11 @@ A rate stays in force until a newer one exists for the same pair. Inverse pairs 
 
 ## Automating rates later
 
-Rates are read through the `RateProvider` interface (`src/server/fx/provider.ts`). The only implementation today is `ManualRateProvider`. A future provider (an ECB feed, a paid API, a scheduled CSV) implements `getRate(userId, base, quote, date)` and is added to the provider list in `src/server/services.ts`; nothing else changes. See [Money and currencies](../architecture/money.md).
+Rates are read through the `RateProvider` interface (`apps/api/src/modules/fx/provider.ts`). The only implementation today is `ManualRateProvider`. A future provider (an ECB feed, a paid API, a scheduled CSV) implements `getRate(userId, base, quote, date)` and is added to the provider list in `apps/api/src/modules/services.ts`; nothing else changes. See [Money and currencies](../architecture/money.md).
 
 ## How it works
 
 - Reports group by `transactions.currency`; net worth groups by `accounts.currency`.
 - `reports.convertedTotals` converts each currency bucket with `fx.getRate(currency, primary, today)` and reports `missing` currencies.
 - The summary endpoint includes `converted` only when `user_settings.show_converted_totals` is true.
+- Deleting a rate (`DELETE /api/v1/exchange-rates/:base/:quote/:date`) sets `deleted_at`; lookups ignore deleted rates, and `POST …/restore` or a new `PUT` for the same key brings the row back.

@@ -1,6 +1,6 @@
 # Transfers and credit cards
 
-> Summary: moving money between your own accounts, paying a credit card or loan, and why none of it counts as spending.
+> Summary: moving money between your own accounts, paying a credit card or loan, editing, deleting and restoring a transfer, and why none of it counts as spending.
 
 ## The idea
 
@@ -14,7 +14,7 @@ A transfer is stored as two rows, one per account, with opposite signs and the s
 
 ### Move money between two accounts
 
-1. Click **New transaction** and set **Type** to *Transfer between accounts*.
+1. Click **New transaction** and set **Type** to _Transfer between accounts_.
 2. Choose the **From** account (money leaves) and the **To** account (money arrives).
 3. Enter the **amount sent** in the source currency. If the two accounts use different currencies, also enter the **amount received** in the destination currency.
 4. Add a memo and the date, then click **Record transfer**.
@@ -33,7 +33,7 @@ The card's balance goes back towards zero; checking goes down by the same amount
 
 ### Edit or delete a transfer
 
-Open either leg's **⋯** menu. **Edit** opens the transfer editor for both legs (accounts, amounts, memo, date). **Delete** removes both legs after confirmation.
+Open either leg's **⋯** menu. **Edit** opens the transfer editor for both legs (accounts, amounts, memo, date). **Delete** removes both legs after confirmation; the toast's **Undo** button, or **Restore** in **Settings › Deleted items**, brings both back together (see [Deleted items](deleted-items.md)). A transfer cannot be restored while either of its accounts is deleted.
 
 ### Turn two imported rows into a transfer
 
@@ -41,15 +41,15 @@ After a CSV import, the wizard lists **possible transfers**: an outgoing row in 
 
 ## Reading the ledger
 
-Each leg is labelled with the other account: "Transfer to Visa" in checking, "Transfer from Checking" on the card. The category column shows *Transfer*. On liability accounts the balance is shown as an amount owed; the raw ledger balance (negative when you owe) is visible in the details panel.
+Each leg is labelled with the other account: "Transfer to Visa" in checking, "Transfer from Checking" on the card. The category column shows _Transfer_. On liability accounts the balance is shown as an amount owed; the raw ledger balance (negative when you owe) is visible in the details panel.
 
 <!-- screenshot: checking account ledger showing a "Transfer to Visa" row next to normal expenses (docs/assets/screenshots/transfer-ledger-row.png) -->
 
 ## How it works
 
 - `ledger.createTransfer` writes both legs in one database transaction; it requires two different accounts of the user, a positive amount, and a destination amount when currencies differ.
-- `ledger.updateTransfer` rewrites both legs; `ledger.remove` on either leg soft-deletes both.
+- `ledger.updateTransfer` rewrites both legs (`PUT /api/v1/transfers/:transferId`); `ledger.removeTransfer` (`DELETE /api/v1/transfers/:transferId`) sets `deleted_at` on both legs and `ledger.restoreTransfer` (`POST …/restore`) clears it on both, after checking that both accounts are live. Deleting a single leg through `/transactions/:id` is refused with `409`.
 - `ledger.linkAsTransfer` converts two existing standard rows (opposite signs, different accounts) into a transfer pair and clears their categories and payees.
 - The database enforces `kind = 'transfer'` ⇔ `transfer_id IS NOT NULL` and forbids a category on non-standard rows.
-- Every report filters `kind = 'standard'`, so exclusion needs no special casing (`src/server/reports/service.ts`, `spendingWhere`).
+- Every report filters `kind = 'standard'`, so exclusion needs no special casing (`apps/api/src/modules/reports/service.ts`, `spendingWhere`).
 - Interest charged by a card is a normal expense on the card account (category Financial › Interest & charges); it is spending.

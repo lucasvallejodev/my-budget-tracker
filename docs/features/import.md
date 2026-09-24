@@ -16,12 +16,12 @@
 
 5. **Preview** lists every row with a status:
 
-   | Status | Meaning | What happens on import |
-   | --- | --- | --- |
-   | New | not seen before | inserted as pending, flagged for review |
-   | Matches existing | same amount as a manual entry within 7 days | your entry keeps its data and receives the import id |
-   | Already imported | its import id already exists in this account | skipped |
-   | Unreadable | date or amount could not be parsed, or the amount is zero | skipped |
+   | Status           | Meaning                                                   | What happens on import                               |
+   | ---------------- | --------------------------------------------------------- | ---------------------------------------------------- |
+   | New              | not seen before                                           | inserted as pending, flagged for review              |
+   | Matches existing | same amount as a manual entry within 7 days               | your entry keeps its data and receives the import id |
+   | Already imported | its import id already exists in this account              | skipped                                              |
+   | Unreadable       | date or amount could not be parsed, or the amount is zero | skipped                                              |
 
    The Category column shows a suggestion when a [rule](rules.md) or a payee's usual category applies.
 
@@ -33,7 +33,7 @@
 
 ## Re-importing
 
-Importing the same file again is safe. Every row gets a deterministic import id (the reference column if mapped, otherwise date + amount + occurrence + a hash of the payee), and ids are unique per account, so repeated rows show as *Already imported*.
+Importing the same file again is safe. Every row gets a deterministic import id (the reference column if mapped, otherwise date + amount + occurrence + a hash of the payee), and ids are unique per account, so repeated rows show as _Already imported_.
 
 ## Supported formats
 
@@ -44,8 +44,8 @@ Importing the same file again is safe. Every row gets a deterministic import id 
 
 ## How it works
 
-- Parsing: `src/server/import/csv.ts` (`parseCsv`, `parseDateCell`).
-- Row mapping and classification (pure): `src/server/import/preview.ts` (`resolveColumns`, `parseRow`, `buildImportId`, `findMatch`, `classifyRow`).
-- Loading and writing: `src/server/import/service.ts`. `preview` never writes; `commit` inserts new rows through `ledger.createStandard` with `status = 'pending'`, `needs_review = true`, the import id and the raw payee text in `original_payee`, creating payees by name as needed. Matched rows only get their `import_id` set.
+- Parsing: `packages/shared/src/lib/csv.ts` (shared with the import wizard, which reads the headers in the browser) (`parseCsv`, `parseDateCell`).
+- Row mapping and classification (pure): `apps/api/src/modules/import/preview.ts` (`resolveColumns`, `parseRow`, `buildImportId`, `findMatch`, `classifyRow`).
+- Loading and writing: `apps/api/src/modules/import/service.ts`, behind `POST /api/v1/imports/preview` and `POST /api/v1/imports`. `preview` never writes; `commit` inserts new rows through `ledger.createStandard` with `status = 'pending'`, `needs_review = true`, the import id and the raw payee text in `original_payee`, creating payees by name as needed. Matched rows only get their `import_id` set.
 - Category suggestion order: first matching rule, then the payee's usual category.
 - `transferSuggestions` looks for uncategorised standard rows with the opposite amount in another account of the same currency within four days; `ledger.linkAsTransfer` pairs them.

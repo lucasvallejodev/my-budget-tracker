@@ -1,8 +1,10 @@
-node_modules
-.next
+**/node_modules
+**/.next
 .git
 .env
 .env.*
 !.env.example
 coverage
+temp
+docs
 *.tsbuildinfo

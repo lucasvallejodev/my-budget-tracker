@@ -77,7 +77,7 @@
       <text x="56" y="80" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">ENTITY</text>
       <text x="56" y="96" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">UserSettings</text>
       <text x="56" y="124" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace"># user_id</text>
-      <text x="224" y="124" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text · clerk</text>
+      <text x="224" y="124" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">text · users.id</text>
       <text x="56" y="144" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">primary_currency</text>
       <text x="224" y="144" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">char(3)</text>
       <text x="56" y="164" fill="#2d3142" font-size="10" font-family="'Geist Mono', monospace">locale</text>
@@ -263,5 +263,5 @@
       <text x="592" y="684" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" font-weight="600">1 / N / 0..1</text>
       <text x="668" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Cardinality</text>
 
-      <text x="760" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Every table also carries user_id (Clerk id) and is scoped by it.</text>
+      <text x="760" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Every table also carries user_id (→ users.id) and is scoped by it.</text>
     </svg>
