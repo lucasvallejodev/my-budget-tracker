@@ -15,20 +15,20 @@ Full documentation lives in [`docs/`](docs/README.md) and is served as a Docsify
 
 | Folder | What is inside |
 | --- | --- |
-| `src/` | The application. `app/` (Next.js routes, server actions, API route handlers), `components/` (`ui/` shared building blocks, `finance/` components and screens, `shell/`; one folder per component with a BEM stylesheet), `styles/` (colour tokens, breakpoint mixins and SCSS abstractions), `server/` (domain services: accounts, categories, ledger, payees, reports, fx, import, rules, budgets), `db/` (Drizzle schema and connection), `schema/` (Zod input schemas), `lib/` (money, dates, styles helpers). Details in [docs/getting-started/project-structure.md](docs/getting-started/project-structure.md). |
-| `drizzle/` | SQL migrations and Drizzle snapshots. Apply with `npm run db:migrate`. |
-| `scripts/` | Database schema check (`npm run db:check`) and local ESLint rules (`scripts/eslint-rules/`). |
+| `apps/web/` | Workspace `@coinkeeper/web`, the Next.js application. `src/app/` (routes, server actions, API route handlers), `src/components/` (`ui/` shared building blocks, `finance/` components and screens, `shell/`; one folder per component with a BEM stylesheet), `src/styles/` (colour tokens, breakpoint mixins and SCSS abstractions), `src/server/` (domain services: accounts, categories, ledger, payees, reports, fx, import, rules, budgets), `src/db/` (Drizzle schema and connection), `drizzle/` (migrations), `scripts/` (`db:check`). Details in [docs/getting-started/project-structure.md](docs/getting-started/project-structure.md). |
+| `packages/shared/` | Workspace `@coinkeeper/shared`: Zod request and response contracts, money, date, pattern and CSV helpers, and constants used by both client and server. |
+| `apps/web/drizzle/` | SQL migrations and Drizzle snapshots. Apply with `npm run db:migrate`. |
+| `scripts/` | Local ESLint and Stylelint rules (`scripts/eslint-rules/`, `scripts/stylelint-rules/`). |
 | `e2e/` | Playwright tests (`npm run test:e2e`) and `playwright.config.ts` at the root. |
 | `docs/` | Human documentation (Docsify): setup, architecture, data model, feature guides, reference. `docs/legacy/` keeps the original proposal, research and migration notes; `docs/assets/` holds diagrams and screenshots. |
 | `agents/` | Documentation written for AI coding agents: condensed architecture, data model, conventions, workflows and a code-to-docs map. Start at [agents/README.md](agents/README.md). |
 | `temp/` | Scratch space for plans, throwaway diagrams and intermediate files. Git-ignored except its README. |
-| `public/` | Static assets. |
 | `AGENTS.md`, `CLAUDE.md` | Operating rules for AI agents working in this repository. |
 | `docker-compose.yml`, `Dockerfile` | Local PostgreSQL 17 and an optional app container. |
 
 ## Setup
 
-Prerequisites: Node.js 22+, Docker Desktop, a Clerk application (publishable and secret key).
+Prerequisites: Node.js 24 (npm 11, which wrote the lockfile), Docker Desktop, a Clerk application (publishable and secret key).
 
 ```bash
 npm ci
@@ -52,7 +52,8 @@ docker compose --profile app up -d --build
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Development server with Turbopack |
-| `npm run build` / `npm start` | Production build and server |
+| `npm run build` / `npm start` | Production build of every workspace and the web server |
+| `npm run typecheck` | TypeScript check of the root files and every workspace |
 | `npm run lint` / `npm run lint:fix` | ESLint (Next.js, type-aware TypeScript, SonarJS, layout and Prettier rules) and Stylelint; `lint:fix` applies every automatic fix |
 | `npm run lint:dupes` | Duplicated code report (jscpd, fails above 3 %) |
 | `npm run knip` | Unused files, exports and dependencies |
@@ -61,7 +62,7 @@ docker compose --profile app up -d --build
 | `npm run test:coverage` | Same with an lcov coverage report (used by the SonarQube Cloud workflow) |
 | `npm run test:e2e` | Playwright end-to-end tests |
 | `npm run db:up` / `npm run db:down` | Start / stop the PostgreSQL container (data volume is kept) |
-| `npm run db:generate` | Generate a migration from `src/db/schema.ts` changes |
+| `npm run db:generate` | Generate a migration from `apps/web/src/db/schema.ts` changes |
 | `npm run db:migrate` | Apply pending migrations |
 | `npm run db:check` | Read-only schema comparison against all migrations |
 | `npm run db:studio` | Drizzle Studio |
@@ -70,7 +71,7 @@ docker compose --profile app up -d --build
 Before committing, run the full gate:
 
 ```bash
-npm run lint && npx tsc --noEmit && npm test -- --run && npm run build
+npm run lint && npm run typecheck && npm test -- --run && npm run build
 ```
 
 ## Documentation

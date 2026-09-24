@@ -16,7 +16,7 @@ Every amount in the database and in the API is a pair:
 
 Floats never appear: forms submit the amount as a **string**, the server parses it with the account's currency, and the client formats minor units for display.
 
-## The helpers (`src/lib/money.ts`)
+## The helpers (`packages/shared/src/lib/money.ts`)
 
 | Function | Purpose |
 | --- | --- |
@@ -26,7 +26,7 @@ Floats never appear: forms submit the amount as a **string**, the server parses 
 | `formatMoney(minor, currency, { locale, signDisplay })` | Localised display string via `Intl.NumberFormat`. |
 | `convertMinor(minor, from, to, rate)` | Converts between currencies with different exponents, rounding half away from zero. |
 
-The `Amount` component (`src/components/ui/amount/`) wraps `formatMoney`, colours inflows and outflows when `signed`, and can flip the sign for liabilities.
+The `Amount` component (`apps/web/src/components/ui/amount/`) wraps `formatMoney`, colours inflows and outflows when `signed`, and can flip the sign for liabilities.
 
 ## Currency rules
 
@@ -40,7 +40,7 @@ The `Amount` component (`src/components/ui/amount/`) wraps `formatMoney`, colour
 
 Rates live in `exchange_rates` as "1 `base` = `rate` `quote` from `date`". The lookup takes the most recent row on or before the requested date, and falls back to the inverse pair (`quote`→`base`, rate inverted, source marked "(inverse)").
 
-The lookup is behind the `RateProvider` interface in `src/server/fx/provider.ts`:
+The lookup is behind the `RateProvider` interface in `apps/web/src/server/fx/provider.ts`:
 
 ```ts
 interface RateProvider {
@@ -49,7 +49,7 @@ interface RateProvider {
 }
 ```
 
-`ManualRateProvider` reads the table. To add an automatic source later, implement the interface and register it in the provider list in `src/server/services.ts`; reports and the UI do not change.
+`ManualRateProvider` reads the table. To add an automatic source later, implement the interface and register it in the provider list in `apps/web/src/server/services.ts`; reports and the UI do not change.
 
 ## Worked example: a credit card in EUR
 

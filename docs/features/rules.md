@@ -25,4 +25,4 @@ Rules do not run when you type a transaction by hand; the payee's usual category
 
 ## How it works
 
-`src/server/rules/service.ts`: `match(userId, texts)` finds the first rule whose pattern is contained in the joined texts; `applyToUncategorized` scans every uncategorised standard row and sets the category and clears `needs_review`. Rules reference a live category; archiving that category with "move to" re-points transactions but not rules, so a rule may show "archived category" until you recreate it.
+`apps/web/src/server/rules/service.ts`: `match(userId, texts)` finds the first rule whose pattern is contained in the joined texts; `applyToUncategorized` scans every uncategorised standard row and sets the category and clears `needs_review`. Rules reference a live category; archiving that category with "move to" re-points transactions but not rules, so a rule may show "archived category" until you recreate it.

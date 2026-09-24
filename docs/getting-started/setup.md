@@ -48,7 +48,7 @@ This starts the `postgres` service from `docker-compose.yml` (PostgreSQL 17, bou
 npm run db:migrate
 ```
 
-Drizzle applies every SQL migration in `drizzle/` that has not run yet and records it in `drizzle.__drizzle_migrations`. The second migration also seeds the `currencies` table. To confirm the live schema matches the migrations without changing anything:
+Drizzle applies every SQL migration in `apps/web/drizzle/` that has not run yet and records it in `drizzle.__drizzle_migrations`. The second migration also seeds the `currencies` table. To confirm the live schema matches the migrations without changing anything:
 
 ```bash
 npm run db:check

@@ -3,6 +3,6 @@
   "minTokens": 40,
   "minLines": 5,
   "reporters": ["console"],
-  "ignore": ["**/*.test.ts", "**/*.test.tsx", "src/components/icons/registry.ts", "**/node_modules/**"],
+  "ignore": ["**/*.test.ts", "**/*.test.tsx", "**/src/constants/icons.ts", "**/node_modules/**", "**/.next/**", "**/drizzle/**"],
   "gitignore": true
 }

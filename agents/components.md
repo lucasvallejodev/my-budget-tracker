@@ -7,14 +7,14 @@ Read this before creating, moving or styling any component. The human version is
 ## Modules and placement
 
 ```
-src/components/
+apps/web/src/components/
   ui/        project-wide building blocks, no domain knowledge (Button, Panel, Stack, Table, Field, Badge, …)
   finance/   finance components and screens (MetricCard, BudgetCard, TransactionTable, Overview, …)
   shell/     application frame (ApplicationShell, AuthScreen, Logo, ThemeToggle)
   structure.test.ts
 ```
 
-Nothing else lives in `src/components/`, and components do not live anywhere else: there is no `_components/` folder under `src/app/`; pages only render components from the barrels.
+Nothing else lives in `apps/web/src/components/`, and components do not live anywhere else: there is no `_components/` folder under `apps/web/src/app/`; pages only render components from the barrels.
 
 Modules depend in one direction: `shell` → `finance` → `ui`. `ui/` imports no other component module (it takes data and callbacks through props), `finance/` imports only `ui`, `shell/` may import both. Shared code moves down, never up.
 
@@ -42,7 +42,7 @@ finance/budget-card/
 - Module roots hold only `index.ts` and plain `.ts` modules (`use-finance-data.ts`, `sample-data.ts`, `transaction-labels.ts`, `export-transactions.ts`); no `.tsx` or stylesheets.
 - The module barrel (`ui/index.ts`, `finance/index.ts`, `shell/index.ts`) re-exports every folder with named exports (no `export *`: Next.js client boundaries need names).
 - `'use client'` goes in the component file, never in `index.ts`.
-- Components, hooks and helpers in `src/components/` are named exports; default exports are rejected (`import/no-default-export`).
+- Components, hooks and helpers in `apps/web/src/components/` are named exports; default exports are rejected (`import/no-default-export`).
 
 ## Imports
 
@@ -51,9 +51,9 @@ finance/budget-card/
 | a component            | its stylesheet               | `import './budget-card.scss';` (only its own)                   |
 | a component            | a sibling in the same module | `import { Panel } from '../panel';`                             |
 | a component            | another module               | `import { Button, Stack } from '@/components/ui';`              |
-| a page or `src/app/**` | any component                | `@/components/finance` or `@/components/finance/account-detail` |
+| a page or `apps/web/src/app/**` | any component                | `@/components/finance` or `@/components/finance/account-detail` |
 
-Never import a file inside another component's folder (`../panel/panel`, `@/components/ui/button/button`), never import a module's own barrel from inside it, never reach another module with `../../`. Data that server code also needs lives outside components (`src/constants/icon-names.ts` for the icon names, `src/constants/palette.ts` for the category-group palette).
+Never import a file inside another component's folder (`../panel/panel`, `@/components/ui/button/button`), never import a module's own barrel from inside it, never reach another module with `../../`. Data that server code also needs lives outside components (`packages/shared/src/constants/icon-names.ts` for the icon names, `packages/shared/src/constants/palette.ts` for the category-group palette).
 
 ## BEM
 
@@ -63,7 +63,7 @@ Never import a file inside another component's folder (`../panel/panel`, `@/comp
 - Nest with `&__element`, `&--modifier`, `&:hover`, `&[data-state='active']` and media mixins; maximum depth 2.
 - Blank line between rules, before nested rules and after an `@include` group; no blank lines between declarations. `npm run lint:fix` applies the spacing.
 
-In TypeScript, write the class names as plain strings and combine them with `cn()` from `src/lib/styles.ts`:
+In TypeScript, write the class names as plain strings and combine them with `cn()` from `apps/web/src/lib/styles.ts`:
 
 ```tsx
 import { cn } from '@/lib/styles';
@@ -87,16 +87,16 @@ Write every class in full so it can be searched for. A variant prop maps to clas
 
 ## Cascade layers
 
-`src/app/globals.scss` declares `@layer reset, ui;` and wraps its resets in `@layer reset`. Every `ui/**` stylesheet wraps its rules in `@layer ui { … }`; atoms that other `ui` components restyle (`button`, `input`, `popover`) use `@layer ui.base`. Feature stylesheets (`finance/`, `shell/`) are unlayered. Resulting priority: `reset` < `ui.base` < `ui` < feature styles, so a feature class always overrides a `ui` component without specificity hacks (`.a.a`) and regardless of load order.
+`apps/web/src/app/globals.scss` declares `@layer reset, ui;` and wraps its resets in `@layer reset`. Every `ui/**` stylesheet wraps its rules in `@layer ui { … }`; atoms that other `ui` components restyle (`button`, `input`, `popover`) use `@layer ui.base`. Feature stylesheets (`finance/`, `shell/`) are unlayered. Resulting priority: `reset` < `ui.base` < `ui` < feature styles, so a feature class always overrides a `ui` component without specificity hacks (`.a.a`) and regardless of load order.
 
 ## SCSS abstractions
 
-Start every stylesheet with `@use 'abstracts' as *;` (resolved through `sassOptions.loadPaths` in `next.config.ts`; the files are in `src/styles/abstracts/`).
+Start every stylesheet with `@use 'abstracts' as *;` (resolved through `sassOptions.loadPaths` in `next.config.ts`; the files are in `apps/web/src/styles/abstracts/`).
 
 - Breakpoints (mobile-first, BrowserStack ranges): `phone-landscape` 481px, `tablet` 601px, `tablet-landscape` 769px, `laptop` 1025px, `desktop` 1281px, `wide` 1441px. Write base styles for phones, then `@include media-up(tablet-landscape) { … }`. `media-down($name)` and `media-between($from, $to)` exist for the rare exception; `breakpoint($name)` returns the pixel value. Raw `min-width` / `max-width` / `width` media queries are rejected in components.
 - Functions: `space($step)` (1 = 4px … 8 = 32px), `radius($size)` (`sm` 8, `md` 10, `lg` 12, `xl` 16, `panel` 18, `pill` 999px, `round` 50%). Unknown keys fail the build.
 - Mixins: `flex-row($gap, $align)`, `flex-column($gap)`, `flex-between($gap, $align)`, `grid-center`, `surface($padding)`, `bordered($radius)`, `accent-highlight`, `muted-text($size)`, `divided($spacing)`, `focus-ring`, `reset-button`, `reset-list`, `truncate`, `pill-control`, `icon-size($size)`, `text-field`, `floating-panel($width)`, `option-item($highlight-selector)`.
-- Colours still come only from `var(--token)` in `src/styles/tokens.scss`. A value repeated in two stylesheets becomes a mixin or function in `abstracts/`; a pattern repeated in two components becomes a component.
+- Colours still come only from `var(--token)` in `apps/web/src/styles/tokens.scss`. A value repeated in two stylesheets becomes a mixin or function in `abstracts/`; a pattern repeated in two components becomes a component.
 - Focus outlines are CSS only (no JS modality tracking): `globals.scss` rings `:focus-visible`, clears `:focus:not(:focus-visible)` and clears every outline inside `.recharts-wrapper`. Style focus with `&:focus-visible { @include focus-ring; }`, never a bare `outline`.
 
 ## Enforcement
@@ -108,8 +108,8 @@ Start every stylesheet with `@use 'abstracts' as *;` (resolved through `sassOpti
 | `ui/**` rules inside `@layer ui` / `ui.*`                                                                                                                                               | Stylelint `local/require-layer`                                       |
 | Component imports only `./<same-name>.scss`; class strings in `className` and `…ClassNames` tables belong to its block                                                                  | ESLint `local/colocated-styles` (`scripts/eslint-rules/`)             |
 | No deep component imports, no own-barrel imports, no `../../` across modules, dependency direction `shell → finance → ui`                                                               | ESLint `no-restricted-imports` (`eslint.config.mjs`)                  |
-| Folder contract, barrels list every folder, no stray stylesheets, unique block names, every `ui` component in the docs catalogue                                                        | Vitest `src/components/structure.test.ts`                             |
-| Named exports only in `src/components/`                                                                                                                                                 | ESLint `import/no-default-export`                                     |
+| Folder contract, barrels list every folder, no stray stylesheets, unique block names, every `ui` component in the docs catalogue                                                        | Vitest `apps/web/src/components/structure.test.ts`                             |
+| Named exports only in `apps/web/src/components/`                                                                                                                                                 | ESLint `import/no-default-export`                                     |
 
 ## Checklist: adding a component
 
@@ -117,5 +117,5 @@ Start every stylesheet with `@use 'abstracts' as *;` (resolved through `sassOpti
 2. Pick the module with the placement rule; create `<name>/` with `<name>.tsx`, `<name>.test.tsx`, `index.ts` and, if styled, `<name>.scss` starting with `@use 'abstracts' as *;` (wrapped in `@layer ui` for `ui/`).
 3. Name classes `.<name>`, `.<name>__element`, `.<name>--modifier`; write mobile-first with `media-up`.
 4. Add the folder to the module barrel with named exports.
-5. `npm run lint:fix && npm run lint && npx tsc --noEmit && npm test -- --run`.
+5. `npm run lint:fix && npm run lint && npm run typecheck && npm test -- --run`.
 6. Update `docs/architecture/components.md` (catalogue) when you add a `ui` component or a mixin.

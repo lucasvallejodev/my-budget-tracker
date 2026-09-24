@@ -21,7 +21,7 @@ jobs:
       - name: Lint (ESLint + Stylelint)
         run: npm run lint
       - name: Type check
-        run: npx tsc --noEmit
+        run: npm run typecheck
       - name: Unit, component and database tests
         run: npm test -- --run
       - name: Duplicated code

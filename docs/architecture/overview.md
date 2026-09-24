@@ -9,7 +9,7 @@
 | UI | React 19, Next.js 16 App Router, SCSS modules, Radix primitives, Recharts, lucide icons |
 | Data fetching | TanStack Query on the client, calling route handlers for reads and server actions for writes |
 | Server | Next.js server actions and route handlers, a domain service layer, Zod validation |
-| Database | PostgreSQL 17 through Drizzle ORM; SQL migrations in `drizzle/` |
+| Database | PostgreSQL 17 through Drizzle ORM; SQL migrations in `apps/web/drizzle/` |
 | Auth | Clerk (sessions, user ids); every row is scoped by `user_id` |
 | Tests | Vitest, Testing Library, PGlite (in-memory PostgreSQL), Playwright |
 
@@ -43,10 +43,10 @@ sequenceDiagram
 ```
 
 1. **Client** components fetch with the hooks in `use-finance-data.ts`. Every mutation invalidates the query keys listed in `FinanceKeys`, which is cheap for a personal app and avoids stale screens.
-2. **Route handlers** (`src/app/api/**`) are wrapped by `handle()` in `src/server/http.ts`: it resolves the user, serialises the result and maps `ServiceError` to an HTTP status.
-3. **Server actions** (`src/app/(main)/actions.ts`) parse input with Zod, call the service, then `revalidatePath('/')`. They throw plain `Error`s so the client can show `error.message`.
-4. **`requireUser()`** (`src/server/auth/require-user.ts`) reads the Clerk session and calls `ensureUserBootstrap`, which creates the user's settings row and seeds the default categories the first time.
-5. **Services** (`src/server/<domain>/service.ts`) are the only place with business rules and the only place that opens database transactions. They receive a `Db` handle, so tests can run them against PGlite.
+2. **Route handlers** (`apps/web/src/app/api/**`) are wrapped by `handle()` in `apps/web/src/server/http.ts`: it resolves the user, serialises the result and maps `ServiceError` to an HTTP status.
+3. **Server actions** (`apps/web/src/app/(main)/actions.ts`) parse input with Zod, call the service, then `revalidatePath('/')`. They throw plain `Error`s so the client can show `error.message`.
+4. **`requireUser()`** (`apps/web/src/server/auth/require-user.ts`) reads the Clerk session and calls `ensureUserBootstrap`, which creates the user's settings row and seeds the default categories the first time.
+5. **Services** (`apps/web/src/server/<domain>/service.ts`) are the only place with business rules and the only place that opens database transactions. They receive a `Db` handle, so tests can run them against PGlite.
 
 ## Principles
 

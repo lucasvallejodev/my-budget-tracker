@@ -4,8 +4,8 @@
 
 ## Workflow
 
-1. Edit `src/db/schema.ts`.
-2. `npm run db:generate` writes `drizzle/000N_<name>.sql` and a snapshot in `drizzle/meta/`. Drizzle Kit needs an interactive terminal when a change is ambiguous (for example an enum rename); in that case answer its prompts, or write the SQL by hand and keep the snapshot consistent.
+1. Edit `apps/web/src/db/schema.ts`.
+2. `npm run db:generate` writes `apps/web/drizzle/000N_<name>.sql` and a snapshot in `apps/web/drizzle/meta/`. Drizzle Kit needs an interactive terminal when a change is ambiguous (for example an enum rename); in that case answer its prompts, or write the SQL by hand and keep the snapshot consistent.
 3. Read the SQL. Add data migrations (`UPDATE`, backfills) by hand where needed; keep every statement separated by `--> statement-breakpoint`.
 4. `npm run db:migrate` applies it locally. `npm test -- --run` applies every migration to PGlite from scratch, so a broken migration fails the suite.
 5. Never edit a migration that has already been applied somewhere; add a new one.

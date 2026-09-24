@@ -2,7 +2,7 @@
 
 > Summary: the groups and categories seeded for every new user, with their colours and icons.
 
-Seeded once per user by `ensureUserBootstrap` from `src/server/categories/default-taxonomy.ts` (version 1). Icons are names from the curated registry in `src/constants/icon-names.ts`. Everything below can be renamed, recoloured, reordered, extended or archived by the user; the Income group is the only one that cannot be archived.
+Seeded once per user by `ensureUserBootstrap` from `apps/web/src/server/categories/default-taxonomy.ts` (version 1). Icons are names from the curated registry in `packages/shared/src/constants/icon-names.ts`. Everything below can be renamed, recoloured, reordered, extended or archived by the user; the Income group is the only one that cannot be archived.
 
 | Group | Kind · colour | Categories (icon) |
 | --- | --- | --- |

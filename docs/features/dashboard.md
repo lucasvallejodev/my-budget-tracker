@@ -24,7 +24,7 @@ The Analytics page reuses the same data with the cash-flow chart, net worth and 
 
 ## How the numbers are computed
 
-All report queries share one predicate (`spendingWhere` in `src/server/reports/service.ts`):
+All report queries share one predicate (`spendingWhere` in `apps/web/src/server/reports/service.ts`):
 
 ```sql
 t.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending

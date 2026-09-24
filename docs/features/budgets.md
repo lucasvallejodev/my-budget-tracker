@@ -18,6 +18,6 @@ A limit for one category, one month and one currency. Spending against it is wha
 
 ## How it works
 
-- Table `budgets` with a unique key on category, month and currency; the service is `src/server/budgets/service.ts`.
+- Table `budgets` with a unique key on category, month and currency; the service is `apps/web/src/server/budgets/service.ts`.
 - `budgets.list` joins the category and group, then asks `reports.breakdownByCategory` for the month's spending in each currency present.
 - `copyFromPreviousMonth` inserts last month's rows for the target month with `ON CONFLICT DO NOTHING`.

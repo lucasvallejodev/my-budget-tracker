@@ -40,7 +40,7 @@ A rate stays in force until a newer one exists for the same pair. Inverse pairs 
 
 ## Automating rates later
 
-Rates are read through the `RateProvider` interface (`src/server/fx/provider.ts`). The only implementation today is `ManualRateProvider`. A future provider (an ECB feed, a paid API, a scheduled CSV) implements `getRate(userId, base, quote, date)` and is added to the provider list in `src/server/services.ts`; nothing else changes. See [Money and currencies](../architecture/money.md).
+Rates are read through the `RateProvider` interface (`apps/web/src/server/fx/provider.ts`). The only implementation today is `ManualRateProvider`. A future provider (an ECB feed, a paid API, a scheduled CSV) implements `getRate(userId, base, quote, date)` and is added to the provider list in `apps/web/src/server/services.ts`; nothing else changes. See [Money and currencies](../architecture/money.md).
 
 ## How it works
 

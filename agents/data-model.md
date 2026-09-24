@@ -1,6 +1,6 @@
 # Data model (agent version)
 
-> Summary: compact reference of every table, column and constraint in `src/db/schema.ts`, plus the semantics of `kind`, `status` and `needs_review`.
+> Summary: compact reference of every table, column and constraint in `apps/web/src/db/schema.ts`, plus the semantics of `kind`, `status` and `needs_review`.
 
 Common columns unless noted: `id text PK` (app-generated UUID), `user_id text` (Clerk id), `created_at`/`updated_at timestamptz`. Soft delete via `deleted_at`, archiving via `archived_at`.
 
@@ -48,4 +48,4 @@ Net worth: all live rows of non-archived accounts, grouped by `accounts.currency
 
 ## Migrations
 
-`drizzle/0000_initial.sql` (legacy Prisma schema, kept for upgrade order) → `drizzle/0001_ledger.sql` (current schema, currency seed, legacy data migration, drops). Generate new ones with `npm run db:generate`, review, then `npm run db:migrate`. PGlite tests apply all migrations from scratch.
+`apps/web/drizzle/0000_initial.sql` (legacy Prisma schema, kept for upgrade order) → `apps/web/drizzle/0001_ledger.sql` (current schema, currency seed, legacy data migration, drops). Generate new ones with `npm run db:generate`, review, then `npm run db:migrate`. PGlite tests apply all migrations from scratch.

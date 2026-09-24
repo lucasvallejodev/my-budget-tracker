@@ -41,10 +41,10 @@ const literalTable = ':matches(ObjectExpression, ArrayExpression)';
 const notPascal = `VariableDeclarator[id.type="Identifier"][id.name!=/${pascalCase}/][id.name!=/^(${nextReservedExports})$/]`;
 
 const constantNamingMessage =
-  'Module-level constant objects and arrays are PascalCase (`Colors`, `FinanceKeys`). Check src/lib, src/constants and src/styles/theme.ts before adding a new one.';
+  'Module-level constant objects and arrays are PascalCase (`Colors`, `FinanceKeys`). Check the lib and constants folders of apps/web and packages/shared before adding a new one.';
 
 const regexMessage =
-  'Regular expressions live in `Patterns` (src/lib/patterns.ts) under a name that says what they match.';
+  'Regular expressions live in `Patterns` (packages/shared/src/lib/patterns.ts) under a name that says what they match.';
 
 /** eslint-plugin-jsdoc's preset for TSDoc: types come from TypeScript, never from comments. */
 const tsdocPreset = jsdoc.configs['flat/recommended-tsdoc-error'];
@@ -84,7 +84,7 @@ const deepComponentImport = {
 const clientServerImport = {
   group: ['@/server', '@/server/*', '@/db', '@/db/*'],
   message:
-    'Client code must not import server or database modules. Share types and Zod schemas through `@/schema` and pure helpers through `@/lib`.',
+    'Client code must not import server or database modules. Share types, Zod schemas and pure helpers through `@coinkeeper/shared`.',
 };
 
 /**
@@ -92,7 +92,7 @@ const clientServerImport = {
  * other modules through `@/components/<module>`, never the module's own barrel.
  */
 const componentModuleImports = moduleName => ({
-  files: [`src/components/${moduleName}/**/*.{ts,tsx}`],
+  files: [`apps/web/src/components/${moduleName}/**/*.{ts,tsx}`],
   rules: {
     'no-restricted-imports': [
       'error',
@@ -129,32 +129,32 @@ const componentModuleImports = moduleName => ({
 });
 
 const colourMessage =
-  'Hard-coded colour. Add it to `Colors` in src/styles/theme.ts (or a token in src/styles/tokens.scss) and reference it from there.';
+  'Hard-coded colour. Add it to `Colors` in apps/web/src/styles/theme.ts (or a token in apps/web/src/styles/tokens.scss) and reference it from there.';
 
 const config = [
   {
     ignores: [
-      'node_modules/**',
-      'build/**',
-      'dist/**',
-      '.next/**',
-      'public/**',
+      '**/node_modules/**',
+      '**/build/**',
+      '**/dist/**',
+      '**/.next/**',
+      'apps/*/public/**',
       'coverage/**',
       'playwright-report/**',
       'temp/**',
       'docs/**',
-      'src/generated/**',
-      'next-env.d.ts',
+      '**/next-env.d.ts',
     ],
   },
   ...nextVitals,
   ...nextTypescript,
+  { settings: { next: { rootDir: 'apps/web/' } } },
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   {
     languageOptions: {
       parserOptions: {
-        projectService: { allowDefaultProject: ['vitest.config.mts'] },
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -362,7 +362,7 @@ const config = [
             ['parent', 'sibling', 'index'],
             'unknown',
           ],
-          internalPattern: ['^@/.+'],
+          internalPattern: ['^@/.+', '^@coinkeeper/.+'],
           newlinesBetween: 1,
           type: 'natural',
         },
@@ -391,7 +391,13 @@ const config = [
   },
   {
     // Utilities and server code: arrow functions with explicit return types.
-    files: ['src/lib/**/*.ts', 'src/server/**/*.ts', 'src/constants/**/*.ts'],
+    files: [
+      'apps/*/src/lib/**/*.ts',
+      'apps/*/src/server/**/*.ts',
+      'apps/*/src/constants/**/*.ts',
+      'packages/shared/src/lib/**/*.ts',
+      'packages/shared/src/constants/**/*.ts',
+    ],
     rules: {
       'prefer-arrow-functions/prefer-arrow-functions': [
         'error',
@@ -404,7 +410,12 @@ const config = [
     },
   },
   {
-    files: ['src/lib/**/*.ts', 'src/constants/**/*.ts'],
+    files: [
+      'apps/*/src/lib/**/*.ts',
+      'apps/*/src/constants/**/*.ts',
+      'packages/shared/src/lib/**/*.ts',
+      'packages/shared/src/constants/**/*.ts',
+    ],
     rules: {
       '@typescript-eslint/explicit-function-return-type': [
         'error',
@@ -420,7 +431,7 @@ const config = [
   {
     // Utilities document their contract in TSDoc (see agents/conventions.md > Documentation
     // comments): every exported function has a description, @param, @returns and @throws.
-    files: ['src/lib/**/*.ts'],
+    files: ['apps/*/src/lib/**/*.ts', 'packages/shared/src/lib/**/*.ts'],
     ignores: ['**/*.test.ts'],
     plugins: { ...tsdocPreset.plugins, tsdoc },
     rules: {
@@ -445,8 +456,12 @@ const config = [
   },
   ...ComponentModules.map(componentModuleImports),
   {
-    files: ['src/app/**/*.{ts,tsx}', 'src/providers/**/*.{ts,tsx}'],
-    ignores: ['src/app/api/**', 'src/app/(main)/actions.ts', 'src/app/(main)/actions.test.ts'],
+    files: ['apps/web/src/app/**/*.{ts,tsx}', 'apps/web/src/providers/**/*.{ts,tsx}'],
+    ignores: [
+      'apps/web/src/app/api/**',
+      'apps/web/src/app/(main)/actions.ts',
+      'apps/web/src/app/(main)/actions.test.ts',
+    ],
     rules: {
       'no-restricted-imports': ['error', { patterns: [deepComponentImport, clientServerImport] }],
     },
@@ -454,7 +469,7 @@ const config = [
   {
     // Components import only their own stylesheet and write class strings of their own BEM block;
     // they are named exports so barrels, imports and searches all use the same name.
-    files: ['src/components/**/*.{ts,tsx}'],
+    files: ['apps/web/src/components/**/*.{ts,tsx}'],
     rules: {
       'import/no-default-export': 'error',
       'local/colocated-styles': 'error',
@@ -469,11 +484,15 @@ const config = [
   },
   {
     // Column order in the schema is part of the Drizzle snapshot; keep it as written.
-    files: ['src/db/schema.ts'],
+    files: ['apps/*/src/db/schema.ts'],
     rules: { 'perfectionist/sort-objects': 'off' },
   },
   {
-    files: ['src/styles/theme.ts', 'src/constants/palette.ts', 'src/lib/patterns.ts'],
+    files: [
+      'apps/web/src/styles/theme.ts',
+      'packages/shared/src/constants/palette.ts',
+      'packages/shared/src/lib/patterns.ts',
+    ],
     rules: { 'no-restricted-syntax': 'off' },
   },
   {

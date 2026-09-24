@@ -1,11 +1,21 @@
-import react from '@vitejs/plugin-react';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
   test: {
-    environment: 'jsdom',
-    exclude: ['node_modules/**', 'e2e/**', '.next/**'],
+    coverage: {
+      exclude: ['**/*.test.{ts,tsx}', '**/*.config.{ts,mts}', '**/.next/**'],
+      include: ['apps/*/src/**', 'packages/*/src/**'],
+    },
+    projects: [
+      'apps/*',
+      'packages/*',
+      {
+        test: {
+          environment: 'node',
+          include: ['scripts/**/*.test.mjs'],
+          name: 'tooling',
+        },
+      },
+    ],
   },
 });

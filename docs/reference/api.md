@@ -4,7 +4,7 @@
 
 All endpoints and actions require a Clerk session and operate on the signed-in user's data. Amounts are `amountMinor` integers with a `currency`; dates are `YYYY-MM-DD`; months are `YYYY-MM`.
 
-## Read endpoints (`src/app/api/**`)
+## Read endpoints (`apps/web/src/app/api/**`)
 
 | Method and path | Query parameters | Returns |
 | --- | --- | --- |
@@ -21,7 +21,7 @@ All endpoints and actions require a Clerk session and operate on the signed-in u
 
 Errors are `{ error: string }` with the service's status (400 validation, 404 not found, 500 unexpected).
 
-## Server actions (`src/app/(main)/actions.ts`)
+## Server actions (`apps/web/src/app/(main)/actions.ts`)
 
 Actions validate with Zod, call a service and revalidate the app. They throw `Error(message)` on failure.
 
@@ -96,8 +96,8 @@ Actions validate with Zod, call a service and revalidate the app. They throw `Er
 
 ## Shapes
 
-`TransactionRow` (from `src/server/ledger/service.ts`): `id, accountId, accountName, accountCurrency, categoryId, categoryName, categoryIcon, groupId, groupName, groupColor, groupKind, payeeId, payeeName, amountMinor, currency, date, kind, transferId, counterpartAccountId, counterpartAccountName, status, needsReview, excluded, memo, importId, originalPayee`.
+`TransactionRow` (from `apps/web/src/server/ledger/service.ts`): `id, accountId, accountName, accountCurrency, categoryId, categoryName, categoryIcon, groupId, groupName, groupColor, groupKind, payeeId, payeeName, amountMinor, currency, date, kind, transferId, counterpartAccountId, counterpartAccountName, status, needsReview, excluded, memo, importId, originalPayee`.
 
-`AccountSummary` (from `src/server/accounts/service.ts`): account columns plus `balanceMinor`, `transactionCount`, `archivedAt`.
+`AccountSummary` (from `apps/web/src/server/accounts/service.ts`): account columns plus `balanceMinor`, `transactionCount`, `archivedAt`.
 
 `CategoryTree`: group columns plus `categories[]` with `transactionCount`.

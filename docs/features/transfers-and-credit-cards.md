@@ -51,5 +51,5 @@ Each leg is labelled with the other account: "Transfer to Visa" in checking, "Tr
 - `ledger.updateTransfer` rewrites both legs; `ledger.remove` on either leg soft-deletes both.
 - `ledger.linkAsTransfer` converts two existing standard rows (opposite signs, different accounts) into a transfer pair and clears their categories and payees.
 - The database enforces `kind = 'transfer'` ⇔ `transfer_id IS NOT NULL` and forbids a category on non-standard rows.
-- Every report filters `kind = 'standard'`, so exclusion needs no special casing (`src/server/reports/service.ts`, `spendingWhere`).
+- Every report filters `kind = 'standard'`, so exclusion needs no special casing (`apps/web/src/server/reports/service.ts`, `spendingWhere`).
 - Interest charged by a card is a normal expense on the card account (category Financial › Interest & charges); it is spending.

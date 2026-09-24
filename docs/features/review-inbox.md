@@ -32,5 +32,5 @@ The dashboard shows a notice with the count and a link; the sidebar has a **Revi
 
 ## How it works
 
-- The page (`src/components/finance/review-inbox/`) lists `/api/transactions?needsReview=1` and calls `categorizeTransactionAction`, which sets the category and `needs_review = false` through `ledger.updateStandard`.
+- The page (`apps/web/src/components/finance/review-inbox/`) lists `/api/transactions?needsReview=1` and calls `categorizeTransactionAction`, which sets the category and `needs_review = false` through `ledger.updateStandard`.
 - The count in the dashboard comes from `ledger.needsReviewCount` inside the summary endpoint.

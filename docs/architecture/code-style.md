@@ -7,8 +7,8 @@ The goal is code that reads well for humans. Three tools enforce it, and `npm ru
 | Tool                            | Enforces                                                                                                                                                                                                                                                           |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Prettier (through ESLint)       | Line width (100), quotes, commas, indentation. Prettier never _adds_ blank lines, which is why the next rule exists.                                                                                                                                               |
-| ESLint (`eslint.config.mjs`)    | Blank lines, object and type layout, naming, colours, function style, complexity budget, TypeScript safety (type-aware rules), React, Next.js and accessibility rules, SonarJS code smells, TSDoc on `src/lib/`.                                                   |
-| Stylelint (`.stylelintrc.json`) | No hard-coded colours in SCSS outside `src/styles/tokens.scss`; BEM class names, one block per stylesheet, `ui` cascade layer, no tag selectors or `@extend`, breakpoints only through mixins, blank lines between rules ([Components and styles](components.md)). |
+| ESLint (`eslint.config.mjs`)    | Blank lines, object and type layout, naming, colours, function style, complexity budget, TypeScript safety (type-aware rules), React, Next.js and accessibility rules, SonarJS code smells, TSDoc on `apps/web/src/lib/`.                                                   |
+| Stylelint (`.stylelintrc.json`) | No hard-coded colours in SCSS outside `apps/web/src/styles/tokens.scss`; BEM class names, one block per stylesheet, `ui` cascade layer, no tag selectors or `@extend`, breakpoints only through mixins, blank lines between rules ([Components and styles](components.md)). |
 
 Two more tools report instead of block: `npm run lint:dupes` (jscpd, fails above 3 % duplicated lines) and `npm run knip` (unused files, exports and dependencies). In CI, the `SonarQube Cloud` workflow publishes duplication, cognitive complexity, coverage and code smells with history at sonarcloud.io (setup in [Setup](../getting-started/setup.md)); its quality gate judges new code only.
 
@@ -47,7 +47,7 @@ export type CashPoint = {
 
 ## Functions
 
-- Helpers in `src/lib/`, `src/constants/` and `src/server/` are arrow functions assigned to a `const`, with an explicit return type in `src/lib/` and `src/constants/`:
+- Helpers in `apps/web/src/lib/`, `apps/web/src/constants/` and `apps/web/src/server/` are arrow functions assigned to a `const`, with an explicit return type in `apps/web/src/lib/` and `apps/web/src/constants/`:
 
   ```ts
   export const getPercentage = (value: number, target: number): number => {
@@ -77,12 +77,12 @@ Every name must say what the value is for. One-letter and abbreviated names are 
 ## No magic values, no comments
 
 - Numbers other than -1, 0 and 1 (and array indexes or parameter defaults) must be named constants: `const MaxPreviewRows = 500`. Strings that act as keys, sentinels or configuration are named too (`UnmappedColumnValue`); user-facing copy stays inline.
-- Regular expressions live only in `src/lib/patterns.ts`, in the `Patterns` object under a name that says what they match (`Patterns.isoDate`, `Patterns.amountSignWrapper`), with small helpers such as `isIsoDate(text)` for the common tests. ESLint rejects a regex literal or `new RegExp` anywhere else.
+- Regular expressions live only in `packages/shared/src/lib/patterns.ts`, in the `Patterns` object under a name that says what they match (`Patterns.isoDate`, `Patterns.amountSignWrapper`), with small helpers such as `isIsoDate(text)` for the common tests. ESLint rejects a regex literal or `new RegExp` anywhere else.
 - Comments are not allowed in application code (a local rule enforces it); only tool directives, the `keep order` marker and the TSDoc blocks described below pass. The intent goes into names, small helpers and types. Config files and the local ESLint rules are the exception.
 
 ## Documenting utilities with TSDoc
 
-Every exported function in `src/lib/` carries a [TSDoc](https://tsdoc.org/) comment. It states the contract that a name cannot: units, accepted input formats, rounding, fallbacks, errors. Editors show it on hover wherever the function is used, so `formatMoney` explains itself inside a component without opening `money.ts`.
+Every exported function in `apps/web/src/lib/` carries a [TSDoc](https://tsdoc.org/) comment. It states the contract that a name cannot: units, accepted input formats, rounding, fallbacks, errors. Editors show it on hover wherever the function is used, so `formatMoney` explains itself inside a component without opening `money.ts`.
 
 ````ts
 /**
@@ -112,7 +112,7 @@ export const convertMinor = (amountMinor: number, from: string, to: string, rate
 - **`@example`** in a fenced block with the result as a trailing `// value`. Every example must be asserted by a test in the colocated `*.test.ts`.
 - Link related helpers with `{@link otherHelper}`.
 
-TSDoc is allowed only directly above an exported declaration in `src/lib/`. Private helpers, function bodies and other folders stay comment-free, and a `/** … */` block anywhere else is rejected. ESLint enforces the rest: `jsdoc/require-jsdoc` (every exported function), `jsdoc/require-param`, `jsdoc/require-returns`, `jsdoc/require-throws`, `jsdoc/check-param-names` (keeps names in sync after a rename), `jsdoc/no-types` and `tsdoc/syntax` (valid TSDoc tags and escaping).
+TSDoc is allowed only directly above an exported declaration in `apps/web/src/lib/`. Private helpers, function bodies and other folders stay comment-free, and a `/** … */` block anywhere else is rejected. ESLint enforces the rest: `jsdoc/require-jsdoc` (every exported function), `jsdoc/require-param`, `jsdoc/require-returns`, `jsdoc/require-throws`, `jsdoc/check-param-names` (keeps names in sync after a rename), `jsdoc/no-types` and `tsdoc/syntax` (valid TSDoc tags and escaping).
 
 <!-- screenshot: editor hover on a formatMoney call showing its TSDoc (docs/assets/screenshots/tsdoc-hover.png) -->
 
@@ -130,20 +130,20 @@ Before adding a helper, a constant, a colour or a style value, look for an exist
 
 | You need…                                              | Look in                                                                                                                                   |
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| a calculation or formatting helper                     | `src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`)                                                                        |
-| a lookup table, limit or unit                          | `src/constants/` (`account.ts`, `field-lengths.ts`, `http.ts`, `money.ts`, `time.ts`), the `*Keys` / `*Names` exports next to the feature |
-| a regular expression or format check                   | `Patterns`, `isIsoDate`, `isIsoMonth`, `isDigitsOnly`, `isHexColor` in `src/lib/patterns.ts`                                              |
-| a colour or chart style in TypeScript                  | `Colors`, `GroupColors`, `ChartStyle` in `src/styles/theme.ts`                                                                            |
-| a colour, shadow or gradient in SCSS                   | the `--tokens` in `src/styles/tokens.scss`                                                                                                |
-| a breakpoint, spacing, radius or repeated SCSS pattern | `media-up`, `space()`, `radius()` and the mixins in `src/styles/abstracts/`                                                               |
-| a piece of markup or a look                            | the components in `src/components/ui/` ([catalogue](components.md#the-ui-catalogue))                                                      |
+| a calculation or formatting helper                     | `apps/web/src/lib/` (`money.ts`, `math.ts`, `date-helpers.ts`, `styles.ts`)                                                                        |
+| a lookup table, limit or unit                          | `apps/web/src/constants/` (`account.ts`, `field-lengths.ts`, `http.ts`, `money.ts`, `time.ts`), the `*Keys` / `*Names` exports next to the feature |
+| a regular expression or format check                   | `Patterns`, `isIsoDate`, `isIsoMonth`, `isDigitsOnly`, `isHexColor` in `packages/shared/src/lib/patterns.ts`                                              |
+| a colour or chart style in TypeScript                  | `Colors`, `GroupColors`, `ChartStyle` in `apps/web/src/styles/theme.ts`                                                                            |
+| a colour, shadow or gradient in SCSS                   | the `--tokens` in `apps/web/src/styles/tokens.scss`                                                                                                |
+| a breakpoint, spacing, radius or repeated SCSS pattern | `media-up`, `space()`, `radius()` and the mixins in `apps/web/src/styles/abstracts/`                                                               |
+| a piece of markup or a look                            | the components in `apps/web/src/components/ui/` ([catalogue](components.md#the-ui-catalogue))                                                      |
 
-If it exists, use or extend it. If the same expression appears twice, move it to `src/lib/` with a test. `npm run lint:dupes` reports larger copies.
+If it exists, use or extend it. If the same expression appears twice, move it to `apps/web/src/lib/` with a test. `npm run lint:dupes` reports larger copies.
 
 ## Colours and theme
 
-- CSS: every colour is a token in `src/styles/tokens.scss` (light and dark values, plus theme-independent values such as gradients and the overlay). SCSS modules use `var(--token)`; Stylelint rejects hex, named and `rgb()` colours anywhere else.
-- TypeScript: every literal colour lives in `Colors` in `src/styles/theme.ts` (chart palette, category-group palette, fallbacks). JSX uses `var(--token)` strings when a CSS token exists and `Colors.*` when a real value is required (SVG charts, seeded data). ESLint rejects hex, `rgb()` and `hsl()` literals in any other file.
+- CSS: every colour is a token in `apps/web/src/styles/tokens.scss` (light and dark values, plus theme-independent values such as gradients and the overlay). SCSS modules use `var(--token)`; Stylelint rejects hex, named and `rgb()` colours anywhere else.
+- TypeScript: every literal colour lives in `Colors` in `apps/web/src/styles/theme.ts` (chart palette, category-group palette, fallbacks). JSX uses `var(--token)` strings when a CSS token exists and `Colors.*` when a real value is required (SVG charts, seeded data). ESLint rejects hex, `rgb()` and `hsl()` literals in any other file.
 - Shared Recharts style objects (`tooltip`, `axisTick`, `grid`) come from `ChartStyle`.
 
 ## Complexity budget

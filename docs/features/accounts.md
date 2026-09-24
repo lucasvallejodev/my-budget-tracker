@@ -50,8 +50,8 @@ The account page shows the balance (or amount owed), the number of transactions,
 ## How it works
 
 - Balances are `SUM(amount_minor)` over the account's live transactions, computed in `accounts.list` as a correlated subquery. Nothing is cached.
-- `classification` is derived from the type in `classificationFor()` (`src/server/accounts/service.ts`).
+- `classification` is derived from the type in `classificationFor()` (`apps/web/src/server/accounts/service.ts`).
 - The currency lock and the delete guard are enforced in `accounts.update` and `accounts.remove`.
-- The sidebar grouping comes from `AccountGroups` in `src/constants/account.ts`; subtotals are computed per currency and liabilities are sign-flipped for display.
+- The sidebar grouping comes from `AccountGroups` in `apps/web/src/constants/account.ts`; subtotals are computed per currency and liabilities are sign-flipped for display.
 
 Related: [Data model › accounts](../architecture/data-model.md#accounts), [Money and currencies](../architecture/money.md).
