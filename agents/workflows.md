@@ -62,3 +62,7 @@ Search for `<!-- screenshot:` in `docs/`, run `npm run dev`, sign up a local acc
 ## Documentation-only change
 
 Edit the page, keep the `> Summary:` line accurate, update `docs/_sidebar.md` if pages were added or renamed, and `agents/docs-map.md` if the mapping changed.
+
+## Write a pull request description
+
+Use the `pr-description` skill (`.claude/skills/pr-description/SKILL.md`): it reads the branch, runs the gates, and fills the house template (Changelog with ADDED/REMOVED/MODIFIED lines, TL;DR, breaking changes, review focus, real check results, out of scope, collapsible screen and endpoint preview). It writes the draft to `temp/pr/<branch>.md` and opens the PR with `gh` only when asked.
