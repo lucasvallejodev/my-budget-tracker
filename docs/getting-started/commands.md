@@ -1,6 +1,6 @@
 # Commands
 
-> Summary: every npm script, what it does and when to use it.
+> Summary: every npm script, the Docker Compose commands (including backup and restore), what each does and when to use it.
 
 All commands run from the repository root. The repository is an npm workspaces monorepo; root scripts delegate to the workspaces (`npm run db:migrate` runs Drizzle Kit in `apps/api`). To run a script of one workspace directly: `npm run <script> -w @coinkeeper/api` or `-w @coinkeeper/web`.
 
@@ -27,7 +27,7 @@ All commands run from the repository root. The repository is an npm workspaces m
 | `npm run format` / `npm run format:check` | Prettier over the whole repository.                                                                                                                                                                                                                                                                       |
 | `npm test -- --run`                       | Vitest once (unit, component and PGlite database tests). Without `--run` it watches.                                                                                                                                                                                                                      |
 | `npm run test:coverage`                   | Same, writing `coverage/lcov.info` (read by SonarQube Cloud in CI).                                                                                                                                                                                                                                       |
-| `npm run test:e2e`                        | Playwright end-to-end tests in `e2e/` in Chromium. Starts the API and the web app itself (or reuses running ones) against `DATABASE_URL`, which must be migrated; each test signs up its own throwaway user. See [Testing › End to end](../architecture/testing.md#end-to-end). |
+| `npm run test:e2e`                        | Playwright end-to-end tests in `e2e/` in Chromium. Starts the API and the web app itself (or reuses running ones) against `DATABASE_URL`, which must be migrated; each test signs up its own throwaway user. See [Testing › End to end](../architecture/testing.md#end-to-end).                           |
 | `npm run typecheck`                       | Type check without building: the root files (`e2e/`, configs) and then every workspace (`tsc --noEmit` in each).                                                                                                                                                                                          |
 
 ## Database
@@ -45,10 +45,12 @@ The database commands run in the API workspace, which owns the schema. See [Data
 
 ## Docker
 
-| Command                                      | What it does                                                                                                |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `docker compose --profile app up -d --build` | Builds the images, runs the one-shot `migrate` container, then the `api` and `web` containers next to PostgreSQL; the web app is on http://localhost:3000 (loopback only). |
-| `docker compose down`                        | Stops everything; the database volume survives.                                                                                                                             |
+| Command                                                                     | What it does                                                                                                                                                                                                                |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose --profile app up -d --build`                                | Builds the images, runs the one-shot `migrate` container, then the `api` and `web` containers next to PostgreSQL; the web app is on http://localhost:3000 (loopback only).                                                  |
+| `docker compose down`                                                       | Stops everything; the database volume survives.                                                                                                                                                                             |
+| `docker compose --profile backup run --rm backup`                           | Writes a dated `pg_dump` custom-format archive of the database to `BACKUP_DIR` (`./backups`) and deletes archives older than `BACKUP_RETENTION_DAYS` (14). See [Setup › Backups and restore](setup.md#backups-and-restore). |
+| `docker compose --profile backup run --rm --entrypoint pg_restore backup …` | Restores an archive from `BACKUP_DIR` with the same image and credentials; the restore drill in [Setup › Backups and restore](setup.md#backups-and-restore) gives the full command.                                         |
 
 ## Typical loops
 

@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 
 import { signIn, signUp } from '@/api/mutations';
 import { Button, Form, FormStack, Notice, Text, TextField } from '@/components/ui';
+import { safeNextPath } from '@/lib/navigation';
 import {
   signInSchema,
   SignInValues,
@@ -18,9 +19,6 @@ import {
 } from '@coinkeeper/shared/schema/auth';
 
 export type AuthMode = 'sign-in' | 'sign-up';
-
-const HomePath = '/';
-const PROTOCOL_RELATIVE_PREFIX = '//';
 
 const Copy = {
   'sign-in': {
@@ -40,9 +38,6 @@ const Copy = {
     title: 'Create your CoinKeeper account',
   },
 } as const;
-
-export const safeNextPath = (next: string | undefined): string =>
-  next?.startsWith(HomePath) && !next.startsWith(PROTOCOL_RELATIVE_PREFIX) ? next : HomePath;
 
 function useAuthSuccess(next: string | undefined) {
   const queryClient = useQueryClient();

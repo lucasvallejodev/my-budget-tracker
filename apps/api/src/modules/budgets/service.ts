@@ -26,19 +26,15 @@ const byGroupThenCategory = (left: BudgetRow, right: BudgetRow): number =>
   left.groupName.localeCompare(right.groupName) ||
   left.categoryName.localeCompare(right.categoryName);
 
+const spentKey = (currency: string, categoryId: string): string => `${currency}:${categoryId}`;
+
 export const createBudgetService = (db: Db) => {
   const reports = createReportService(db);
 
   const spentByCategory = async (userId: string, month: string, currencies: string[]) => {
-    const spent = new Map<string, number>();
+    const rows = await reports.categorySpending(userId, month, currencies);
 
-    for (const currency of currencies) {
-      for (const slice of await reports.breakdownByCategory(userId, month, currency)) {
-        if (slice.categoryId) spent.set(`${currency}:${slice.categoryId}`, slice.spentMinor);
-      }
-    }
-
-    return spent;
+    return new Map(rows.map(row => [spentKey(row.currency, row.categoryId), row.spentMinor]));
   };
 
   const list = async (
@@ -81,7 +77,7 @@ export const createBudgetService = (db: Db) => {
         ...row,
         amountMinor: Number(row.amountMinor),
         deletedAt: toIsoTimestamp(row.deletedAt),
-        spentMinor: spent.get(`${row.currency}:${row.categoryId}`) ?? 0,
+        spentMinor: spent.get(spentKey(row.currency, row.categoryId)) ?? 0,
       }))
       .sort(byGroupThenCategory);
   };

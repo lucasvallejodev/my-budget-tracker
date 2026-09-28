@@ -1,4 +1,4 @@
-import { sql, SQL } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 import { UNCATEGORIZED_COLOR } from '@coinkeeper/shared/constants/palette';
 import { isoDateOfMonthStart, toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
@@ -11,6 +11,7 @@ import type {
   NetWorthBucket,
 } from '@coinkeeper/shared/schema/reports';
 
+import { rowsOf, valueList } from '../batch';
 import { Db } from '../db';
 import { createFxService } from '../fx/service';
 import { monthRange } from '../ledger/service';
@@ -19,10 +20,41 @@ const DEFAULT_CASH_FLOW_MONTHS = 8;
 
 const spendingWhere = sql`t.deleted_at IS NULL AND a.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending`;
 
-const query = async <T>(db: Db, statement: SQL): Promise<T[]> => {
-  const result = (await db.execute(statement)) as { rows: T[] };
+type CategorySpending = {
+  categoryId: string;
+  currency: string;
+  spentMinor: number;
+};
 
-  return result.rows;
+const categorySpending = async (
+  db: Db,
+  userId: string,
+  month: string,
+  currencies: string[]
+): Promise<CategorySpending[]> => {
+  if (!currencies.length) return [];
+
+  const { end, start } = monthRange(month);
+
+  const rows = await rowsOf<{ category_id: string; currency: string; spent_minor: string }>(
+    db,
+    sql`
+    SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor
+    FROM transactions t
+    JOIN accounts a ON a.id = t.account_id
+    JOIN categories c ON c.id = t.category_id
+    JOIN category_groups g ON g.id = c.group_id
+    WHERE t.user_id = ${userId} AND ${spendingWhere} AND t.currency IN (${valueList(currencies)})
+      AND t.date >= ${start} AND t.date < ${end}
+      AND g.kind = 'expense'
+    GROUP BY t.currency, t.category_id`
+  );
+
+  return rows.map(row => ({
+    categoryId: row.category_id,
+    currency: row.currency,
+    spentMinor: Number(row.spent_minor),
+  }));
 };
 
 export const createReportService = (db: Db) => {
@@ -32,7 +64,7 @@ export const createReportService = (db: Db) => {
     async breakdownByCategory(userId: string, month: string, currency: string) {
       const { end, start } = monthRange(month);
 
-      const rows = await query<{
+      const rows = await rowsOf<{
         category_id: string | null;
         category_name: string | null;
         color: string | null;
@@ -68,7 +100,7 @@ export const createReportService = (db: Db) => {
     async breakdownByGroup(userId: string, month: string): Promise<GroupSlice[]> {
       const { end, start } = monthRange(month);
 
-      const rows = await query<{
+      const rows = await rowsOf<{
         color: string | null;
         currency: string;
         group_id: string | null;
@@ -106,7 +138,7 @@ export const createReportService = (db: Db) => {
       const { end } = monthRange(month);
       const start = isoDateOfMonthStart(month, 1 - months);
 
-      const rows = await query<{
+      const rows = await rowsOf<{
         currency: string;
         income_minor: string;
         month: string;
@@ -134,28 +166,24 @@ export const createReportService = (db: Db) => {
       }));
     },
 
+    categorySpending: (userId: string, month: string, currencies: string[]) =>
+      categorySpending(db, userId, month, currencies),
+
     async convertedTotals(
       userId: string,
       primary: string,
       data: { netWorth: NetWorthBucket[]; totals: CurrencyTotals[] },
       asOf = toIsoDate(new Date())
     ): Promise<ConvertedTotals> {
-      const currencies = [
+      const foreign = [
         ...new Set([
           ...data.netWorth.map(balance => balance.currency),
           ...data.totals.map(total => total.currency),
         ]),
-      ];
+      ].filter(currency => currency !== primary);
 
-      const rates = new Map<string, Awaited<ReturnType<typeof fx.getRate>>>();
-
-      for (const currency of currencies) {
-        if (currency !== primary) {
-          rates.set(currency, await fx.getRate(userId, currency, primary, asOf));
-        }
-      }
-
-      const missing = currencies.filter(currency => currency !== primary && !rates.get(currency));
+      const rates = await fx.getRates(userId, foreign, primary, asOf);
+      const missing = foreign.filter(currency => !rates.has(currency));
 
       const convert = (amountMinor: number, currency: string) => {
         if (currency === primary) return amountMinor;
@@ -176,14 +204,20 @@ export const createReportService = (db: Db) => {
           (sum, balance) => sum + convert(balance.netMinor, balance.currency),
           0
         ),
-        rates: [...rates.entries()]
-          .filter((entry): entry is [string, NonNullable<(typeof entry)[1]>] => !!entry[1])
-          .map(([currency, rate]) => ({
-            currency,
-            date: rate.date,
-            rate: rate.rate,
-            source: rate.source,
-          })),
+        rates: foreign.flatMap(currency => {
+          const rate = rates.get(currency);
+
+          return rate
+            ? [
+                {
+                  currency,
+                  date: rate.date,
+                  rate: rate.rate,
+                  source: rate.source,
+                },
+              ]
+            : [];
+        }),
         spendingMinor: data.totals.reduce(
           (sum, total) => sum + convert(total.spendingMinor, total.currency),
           0
@@ -194,7 +228,7 @@ export const createReportService = (db: Db) => {
     async monthlyTotals(userId: string, month: string): Promise<CurrencyTotals[]> {
       const { end, start } = monthRange(month);
 
-      const rows = await query<{
+      const rows = await rowsOf<{
         currency: string;
         income_minor: string;
         spending_minor: string;
@@ -221,7 +255,7 @@ export const createReportService = (db: Db) => {
     },
 
     async netWorth(userId: string): Promise<NetWorthBucket[]> {
-      const rows = await query<{
+      const rows = await rowsOf<{
         assets_minor: string;
         currency: string;
         liabilities_minor: string;

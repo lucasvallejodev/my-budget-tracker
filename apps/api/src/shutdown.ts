@@ -8,7 +8,8 @@ export type ShutdownOptions = {
   closeApp: () => Promise<void>;
   closeDatabase: () => Promise<void>;
   exit: (code: number) => void;
-  log: Pick<FastifyBaseLogger, 'error' | 'info'>;
+  log: Pick<FastifyBaseLogger, 'error' | 'fatal' | 'info'>;
+  successExitCode?: number;
   timeoutMs?: number;
 };
 
@@ -34,17 +35,23 @@ const closeAll = async ({ closeApp, closeDatabase }: ShutdownOptions) => {
 };
 
 export const shutDown = async (options: ShutdownOptions): Promise<void> => {
-  const { exit, log, timeoutMs = SHUTDOWN_TIMEOUT_MS } = options;
+  const { exit, log, successExitCode = EXIT_SUCCESS, timeoutMs = SHUTDOWN_TIMEOUT_MS } = options;
   const deadline = failAfter(timeoutMs);
 
   try {
     await Promise.race([closeAll(options), deadline.expired]);
     log.info('Shutdown complete');
-    exit(EXIT_SUCCESS);
+    exit(successExitCode);
   } catch (error) {
     log.error(error, 'Shutdown failed');
     exit(EXIT_FAILURE);
   } finally {
     deadline.cancel();
   }
+};
+
+export const shutDownAfterFatal = (error: unknown, options: ShutdownOptions): Promise<void> => {
+  options.log.fatal({ err: error }, 'Fatal error, shutting down');
+
+  return shutDown({ ...options, successExitCode: EXIT_FAILURE });
 };

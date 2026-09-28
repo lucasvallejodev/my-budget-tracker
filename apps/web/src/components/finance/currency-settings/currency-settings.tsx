@@ -85,7 +85,7 @@ function RatesTable({
   rates: ExchangeRateRow[];
 }) {
   return (
-    <Table>
+    <Table label="Exchange rates">
       <thead>
         <tr>
           <TableHeaderCell>From</TableHeaderCell>

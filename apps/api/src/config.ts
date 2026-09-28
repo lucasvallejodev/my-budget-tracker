@@ -6,7 +6,13 @@ import { databaseUrl } from '@/db/connection';
 const DEFAULT_PORT = 4000;
 const DEFAULT_SESSION_DAYS = 30;
 const DEFAULT_AUTH_ATTEMPTS_PER_MINUTE = 10;
+const DEFAULT_HANDLER_TIMEOUT_MS = 20_000;
+const MIN_HANDLER_TIMEOUT_MS = 1_000;
+const MAX_HANDLER_TIMEOUT_MS = 120_000;
 const MAX_SESSION_DAYS = 365;
+const DEFAULT_SESSION_MAX_AGE_DAYS = 90;
+const DEFAULT_SIGN_IN_FAILURES_PER_ACCOUNT = 5;
+const MAX_SIGN_IN_FAILURES_PER_ACCOUNT = 100;
 const IPV4_PREFIX_BITS = 32;
 const IPV6_PREFIX_BITS = 128;
 const CIDR_SEPARATOR = '/';
@@ -16,6 +22,8 @@ const DEVELOPMENT_COOKIE_NAME = 'ck_session';
 
 const TRUST_PROXY_ERROR =
   'TRUST_PROXY must be false or a comma-separated list of proxy addresses, CIDR ranges or loopback, linklocal, uniquelocal; true would trust any X-Forwarded-For a client sends';
+
+const SESSION_MAX_AGE_ERROR = 'SESSION_MAX_AGE_DAYS must be at least SESSION_DAYS';
 
 const LogLevelValues = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
 const NamedProxyRanges = ['linklocal', 'loopback', 'uniquelocal'];
@@ -77,11 +85,34 @@ const environmentSchema = z.object({
   COOKIE_SECURE: z.stringbool().optional(),
   CORS_ORIGINS: commaList(''),
   DATABASE_URL: z.string().optional(),
+  HANDLER_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(MIN_HANDLER_TIMEOUT_MS)
+    .max(MAX_HANDLER_TIMEOUT_MS)
+    .default(DEFAULT_HANDLER_TIMEOUT_MS),
   LOG_LEVEL: z.enum(LogLevelValues).default('info'),
   NODE_ENV: z.string().default('development'),
   SESSION_DAYS: z.coerce.number().int().min(1).max(MAX_SESSION_DAYS).default(DEFAULT_SESSION_DAYS),
+  SESSION_MAX_AGE_DAYS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_SESSION_DAYS)
+    .default(DEFAULT_SESSION_MAX_AGE_DAYS),
+  SIGN_IN_FAILURES_PER_ACCOUNT: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(MAX_SIGN_IN_FAILURES_PER_ACCOUNT)
+    .default(DEFAULT_SIGN_IN_FAILURES_PER_ACCOUNT),
   TRUST_PROXY: trustedProxies,
 });
+
+const checkedEnvironmentSchema = environmentSchema.refine(
+  values => values.SESSION_MAX_AGE_DAYS >= values.SESSION_DAYS,
+  { error: SESSION_MAX_AGE_ERROR, path: ['SESSION_MAX_AGE_DAYS'] }
+);
 
 export type AppConfig = {
   allowedOrigins: string[];
@@ -90,11 +121,14 @@ export type AppConfig = {
   corsOrigins: string[];
   databaseUrl: string | null;
   docs: boolean;
+  handlerTimeoutMs: number;
   host: string;
   logLevel: (typeof LogLevelValues)[number];
   port: number;
   sessionCookieName: string;
   sessionDays: number;
+  sessionMaxAgeDays: number;
+  signInFailuresPerAccount: number;
   trustedProxies: string[];
 };
 
@@ -102,7 +136,7 @@ const withoutEmptyValues = (environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv =
   Object.fromEntries(Object.entries(environment).filter(([, value]) => value !== ''));
 
 export const loadConfig = (environment: NodeJS.ProcessEnv = process.env): AppConfig => {
-  const parsed = environmentSchema.parse(withoutEmptyValues(environment));
+  const parsed = checkedEnvironmentSchema.parse(withoutEmptyValues(environment));
   const production = parsed.NODE_ENV === 'production';
   const cookieSecure = parsed.COOKIE_SECURE ?? production;
 
@@ -113,11 +147,14 @@ export const loadConfig = (environment: NodeJS.ProcessEnv = process.env): AppCon
     corsOrigins: parsed.CORS_ORIGINS,
     databaseUrl: parsed.DATABASE_URL ? databaseUrl(parsed.DATABASE_URL) : null,
     docs: parsed.API_DOCS ?? !production,
+    handlerTimeoutMs: parsed.HANDLER_TIMEOUT_MS,
     host: parsed.API_HOST,
     logLevel: parsed.LOG_LEVEL,
     port: parsed.API_PORT,
     sessionCookieName: cookieSecure ? SECURE_COOKIE_NAME : DEVELOPMENT_COOKIE_NAME,
     sessionDays: parsed.SESSION_DAYS,
+    sessionMaxAgeDays: parsed.SESSION_MAX_AGE_DAYS,
+    signInFailuresPerAccount: parsed.SIGN_IN_FAILURES_PER_ACCOUNT,
     trustedProxies: parsed.TRUST_PROXY,
   };
 };

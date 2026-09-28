@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { AuthForm, safeNextPath } from './auth-form';
+import { AuthForm } from './auth-form';
 
 const replace = vi.fn();
 const refresh = vi.fn();
@@ -83,12 +83,5 @@ describe('AuthForm', () => {
       name: '',
       password: 'correct horse battery staple',
     });
-  });
-
-  it('only follows local next paths', () => {
-    expect(safeNextPath('/budgets?month=2026-09')).toBe('/budgets?month=2026-09');
-    expect(safeNextPath('//evil.example')).toBe('/');
-    expect(safeNextPath('https://evil.example')).toBe('/');
-    expect(safeNextPath(undefined)).toBe('/');
   });
 });

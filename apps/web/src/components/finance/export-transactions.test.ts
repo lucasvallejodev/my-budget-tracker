@@ -13,10 +13,24 @@ describe('transactionsToCsv', () => {
     );
   });
 
-  it('neutralises spreadsheet formulas', () => {
+  it('neutralizes spreadsheet formulas', () => {
     const [row] = SampleTransactions;
     const csv = transactionsToCsv([{ ...row, memo: '=SUM(A1)' }]);
 
     expect(csv).toContain(`"'=SUM(A1)"`);
+  });
+
+  it('keeps negative amounts numeric', () => {
+    const [row] = SampleTransactions;
+
+    const csv = transactionsToCsv([
+      {
+        ...row,
+        amountMinor: -1250,
+        currency: 'EUR',
+      },
+    ]);
+
+    expect(csv).toContain('"-12.50","EUR"');
   });
 });

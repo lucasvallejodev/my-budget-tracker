@@ -3,7 +3,7 @@ import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
 
 import { HttpStatus } from '@/constants/http';
 import { ServiceError } from '@/modules/db';
-import { isForeignKeyViolation, isUniqueViolation } from '@/modules/errors';
+import { isForeignKeyViolation, isQueryCanceled, isUniqueViolation } from '@/modules/errors';
 import type { ErrorCode, ErrorResponse } from '@coinkeeper/shared/schema/common';
 
 type ErrorBody = ErrorResponse['error'];
@@ -17,6 +17,10 @@ const StatusCodes: Partial<Record<number, ErrorCode>> = {
   [HttpStatus.unauthorized]: 'UNAUTHENTICATED',
 };
 
+const ClientErrorMessages: Partial<Record<number, string>> = {
+  [HttpStatus.unsupportedMediaType]: 'Send the request body as application/json',
+};
+
 const fieldName = (instancePath: string): string =>
   instancePath.split('/').filter(Boolean).join('.') || 'body';
 
@@ -27,6 +31,11 @@ const validationFields = (error: FastifyError): Record<string, string> =>
       issue.message ?? 'Invalid value',
     ])
   );
+
+const clientError = (error: FastifyError, status: number): ErrorBody => ({
+  code: StatusCodes[status] ?? 'INVALID_REQUEST',
+  message: ClientErrorMessages[status] ?? error.message,
+});
 
 const describe = (error: FastifyError): { body: ErrorBody; status: number } => {
   if (hasZodFastifySchemaValidationErrors(error)) {
@@ -60,11 +69,17 @@ const describe = (error: FastifyError): { body: ErrorBody; status: number } => {
     };
   }
 
-  const status = error.statusCode ?? HttpStatus.internalError;
+  const status = isQueryCanceled(error)
+    ? HttpStatus.serviceUnavailable
+    : (error.statusCode ?? HttpStatus.internalError);
 
   if (status < FIRST_SERVER_ERROR) {
+    return { body: clientError(error, status), status };
+  }
+
+  if (status === HttpStatus.serviceUnavailable) {
     return {
-      body: { code: StatusCodes[status] ?? 'INVALID_REQUEST', message: error.message },
+      body: { code: 'UNAVAILABLE', message: 'The service is temporarily unavailable' },
       status,
     };
   }
@@ -79,7 +94,7 @@ export const registerErrorHandler = (app: FastifyInstance): void => {
   app.setErrorHandler((error: FastifyError, request, reply) => {
     const { body, status } = describe(error);
 
-    if (status >= FIRST_SERVER_ERROR) request.log.error(error);
+    if (status >= FIRST_SERVER_ERROR) request.log.error({ err: error }, 'Request failed');
 
     return reply.status(status).send({ error: body });
   });

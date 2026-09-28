@@ -226,7 +226,7 @@ export const needsReviewCount = async (db: Db, userId: string): Promise<number> 
     .where(
       and(
         eq(transactions.userId, userId),
-        eq(transactions.needsReview, true),
+        sql`${transactions.needsReview}`,
         isNull(transactions.deletedAt)
       )
     );

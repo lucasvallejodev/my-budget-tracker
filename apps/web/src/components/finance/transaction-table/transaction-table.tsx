@@ -51,7 +51,7 @@ export function TransactionTable({
   if (!transactions.length) return <EmptyState title="No transactions yet" />;
 
   return (
-    <Table>
+    <Table label="Transactions">
       <thead>
         <tr>
           <TableHeaderCell>Description</TableHeaderCell>

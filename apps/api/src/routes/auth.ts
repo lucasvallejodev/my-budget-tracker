@@ -1,7 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 
+import { createSignInThrottle } from '@/auth/sign-in-throttle';
 import { HttpStatus } from '@/constants/http';
+import { ServiceError } from '@/modules/db';
+import { audit, AuditEvents } from '@/plugins/audit';
 import { clearSessionCookie, sessionTokenOf, setSessionCookie } from '@/plugins/authentication';
 import { requireAuth, userIdOf } from '@/plugins/context';
 import {
@@ -18,17 +21,38 @@ import { noContent, withErrors } from './responses';
 
 const ONE_MINUTE = '1 minute';
 
-const startSession = async (request: FastifyRequest, reply: FastifyReply, userId: string) => {
-  const session = await request.server.services.sessions.create(userId, {
-    ipAddress: request.ip,
-    userAgent: request.headers['user-agent'] ?? null,
-  });
+const metadataOf = (request: FastifyRequest) => ({
+  ipAddress: request.ip,
+  userAgent: request.headers['user-agent'] ?? null,
+});
 
-  setSessionCookie(reply, request.server.config, session.token, session.expiresAt);
+const startSession = async (request: FastifyRequest, reply: FastifyReply, userId: string) => {
+  const { config, services } = request.server;
+  const previousToken = sessionTokenOf(request, config);
+
+  if (previousToken) await services.sessions.revokeToken(previousToken);
+
+  const session = await services.sessions.create(userId, metadataOf(request));
+
+  setSessionCookie(reply, config, session.token, session.expiresAt);
 };
+
+const auditSignInFailure =
+  (request: FastifyRequest) =>
+  (error: unknown): never => {
+    if (error instanceof ServiceError) {
+      audit(request, AuditEvents.signInFailed, { reason: error.code });
+    }
+
+    throw error;
+  };
 
 export const publicAuthRoutes: FastifyPluginAsyncZod = async app => {
   const rateLimit = { max: app.config.authAttemptsPerMinute, timeWindow: ONE_MINUTE };
+
+  const signInThrottle = createSignInThrottle({
+    freeFailures: app.config.signInFailuresPerAccount,
+  });
 
   app.post(
     '/auth/sign-up',
@@ -37,6 +61,7 @@ export const publicAuthRoutes: FastifyPluginAsyncZod = async app => {
       schema: {
         body: signUpSchema,
         response: withErrors({ [HttpStatus.created]: userSchema }),
+        security: [],
         tags: ['auth'],
       },
     },
@@ -44,6 +69,7 @@ export const publicAuthRoutes: FastifyPluginAsyncZod = async app => {
       const user = await app.services.auth.signUp(request.body);
 
       await startSession(request, reply, user.id);
+      audit(request, AuditEvents.signedUp, { userId: user.id });
 
       return reply.status(HttpStatus.created).send(user);
     }
@@ -56,13 +82,19 @@ export const publicAuthRoutes: FastifyPluginAsyncZod = async app => {
       schema: {
         body: signInSchema,
         response: withErrors({ [HttpStatus.ok]: userSchema }),
+        security: [],
         tags: ['auth'],
       },
     },
     async (request, reply) => {
-      const user = await app.services.auth.signIn(request.body.email, request.body.password);
+      const { email, password } = request.body;
+
+      const user = await signInThrottle
+        .attempt(email, () => app.services.auth.signIn(email, password))
+        .catch(auditSignInFailure(request));
 
       await startSession(request, reply, user.id);
+      audit(request, AuditEvents.signedIn, { userId: user.id });
 
       return user;
     }
@@ -70,12 +102,19 @@ export const publicAuthRoutes: FastifyPluginAsyncZod = async app => {
 
   app.post(
     '/auth/sign-out',
-    { schema: { response: withErrors({ [HttpStatus.noContent]: noContent }), tags: ['auth'] } },
+    {
+      schema: {
+        response: withErrors({ [HttpStatus.noContent]: noContent }),
+        security: [],
+        tags: ['auth'],
+      },
+    },
     async (request, reply) => {
       const token = sessionTokenOf(request, app.config);
 
       if (token) await app.services.sessions.revokeToken(token);
       clearSessionCookie(reply, app.config);
+      audit(request, AuditEvents.signedOut, { userId: request.auth?.user.id });
 
       return reply.status(HttpStatus.noContent).send();
     }
@@ -112,14 +151,18 @@ export const meRoutes: FastifyPluginAsyncZod = async app => {
       },
     },
     async (request, reply) => {
-      const { sessionId, user } = requireAuth(request);
+      const { user } = requireAuth(request);
 
       await app.services.auth.changePassword(
         user.id,
         request.body.currentPassword,
         request.body.newPassword
       );
-      await app.services.sessions.revokeOthers(user.id, sessionId);
+
+      const session = await app.services.sessions.rotate(user.id, metadataOf(request));
+
+      setSessionCookie(reply, app.config, session.token, session.expiresAt);
+      audit(request, AuditEvents.passwordChanged, { userId: user.id });
 
       return reply.status(HttpStatus.noContent).send();
     }
@@ -147,7 +190,10 @@ export const meRoutes: FastifyPluginAsyncZod = async app => {
       },
     },
     async (request, reply) => {
-      await app.services.sessions.revoke(userIdOf(request), request.params.id);
+      const userId = userIdOf(request);
+
+      await app.services.sessions.revoke(userId, request.params.id);
+      audit(request, AuditEvents.sessionRevoked, { sessionId: request.params.id, userId });
 
       return reply.status(HttpStatus.noContent).send();
     }

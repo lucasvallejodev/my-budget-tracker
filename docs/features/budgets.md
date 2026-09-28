@@ -20,5 +20,5 @@ A limit for one category, one month and one currency. Spending against it is wha
 
 - Table `budgets` with a unique key on category, month and currency; the service is `apps/api/src/modules/budgets/service.ts`.
 - Deleting (`DELETE /api/v1/budgets/:id`) sets `deleted_at`. `PUT /api/v1/budgets/:month/:categoryId/:currency` upserts by that key and revives a deleted row; `POST /api/v1/budgets/:id/restore` restores one without changing the limit. Budgets have no tab in [Deleted items](deleted-items.md).
-- `budgets.list` joins the category and group, then asks `reports.breakdownByCategory` for the month's spending in each currency present.
+- `budgets.list` joins the category and group, then reads the month's spending for every currency present in one grouped query (`reports.categorySpending`, with the same `spendingWhere` predicate as the reports), keyed by currency and category. Nothing is summed across currencies, so a JPY limit is compared with JPY spending and a KWD limit with KWD spending, each in its own minor units.
 - `copyFromPreviousMonth` copies last month's live rows into the target month, skipping archived categories and limits that already exist.

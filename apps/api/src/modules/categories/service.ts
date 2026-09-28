@@ -3,7 +3,8 @@ import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { categories, categoryGroups, payees, transactions } from '@/db/schema';
 import type { Category, CategoryGroup, CategoryTree } from '@coinkeeper/shared/schema/categories';
 
-import { conflict, Db, notFound, ServiceError, toIsoTimestamp } from '../db';
+import { assertAllFound, assertDistinctIds, positionedIds, rowsOf } from '../batch';
+import { conflict, Db, DbOrTx, notFound, ServiceError, toIsoTimestamp } from '../db';
 
 const toGroup = (row: typeof categoryGroups.$inferSelect): CategoryGroup => ({
   archivedAt: toIsoTimestamp(row.archivedAt),
@@ -33,6 +34,28 @@ export const ownedActiveCategory = async (db: Db, userId: string, id: string) =>
 
   return category ?? notFound('Category');
 };
+
+const moveCategories = (tx: DbOrTx, userId: string, groupId: string, orderedIds: string[]) =>
+  rowsOf<{ id: string }>(
+    tx,
+    sql`
+    UPDATE categories AS category
+    SET group_id = ${groupId}, sort_order = ordered.position, updated_at = now()
+    FROM (VALUES ${positionedIds(orderedIds)}) AS ordered(id, position)
+    WHERE category.id = ordered.id AND category.user_id = ${userId}
+    RETURNING category.id`
+  );
+
+const sortGroups = (tx: DbOrTx, userId: string, orderedIds: string[]) =>
+  rowsOf<{ id: string }>(
+    tx,
+    sql`
+    UPDATE category_groups AS category_group
+    SET sort_order = ordered.position, updated_at = now()
+    FROM (VALUES ${positionedIds(orderedIds)}) AS ordered(id, position)
+    WHERE category_group.id = ordered.id AND category_group.user_id = ${userId}
+    RETURNING category_group.id`
+  );
 
 export const createCategoryService = (db: Db) => {
   const ownedGroup = async (userId: string, id: string) => {
@@ -158,24 +181,24 @@ export const createCategoryService = (db: Db) => {
       return toGroup(group);
     },
     async reorderCategories(userId: string, groupId: string, orderedIds: string[]) {
+      assertDistinctIds(orderedIds);
       await ownedGroup(userId, groupId);
       await db.transaction(async tx => {
-        for (const [index, id] of orderedIds.entries()) {
-          await tx
-            .update(categories)
-            .set({ groupId, sortOrder: index })
-            .where(and(eq(categories.id, id), eq(categories.userId, userId)));
-        }
+        assertAllFound(
+          (await moveCategories(tx, userId, groupId, orderedIds)).length,
+          orderedIds,
+          'Category'
+        );
       });
     },
     async reorderGroups(userId: string, orderedIds: string[]) {
+      assertDistinctIds(orderedIds);
       await db.transaction(async tx => {
-        for (const [index, id] of orderedIds.entries()) {
-          await tx
-            .update(categoryGroups)
-            .set({ sortOrder: index })
-            .where(and(eq(categoryGroups.id, id), eq(categoryGroups.userId, userId)));
-        }
+        assertAllFound(
+          (await sortGroups(tx, userId, orderedIds)).length,
+          orderedIds,
+          'Category group'
+        );
       });
     },
     async tree(userId: string, { includeArchived = false } = {}): Promise<CategoryTree[]> {

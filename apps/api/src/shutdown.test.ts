@@ -1,7 +1,13 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import { EXIT_FAILURE, EXIT_SUCCESS, shutDown, type ShutdownOptions } from './shutdown';
+import {
+  EXIT_FAILURE,
+  EXIT_SUCCESS,
+  shutDown,
+  shutDownAfterFatal,
+  type ShutdownOptions,
+} from './shutdown';
 
 const SHORT_TIMEOUT_MS = 20;
 
@@ -10,7 +16,11 @@ const optionsWith = (overrides: Partial<ShutdownOptions>) => {
     closeApp: vi.fn(() => Promise.resolve()),
     closeDatabase: vi.fn(() => Promise.resolve()),
     exit: vi.fn(),
-    log: { error: vi.fn(), info: vi.fn() },
+    log: {
+      error: vi.fn(),
+      fatal: vi.fn(),
+      info: vi.fn(),
+    },
     timeoutMs: SHORT_TIMEOUT_MS,
     ...overrides,
   };
@@ -60,6 +70,29 @@ describe('shutDown', () => {
     await shutDown(options);
 
     expect(options.closeDatabase).not.toHaveBeenCalled();
+    expect(options.exit).toHaveBeenCalledOnce();
+    expect(options.exit).toHaveBeenCalledWith(EXIT_FAILURE);
+  });
+});
+
+describe('shutDownAfterFatal', () => {
+  it('logs the error as fatal, closes everything and exits non-zero even when closing succeeds', async () => {
+    const failure = new Error('boom');
+    const options = optionsWith({});
+
+    await shutDownAfterFatal(failure, options);
+
+    expect(options.log.fatal).toHaveBeenCalledWith({ err: failure }, 'Fatal error, shutting down');
+    expect(options.closeApp).toHaveBeenCalled();
+    expect(options.closeDatabase).toHaveBeenCalled();
+    expect(options.exit).toHaveBeenCalledWith(EXIT_FAILURE);
+  });
+
+  it('still exits non-zero when the shutdown times out', async () => {
+    const options = optionsWith({ closeApp: vi.fn(never) });
+
+    await shutDownAfterFatal(new Error('boom'), options);
+
     expect(options.exit).toHaveBeenCalledOnce();
     expect(options.exit).toHaveBeenCalledWith(EXIT_FAILURE);
   });

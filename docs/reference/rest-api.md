@@ -6,33 +6,35 @@ The live, machine-readable version is the OpenAPI document served by the API at 
 
 ## Conventions
 
-| Topic               | Rule                                                                                                                                                                    |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Base path           | `/api/v1`. Resource names are plural and kebab-case.                                                                                                                    |
-| Authentication      | Session cookie from `POST /auth/sign-in` or `/auth/sign-up`. Everything except `/health` and `/auth/*` answers `401` without it.                                        |
-| Writes              | `POST`, `PUT`, `PATCH`, `DELETE` with a JSON body (`Content-Type: application/json`) from an allowed origin.                                                            |
-| Ids                 | UUIDs in the path; an id that is malformed answers `400`, one that does not exist or belongs to someone else answers `404`.                                             |
-| Money in            | Decimal strings (`"amount": "12.50"`, `"1.234,56"` also accepted) plus a `direction` where needed; parsed in the currency of the account, budget or rate.               |
-| Money out           | `amountMinor` integers with a `currency` (`"amountMinor": -1250, "currency": "EUR"`).                                                                                   |
-| Dates               | `YYYY-MM-DD`; months `YYYY-MM`; timestamps ISO 8601.                                                                                                                    |
-| Booleans in queries | `true` / `false` (`1` / `0` also accepted).                                                                                                                             |
-| Collections         | `{ "items": [...] }`; `GET /transactions` adds `"nextCursor"` (pass it back as `cursor`; `null` on the last page).                                                      |
-| Status codes        | `200` read or update, `201` created (with `Location` for accounts), `204` deleted or empty command, errors as in [API service › Errors](../architecture/api.md#errors). |
-| Deletes             | Soft: rows get `deletedAt`, disappear from lists and totals, and come back with `POST …/restore`.                                                                       |
+| Topic               | Rule                                                                                                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Base path           | `/api/v1`. Resource names are plural and kebab-case.                                                                                                                               |
+| Authentication      | Session cookie from `POST /auth/sign-in` or `/auth/sign-up`. Everything except `/health/live`, `/health/ready` and `/auth/*` answers `401` without it.                             |
+| Writes              | `POST`, `PUT`, `PATCH`, `DELETE` with a JSON body (`Content-Type: application/json`) from an allowed origin. Any other body type answers `415`; commands without a body send none. |
+| Request ids         | Every response has `X-Request-Id`. Send your own UUID in `X-Request-Id` to have it reused; any other value is replaced.                                                            |
+| Ids                 | UUIDs in the path; an id that is malformed answers `400`, one that does not exist or belongs to someone else answers `404`.                                                        |
+| Money in            | Decimal strings (`"amount": "12.50"`, `"1.234,56"` also accepted) plus a `direction` where needed; parsed in the currency of the account, budget or rate.                          |
+| Money out           | `amountMinor` integers with a `currency` (`"amountMinor": -1250, "currency": "EUR"`).                                                                                              |
+| Dates               | `YYYY-MM-DD`; months `YYYY-MM`; timestamps ISO 8601.                                                                                                                               |
+| Booleans in queries | `true` / `false` (`1` / `0` also accepted).                                                                                                                                        |
+| Collections         | `{ "items": [...] }`; `GET /transactions` adds `"nextCursor"` (pass it back as `cursor`; `null` on the last page).                                                                 |
+| Status codes        | `200` read or update, `201` created (with `Location` for accounts), `204` deleted or empty command, errors as in [API service › Errors](../architecture/api.md#errors).            |
+| Deletes             | Soft: rows get `deletedAt`, disappear from lists and totals, and come back with `POST …/restore`.                                                                                  |
 
 ## Health and authentication
 
-| Method and path           | Body / query                                | Response                                                                          |
-| ------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------- |
-| `GET /health`             | —                                           | `{ status: "ok", database: "ok" }` (no session needed)                            |
-| `POST /auth/sign-up`      | `{ email, password (12–128 chars), name? }` | `201` `User` + session cookie; `409 EMAIL_TAKEN`                                  |
-| `POST /auth/sign-in`      | `{ email, password }`                       | `200` `User` + session cookie; `401 INVALID_CREDENTIALS`; `429` when rate limited |
-| `POST /auth/sign-out`     | —                                           | `204`, session deleted, cookie cleared                                            |
-| `GET /me`                 | —                                           | `User` `{ id, email, name, createdAt }`                                           |
-| `PATCH /me`               | `{ email?, name? }`                         | `User`; `409 EMAIL_TAKEN`                                                         |
-| `PUT /me/password`        | `{ currentPassword, newPassword }`          | `204`, every other session signed out; `403` wrong current password               |
-| `GET /me/sessions`        | —                                           | `{ items: Session[] }` (`current: true` marks this one)                           |
-| `DELETE /me/sessions/:id` | —                                           | `204`                                                                             |
+| Method and path           | Body / query                                | Response                                                                                                                                                    |
+| ------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health/live`        | —                                           | `{ status: "ok" }` without touching the database (no session needed)                                                                                        |
+| `GET /health/ready`       | —                                           | `{ status: "ok", database: "ok" }`; `503 UNAVAILABLE` when the database is unreachable (no session needed)                                                  |
+| `POST /auth/sign-up`      | `{ email, password (12–128 chars), name? }` | `201` `User` + session cookie; `409 EMAIL_TAKEN`                                                                                                            |
+| `POST /auth/sign-in`      | `{ email, password }`                       | `200` `User` + new session cookie (a session cookie sent with the request is ended); `401 INVALID_CREDENTIALS`; `429` when rate limited per IP, or when too many attempts for one email are already queued (attempts for an email are slowed after repeated failures, never locked) |
+| `POST /auth/sign-out`     | —                                           | `204`, session deleted, cookie cleared                                                                                                                      |
+| `GET /me`                 | —                                           | `User` `{ id, email, name, createdAt }`                                                                                                                     |
+| `PATCH /me`               | `{ email?, name? }`                         | `User`; `409 EMAIL_TAKEN`                                                                                                                                   |
+| `PUT /me/password`        | `{ currentPassword, newPassword }`          | `204` + new session cookie; every session, including the old one of this browser, is signed out; `403` wrong current password                               |
+| `GET /me/sessions`        | —                                           | `{ items: Session[] }` (`current: true` marks this one)                                                                                                     |
+| `DELETE /me/sessions/:id` | —                                           | `204`                                                                                                                                                       |
 
 ## Settings and currencies
 
@@ -63,8 +65,8 @@ The live, machine-readable version is the OpenAPI document served by the API at 
 | `PATCH /category-groups/:id`                | any of the above                                                                                   | `CategoryGroup`; `422` turning Income into expense                                |
 | `POST /category-groups/:id/archive`         | —                                                                                                  | `204`; `422` for Income or while it has live categories                           |
 | `POST /category-groups/:id/unarchive`       | —                                                                                                  | `CategoryGroup`                                                                   |
-| `PUT /category-groups/order`                | `{ ids }`                                                                                          | `204`                                                                             |
-| `PUT /category-groups/:id/categories/order` | `{ ids }` (listed categories move into this group, in this order)                                  | `204`                                                                             |
+| `PUT /category-groups/order`                | `{ ids }`                                                                                          | `204`; `400` repeated id; `404` unknown or foreign id (nothing changes)           |
+| `PUT /category-groups/:id/categories/order` | `{ ids }` (listed categories move into this group, in this order)                                  | `204`; `400` repeated id; `404` unknown or foreign id (nothing changes)           |
 | `POST /categories`                          | `{ groupId, name, icon }` (`icon` from the curated list)                                           | `201` `Category`                                                                  |
 | `PATCH /categories/:id`                     | any of the above (a new `groupId` moves it)                                                        | `Category`                                                                        |
 | `POST /categories/:id/archive`              | `{ moveToId? }` — move its transactions and payee defaults, or leave them uncategorised for review | `204`                                                                             |
@@ -114,15 +116,15 @@ A transfer is two linked rows (`kind: "transfer"`, same `transferId`). They appe
 
 ## Rules
 
-| Method and path           | Body / query                     | Response                                                  |
-| ------------------------- | -------------------------------- | --------------------------------------------------------- |
-| `GET /rules`              | `deleted`                        | `{ items: RuleRow[] }` in priority order                  |
-| `POST /rules`             | `{ pattern, categoryId, name? }` | `201` `RuleRow`                                           |
-| `PATCH /rules/:id`        | any of the above                 | `RuleRow`                                                 |
-| `PUT /rules/order`        | `{ ids }` (first wins)           | `204`                                                     |
-| `DELETE /rules/:id`       | —                                | `204`                                                     |
-| `POST /rules/:id/restore` | —                                | `RuleRow`                                                 |
-| `POST /rules/apply`       | —                                | `{ updated }` — categorises uncategorised rows that match |
+| Method and path           | Body / query                     | Response                                                       |
+| ------------------------- | -------------------------------- | -------------------------------------------------------------- |
+| `GET /rules`              | `deleted`                        | `{ items: RuleRow[] }` in priority order                       |
+| `POST /rules`             | `{ pattern, categoryId, name? }` | `201` `RuleRow`                                                |
+| `PATCH /rules/:id`        | any of the above                 | `RuleRow`                                                      |
+| `PUT /rules/order`        | `{ ids }` (first wins)           | `204`; `400` repeated id; `404` unknown, deleted or foreign id |
+| `DELETE /rules/:id`       | —                                | `204`                                                          |
+| `POST /rules/:id/restore` | —                                | `RuleRow`                                                      |
+| `POST /rules/apply`       | —                                | `{ updated }` — categorises uncategorised rows that match      |
 
 ## Budgets
 

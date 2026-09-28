@@ -1,16 +1,22 @@
-import { and, eq, gte, isNull, lte, ne, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 
-import { accounts, transactions } from '@/db/schema';
-import { MILLISECONDS_PER_DAY } from '@coinkeeper/shared/constants/time';
+import { categories, transactions } from '@/db/schema';
+import { MAX_PAGE_SIZE } from '@coinkeeper/shared/constants/pagination';
+import { chunk } from '@coinkeeper/shared/lib/arrays';
 import { parseCsv } from '@coinkeeper/shared/lib/csv';
-import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
-import { Patterns } from '@coinkeeper/shared/lib/patterns';
 import type { TransferSuggestion } from '@coinkeeper/shared/schema/imports';
 
 import { createAccountService } from '../accounts/service';
-import { Db, ServiceError } from '../db';
-import { createLedgerService } from '../ledger/service';
-import { createPayeeService } from '../payees/service';
+import { rowsOf, valueList, WRITE_CHUNK_ROWS } from '../batch';
+import { Db, DbOrTx, notFound, ServiceError } from '../db';
+import { assertDate, assertNonZeroAmount, ownedAccount } from '../ledger/guards';
+import { standardInsertValues } from '../ledger/standard';
+import {
+  createPayeeService,
+  learnDefaultCategory,
+  payeeNameKey,
+  resolvePayeesByName,
+} from '../payees/service';
 import { createRuleService } from '../rules/service';
 import {
   buildImportId,
@@ -30,14 +36,12 @@ export type { TransferSuggestion };
 
 type ImportContext = {
   db: Db;
-  ledger: ReturnType<typeof createLedgerService>;
   ownedAccount: (userId: string, id: string) => Promise<{ currency: string; id: string }>;
   payees: ReturnType<typeof createPayeeService>;
   rules: ReturnType<typeof createRuleService>;
 };
 
 const TRANSFER_WINDOW_DAYS = 4;
-const TRANSFER_WINDOW_MS = TRANSFER_WINDOW_DAYS * MILLISECONDS_PER_DAY;
 
 const countStatuses = (rows: PreviewRow[]): Record<PreviewStatus, number> => {
   const counts: Record<PreviewStatus, number> = {
@@ -123,151 +127,284 @@ const preview = async (
   };
 };
 
-const applyMatchedRow = async (db: Db, userId: string, row: PreviewRow): Promise<boolean> => {
-  if (!row.matchedTransactionId) return false;
+type InsertableRow = PreviewRow & { amountMinor: number; date: string };
 
-  const updated = await db
-    .update(transactions)
-    .set({ importId: row.importId, originalPayee: row.payee || null })
-    .where(
-      and(
-        eq(transactions.id, row.matchedTransactionId),
-        eq(transactions.userId, userId),
-        isNull(transactions.importId)
-      )
-    )
-    .returning({ id: transactions.id });
+type MatchedRow = PreviewRow & { matchedTransactionId: string };
 
-  return updated.length > 0;
+type PayeesByName = Awaited<ReturnType<typeof resolvePayeesByName>>;
+
+type LockedAccount = Awaited<ReturnType<typeof ownedAccount>>;
+
+type InsertedRow = {
+  categoryId: string | null;
+  id: string;
+  payeeId: string | null;
 };
 
-const isUniqueViolation = (error: unknown): boolean =>
-  error instanceof Error && Patterns.uniqueViolationMessage.test(error.message);
-
-const insertNewRow = async (
-  service: ImportContext,
-  userId: string,
-  accountId: string,
-  row: PreviewRow & { amountMinor: number; date: string }
-): Promise<string | null> => {
-  const payee = row.payee ? await service.payees.findOrCreate(userId, row.payee) : null;
-  const categoryId = row.suggestedCategoryId ?? payee?.defaultCategoryId ?? null;
-
-  try {
-    const created = await service.ledger.createStandard(userId, {
-      accountId,
-      amountMinor: row.amountMinor,
-      categoryId,
-      date: row.date,
-      importId: row.importId,
-      memo: row.memo,
-      needsReview: true,
-      originalPayee: row.payee || null,
-      payeeId: payee?.id ?? null,
-      status: 'pending',
-    });
-
-    return created.id;
-  } catch (error) {
-    if (!isUniqueViolation(error)) throw error;
-
-    return null;
-  }
-};
-
-const isInsertable = (row: PreviewRow): row is PreviewRow & { amountMinor: number; date: string } =>
+const isInsertable = (row: PreviewRow): row is InsertableRow =>
   row.status === 'new' && row.date !== null && row.amountMinor !== null;
 
-const commit = async (service: ImportContext, userId: string, input: Preview) => {
-  const account = await service.ownedAccount(userId, input.accountId);
+const isMatched = (row: PreviewRow): row is MatchedRow =>
+  row.status === 'matched' && !!row.matchedTransactionId;
+
+const assertInsertable = (rows: InsertableRow[]): void => {
+  for (const row of rows) {
+    assertDate(row.date);
+    assertNonZeroAmount(row.amountMinor);
+  }
+};
+
+const applyMatchedRows = async (
+  tx: DbOrTx,
+  userId: string,
+  accountId: string,
+  rows: MatchedRow[]
+): Promise<number> => {
   let matched = 0;
-  const insertedIds: string[] = [];
 
-  for (const row of input.rows) {
-    if (row.status === 'matched') {
-      if (await applyMatchedRow(service.db, userId, row)) matched++;
-    } else if (isInsertable(row)) {
-      const id = await insertNewRow(service, userId, account.id, row);
+  for (const slice of chunk(rows, WRITE_CHUNK_ROWS)) {
+    const values = sql.join(
+      slice.map(row => sql`(${row.matchedTransactionId}, ${row.importId}, ${row.payee || null})`),
+      sql`, `
+    );
 
-      if (id) insertedIds.push(id);
-    }
+    const stamped = await rowsOf<{ id: string }>(
+      tx,
+      sql`
+      UPDATE transactions AS target
+      SET import_id = matched.import_id, original_payee = matched.original_payee, updated_at = now()
+      FROM (VALUES ${values}) AS matched(id, import_id, original_payee)
+      WHERE target.id = matched.id AND target.user_id = ${userId} AND target.account_id = ${accountId}
+        AND target.kind = 'standard' AND target.import_id IS NULL AND target.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM transactions AS taken
+          WHERE taken.account_id = target.account_id AND taken.import_id = matched.import_id
+            AND taken.deleted_at IS NULL)
+      RETURNING target.id`
+    );
+
+    matched += stamped.length;
   }
 
-  return {
-    inserted: insertedIds.length,
-    insertedIds,
-    matched,
-  };
+  return matched;
 };
 
-const shiftDate = (date: string, deltaMs: number): string =>
-  toIsoDate(new Date(Date.parse(date) + deltaMs));
+const payeeOf = (payeesByName: PayeesByName, row: InsertableRow) =>
+  row.payee.trim() ? payeesByName.get(payeeNameKey(row.payee)) : undefined;
 
-type OutgoingRow = {
-  accountId: string;
-  amountMinor: number;
-  currency: string;
-  date: string;
-  id: string;
-};
-
-const findTransferPeer = async (db: Db, userId: string, row: OutgoingRow) => {
-  const [peer] = await db
-    .select({
-      accountId: transactions.accountId,
-      accountName: accounts.name,
-      id: transactions.id,
-    })
-    .from(transactions)
-    .innerJoin(accounts, eq(accounts.id, transactions.accountId))
-    .where(
-      and(
-        eq(transactions.userId, userId),
-        eq(transactions.kind, 'standard'),
-        isNull(transactions.deletedAt),
-        isNull(transactions.categoryId),
-        ne(transactions.accountId, row.accountId),
-        eq(transactions.currency, row.currency),
-        eq(transactions.amountMinor, -row.amountMinor),
-        gte(transactions.date, shiftDate(row.date, -TRANSFER_WINDOW_MS)),
-        lte(transactions.date, shiftDate(row.date, TRANSFER_WINDOW_MS))
+const referencedCategoryIds = (rows: InsertableRow[], payeesByName: PayeesByName): string[] => [
+  ...new Set(
+    rows.flatMap(row =>
+      [row.suggestedCategoryId, payeeOf(payeesByName, row)?.defaultCategoryId].filter(
+        (id): id is string => !!id
       )
     )
-    .orderBy(sql`abs(${transactions.date}::date - ${row.date}::date)`)
-    .limit(1);
+  ),
+];
 
-  return peer;
+const activeCategoryIds = async (
+  tx: DbOrTx,
+  userId: string,
+  ids: string[]
+): Promise<Set<string>> => {
+  const active = new Set<string>();
+
+  for (const slice of chunk(ids, WRITE_CHUNK_ROWS)) {
+    const rows = await tx
+      .select({ id: categories.id })
+      .from(categories)
+      .where(
+        and(
+          inArray(categories.id, slice),
+          eq(categories.userId, userId),
+          isNull(categories.archivedAt)
+        )
+      );
+
+    for (const row of rows) active.add(row.id);
+  }
+
+  return active;
 };
+
+const importedCategoryId = (
+  row: InsertableRow,
+  payeeDefault: string | null | undefined,
+  active: Set<string>
+): string | null => {
+  if (row.suggestedCategoryId) {
+    return active.has(row.suggestedCategoryId) ? row.suggestedCategoryId : notFound('Category');
+  }
+
+  return payeeDefault && active.has(payeeDefault) ? payeeDefault : null;
+};
+
+type RowContext = {
+  account: LockedAccount;
+  active: Set<string>;
+  payeesByName: PayeesByName;
+  userId: string;
+};
+
+const importedRowValues = (
+  { account, active, payeesByName, userId }: RowContext,
+  row: InsertableRow
+): typeof transactions.$inferInsert => {
+  const payee = payeeOf(payeesByName, row);
+
+  return standardInsertValues(userId, account, {
+    accountId: account.id,
+    amountMinor: row.amountMinor,
+    categoryId: importedCategoryId(row, payee?.defaultCategoryId, active),
+    date: row.date,
+    importId: row.importId,
+    memo: row.memo,
+    needsReview: true,
+    originalPayee: row.payee || null,
+    payeeId: payee?.id ?? null,
+    status: 'pending',
+  });
+};
+
+const insertImportedRows = async (
+  tx: DbOrTx,
+  values: (typeof transactions.$inferInsert)[]
+): Promise<InsertedRow[]> => {
+  const inserted: InsertedRow[] = [];
+
+  for (const slice of chunk(values, WRITE_CHUNK_ROWS)) {
+    const created = await tx
+      .insert(transactions)
+      .values(slice)
+      .onConflictDoNothing({
+        target: [transactions.accountId, transactions.importId],
+        where: sql`${transactions.importId} IS NOT NULL AND ${transactions.deletedAt} IS NULL`,
+      })
+      .returning({
+        categoryId: transactions.categoryId,
+        id: transactions.id,
+        payeeId: transactions.payeeId,
+      });
+
+    inserted.push(...created);
+  }
+
+  return inserted;
+};
+
+const learnPayeeDefaults = async (
+  tx: DbOrTx,
+  userId: string,
+  inserted: InsertedRow[]
+): Promise<void> => {
+  const payeeIds = new Set(
+    inserted.flatMap(row => (row.categoryId && row.payeeId ? [row.payeeId] : []))
+  );
+
+  for (const payeeId of payeeIds) await learnDefaultCategory(tx, userId, payeeId);
+};
+
+const commit = async (service: ImportContext, userId: string, input: Preview) => {
+  const insertable = input.rows.filter(isInsertable);
+
+  assertInsertable(insertable);
+
+  return service.db.transaction(async tx => {
+    const account = await ownedAccount(tx, userId, input.accountId);
+    const matched = await applyMatchedRows(tx, userId, account.id, input.rows.filter(isMatched));
+
+    const payeesByName = await resolvePayeesByName(
+      tx,
+      userId,
+      insertable.map(row => row.payee)
+    );
+
+    const context: RowContext = {
+      account,
+      active: await activeCategoryIds(tx, userId, referencedCategoryIds(insertable, payeesByName)),
+      payeesByName,
+      userId,
+    };
+
+    const inserted = await insertImportedRows(
+      tx,
+      insertable.map(row => importedRowValues(context, row))
+    );
+
+    await learnPayeeDefaults(tx, userId, inserted);
+
+    return {
+      inserted: inserted.length,
+      insertedIds: inserted.map(row => row.id),
+      matched,
+    };
+  });
+};
+
+type SuggestionRow = {
+  amount_minor: string;
+  currency: string;
+  date: string;
+  in_account: string;
+  in_id: string;
+  out_account: string;
+  out_id: string;
+};
+
+const suggestionCandidates = (
+  db: Db,
+  userId: string,
+  transactionIds?: string[]
+): Promise<SuggestionRow[]> =>
+  rowsOf<SuggestionRow>(
+    db,
+    sql`
+    SELECT outgoing.id AS out_id, outgoing.amount_minor, outgoing.currency, outgoing.date::text AS date,
+      out_account.name AS out_account, peer.id AS in_id, peer.account_name AS in_account
+    FROM transactions AS outgoing
+    JOIN accounts AS out_account ON out_account.id = outgoing.account_id
+    JOIN LATERAL (
+      SELECT incoming.id, in_account.name AS account_name
+      FROM transactions AS incoming
+      JOIN accounts AS in_account ON in_account.id = incoming.account_id
+      WHERE incoming.user_id = ${userId} AND incoming.kind = 'standard'
+        AND incoming.deleted_at IS NULL AND incoming.category_id IS NULL
+        AND incoming.account_id <> outgoing.account_id AND incoming.currency = outgoing.currency
+        AND incoming.amount_minor = -outgoing.amount_minor
+        AND incoming.date BETWEEN outgoing.date - ${TRANSFER_WINDOW_DAYS}::int
+          AND outgoing.date + ${TRANSFER_WINDOW_DAYS}::int
+      ORDER BY abs(incoming.date - outgoing.date), incoming.created_at, incoming.id
+      LIMIT 1
+    ) AS peer ON true
+    WHERE outgoing.user_id = ${userId} AND outgoing.kind = 'standard'
+      AND outgoing.deleted_at IS NULL AND outgoing.category_id IS NULL AND outgoing.amount_minor < 0
+      ${transactionIds ? sql`AND outgoing.id IN (${valueList(transactionIds)})` : sql``}
+    ORDER BY outgoing.date DESC, outgoing.created_at DESC, outgoing.id DESC
+    LIMIT ${MAX_PAGE_SIZE}`
+  );
 
 const transferSuggestions = async (
   service: ImportContext,
   userId: string,
   transactionIds?: string[]
 ): Promise<TransferSuggestion[]> => {
-  const rows = await service.ledger.list(userId, {
-    ids: transactionIds,
-    kind: 'standard',
-    limit: 2000,
-  });
+  if (transactionIds && !transactionIds.length) return [];
 
   const suggestions: TransferSuggestion[] = [];
   const seen = new Set<string>();
 
-  for (const row of rows) {
-    if (row.amountMinor >= 0 || row.categoryId) continue;
-    const peer = await findTransferPeer(service.db, userId, row);
-
-    if (!peer || seen.has(peer.id)) continue;
-    seen.add(peer.id);
+  for (const row of await suggestionCandidates(service.db, userId, transactionIds)) {
+    if (seen.has(row.in_id)) continue;
+    seen.add(row.in_id);
 
     suggestions.push({
-      amountMinor: -row.amountMinor,
+      amountMinor: -Number(row.amount_minor),
       currency: row.currency,
       date: row.date,
-      inAccount: peer.accountName ?? 'Account',
-      inId: peer.id,
-      outAccount: row.accountName,
-      outId: row.id,
+      inAccount: row.in_account,
+      inId: row.in_id,
+      outAccount: row.out_account,
+      outId: row.out_id,
     });
   }
 
@@ -279,7 +416,6 @@ export const createImportService = (db: Db) => {
 
   const service: ImportContext = {
     db,
-    ledger: createLedgerService(db),
     ownedAccount: async (userId, id) => {
       const account = await accountsService.owned(userId, id);
 

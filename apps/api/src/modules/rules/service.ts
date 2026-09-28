@@ -1,10 +1,18 @@
-import { and, asc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 
 import { categories, rules, transactions } from '@/db/schema';
+import { chunk } from '@coinkeeper/shared/lib/arrays';
 import type { RuleRow } from '@coinkeeper/shared/schema/rules';
 
+import {
+  assertAllFound,
+  assertDistinctIds,
+  positionedIds,
+  rowsOf,
+  WRITE_CHUNK_ROWS,
+} from '../batch';
 import { ownedActiveCategory } from '../categories/service';
-import { Db, notFound, ServiceError, toIsoTimestamp } from '../db';
+import { Db, DbOrTx, notFound, ServiceError, toIsoTimestamp } from '../db';
 
 type RuleInput = {
   categoryId: string;
@@ -20,6 +28,27 @@ const haystackOf = (texts: (string | null | undefined)[]): string =>
 
 const firstMatch = (list: RuleRow[], haystack: string): RuleRow | null =>
   list.find(rule => haystack.includes(rule.pattern.toLowerCase())) ?? null;
+
+const prioritize = (tx: DbOrTx, userId: string, orderedIds: string[]) =>
+  rowsOf<{ id: string }>(
+    tx,
+    sql`
+    UPDATE rules AS rule
+    SET priority = ordered.position, updated_at = now()
+    FROM (VALUES ${positionedIds(orderedIds)}) AS ordered(id, position)
+    WHERE rule.id = ordered.id AND rule.user_id = ${userId} AND rule.deleted_at IS NULL
+    RETURNING rule.id`
+  );
+
+const categorize = async (tx: DbOrTx, userId: string, matches: SQL[]): Promise<void> => {
+  for (const slice of chunk(matches, WRITE_CHUNK_ROWS)) {
+    await tx.execute(sql`
+      UPDATE transactions AS target
+      SET category_id = matched.category_id, needs_review = false, updated_at = now()
+      FROM (VALUES ${sql.join(slice, sql`, `)}) AS matched(id, category_id)
+      WHERE target.id = matched.id AND target.user_id = ${userId}`);
+  }
+};
 
 export const createRuleService = (db: Db) => {
   const owned = async (userId: string, id: string, { deleted = false } = {}) => {
@@ -94,20 +123,15 @@ export const createRuleService = (db: Db) => {
             )
           );
 
-        let updated = 0;
-
-        for (const row of rows) {
+        const matches = rows.flatMap(row => {
           const rule = firstMatch(active, haystackOf([row.payeeName, row.originalPayee, row.memo]));
 
-          if (!rule) continue;
-          await tx
-            .update(transactions)
-            .set({ categoryId: rule.categoryId, needsReview: false })
-            .where(eq(transactions.id, row.id));
-          updated++;
-        }
+          return rule ? [sql`(${row.id}, ${rule.categoryId})`] : [];
+        });
 
-        return updated;
+        await categorize(tx, userId, matches);
+
+        return matches.length;
       });
     },
     async create(userId: string, data: RuleInput): Promise<RuleRow> {
@@ -155,13 +179,9 @@ export const createRuleService = (db: Db) => {
       await db.update(rules).set({ deletedAt: new Date() }).where(eq(rules.id, id));
     },
     async reorder(userId: string, orderedIds: string[]): Promise<void> {
+      assertDistinctIds(orderedIds);
       await db.transaction(async tx => {
-        for (const [index, id] of orderedIds.entries()) {
-          await tx
-            .update(rules)
-            .set({ priority: index })
-            .where(and(eq(rules.id, id), eq(rules.userId, userId)));
-        }
+        assertAllFound((await prioritize(tx, userId, orderedIds)).length, orderedIds, 'Rule');
       });
     },
     async restore(userId: string, id: string): Promise<RuleRow> {

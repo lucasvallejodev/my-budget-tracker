@@ -4,21 +4,14 @@ import { HttpStatus } from '@/constants/http';
 import { users } from '@/db/schema';
 import { ensureUserBootstrap } from '@/modules/categories/seed';
 import { conflict, Db, notFound, ServiceError } from '@/modules/db';
+import { isUniqueViolation } from '@/modules/errors';
 import type { User } from '@coinkeeper/shared/schema/auth';
 
 import { hashPassword, spendVerificationTime, verifyPassword } from './passwords';
 
-const UNIQUE_VIOLATION = '23505';
-
 type UserRecord = typeof users.$inferSelect;
 
-const normaliseEmail = (email: string): string => email.trim().toLowerCase();
-
-const isUniqueViolation = (error: unknown): boolean =>
-  !!error &&
-  typeof error === 'object' &&
-  (('code' in error && error.code === UNIQUE_VIOLATION) ||
-    ('cause' in error && isUniqueViolation(error.cause)));
+export const normaliseEmail = (email: string): string => email.trim().toLowerCase();
 
 const emailTaken = (): never =>
   conflict('An account with that email already exists', 'EMAIL_TAKEN');

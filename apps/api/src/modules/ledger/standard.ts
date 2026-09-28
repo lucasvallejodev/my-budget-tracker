@@ -27,7 +27,7 @@ export type LedgerContext = {
 
 type Account = Awaited<ReturnType<typeof ownedAccount>>;
 
-const standardInsertValues = (
+export const standardInsertValues = (
   userId: string,
   account: Account,
   input: StandardInput

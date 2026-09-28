@@ -1,6 +1,8 @@
 // @vitest-environment node
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { sessions as sessionRows } from '@/db/schema';
 import {
   clientFor,
   createTestApp,
@@ -14,6 +16,10 @@ import {
 const PEER_ADDRESS = '192.0.2.10';
 const SPOOFED_ADDRESS = '203.0.113.66';
 const CLIENT_ADDRESS = '198.51.100.7';
+const DAY_MS = 86_400_000;
+const NEW_PASSWORD = 'another long password';
+const WRONG_PASSWORD = 'wrong password!!';
+const SLOWED_ATTEMPT_MIN_MS = 900;
 
 let context: TestContext;
 
@@ -131,7 +137,7 @@ describe('sessions', () => {
     expect((await client.request('GET', '/me')).statusCode).toBe(401);
   });
 
-  it('lists and revokes sessions and signs other sessions out on password change', async () => {
+  it('lists and revokes sessions and rotates every session on password change', async () => {
     const first = await signUp(context.app, 'ada@example.com');
 
     const secondSignIn = await inject(context.app, 'POST', '/auth/sign-in', {
@@ -153,15 +159,21 @@ describe('sessions', () => {
 
     const changed = await first.request('PUT', '/me/password', {
       currentPassword: TestPassword,
-      newPassword: 'another long password',
+      newPassword: NEW_PASSWORD,
     });
 
     expect(changed.statusCode).toBe(204);
+
+    const rotated = clientFor(context.app, sessionCookieOf(changed));
+
+    expect(rotated.cookie).not.toBe(first.cookie);
     expect((await second.request('GET', '/me')).statusCode).toBe(401);
-    expect((await first.request('GET', '/me')).statusCode).toBe(200);
+    expect((await first.request('GET', '/me')).statusCode).toBe(401);
+    expect((await rotated.request('GET', '/me')).statusCode).toBe(200);
+    expect((await rotated.request('GET', '/me/sessions')).json().items).toHaveLength(1);
 
     const signIn = await inject(context.app, 'POST', '/auth/sign-in', {
-      payload: { email: 'ada@example.com', password: 'another long password' },
+      payload: { email: 'ada@example.com', password: NEW_PASSWORD },
     });
 
     const third = clientFor(context.app, sessionCookieOf(signIn));
@@ -169,7 +181,72 @@ describe('sessions', () => {
     const other = current.find((session: { current: boolean }) => !session.current);
 
     expect((await third.request('DELETE', `/me/sessions/${other.id}`)).statusCode).toBe(204);
-    expect((await first.request('GET', '/me')).statusCode).toBe(401);
+    expect((await rotated.request('GET', '/me')).statusCode).toBe(401);
+  });
+
+  it('never reuses a session cookie the browser already holds when signing in', async () => {
+    const chosen = 'ck_session=attacker-chosen-token';
+
+    const fixated = await inject(context.app, 'POST', '/auth/sign-up', {
+      headers: { cookie: chosen },
+      payload: { email: 'ada@example.com', password: TestPassword },
+    });
+
+    const signedUp = sessionCookieOf(fixated);
+
+    expect(signedUp).not.toBe(chosen);
+
+    const again = await inject(context.app, 'POST', '/auth/sign-in', {
+      headers: { cookie: signedUp },
+      payload: { email: 'ada@example.com', password: TestPassword },
+    });
+
+    const signedIn = clientFor(context.app, sessionCookieOf(again));
+
+    expect(signedIn.cookie).not.toBe(signedUp);
+    expect((await clientFor(context.app, signedUp).request('GET', '/me')).statusCode).toBe(401);
+    expect((await signedIn.request('GET', '/me/sessions')).json().items).toHaveLength(1);
+  });
+
+  it('ends a session at its maximum age even while it is in use', async () => {
+    const client = await signUp(context.app, 'ada@example.com');
+    const now = Date.now();
+
+    await context.database.db.update(sessionRows).set({
+      createdAt: new Date(now - 91 * DAY_MS),
+      expiresAt: new Date(now + 20 * DAY_MS),
+      lastUsedAt: new Date(now),
+    });
+
+    const response = await client.request('GET', '/me');
+
+    expect(response.statusCode).toBe(401);
+    expect(response.cookies[0]).toMatchObject({ name: 'ck_session', value: '' });
+    expect(await context.database.db.select().from(sessionRows)).toHaveLength(0);
+  });
+
+  it('renews a sliding session only up to its maximum age', async () => {
+    const client = await signUp(context.app, 'ada@example.com');
+    const { id: userId } = (await client.request('GET', '/me')).json();
+    const now = Date.now();
+    const createdAt = new Date(now - 85 * DAY_MS);
+    const endOfLife = createdAt.getTime() + 90 * DAY_MS;
+
+    await context.database.db
+      .update(sessionRows)
+      .set({ createdAt, expiresAt: new Date(now + DAY_MS) });
+
+    const response = await client.request('GET', '/me');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.cookies[0].expires?.getTime()).toBe(Math.floor(endOfLife / 1000) * 1000);
+
+    const [row] = await context.database.db
+      .select({ expiresAt: sessionRows.expiresAt })
+      .from(sessionRows)
+      .where(eq(sessionRows.userId, userId));
+
+    expect(row.expiresAt.getTime()).toBe(endOfLife);
   });
 
   it('updates the profile and keeps emails unique', async () => {
@@ -216,7 +293,7 @@ describe('request protection', () => {
   });
 
   it('sends no CORS headers to other origins and sets security headers', async () => {
-    const response = await inject(context.app, 'GET', '/health', {
+    const response = await inject(context.app, 'GET', '/health/live', {
       headers: { origin: 'https://evil.example' },
     });
 
@@ -263,6 +340,51 @@ describe('rate limiting', () => {
     }
   }, 30000);
 
+  it('slows failed sign-ins per account across addresses but never locks out the right password', async () => {
+    const limited = await createTestApp({ SIGN_IN_FAILURES_PER_ACCOUNT: '1' });
+
+    try {
+      await signUp(limited.app, 'ada@example.com');
+
+      const attemptFrom = (remoteAddress: string, email: string, password: string) =>
+        inject(limited.app, 'POST', '/auth/sign-in', {
+          payload: { email, password },
+          remoteAddress,
+        });
+
+      const timed = async (attempt: () => Promise<{ statusCode: number }>) => {
+        const startedAt = Date.now();
+        const { statusCode } = await attempt();
+
+        return { elapsed: Date.now() - startedAt, statusCode };
+      };
+
+      for (const address of ['203.0.113.1', '203.0.113.2']) {
+        expect((await attemptFrom(address, 'ada@example.com', WRONG_PASSWORD)).statusCode).toBe(
+          401
+        );
+      }
+
+      const known = await timed(() => attemptFrom('203.0.113.3', 'ADA@example.com', TestPassword));
+
+      expect(known.statusCode).toBe(200);
+      expect(known.elapsed).toBeGreaterThanOrEqual(SLOWED_ATTEMPT_MIN_MS);
+
+      for (const address of ['203.0.113.4', '203.0.113.5']) {
+        await attemptFrom(address, 'nobody@example.com', TestPassword);
+      }
+
+      const unknown = await timed(() =>
+        attemptFrom('203.0.113.6', 'nobody@example.com', TestPassword)
+      );
+
+      expect(unknown.statusCode).toBe(401);
+      expect(unknown.elapsed).toBeGreaterThanOrEqual(SLOWED_ATTEMPT_MIN_MS);
+    } finally {
+      await limited.close();
+    }
+  }, 30000);
+
   it('ignores X-Forwarded-For by default, so rotating it does not reset the limit', async () => {
     const limited = await createTestApp({ AUTH_ATTEMPTS_PER_MINUTE: '2' });
 
@@ -281,6 +403,71 @@ describe('rate limiting', () => {
       await limited.close();
     }
   }, 30000);
+});
+
+describe('security events', () => {
+  it('logs each auth event with its outcome and never the email, password or token', async () => {
+    const info = vi.spyOn(context.app.log, 'info');
+    const warn = vi.spyOn(context.app.log, 'warn');
+
+    try {
+      const client = await signUp(context.app, 'ada@example.com');
+
+      await inject(context.app, 'POST', '/auth/sign-in', {
+        payload: { email: 'ada@example.com', password: WRONG_PASSWORD },
+      });
+
+      const signIn = await inject(context.app, 'POST', '/auth/sign-in', {
+        payload: { email: 'ada@example.com', password: TestPassword },
+      });
+
+      const second = clientFor(context.app, sessionCookieOf(signIn));
+
+      const [other] = (await second.request('GET', '/me/sessions'))
+        .json()
+        .items.filter((session: { current: boolean }) => !session.current);
+
+      await second.request('DELETE', `/me/sessions/${other.id}`);
+
+      const changed = await second.request('PUT', '/me/password', {
+        currentPassword: TestPassword,
+        newPassword: NEW_PASSWORD,
+      });
+
+      await clientFor(context.app, sessionCookieOf(changed)).request('POST', '/auth/sign-out');
+
+      const entries = [...info.mock.calls, ...warn.mock.calls]
+        .map(([entry]) => entry)
+        .filter(entry => typeof entry === 'object' && entry !== null && 'audit' in entry);
+
+      expect(entries.map(entry => (entry as { audit: string }).audit)).toEqual([
+        'signed_up',
+        'signed_in',
+        'session_revoked',
+        'password_changed',
+        'signed_out',
+        'sign_in_failed',
+      ]);
+      expect(entries).toContainEqual(
+        expect.objectContaining({ audit: 'sign_in_failed', reason: 'INVALID_CREDENTIALS' })
+      );
+
+      const logged = JSON.stringify(entries);
+
+      for (const secret of [
+        'ada@example.com',
+        TestPassword,
+        NEW_PASSWORD,
+        WRONG_PASSWORD,
+        client.cookie.split('=')[1],
+      ]) {
+        expect(logged).not.toContain(secret);
+      }
+    } finally {
+      info.mockRestore();
+      warn.mockRestore();
+    }
+  });
 });
 
 describe('client address', () => {

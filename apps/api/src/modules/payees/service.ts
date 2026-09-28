@@ -1,9 +1,11 @@
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { categories, payees, transactions } from '@/db/schema';
+import { chunk } from '@coinkeeper/shared/lib/arrays';
 import type { PayeeRow } from '@coinkeeper/shared/schema/payees';
 
-import { conflict, Db, notFound, toIsoTimestamp } from '../db';
+import { WRITE_CHUNK_ROWS } from '../batch';
+import { conflict, Db, DbOrTx, notFound, toIsoTimestamp } from '../db';
 import { isUniqueViolation } from '../errors';
 
 const RECENT_TRANSACTIONS_SAMPLE = 3;
@@ -19,6 +21,94 @@ const toPayee = (row: PayeeRecord): PayeeRow => ({
 });
 
 const nameTaken = (): never => conflict('A payee with that name already exists');
+
+export const payeeNameKey = (name: string): string => name.trim().toLowerCase();
+
+const distinctNames = (names: string[]): string[] => {
+  const byKey = new Map<string, string>();
+
+  for (const name of names) {
+    const trimmed = name.trim();
+
+    if (trimmed && !byKey.has(payeeNameKey(trimmed))) byKey.set(payeeNameKey(trimmed), trimmed);
+  }
+
+  return [...byKey.values()];
+};
+
+const indexByName = (target: Map<string, PayeeRecord>, rows: PayeeRecord[]): void => {
+  for (const row of rows) {
+    if (!target.has(payeeNameKey(row.name))) target.set(payeeNameKey(row.name), row);
+  }
+};
+
+export const resolvePayeesByName = async (
+  tx: DbOrTx,
+  userId: string,
+  names: string[]
+): Promise<Map<string, PayeeRecord>> => {
+  const byName = new Map<string, PayeeRecord>();
+
+  indexByName(
+    byName,
+    await tx.select().from(payees).where(eq(payees.userId, userId)).orderBy(asc(payees.createdAt))
+  );
+
+  const missing = distinctNames(names).filter(name => !byName.has(payeeNameKey(name)));
+
+  for (const slice of chunk(missing, WRITE_CHUNK_ROWS)) {
+    await tx
+      .insert(payees)
+      .values(slice.map(name => ({ name, userId })))
+      .onConflictDoNothing({ target: [payees.userId, payees.name] });
+    indexByName(
+      byName,
+      await tx
+        .select()
+        .from(payees)
+        .where(and(eq(payees.userId, userId), inArray(payees.name, slice)))
+    );
+  }
+
+  return byName;
+};
+
+export const learnDefaultCategory = async (
+  db: DbOrTx,
+  userId: string,
+  payeeId: string
+): Promise<void> => {
+  const recent = await db
+    .select({ categoryId: transactions.categoryId })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        eq(transactions.payeeId, payeeId),
+        eq(transactions.kind, 'standard'),
+        isNull(transactions.deletedAt)
+      )
+    )
+    .orderBy(desc(transactions.date), desc(transactions.createdAt))
+    .limit(RECENT_TRANSACTIONS_SAMPLE);
+
+  const tally = new Map<string, number>();
+
+  for (const row of recent) {
+    if (row.categoryId) tally.set(row.categoryId, (tally.get(row.categoryId) ?? 0) + 1);
+  }
+
+  const winner = [...tally.entries()].find(([, count]) => count >= MAJORITY_OF_SAMPLE)?.[0];
+  const fallback = recent.length < MAJORITY_OF_SAMPLE ? recent[0]?.categoryId : undefined;
+  const next = winner ?? fallback;
+
+  if (next) {
+    await db
+      .update(payees)
+      .set({ defaultCategoryId: next })
+      .where(and(eq(payees.id, payeeId), eq(payees.userId, userId)));
+  }
+};
 
 export const createPayeeService = (db: Db) => {
   const find = async (userId: string, id: string) => {
@@ -82,52 +172,8 @@ export const createPayeeService = (db: Db) => {
         throw error;
       }
     },
-    async findOrCreate(userId: string, name: string) {
-      const trimmed = name.trim();
-
-      const [existing] = await db
-        .select()
-        .from(payees)
-        .where(and(eq(payees.userId, userId), sql`lower(${payees.name}) = lower(${trimmed})`))
-        .limit(1);
-
-      if (existing) return existing;
-      const [payee] = await db.insert(payees).values({ name: trimmed, userId }).returning();
-
-      return payee;
-    },
-    async learnDefaultCategory(userId: string, payeeId: string) {
-      const recent = await db
-        .select({ categoryId: transactions.categoryId })
-        .from(transactions)
-        .where(
-          and(
-            eq(transactions.userId, userId),
-            eq(transactions.payeeId, payeeId),
-            eq(transactions.kind, 'standard'),
-            isNull(transactions.deletedAt)
-          )
-        )
-        .orderBy(desc(transactions.date), desc(transactions.createdAt))
-        .limit(RECENT_TRANSACTIONS_SAMPLE);
-
-      const tally = new Map<string, number>();
-
-      for (const row of recent) {
-        if (row.categoryId) tally.set(row.categoryId, (tally.get(row.categoryId) ?? 0) + 1);
-      }
-
-      const winner = [...tally.entries()].find(([, count]) => count >= MAJORITY_OF_SAMPLE)?.[0];
-      const fallback = recent.length < MAJORITY_OF_SAMPLE ? recent[0]?.categoryId : undefined;
-      const next = winner ?? fallback;
-
-      if (next) {
-        await db
-          .update(payees)
-          .set({ defaultCategoryId: next })
-          .where(and(eq(payees.id, payeeId), eq(payees.userId, userId)));
-      }
-    },
+    learnDefaultCategory: (userId: string, payeeId: string) =>
+      learnDefaultCategory(db, userId, payeeId),
     async list(userId: string, { includeArchived = false } = {}): Promise<PayeeRow[]> {
       const rows = await db
         .select()

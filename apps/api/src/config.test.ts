@@ -64,6 +64,41 @@ describe('loadConfig', () => {
     });
   });
 
+  it('limits every request to a handler timeout within its bounds', () => {
+    expect(loadConfig({}).handlerTimeoutMs).toBe(20_000);
+    expect(loadConfig({ HANDLER_TIMEOUT_MS: '45000' }).handlerTimeoutMs).toBe(45_000);
+
+    for (const invalid of ['0', '999', '120001', 'slow']) {
+      expect(() => loadConfig({ HANDLER_TIMEOUT_MS: invalid }), invalid).toThrow();
+    }
+  });
+
+  it('caps session age and failed sign-ins per account within their bounds', () => {
+    expect(loadConfig({})).toMatchObject({ sessionMaxAgeDays: 90, signInFailuresPerAccount: 5 });
+    expect(
+      loadConfig({
+        SESSION_DAYS: '7',
+        SESSION_MAX_AGE_DAYS: '7',
+        SIGN_IN_FAILURES_PER_ACCOUNT: '5',
+      })
+    ).toMatchObject({
+      sessionDays: 7,
+      sessionMaxAgeDays: 7,
+      signInFailuresPerAccount: 5,
+    });
+    expect(() => loadConfig({ SESSION_DAYS: '60', SESSION_MAX_AGE_DAYS: '30' })).toThrow(
+      'SESSION_MAX_AGE_DAYS must be at least SESSION_DAYS'
+    );
+
+    for (const invalid of ['0', '366', 'forever']) {
+      expect(() => loadConfig({ SESSION_MAX_AGE_DAYS: invalid }), invalid).toThrow();
+    }
+
+    for (const invalid of ['0', '101', 'many']) {
+      expect(() => loadConfig({ SIGN_IN_FAILURES_PER_ACCOUNT: invalid }), invalid).toThrow();
+    }
+  });
+
   it('rejects invalid values', () => {
     expect(() => loadConfig({ API_PORT: 'eighty' })).toThrow();
     expect(() => loadConfig({ DATABASE_URL: 'mysql://nope' })).toThrow('postgres');

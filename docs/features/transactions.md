@@ -33,7 +33,7 @@ A transaction is one movement of money in one account. Expenses are negative, in
 
 ### Find transactions
 
-The Transactions page shows one month at a time with a month picker; **All months** loads everything (up to 2,000 rows). Filters run on the loaded rows: search (payee, memo, category, account), date range, category, type (income, expense, transfer, opening balance) and status. **Export CSV** downloads the filtered rows (Settings › Data Management exports every transaction, fetching all pages); **Print / PDF** uses the browser's print dialog.
+The Transactions page shows one month at a time with a month picker; **All months** loads everything (up to 2,000 rows). Filters run on the loaded rows: search (payee, memo, category, account), date range, category, type (income, expense, transfer, opening balance) and status. **Export CSV** downloads the filtered rows (Settings › Data Management exports every transaction, fetching all pages). Amounts are written as plain numbers (`-12.50`), and any text cell that a spreadsheet would run as a formula (starting with `=`, `+`, `-`, `@`) is prefixed with `'` so it opens as text; **Print / PDF** uses the browser's print dialog.
 
 <!-- screenshot: Transactions page with the month picker, filters and a few rows including a transfer and a "Needs review" badge (docs/assets/screenshots/transactions-list.png) -->
 
