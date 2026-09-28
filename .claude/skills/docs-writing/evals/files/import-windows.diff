@@ -1,0 +1,172 @@
+diff --git a/apps/api/src/modules/import/preview.ts b/apps/api/src/modules/import/preview.ts
+index 38d011f..01fdacb 100644
+--- a/apps/api/src/modules/import/preview.ts
++++ b/apps/api/src/modules/import/preview.ts
+@@ -7,6 +7,7 @@ import type {
+   PreviewRow,
+   PreviewStatus,
+ } from '@coinkeeper/shared/schema/imports';
++import { MatchWindowDays } from '@coinkeeper/shared/schema/imports';
+ 
+ import { ServiceError } from '../db';
+ 
+@@ -37,8 +38,6 @@ export type MatchCandidate = {
+   id: string;
+ };
+ 
+-const MATCH_WINDOW_DAYS = 7;
+-const MATCH_WINDOW_MS = MATCH_WINDOW_DAYS * MILLISECONDS_PER_DAY;
+ const FNV_OFFSET_BASIS = 2166136261;
+ const FNV_PRIME = 16777619;
+ const HEX_RADIX = 16;
+@@ -143,17 +142,19 @@ export const buildImportId = (row: ParsedRow, occurrences: Map<string, number>):
+ export const findMatch = (
+   candidates: MatchCandidate[],
+   claimed: Set<string>,
+-  row: ParsedRow
++  row: ParsedRow,
++  windowDays: number = MatchWindowDays.default
+ ): MatchCandidate | undefined => {
+   if (row.date === null) return undefined;
+   const target = Date.parse(row.date);
++  const windowMs = windowDays * MILLISECONDS_PER_DAY;
+ 
+   return candidates
+     .filter(
+       candidate => !claimed.has(candidate.id) && Number(candidate.amountMinor) === row.amountMinor
+     )
+     .map(candidate => ({ ...candidate, distance: Math.abs(Date.parse(candidate.date) - target) }))
+-    .filter(candidate => candidate.distance <= MATCH_WINDOW_MS)
++    .filter(candidate => candidate.distance <= windowMs)
+     .sort((left, right) => left.distance - right.distance)[0];
+ };
+ 
+@@ -164,6 +165,7 @@ export type ClassifyContext = {
+   claimed: Set<string>;
+   existingIds: Set<string>;
+   matchRule: (texts: string[]) => RuleMatch | Promise<RuleMatch>;
++  matchWindowDays?: number;
+   payeeDefaults: Map<string, string | null>;
+ };
+ 
+@@ -202,7 +204,7 @@ export const classifyRow = async (
+ 
+   if (parsed.error) return { ...row, status: 'invalid' };
+   if (ctx.existingIds.has(importId)) return { ...row, status: 'duplicate' };
+-  const match = findMatch(ctx.candidates, ctx.claimed, parsed);
++  const match = findMatch(ctx.candidates, ctx.claimed, parsed, ctx.matchWindowDays);
+   const suggestion = await suggestCategory(ctx, parsed);
+ 
+   if (!match) return { ...row, ...suggestion };
+diff --git a/apps/api/src/modules/import/service.ts b/apps/api/src/modules/import/service.ts
+index d79cc00..655bf5e 100644
+--- a/apps/api/src/modules/import/service.ts
++++ b/apps/api/src/modules/import/service.ts
+@@ -36,7 +36,7 @@ type ImportContext = {
+   rules: ReturnType<typeof createRuleService>;
+ };
+ 
+-const TRANSFER_WINDOW_DAYS = 4;
++const TRANSFER_WINDOW_DAYS = 7;
+ const TRANSFER_WINDOW_MS = TRANSFER_WINDOW_DAYS * MILLISECONDS_PER_DAY;
+ 
+ const countStatuses = (rows: PreviewRow[]): Record<PreviewStatus, number> => {
+@@ -98,6 +98,7 @@ const preview = async (
+     claimed: new Set(),
+     existingIds: await loadExistingImportIds(service.db, account.id),
+     matchRule: await service.rules.matcher(userId),
++    matchWindowDays: input.mapping.matchWindowDays,
+     payeeDefaults: new Map(
+       (await service.payees.list(userId)).map(payee => [
+         payee.name.toLowerCase(),
+diff --git a/apps/web/src/components/finance/import-wizard/import-wizard.tsx b/apps/web/src/components/finance/import-wizard/import-wizard.tsx
+index 381ce36..01c2b3c 100644
+--- a/apps/web/src/components/finance/import-wizard/import-wizard.tsx
++++ b/apps/web/src/components/finance/import-wizard/import-wizard.tsx
+@@ -13,6 +13,7 @@ import {
+   EmptyState,
+   Field,
+   FilterBar,
++  Input,
+   ListRow,
+   Page,
+   PageHeading,
+@@ -27,7 +28,12 @@ import {
+   Text,
+ } from '@/components/ui';
+ import { parseCsv } from '@coinkeeper/shared/lib/csv';
+-import type { ColumnMapping, Preview, TransferSuggestion } from '@coinkeeper/shared/schema/imports';
++import {
++  type ColumnMapping,
++  MatchWindowDays,
++  type Preview,
++  type TransferSuggestion,
++} from '@coinkeeper/shared/schema/imports';
+ 
+ import { AccountPicker } from '../account-picker';
+ import { flattenCategories } from '../category-picker';
+@@ -241,6 +247,21 @@ export function ImportWizard() {
+                 Spending is positive in this file
+               </span>
+             </Field>
++            <Field variant="filter">
++              Match window (days)
++              <Input
++                type="number"
++                min={MatchWindowDays.min}
++                max={MatchWindowDays.max}
++                value={mapping.matchWindowDays ?? MatchWindowDays.default}
++                onChange={event =>
++                  setMapping(current => ({
++                    ...current,
++                    matchWindowDays: Number(event.target.value),
++                  }))
++                }
++              />
++            </Field>
+           </FilterBar>
+           <Button
+             disabled={!accountId || !mapping.date || runPreview.isPending}
+diff --git a/packages/shared/src/constants/field-lengths.ts b/packages/shared/src/constants/field-lengths.ts
+index 20a2fc1..51b5fda 100644
+--- a/packages/shared/src/constants/field-lengths.ts
++++ b/packages/shared/src/constants/field-lengths.ts
+@@ -3,7 +3,7 @@ export const FieldLengths = {
+   amountInput: 30,
+   currencyCode: 3,
+   email: 254,
+-  importCsv: 2_000_000,
++  importCsv: 5_000_000,
+   institution: 50,
+   localeMax: 20,
+   localeMin: 2,
+diff --git a/packages/shared/src/schema/imports.ts b/packages/shared/src/schema/imports.ts
+index c845e96..a8d0e18 100644
+--- a/packages/shared/src/schema/imports.ts
++++ b/packages/shared/src/schema/imports.ts
+@@ -7,6 +7,8 @@ export const PreviewStatusValues = ['new', 'duplicate', 'matched', 'invalid'] as
+ 
+ export const SuggestionSourceValues = ['rule', 'payee'] as const;
+ 
++export const MatchWindowDays = { default: 7, max: 14, min: 1 } as const;
++
+ export const columnMappingSchema = z.object({
+   amount: z.string().optional(),
+   credit: z.string().optional(),
+@@ -15,6 +17,7 @@ export const columnMappingSchema = z.object({
+   debit: z.string().optional(),
+   externalId: z.string().optional(),
+   invertSign: z.boolean().optional(),
++  matchWindowDays: z.number().int().min(MatchWindowDays.min).max(MatchWindowDays.max).optional(),
+   memo: z.string().optional(),
+   payee: z.string().optional(),
+ });
+@@ -65,7 +68,7 @@ export const importPreviewRequestSchema = z.object({
+   csv: z
+     .string()
+     .min(1, 'The file is empty')
+-    .max(FieldLengths.importCsv, 'File is too large (2 MB max)'),
++    .max(FieldLengths.importCsv, 'File is too large (5 MB max)'),
+   mapping: columnMappingSchema,
+ });
+ 

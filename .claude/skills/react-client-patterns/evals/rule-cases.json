@@ -1,0 +1,658 @@
+[
+  {
+    "ruleId": "advanced-effect-event-deps",
+    "ruleTitle": "Do not put Effect Events in dependency arrays",
+    "type": "bad",
+    "code": "export function useColorSchemeChange(onChange: () => void) {\n  const notifyChange = useEffectEvent(onChange);\n\n  useEffect(() => {\n    const media = window.matchMedia(DarkSchemeQuery);\n\n    media.addEventListener('change', notifyChange);\n\n    return () => media.removeEventListener('change', notifyChange);\n  }, [notifyChange]);\n}",
+    "language": "tsx",
+    "description": "Effect Event listed as a dependency"
+  },
+  {
+    "ruleId": "advanced-effect-event-deps",
+    "ruleTitle": "Do not put Effect Events in dependency arrays",
+    "type": "good",
+    "code": "export function useColorSchemeChange(onChange: () => void) {\n  const notifyChange = useEffectEvent(onChange);\n\n  useEffect(() => {\n    const media = window.matchMedia(DarkSchemeQuery);\n\n    media.addEventListener('change', notifyChange);\n\n    return () => media.removeEventListener('change', notifyChange);\n  }, []);\n}",
+    "language": "tsx",
+    "description": "Effect depends only on reactive values"
+  },
+  {
+    "ruleId": "advanced-init-once",
+    "ruleTitle": "Initialize the app once, not per mount",
+    "type": "bad",
+    "code": "export function ThemeToggle() {\n  useEffect(() => {\n    applyTheme(storedTheme());\n  }, []);\n\n  return <ThemeMenu />;\n}",
+    "language": "tsx",
+    "description": "App-wide initialization in a mount effect"
+  },
+  {
+    "ruleId": "advanced-init-once",
+    "ruleTitle": "Initialize the app once, not per mount",
+    "type": "good",
+    "code": "let themeInitialized = false;\n\nconst initializeThemeOnce = (): void => {\n  if (themeInitialized) return;\n\n  themeInitialized = true;\n  applyTheme(storedTheme());\n};\n\nexport function ThemeToggle() {\n  useEffect(initializeThemeOnce, []);\n\n  return <ThemeMenu />;\n}",
+    "language": "tsx",
+    "description": "Module-level guard runs once per load"
+  },
+  {
+    "ruleId": "advanced-use-latest",
+    "ruleTitle": "useEffectEvent for the latest callback",
+    "type": "bad",
+    "code": "const SEARCH_DEBOUNCE_MS = 300;\n\nexport function PayeeSearch({ onSearch }: { onSearch: (query: string) => void }) {\n  const [query, setQuery] = useState('');\n\n  useEffect(() => {\n    const timer = setTimeout(() => onSearch(query), SEARCH_DEBOUNCE_MS);\n\n    return () => clearTimeout(timer);\n  }, [query, onSearch]);\n\n  return (\n    <Input\n      aria-label=\"Search payees\"\n      value={query}\n      onChange={event => setQuery(event.target.value)}\n    />\n  );\n}",
+    "language": "tsx",
+    "description": "Effect re-runs whenever the callback prop changes"
+  },
+  {
+    "ruleId": "advanced-use-latest",
+    "ruleTitle": "useEffectEvent for the latest callback",
+    "type": "good",
+    "code": "const SEARCH_DEBOUNCE_MS = 300;\n\nexport function PayeeSearch({ onSearch }: { onSearch: (query: string) => void }) {\n  const [query, setQuery] = useState('');\n  const search = useEffectEvent(onSearch);\n\n  useEffect(() => {\n    const timer = setTimeout(() => search(query), SEARCH_DEBOUNCE_MS);\n\n    return () => clearTimeout(timer);\n  }, [query]);\n\n  return (\n    <Input\n      aria-label=\"Search payees\"\n      value={query}\n      onChange={event => setQuery(event.target.value)}\n    />\n  );\n}",
+    "language": "tsx",
+    "description": "useEffectEvent reads the latest callback"
+  },
+  {
+    "ruleId": "async-cheap-condition-before-await",
+    "ruleTitle": "Check cheap conditions before awaiting",
+    "type": "bad",
+    "code": "const convertIfNeeded = async (account: AccountSummary, primaryCurrency: string) => {\n  const settings = await apiGet<UserSettings>('/settings');\n\n  if (settings.showConvertedTotals && account.currency !== primaryCurrency) {\n    showConversion(account);\n  }\n};",
+    "language": "typescript",
+    "description": "Awaits settings before checking the cheap condition"
+  },
+  {
+    "ruleId": "async-cheap-condition-before-await",
+    "ruleTitle": "Check cheap conditions before awaiting",
+    "type": "good",
+    "code": "const convertIfNeeded = async (account: AccountSummary, primaryCurrency: string) => {\n  if (account.currency === primaryCurrency) return;\n\n  const settings = await apiGet<UserSettings>('/settings');\n\n  if (settings.showConvertedTotals) showConversion(account);\n};",
+    "language": "typescript",
+    "description": "Synchronous guard first, request only when needed"
+  },
+  {
+    "ruleId": "async-defer-await",
+    "ruleTitle": "Defer await until needed",
+    "type": "bad",
+    "code": "onSuccess: async (data: TData) => {\n  toast.success(successMessage);\n  await invalidate();\n  await onSuccess?.(data);\n},",
+    "language": "typescript",
+    "description": "Dialog waits for every refetch before closing"
+  },
+  {
+    "ruleId": "async-defer-await",
+    "ruleTitle": "Defer await until needed",
+    "type": "good",
+    "code": "onSuccess: async (data: TData) => {\n  toast.success(successMessage);\n  await onSuccess?.(data);\n  await invalidate();\n},",
+    "language": "typescript",
+    "description": "Dialog closes first, refetch runs behind it"
+  },
+  {
+    "ruleId": "async-dependencies",
+    "ruleTitle": "Chain dependent promises, await once",
+    "type": "bad",
+    "code": "const accounts = await apiList<AccountSummary>('/accounts');\nconst currencies = await apiList<Currency>('/currencies');\nconst firstAccountPage = await apiGet<PageResponse<TransactionRow>>('/transactions', {\n  accountId: accounts[0]?.id,\n});",
+    "language": "typescript",
+    "description": "Currencies wait for the account-dependent request"
+  },
+  {
+    "ruleId": "async-dependencies",
+    "ruleTitle": "Chain dependent promises, await once",
+    "type": "good",
+    "code": "const accountsRequest = apiList<AccountSummary>('/accounts');\nconst firstAccountPageRequest = accountsRequest.then(accounts =>\n  apiGet<PageResponse<TransactionRow>>('/transactions', { accountId: accounts[0]?.id })\n);\n\nconst [accounts, currencies, firstAccountPage] = await Promise.all([\n  accountsRequest,\n  apiList<Currency>('/currencies'),\n  firstAccountPageRequest,\n]);",
+    "language": "typescript",
+    "description": "Dependent request chained, everything awaited once"
+  },
+  {
+    "ruleId": "async-parallel",
+    "ruleTitle": "Run independent requests in parallel",
+    "type": "bad",
+    "code": "const restoreSelected = async (ruleIds: string[]) => {\n  for (const ruleId of ruleIds) {\n    await restoreRule(ruleId);\n  }\n\n  await refresh();\n};",
+    "language": "typescript",
+    "description": "Restores run one after another"
+  },
+  {
+    "ruleId": "async-parallel",
+    "ruleTitle": "Run independent requests in parallel",
+    "type": "good",
+    "code": "const restoreSelected = async (ruleIds: string[]) => {\n  await Promise.all(ruleIds.map(ruleId => restoreRule(ruleId)));\n  await refresh();\n};",
+    "language": "typescript",
+    "description": "Independent restores run together"
+  },
+  {
+    "ruleId": "bundle-analyzable-paths",
+    "ruleTitle": "Keep dynamic imports statically analysable",
+    "type": "bad",
+    "code": "const chartPath = `../${chartName}-chart`;\nconst chartModule = await import(chartPath);",
+    "language": "typescript",
+    "description": "Import path hidden in a variable"
+  },
+  {
+    "ruleId": "bundle-analyzable-paths",
+    "ruleTitle": "Keep dynamic imports statically analysable",
+    "type": "good",
+    "code": "const ChartLoaders = {\n  cashFlow: () => import('../cash-flow-chart').then(chartModule => chartModule.CashFlowChart),\n  distribution: () =>\n    import('../distribution-chart').then(chartModule => chartModule.DistributionChart),\n};\n\nconst Chart = await ChartLoaders[chartName]();",
+    "language": "typescript",
+    "description": "Explicit map of literal imports"
+  },
+  {
+    "ruleId": "bundle-dynamic-imports",
+    "ruleTitle": "Lazy-load heavy client-only components",
+    "type": "bad",
+    "code": "import { CashFlowChart } from '../cash-flow-chart';\n\nexport function Overview({ points }: { points: CashPoint[] }) {\n  return <CashFlowChart points={points} />;\n}",
+    "language": "tsx",
+    "description": "Recharts chart in the main chunk of the screen"
+  },
+  {
+    "ruleId": "bundle-dynamic-imports",
+    "ruleTitle": "Lazy-load heavy client-only components",
+    "type": "good",
+    "code": "const CashFlowChart = dynamic(\n  () => import('../cash-flow-chart').then(chartModule => chartModule.CashFlowChart),\n  { loading: () => <Spinner label=\"Loading chart\" />, ssr: false }\n);\n\nexport function Overview({ points }: { points: CashPoint[] }) {\n  return <CashFlowChart points={points} />;\n}",
+    "language": "tsx",
+    "description": "Chart loaded on demand with a module-level dynamic component"
+  },
+  {
+    "ruleId": "client-event-listeners",
+    "ruleTitle": "Share one global event listener",
+    "type": "bad",
+    "code": "export function useKeyboardShortcut(key: string, handler: () => void) {\n  useEffect(() => {\n    const handleKeyDown = (event: KeyboardEvent) => {\n      if (event.metaKey && event.key === key) handler();\n    };\n\n    window.addEventListener('keydown', handleKeyDown);\n\n    return () => window.removeEventListener('keydown', handleKeyDown);\n  }, [key, handler]);\n}",
+    "language": "tsx",
+    "description": "Every hook instance adds its own window listener"
+  },
+  {
+    "ruleId": "client-event-listeners",
+    "ruleTitle": "Share one global event listener",
+    "type": "good",
+    "code": "const ShortcutHandlers = new Map<string, Set<() => void>>();\n\nconst runShortcut = (event: KeyboardEvent): void => {\n  if (!event.metaKey) return;\n\n  ShortcutHandlers.get(event.key)?.forEach(handler => handler());\n};\n\nconst addShortcut = (key: string, handler: () => void): (() => void) => {\n  if (!ShortcutHandlers.size) window.addEventListener('keydown', runShortcut);\n\n  const handlers = ShortcutHandlers.get(key) ?? new Set<() => void>();\n\n  handlers.add(handler);\n  ShortcutHandlers.set(key, handlers);\n\n  return () => {\n    handlers.delete(handler);\n    if (!handlers.size) ShortcutHandlers.delete(key);\n    if (!ShortcutHandlers.size) window.removeEventListener('keydown', runShortcut);\n  };\n};\n\nexport function useKeyboardShortcut(key: string, handler: () => void) {\n  const onShortcut = useEffectEvent(handler);\n\n  useEffect(() => addShortcut(key, onShortcut), [key]);\n}",
+    "language": "tsx",
+    "description": "One shared listener and a registry of handlers"
+  },
+  {
+    "ruleId": "client-localstorage-schema",
+    "ruleTitle": "Guard, version and minimize localStorage",
+    "type": "bad",
+    "code": "export const storedTheme = (): string => localStorage.getItem(ThemeStorageKey) || DefaultTheme;\n\nexport const rememberUser = (user: User): void => {\n  localStorage.setItem('coinkeeper-user', JSON.stringify(user));\n};",
+    "language": "typescript",
+    "description": "Unguarded storage access and a whole object stored"
+  },
+  {
+    "ruleId": "client-localstorage-schema",
+    "ruleTitle": "Guard, version and minimize localStorage",
+    "type": "good",
+    "code": "const readStoredValue = (key: string): string | null => {\n  try {\n    return localStorage.getItem(key);\n  } catch {\n    return null;\n  }\n};\n\nconst writeStoredValue = (key: string, value: string): boolean => {\n  try {\n    localStorage.setItem(key, value);\n\n    return true;\n  } catch {\n    return false;\n  }\n};\n\nexport const storedTheme = (): string => readStoredValue(ThemeStorageKey) ?? DefaultTheme;\n\nexport const rememberTheme = (theme: string): boolean => writeStoredValue(ThemeStorageKey, theme);",
+    "language": "typescript",
+    "description": "Guarded access, only a preference stored"
+  },
+  {
+    "ruleId": "client-passive-event-listeners",
+    "ruleTitle": "Passive touch and wheel listeners",
+    "type": "bad",
+    "code": "useEffect(() => {\n  const trackWheel = (event: WheelEvent) => setScrolledDown(event.deltaY > 0);\n\n  document.addEventListener('wheel', trackWheel);\n\n  return () => document.removeEventListener('wheel', trackWheel);\n}, []);",
+    "language": "tsx",
+    "description": "Wheel listener blocks scrolling"
+  },
+  {
+    "ruleId": "client-passive-event-listeners",
+    "ruleTitle": "Passive touch and wheel listeners",
+    "type": "good",
+    "code": "useEffect(() => {\n  const trackWheel = (event: WheelEvent) => setScrolledDown(event.deltaY > 0);\n\n  document.addEventListener('wheel', trackWheel, { passive: true });\n\n  return () => document.removeEventListener('wheel', trackWheel);\n}, []);",
+    "language": "tsx",
+    "description": "Passive listener for a read-only handler"
+  },
+  {
+    "ruleId": "client-query-hooks",
+    "ruleTitle": "Read server data through query hooks",
+    "type": "bad",
+    "code": "export function BudgetList({ month }: { month: string }) {\n  const [rows, setRows] = useState<BudgetRow[]>([]);\n\n  useEffect(() => {\n    fetch(`/api/v1/budgets?month=${month}`)\n      .then(response => response.json())\n      .then(body => setRows(body.items));\n  }, [month]);\n\n  return <BudgetTable rows={rows} />;\n}",
+    "language": "tsx",
+    "description": "Server data fetched in an effect and copied into state"
+  },
+  {
+    "ruleId": "client-query-hooks",
+    "ruleTitle": "Read server data through query hooks",
+    "type": "good",
+    "code": "export const budgetsQuery = (month: string) =>\n  queryOptions({\n    queryFn: () => apiList<BudgetRow>('/budgets', { month }),\n    queryKey: QueryKeys.budgets(month),\n  });\n\nexport function useBudgets(month: string) {\n  return useQuery({ ...budgetsQuery(month), placeholderData: keepPreviousData });\n}\n\nexport function BudgetList({ month }: { month: string }) {\n  const budgets = useBudgets(month);\n\n  return (\n    <QueryContent pending={budgets.isPending} error={budgets.isError} loading=\"Loading budgets…\">\n      {() => <BudgetTable rows={budgets.data ?? []} />}\n    </QueryContent>\n  );\n}",
+    "language": "tsx",
+    "description": "Query hook with a month key and the previous month kept on screen"
+  },
+  {
+    "ruleId": "js-cache-function-results",
+    "ruleTitle": "Reuse Intl formatters",
+    "type": "bad",
+    "code": "export const formatMoney = (\n  amountMinor: number,\n  currency: string,\n  options: MoneyFormatOptions = {}\n): string => {\n  const digits = minorUnits(currency);\n\n  return new Intl.NumberFormat(options.locale ?? undefined, {\n    currency: currency.toUpperCase(),\n    maximumFractionDigits: digits,\n    minimumFractionDigits: digits,\n    signDisplay: options.signDisplay ?? 'auto',\n    style: 'currency',\n  }).format(amountMinor / minorUnitScale(digits));\n};",
+    "language": "typescript",
+    "description": "New Intl formatter on every call"
+  },
+  {
+    "ruleId": "js-cache-function-results",
+    "ruleTitle": "Reuse Intl formatters",
+    "type": "good",
+    "code": "const MoneyFormatters = new Map<string, Intl.NumberFormat>();\n\nconst moneyFormatter = (\n  currency: string,\n  locale: string | undefined,\n  signDisplay: SignDisplay\n): Intl.NumberFormat => {\n  const code = currency.toUpperCase();\n  const key = [locale, code, signDisplay].join();\n  const cached = MoneyFormatters.get(key);\n\n  if (cached) return cached;\n\n  const digits = minorUnits(code);\n  const formatter = new Intl.NumberFormat(locale, {\n    currency: code,\n    maximumFractionDigits: digits,\n    minimumFractionDigits: digits,\n    signDisplay,\n    style: 'currency',\n  });\n\n  MoneyFormatters.set(key, formatter);\n\n  return formatter;\n};\n\nexport const formatMoney = (\n  amountMinor: number,\n  currency: string,\n  options: MoneyFormatOptions = {}\n): string =>\n  moneyFormatter(currency, options.locale, options.signDisplay ?? 'auto').format(\n    amountMinor / minorUnitScale(minorUnits(currency))\n  );",
+    "language": "typescript",
+    "description": "Formatters cached by locale, currency and sign mode"
+  },
+  {
+    "ruleId": "js-early-exit",
+    "ruleTitle": "Return early",
+    "type": "bad",
+    "code": "const firstInvalidRow = (rows: PreviewRow[]): string | null => {\n  let message: string | null = null;\n\n  for (const row of rows) {\n    if (!row.date && !message) message = `Row ${row.index}: date is missing`;\n    if (row.amountMinor === null && !message) message = `Row ${row.index}: amount is missing`;\n  }\n\n  return message;\n};",
+    "language": "typescript",
+    "description": "Loop keeps going after the answer is known"
+  },
+  {
+    "ruleId": "js-early-exit",
+    "ruleTitle": "Return early",
+    "type": "good",
+    "code": "const firstInvalidRow = (rows: PreviewRow[]): string | null => {\n  for (const row of rows) {\n    if (!row.date) return `Row ${row.index}: date is missing`;\n    if (row.amountMinor === null) return `Row ${row.index}: amount is missing`;\n  }\n\n  return null;\n};",
+    "language": "typescript",
+    "description": "Returns on the first invalid row"
+  },
+  {
+    "ruleId": "js-flatmap-filter",
+    "ruleTitle": "flatMap instead of map and filter",
+    "type": "bad",
+    "code": "const payeeNames = transactions\n  .map(transaction => (transaction.payeeName ? transaction.payeeName : null))\n  .filter(Boolean);",
+    "language": "typescript",
+    "description": "Map to null then filter"
+  },
+  {
+    "ruleId": "js-flatmap-filter",
+    "ruleTitle": "flatMap instead of map and filter",
+    "type": "good",
+    "code": "const payeeNames = transactions.flatMap(transaction =>\n  transaction.payeeName ? [transaction.payeeName] : []\n);",
+    "language": "typescript",
+    "description": "One pass with flatMap"
+  },
+  {
+    "ruleId": "js-hoist-regexp",
+    "ruleTitle": "Regular expressions only in Patterns",
+    "type": "bad",
+    "code": "export function MonthField({ value }: { value: string }) {\n  const isValid = /^\\d{4}-\\d{2}$/.test(value);\n\n  return <Input aria-invalid={!isValid} value={value} readOnly />;\n}",
+    "language": "tsx",
+    "description": "Regular expression written inside a component"
+  },
+  {
+    "ruleId": "js-hoist-regexp",
+    "ruleTitle": "Regular expressions only in Patterns",
+    "type": "good",
+    "code": "export function MonthField({ value }: { value: string }) {\n  const isValid = isIsoMonth(value);\n\n  return <Input aria-invalid={!isValid} value={value} readOnly />;\n}",
+    "language": "tsx",
+    "description": "Shared pattern helper from patterns.ts"
+  },
+  {
+    "ruleId": "js-index-maps",
+    "ruleTitle": "Index maps for repeated lookups",
+    "type": "bad",
+    "code": "const rows = transactions.map(transaction => ({\n  ...transaction,\n  account: accounts.find(account => account.id === transaction.accountId),\n}));",
+    "language": "typescript",
+    "description": "find by id inside a map"
+  },
+  {
+    "ruleId": "js-index-maps",
+    "ruleTitle": "Index maps for repeated lookups",
+    "type": "good",
+    "code": "const accountsById = new Map(accounts.map(account => [account.id, account]));\nconst rows = transactions.map(transaction => ({\n  ...transaction,\n  account: accountsById.get(transaction.accountId),\n}));",
+    "language": "typescript",
+    "description": "Map built once, then constant-time lookups"
+  },
+  {
+    "ruleId": "js-min-max-loop",
+    "ruleTitle": "One pass for min and max",
+    "type": "bad",
+    "code": "const latestTransaction = (transactions: TransactionRow[]): TransactionRow | undefined =>\n  transactions.toSorted((left, right) => right.date.localeCompare(left.date))[0];",
+    "language": "typescript",
+    "description": "Sorts every transaction to find the latest"
+  },
+  {
+    "ruleId": "js-min-max-loop",
+    "ruleTitle": "One pass for min and max",
+    "type": "bad",
+    "code": "const dateRange = (transactions: TransactionRow[]) => {\n  const byDate = transactions.toSorted((left, right) => left.date.localeCompare(right.date));\n\n  return { newest: byDate.at(-1), oldest: byDate[0] };\n};",
+    "language": "typescript",
+    "description": "Sorts to find the oldest and newest"
+  },
+  {
+    "ruleId": "js-min-max-loop",
+    "ruleTitle": "One pass for min and max",
+    "type": "good",
+    "code": "const latestTransaction = (transactions: TransactionRow[]): TransactionRow | undefined =>\n  transactions.reduce<TransactionRow | undefined>(\n    (latest, transaction) => (!latest || transaction.date > latest.date ? transaction : latest),\n    undefined\n  );",
+    "language": "typescript",
+    "description": "One pass with reduce"
+  },
+  {
+    "ruleId": "js-set-map-lookups",
+    "ruleTitle": "Set for membership checks",
+    "type": "bad",
+    "code": "const selected = transactions.filter(transaction => selectedIds.includes(transaction.id));",
+    "language": "typescript",
+    "description": "includes on an array for every item"
+  },
+  {
+    "ruleId": "js-set-map-lookups",
+    "ruleTitle": "Set for membership checks",
+    "type": "good",
+    "code": "const selectedIdSet = new Set(selectedIds);\nconst selected = transactions.filter(transaction => selectedIdSet.has(transaction.id));",
+    "language": "typescript",
+    "description": "Set membership"
+  },
+  {
+    "ruleId": "js-tosorted-immutable",
+    "ruleTitle": "Never sort shared arrays in place",
+    "type": "bad",
+    "code": "const sortedAccounts = useMemo(\n  () => accounts.sort((left, right) => left.name.localeCompare(right.name)),\n  [accounts]\n);",
+    "language": "tsx",
+    "description": "Sorts the cached query array in place"
+  },
+  {
+    "ruleId": "js-tosorted-immutable",
+    "ruleTitle": "Never sort shared arrays in place",
+    "type": "good",
+    "code": "const sortedAccounts = useMemo(\n  () => accounts.toSorted((left, right) => left.name.localeCompare(right.name)),\n  [accounts]\n);",
+    "language": "tsx",
+    "description": "Sorted copy leaves the cache untouched"
+  },
+  {
+    "ruleId": "rendering-conditional-render",
+    "ruleTitle": "Explicit conditionals with numeric values",
+    "type": "bad",
+    "code": "export function SpentLine({ budget }: { budget: BudgetRow }) {\n  return (\n    <p>\n      {budget.spentMinor && <Amount amountMinor={budget.spentMinor} currency={budget.currency} />}\n    </p>\n  );\n}",
+    "language": "tsx",
+    "description": "Zero amount renders the text 0"
+  },
+  {
+    "ruleId": "rendering-conditional-render",
+    "ruleTitle": "Explicit conditionals with numeric values",
+    "type": "good",
+    "code": "export function SpentLine({ budget }: { budget: BudgetRow }) {\n  return (\n    <p>\n      {budget.spentMinor !== 0 ? (\n        <Amount amountMinor={budget.spentMinor} currency={budget.currency} />\n      ) : null}\n    </p>\n  );\n}",
+    "language": "tsx",
+    "description": "Explicit comparison renders nothing for zero"
+  },
+  {
+    "ruleId": "rendering-hoist-jsx",
+    "ruleTitle": "Hoist static JSX",
+    "type": "bad",
+    "code": "function BudgetList({ budgets }: { budgets: BudgetRow[] }) {\n  return budgets.length > 0 ? (\n    <BudgetRows budgets={budgets} />\n  ) : (\n    <EmptyState title=\"No budgets yet\" />\n  );\n}",
+    "language": "tsx",
+    "description": "Static element recreated on every render"
+  },
+  {
+    "ruleId": "rendering-hoist-jsx",
+    "ruleTitle": "Hoist static JSX",
+    "type": "good",
+    "code": "const NoBudgets = <EmptyState title=\"No budgets yet\" />;\n\nfunction BudgetList({ budgets }: { budgets: BudgetRow[] }) {\n  return budgets.length > 0 ? <BudgetRows budgets={budgets} /> : NoBudgets;\n}",
+    "language": "tsx",
+    "description": "Static element hoisted to module scope"
+  },
+  {
+    "ruleId": "rendering-hydration-no-flicker",
+    "ruleTitle": "Apply stored preferences before paint",
+    "type": "bad",
+    "code": "export function ThemeRoot({ children }: { children: ReactNode }) {\n  const theme = localStorage.getItem(ThemeStorageKey) ?? 'light';\n\n  return <div data-theme={theme}>{children}</div>;\n}",
+    "language": "tsx",
+    "description": "Storage read during render breaks prerendering"
+  },
+  {
+    "ruleId": "rendering-hydration-no-flicker",
+    "ruleTitle": "Apply stored preferences before paint",
+    "type": "bad",
+    "code": "export function ThemeRoot({ children }: { children: ReactNode }) {\n  useEffect(() => {\n    applyTheme(storedTheme());\n  }, []);\n\n  return <>{children}</>;\n}",
+    "language": "tsx",
+    "description": "Theme applied after paint causes a flash"
+  },
+  {
+    "ruleId": "rendering-hydration-no-flicker",
+    "ruleTitle": "Apply stored preferences before paint",
+    "type": "good",
+    "code": "const ThemeBootScript = `(() => {\n  try {\n    const theme = localStorage.getItem('${ThemeStorageKey}') ?? 'light';\n    const prefersDark = window.matchMedia('${DarkSchemeQuery}').matches;\n    const isDark = theme === 'dark' || (theme === 'system' && prefersDark);\n    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';\n  } catch {\n    document.documentElement.dataset.theme = 'light';\n  }\n})();`;\n\nexport default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {\n  return (\n    <html lang=\"en\" suppressHydrationWarning>\n      <head>\n        <script dangerouslySetInnerHTML={{ __html: ThemeBootScript }} />\n      </head>\n      <body className={dmSans.variable}>{children}</body>\n    </html>\n  );\n}",
+    "language": "tsx",
+    "description": "Pre-paint script sets the theme on html"
+  },
+  {
+    "ruleId": "rendering-hydration-suppress-warning",
+    "ruleTitle": "Client-only values after hydration",
+    "type": "bad",
+    "code": "export function SessionLastUsed({ session }: { session: Session }) {\n  return <Text as=\"span\">Last active {new Date(session.lastUsedAt).toLocaleString()}</Text>;\n}",
+    "language": "tsx",
+    "description": "Locale time rendered during prerender and hydration"
+  },
+  {
+    "ruleId": "rendering-hydration-suppress-warning",
+    "ruleTitle": "Client-only values after hydration",
+    "type": "good",
+    "code": "export function SessionLastUsed({ session }: { session: Session }) {\n  const hydrated = useHydrated();\n\n  return (\n    <Text as=\"span\">\n      Last active {hydrated ? new Date(session.lastUsedAt).toLocaleString() : null}\n    </Text>\n  );\n}",
+    "language": "tsx",
+    "description": "Client-only value shown after hydration"
+  },
+  {
+    "ruleId": "rerender-defer-reads",
+    "ruleTitle": "Do not subscribe to state read only in handlers",
+    "type": "bad",
+    "code": "export function ExportButton({ rows }: { rows: TransactionRow[] }) {\n  const searchParams = useSearchParams();\n\n  return (\n    <Button onClick={() => exportTransactions(rows, searchParams.get('account'))}>\n      Export CSV\n    </Button>\n  );\n}",
+    "language": "tsx",
+    "description": "Subscribes to search params only read on click"
+  },
+  {
+    "ruleId": "rerender-defer-reads",
+    "ruleTitle": "Do not subscribe to state read only in handlers",
+    "type": "good",
+    "code": "export function ExportButton({ rows }: { rows: TransactionRow[] }) {\n  const exportCurrentView = () =>\n    exportTransactions(rows, new URLSearchParams(window.location.search).get('account'));\n\n  return <Button onClick={exportCurrentView}>Export CSV</Button>;\n}",
+    "language": "tsx",
+    "description": "Reads the URL inside the handler"
+  },
+  {
+    "ruleId": "rerender-dependencies",
+    "ruleTitle": "Primitive effect dependencies",
+    "type": "bad",
+    "code": "useEffect(() => {\n  document.title = `${account.name} · CoinKeeper`;\n}, [account]);",
+    "language": "tsx",
+    "description": "Effect depends on the whole account object"
+  },
+  {
+    "ruleId": "rerender-dependencies",
+    "ruleTitle": "Primitive effect dependencies",
+    "type": "good",
+    "code": "useEffect(() => {\n  document.title = `${account.name} · CoinKeeper`;\n}, [account.name]);",
+    "language": "tsx",
+    "description": "Effect depends on the primitive it uses"
+  },
+  {
+    "ruleId": "rerender-derived-state",
+    "ruleTitle": "Subscribe to derived booleans",
+    "type": "bad",
+    "code": "export function Navigation({ children }: { children: ReactNode }) {\n  const width = useWindowWidth();\n\n  return (\n    <nav\n      className={width < TABLET_LANDSCAPE_WIDTH ? 'navigation navigation--compact' : 'navigation'}\n    >\n      {children}\n    </nav>\n  );\n}",
+    "language": "tsx",
+    "description": "Re-renders on every pixel of width"
+  },
+  {
+    "ruleId": "rerender-derived-state",
+    "ruleTitle": "Subscribe to derived booleans",
+    "type": "good",
+    "code": "export function Navigation({ children }: { children: ReactNode }) {\n  const isCompact = useMediaQuery(CompactNavigationQuery);\n\n  return <nav className={cn('navigation', { 'navigation--compact': isCompact })}>{children}</nav>;\n}",
+    "language": "tsx",
+    "description": "Subscribes to the boolean only"
+  },
+  {
+    "ruleId": "rerender-derived-state-no-effect",
+    "ruleTitle": "Derive state during render",
+    "type": "bad",
+    "code": "const [remainingMinor, setRemainingMinor] = useState(0);\n\nuseEffect(() => {\n  setRemainingMinor(budget.amountMinor - budget.spentMinor);\n}, [budget.amountMinor, budget.spentMinor]);",
+    "language": "tsx",
+    "description": "Derived value mirrored into state by an effect"
+  },
+  {
+    "ruleId": "rerender-derived-state-no-effect",
+    "ruleTitle": "Derive state during render",
+    "type": "good",
+    "code": "const remainingMinor = budget.amountMinor - budget.spentMinor;",
+    "language": "tsx",
+    "description": "Derived during render"
+  },
+  {
+    "ruleId": "rerender-functional-setstate",
+    "ruleTitle": "Functional setState updates",
+    "type": "bad",
+    "code": "const [selectedIds, setSelectedIds] = useState<string[]>([]);\n\nconst toggleSelected = useCallback(\n  (id: string) =>\n    setSelectedIds(\n      selectedIds.includes(id)\n        ? selectedIds.filter(selectedId => selectedId !== id)\n        : [...selectedIds, id]\n    ),\n  [selectedIds]\n);",
+    "language": "tsx",
+    "description": "Callback depends on the state it updates"
+  },
+  {
+    "ruleId": "rerender-functional-setstate",
+    "ruleTitle": "Functional setState updates",
+    "type": "good",
+    "code": "const [selectedIds, setSelectedIds] = useState<string[]>([]);\n\nconst toggleSelected = useCallback(\n  (id: string) =>\n    setSelectedIds(currentIds =>\n      currentIds.includes(id)\n        ? currentIds.filter(selectedId => selectedId !== id)\n        : [...currentIds, id]\n    ),\n  []\n);",
+    "language": "tsx",
+    "description": "Updater form keeps the callback stable"
+  },
+  {
+    "ruleId": "rerender-lazy-state-init",
+    "ruleTitle": "Lazy state initialization",
+    "type": "bad",
+    "code": "const [columnMapping, setColumnMapping] = useState(guessMapping(parseCsv(csv).headers));",
+    "language": "tsx",
+    "description": "CSV parsed on every render"
+  },
+  {
+    "ruleId": "rerender-lazy-state-init",
+    "ruleTitle": "Lazy state initialization",
+    "type": "good",
+    "code": "const [columnMapping, setColumnMapping] = useState(() => guessMapping(parseCsv(csv).headers));",
+    "language": "tsx",
+    "description": "Initializer function runs once"
+  },
+  {
+    "ruleId": "rerender-memo",
+    "ruleTitle": "Extract expensive work into memoized components",
+    "type": "bad",
+    "code": "export function OverspendPanel({\n  budgets,\n  isPending,\n}: {\n  budgets: BudgetRow[];\n  isPending: boolean;\n}) {\n  const ranking = useMemo(() => rankByOverspend(budgets), [budgets]);\n\n  if (isPending) return <Spinner />;\n\n  return <RankingList ranking={ranking} />;\n}",
+    "language": "tsx",
+    "description": "Ranking computed even while loading"
+  },
+  {
+    "ruleId": "rerender-memo",
+    "ruleTitle": "Extract expensive work into memoized components",
+    "type": "good",
+    "code": "const OverspendRanking = memo(function OverspendRanking({ budgets }: { budgets: BudgetRow[] }) {\n  return <RankingList ranking={rankByOverspend(budgets)} />;\n});\n\nexport function OverspendPanel({\n  budgets,\n  isPending,\n}: {\n  budgets: BudgetRow[];\n  isPending: boolean;\n}) {\n  if (isPending) return <Spinner />;\n\n  return <OverspendRanking budgets={budgets} />;\n}",
+    "language": "tsx",
+    "description": "Memoized child skipped by the early return"
+  },
+  {
+    "ruleId": "rerender-memo-with-default-value",
+    "ruleTitle": "Hoist default props of memoized components",
+    "type": "bad",
+    "code": "const AccountRow = memo(function AccountRow({\n  onSelect = () => undefined,\n}: {\n  onSelect?: () => void;\n}) {\n  return <ListRow onClick={onSelect} />;\n});",
+    "language": "tsx",
+    "description": "Inline default breaks memo"
+  },
+  {
+    "ruleId": "rerender-memo-with-default-value",
+    "ruleTitle": "Hoist default props of memoized components",
+    "type": "good",
+    "code": "const ignoreSelect = (): void => undefined;\n\nconst AccountRow = memo(function AccountRow({\n  onSelect = ignoreSelect,\n}: {\n  onSelect?: () => void;\n}) {\n  return <ListRow onClick={onSelect} />;\n});",
+    "language": "tsx",
+    "description": "Default hoisted to a named constant"
+  },
+  {
+    "ruleId": "rerender-move-effect-to-event",
+    "ruleTitle": "Put interaction logic in event handlers",
+    "type": "bad",
+    "code": "export function ApplyRulesButton() {\n  const [submitted, setSubmitted] = useState(false);\n\n  useEffect(() => {\n    if (submitted) void applyRules().then(() => toast.success('Rules applied'));\n  }, [submitted]);\n\n  return <Button onClick={() => setSubmitted(true)}>Apply rules</Button>;\n}",
+    "language": "tsx",
+    "description": "Action modeled as state plus effect"
+  },
+  {
+    "ruleId": "rerender-move-effect-to-event",
+    "ruleTitle": "Put interaction logic in event handlers",
+    "type": "good",
+    "code": "export function ApplyRulesButton() {\n  const apply = useEntityMutation({\n    mutationFn: applyRules,\n    successMessage: result => `${result.updated} entries categorized`,\n  });\n\n  return (\n    <Button disabled={apply.isPending} onClick={() => apply.mutate()}>\n      Apply rules\n    </Button>\n  );\n}",
+    "language": "tsx",
+    "description": "Mutation fired from the handler"
+  },
+  {
+    "ruleId": "rerender-no-inline-components",
+    "ruleTitle": "Define components at module scope",
+    "type": "bad",
+    "code": "export function AccountCard({ account }: { account: AccountSummary }) {\n  const Balance = () => <Amount amountMinor={account.balanceMinor} currency={account.currency} />;\n\n  return (\n    <Panel title={account.name}>\n      <Balance />\n    </Panel>\n  );\n}",
+    "language": "tsx",
+    "description": "Component declared inside a component"
+  },
+  {
+    "ruleId": "rerender-no-inline-components",
+    "ruleTitle": "Define components at module scope",
+    "type": "good",
+    "code": "function AccountBalance({ account }: { account: AccountSummary }) {\n  return <Amount amountMinor={account.balanceMinor} currency={account.currency} />;\n}\n\nexport function AccountCard({ account }: { account: AccountSummary }) {\n  return (\n    <Panel title={account.name}>\n      <AccountBalance account={account} />\n    </Panel>\n  );\n}",
+    "language": "tsx",
+    "description": "Module-level component with props"
+  },
+  {
+    "ruleId": "rerender-simple-expression-in-memo",
+    "ruleTitle": "No useMemo for simple primitives",
+    "type": "bad",
+    "code": "const isLoading = useMemo(\n  () => accounts.isPending || budgets.isPending,\n  [accounts.isPending, budgets.isPending]\n);",
+    "language": "tsx",
+    "description": "useMemo around a boolean expression"
+  },
+  {
+    "ruleId": "rerender-simple-expression-in-memo",
+    "ruleTitle": "No useMemo for simple primitives",
+    "type": "good",
+    "code": "const isLoading = accounts.isPending || budgets.isPending;",
+    "language": "tsx",
+    "description": "Plain expression"
+  },
+  {
+    "ruleId": "rerender-split-combined-hooks",
+    "ruleTitle": "Split combined hook computations",
+    "type": "bad",
+    "code": "const visibleRows = useMemo(\n  () =>\n    rows\n      .filter(row => row.currency === currency)\n      .toSorted((left, right) =>\n        sortOrder === 'ascending'\n          ? left.amountMinor - right.amountMinor\n          : right.amountMinor - left.amountMinor\n      ),\n  [rows, currency, sortOrder]\n);",
+    "language": "tsx",
+    "description": "Changing the sort order re-filters"
+  },
+  {
+    "ruleId": "rerender-split-combined-hooks",
+    "ruleTitle": "Split combined hook computations",
+    "type": "good",
+    "code": "const AmountComparators: Record<SortOrder, (left: BudgetRow, right: BudgetRow) => number> = {\n  ascending: (left, right) => left.amountMinor - right.amountMinor,\n  descending: (left, right) => right.amountMinor - left.amountMinor,\n};\n\nconst currencyRows = useMemo(() => rows.filter(row => row.currency === currency), [rows, currency]);\nconst visibleRows = useMemo(\n  () => currencyRows.toSorted(AmountComparators[sortOrder]),\n  [currencyRows, sortOrder]\n);",
+    "language": "tsx",
+    "description": "Filter and sort memoized separately"
+  },
+  {
+    "ruleId": "rerender-split-combined-hooks",
+    "ruleTitle": "Split combined hook computations",
+    "type": "bad",
+    "code": "useEffect(() => {\n  document.title = `${pageTitle} · CoinKeeper`;\n  window.scrollTo({ top: 0 });\n}, [pageTitle, pathname]);",
+    "language": "tsx",
+    "description": "One effect for two unrelated side effects"
+  },
+  {
+    "ruleId": "rerender-split-combined-hooks",
+    "ruleTitle": "Split combined hook computations",
+    "type": "good",
+    "code": "useEffect(() => {\n  document.title = `${pageTitle} · CoinKeeper`;\n}, [pageTitle]);\n\nuseEffect(() => {\n  window.scrollTo({ top: 0 });\n}, [pathname]);",
+    "language": "tsx",
+    "description": "One effect per side effect"
+  },
+  {
+    "ruleId": "rerender-transitions",
+    "ruleTitle": "Transitions for non-urgent updates",
+    "type": "bad",
+    "code": "const [month, setMonth] = useState(currentMonth());\n\n<MonthPicker month={month} onChange={setMonth} />;",
+    "language": "tsx",
+    "description": "Month switch re-renders the whole overview urgently"
+  },
+  {
+    "ruleId": "rerender-transitions",
+    "ruleTitle": "Transitions for non-urgent updates",
+    "type": "good",
+    "code": "const [month, setMonth] = useState(currentMonth());\nconst [isSwitching, startSwitching] = useTransition();\n\n<MonthPicker month={month} onChange={nextMonth => startSwitching(() => setMonth(nextMonth))} />;",
+    "language": "tsx",
+    "description": "Month switch marked as a transition"
+  },
+  {
+    "ruleId": "rerender-use-deferred-value",
+    "ruleTitle": "useDeferredValue for expensive derived renders",
+    "type": "bad",
+    "code": "const [search, setSearch] = useState('');\nconst filtered = transactions.filter(transaction => matchesSearch(transaction, search));\n\nreturn <TransactionTable transactions={filtered} />;",
+    "language": "tsx",
+    "description": "Every keystroke filters all transactions synchronously"
+  },
+  {
+    "ruleId": "rerender-use-deferred-value",
+    "ruleTitle": "useDeferredValue for expensive derived renders",
+    "type": "good",
+    "code": "const [search, setSearch] = useState('');\nconst deferredSearch = useDeferredValue(search);\nconst filtered = useMemo(\n  () => transactions.filter(transaction => matchesSearch(transaction, deferredSearch)),\n  [transactions, deferredSearch]\n);\nconst isStale = search !== deferredSearch;\n\nreturn (\n  <div\n    className={cn('transaction-explorer__results', {\n      'transaction-explorer__results--stale': isStale,\n    })}\n  >\n    <TransactionTable transactions={filtered} />\n  </div>\n);",
+    "language": "tsx",
+    "description": "Deferred search with a stale modifier"
+  }
+]

@@ -1,0 +1,90 @@
+// @vitest-environment node
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+
+import { createTestApp, signUp, TestClient, TestContext } from '@/test/app';
+
+let context: TestContext;
+let ada: TestClient;
+let bob: TestClient;
+
+type Group = {
+  categories: { id: string; name: string }[];
+  id: string;
+  name: string;
+};
+
+const categoryId = async (client: TestClient, name: string) =>
+  ((await client.request('GET', '/category-groups')).json().items as Group[])
+    .flatMap(group => group.categories)
+    .find(category => category.name === name)!.id;
+
+beforeAll(async () => {
+  context = await createTestApp();
+}, 30000);
+afterAll(async () => {
+  await context.close();
+});
+beforeEach(async () => {
+  await context.database.reset();
+  ada = await signUp(context.app, 'ada@example.com');
+  bob = await signUp(context.app, 'bob@example.com');
+});
+
+describe('budgets', () => {
+  it('creates a limit and lists it for its month only', async () => {
+    const groceries = await categoryId(ada, 'Groceries');
+    const created = await ada.request('PUT', `/budgets/2026-09/${groceries}/EUR`, {
+      amount: '300',
+    });
+
+    expect(created.statusCode).toBe(201);
+    expect((await ada.request('GET', '/budgets?month=2026-09')).json().items).toHaveLength(1);
+    expect((await ada.request('GET', '/budgets?month=2026-10')).json().items).toEqual([]);
+  });
+
+  it('rejects a zero limit and hides budgets from other users', async () => {
+    const groceries = await categoryId(ada, 'Groceries');
+    const created = await ada.request('PUT', `/budgets/2026-09/${groceries}/EUR`, {
+      amount: '120',
+    });
+
+    expect(
+      (await ada.request('PUT', `/budgets/2026-09/${groceries}/EUR`, { amount: '0' })).statusCode
+    ).toBe(400);
+    expect((await bob.request('GET', '/budgets?month=2026-09')).json().items).toEqual([]);
+    expect((await bob.request('DELETE', `/budgets/${created.json().id}`)).statusCode).toBe(404);
+  });
+});
+
+describe('copying across a year boundary', () => {
+  let fresh: TestContext;
+  let carol: TestClient;
+
+  beforeAll(async () => {
+    fresh = await createTestApp();
+    carol = await signUp(fresh.app, 'carol@example.com');
+  }, 30000);
+  afterAll(() => fresh.close);
+
+  it('stores the December limits', async () => {
+    const groceries = await categoryId(carol, 'Groceries');
+    const rent = await categoryId(carol, 'Rent / Mortgage');
+
+    expect(
+      (await carol.request('PUT', `/budgets/2026-12/${groceries}/EUR`, { amount: '400' }))
+        .statusCode
+    ).toBe(201);
+    expect(
+      (await carol.request('PUT', `/budgets/2026-12/${rent}/EUR`, { amount: '900' })).statusCode
+    ).toBe(201);
+  });
+
+  it('copies December into January of the next year', async () => {
+    const copied = await carol.request('POST', '/budgets/copy-previous-month', {
+      month: '2027-01',
+    });
+
+    expect(copied.json()).toEqual({ copied: 2 });
+    expect((await carol.request('GET', '/budgets?month=2027-01')).json().items).toHaveLength(2);
+  });
+});

@@ -1,0 +1,89 @@
+{
+  "skill_name": "database-change",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add 'pension' as an account type. Existing investment accounts whose name mentions pension (any case) should become pension accounts in the same deploy, so people see them correctly right away. Write the schema change and the migration(s).",
+      "expected_output": "The value is added to AccountTypeValues in packages/shared/src/schema/enums.ts (which feeds the account_type pgEnum) and generated as ALTER TYPE ... ADD VALUE. The reclassification UPDATE is not in the same migrator run: the Drizzle migrator applies every pending migration in one transaction, and PostgreSQL rejects a new enum value until the ADD VALUE commits ('unsafe use of new value'), so two migration files shipped together still fail on the live database. The answer ships the UPDATE in a later release, or runs it outside the migrator after the migration committed, and says the 'same deploy' wish cannot be met inside the migrator. Trap: the test suite stays green either way, because on a fresh PGlite database the enum type is created in the same transaction, which PostgreSQL allows. The raw UPDATE sets updated_at = now(), and the hand-written file is created with drizzle-kit --custom in the API workspace. Skill-only: #2 and #3 (SKILL.md facts, references/migrations.md single-transaction trap table), #4 (SKILL.md facts: $onUpdate), #5 (references/migrations.md Hand-written SQL: the root script does not forward flags).",
+      "files": [],
+      "assertions": [
+        "The new value is added to AccountTypeValues in packages/shared/src/schema/enums.ts (the source of the account_type pgEnum and the Zod contract), and the migration adds it with ALTER TYPE \"account_type\" ADD VALUE 'pension'",
+        "The statement that sets type = 'pension' on existing rows runs in a later transaction than the ADD VALUE: a later release (a separate migrator run) or a script run after the migration has committed. Two migration files applied in the same deploy do not count, and neither does an ADD VALUE and an UPDATE in one file",
+        "The answer explains why: the migrator applies all pending migrations in a single transaction, and PostgreSQL does not allow a newly added enum value to be used until the transaction that added it commits",
+        "The reclassification SQL is raw SQL that sets updated_at = now() itself (the $onUpdate hook only fires for Drizzle .update()), or it is done through Drizzle's .update() builder, where the hook fires; it is limited to type = 'investment' rows and matches the name case-insensitively (ILIKE, lower() or equivalent)",
+        "Any hand-written migration file is created by Drizzle Kit's custom mode run in the API workspace (for example npm run db:generate -w @coinkeeper/api -- --custom --name <name>, or drizzle-kit generate --custom from apps/api), not by passing flags to the root npm run db:generate, which does not forward them, and not by writing the journal entry by hand"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Accounts need a mandatory 'institution' field from now on. Make accounts.institution NOT NULL on the production database without downtime.",
+      "expected_output": "An expand/contract plan across at least two releases: backfill and CHECK (institution IS NOT NULL) NOT VALID in a custom migration, then VALIDATE, SET NOT NULL and drop the check in a later release, each migration starting with SET LOCAL lock_timeout, with the Zod contract and tests updated. Skill-only: #1's reason (the migrator's single transaction), #3 (--custom run in the API workspace; the root script does not forward flags) and #4 (drizzle-kit check), from references/migrations.md.",
+      "files": [],
+      "assertions": [
+        "The plan splits the change across at least two releases (separate migrator runs) and gives the reason: the migrator applies all pending migrations in one transaction, so adding the NOT VALID check and validating it in the same deploy keeps the ADD's strong lock during the validation scan",
+        "Existing NULL institutions are backfilled before the constraint is added, then a CHECK (institution IS NOT NULL) NOT VALID constraint is added, and a later release runs VALIDATE CONSTRAINT before ALTER COLUMN ... SET NOT NULL (dropping the check afterwards)",
+        "Hand-written SQL gets its journal entry and snapshot from Drizzle Kit run in the API workspace: npm run db:generate -w @coinkeeper/api -- --custom --name <name>, or a constraint declared in schema.ts and generated in that workspace. The answer does not pass --custom or --name to the root npm run db:generate, which does not forward them",
+        "Verification includes drizzle-kit check in the API workspace (npm exec -w @coinkeeper/api -- drizzle-kit check or equivalent) as well as npm run db:migrate and npm run db:check",
+        "Every migration that alters accounts starts with SET LOCAL lock_timeout",
+        "The account input contract in packages/shared/src/schema/accounts.ts makes institution required, and schema.ts gains .notNull() in the release that runs SET NOT NULL, not before"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The budgets page is slow for users with several currencies and reordering 80 categories fires 80 UPDATEs. Fix both in the services.",
+      "expected_output": "spentByCategory in apps/api/src/modules/budgets/service.ts becomes one grouped query over every needed currency, built on spendingWhere and grouped by currency; reorderCategories becomes one statement (UPDATE ... FROM (VALUES ...), a CASE expression, or an equivalent single-statement batch) with an integer sort order, updated_at handled, user scoping and a foreign-id check, plus PGlite tests. Skill-only: #4 for raw-SQL designs (SKILL.md facts: $onUpdate), #6 (SKILL.md Verify and references/query-plans.md: EXPLAIN (ANALYZE, BUFFERS) before and after for performance work).",
+      "files": [],
+      "assertions": [
+        "Budget spending for all the page's currencies comes from one query built on spendingWhere from apps/api/src/modules/reports/service.ts (not a copied predicate), grouped by currency so nothing is summed across currencies; if the query filters by a currency list, an empty list is handled before building IN (...) or ANY(...)",
+        "The reorder writes every sort order in one statement (UPDATE ... FROM (VALUES ...), a CASE expression, or an equivalent single-statement batch) instead of one UPDATE per id, and the position reaches PostgreSQL as an integer (explicit cast where untyped parameters would otherwise be text)",
+        "The reorder is scoped by user_id and rejects ids the user does not own with notFound, using a count of owned ids or the RETURNING rows, not the driver's affected-row count",
+        "If the reorder is raw SQL, it sets updated_at = now() explicitly because $onUpdate only runs for Drizzle .update(); a query-builder .update() may rely on $onUpdate",
+        "Tests cover a multi-currency budget month and a reorder with another user's category id (not found)",
+        "The answer backs the performance claim with before and after evidence for the pull request: EXPLAIN (ANALYZE, BUFFERS) of the new query and/or the number of statements per request on seeded volume, or gives the exact commands to capture it"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "This morning's deploy included the needs-review index migration. The migrate container exited 0, but npm run db:check against production fails, and running npm run db:migrate again changes nothing. CI and the tests are green. The files are provided: `.claude/skills/database-change/evals/files/journal-after-rebase.json.txt` is our `apps/api/drizzle/meta/_journal.json`, `.claude/skills/database-change/evals/files/0002_transactions_needs_review_idx.sql.txt` is `apps/api/drizzle/0002_transactions_needs_review_idx.sql`, and `.claude/skills/database-change/evals/files/deploy-session.log.txt` is my terminal session. What went wrong, and how do I fix it so production gets the index?",
+      "expected_output": "Diagnosis: 0002's journal 'when' (1790331712905) is older than 0001's (1790418953120), because the file was renumbered by hand after a rebase and kept its original timestamp. The migrator reads the newest created_at in drizzle.__drizzle_migrations and applies only entries whose 'when' is greater, so it skipped 0002 silently; fresh databases (PGlite tests, CI) apply everything, so nothing failed there. The 0002 snapshot also points at 0000's id, so it collides with 0001. Fix: give 0002 a 'when' greater than every applied entry and repoint its snapshot prevId at 0001's id (or delete the hand-renumbered files and regenerate the migration on top of main), without touching the applied migrations; verify with drizzle-kit check in the API workspace (it warns about both problems), then db:migrate and db:check on production. Skill-only: #1 (SKILL.md facts: the migrator compares only against the newest applied migration), #4 (references/migrations.md Hand-written SQL: prevId chain), #5 (drizzle-kit check).",
+      "files": [
+        ".claude/skills/database-change/evals/files/journal-after-rebase.json.txt",
+        ".claude/skills/database-change/evals/files/0002_transactions_needs_review_idx.sql.txt",
+        ".claude/skills/database-change/evals/files/deploy-session.log.txt"
+      ],
+      "assertions": [
+        "Root cause: the 0002 entry's 'when' is older than 0001's, and the migrator applies only entries whose 'when' is greater than the newest created_at recorded in drizzle.__drizzle_migrations, so 0002 was skipped without any error (2 of 3 recorded)",
+        "It explains why the tests and CI stayed green: they migrate an empty database (PGlite), where every journal entry is applied regardless of timestamp order",
+        "The fix makes 0002 apply on production: its 'when' becomes greater than every applied entry (or the migration is regenerated as a new entry on top of main), and the already-applied migrations 0000 and 0001 are left unchanged",
+        "It notices that 0001_snapshot.json and 0002_snapshot.json both have 0000's id as prevId and repairs the chain (0002's prevId becomes 0001's id, or the snapshot is regenerated by Drizzle Kit)",
+        "Verification runs drizzle-kit check in the API workspace, which reports out-of-order timestamps and snapshot collisions, then npm run db:migrate and npm run db:check against production, expecting 3/3 migrations recorded and a matching schema"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Store transaction amounts as numeric(12,2) so we can hold cents exactly, and hard-delete transactions older than 7 years: the table keeps growing and the transactions page is getting slower.",
+      "expected_output": "Declines both changes: amounts are already exact as signed integer minor units in a bigint column next to the row's currency code, and financial rows are soft-deleted, never DELETEd; both are core rules that change only on explicit request with docs and tests. For the slowness, it measures before changing anything and proposes index work that matches the list query. Skill-only: #4 (SKILL.md workflow step 4, references/query-plans.md), #5 (references/indexes.md: column order with keyset tie-breakers, partial index on the live-row predicate).",
+      "files": [],
+      "assertions": [
+        "Declines changing the amount column to numeric and explains that amounts are already stored exactly as signed integers in the currency's minor unit (a bigint column) alongside a three-letter currency code, which also covers currencies with 0 or 3 decimals",
+        "Declines hard-deleting transactions and explains that financial rows are soft-deleted (a deletion timestamp that live queries exclude) and never removed with DELETE, including in data migrations",
+        "States that both are core rules that change only on an explicit request, with the docs and tests that state them updated (CLAUDE.md rule 6 or agents/architecture.md)",
+        "For the slowness, it proposes measuring first: EXPLAIN (ANALYZE, BUFFERS) of the transactions list query on realistic volume (seeded throwaway data or production), before any schema or index change",
+        "It proposes an index remedy tied to the list query's shape: columns in filter-then-keyset order (user_id, date, created_at, id), and/or a partial index whose predicate matches the live-row filter deleted_at IS NULL, to be confirmed with the plan"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "I want to find out which SQL statements eat the most time on our production database. Turn on pg_stat_statements and tell me what to run to see the worst offenders.",
+      "expected_output": "Postgres is started with shared_preload_libraries=pg_stat_statements (a command or config change on the compose postgres service, then a restart); the extension is created once with psql against the live database, not in a Drizzle migration, because every migration also runs on PGlite in the tests and PGlite does not provide pg_stat_statements; the top-statements query orders by total_exec_time; pg_stat_statements_reset() between experiments; and a top statement is followed up with EXPLAIN (ANALYZE, BUFFERS) using real parameters. Skill-only: #2 (references/query-plans.md section 6: not in a migration because of PGlite).",
+      "files": [],
+      "assertions": [
+        "Postgres itself is configured to preload the library (shared_preload_libraries including pg_stat_statements, for example a command: postgres -c ... on the compose postgres service or a postgresql.conf change), and the answer says Postgres must be restarted",
+        "The extension is created once against the live database (psql or an operations script), not with an unconditional CREATE EXTENSION in a Drizzle migration under apps/api/drizzle, because the test suite applies every migration to PGlite, which does not provide pg_stat_statements",
+        "The top-statements query ranks by total_exec_time and shows calls, mean execution time, rows and the query text, using the PostgreSQL 13+ column names (total_exec_time, mean_exec_time), not total_time or mean_time",
+        "It explains that the counters are cumulative and shows pg_stat_statements_reset() to start a clean measurement",
+        "It says how to dig into a top statement: EXPLAIN (ANALYZE, BUFFERS) with real parameter values (literals or PREPARE ... EXECUTE), noting that ANALYZE executes the statement so writes belong in BEGIN ... ROLLBACK"
+      ]
+    }
+  ]
+}

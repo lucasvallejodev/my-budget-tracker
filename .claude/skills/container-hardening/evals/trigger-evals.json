@@ -1,0 +1,41 @@
+[
+  {
+    "query": "the api container takes ten seconds to stop, can you fix the Dockerfile",
+    "should_trigger": true
+  },
+  {
+    "query": "pin our base images by digest and make sure Dependabot keeps the digests updated",
+    "should_trigger": true
+  },
+  {
+    "query": "harden docker-compose for production: read-only, drop caps, memory limits",
+    "should_trigger": true
+  },
+  {
+    "query": "add a Caddy reverse proxy with HTTPS in front of the web container",
+    "should_trigger": true
+  },
+  {
+    "query": "our workflows use actions@v4 tags and have no permissions block, lock them down",
+    "should_trigger": true
+  },
+  { "query": "build both docker images in CI and scan them with trivy", "should_trigger": true },
+  {
+    "query": "add a readiness endpoint to the Fastify API that checks the database",
+    "should_trigger": false
+  },
+  {
+    "query": "set statement_timeout on the pg pool and add a partial index on deleted_at",
+    "should_trigger": false
+  },
+  {
+    "query": "the playwright workflow is flaky in CI, make the e2e tests stable",
+    "should_trigger": false
+  },
+  {
+    "query": "review the new session code in apps/api/src/auth for security issues",
+    "should_trigger": false
+  },
+  { "query": "add Pino log redaction for cookies in the API", "should_trigger": false },
+  { "query": "/security-review", "should_trigger": false }
+]

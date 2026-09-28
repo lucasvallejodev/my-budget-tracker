@@ -1,0 +1,87 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+
+import {
+  Amount,
+  Badge,
+  Button,
+  EmptyState,
+  ListRow,
+  Panel,
+  QueryContent,
+  Stack,
+} from '@/components/ui';
+
+import { exportBudgets } from '../export-budgets';
+import { BudgetRow, useBudgets, useSettings } from '../use-finance-data';
+
+const TopOverspendCount = 5;
+
+const overspendOf = (budget: BudgetRow) => budget.spentMinor - budget.amountMinor;
+
+export function OverspendPanel({ month }: { month: string }) {
+  const budgets = useBudgets(month);
+  const settings = useSettings();
+  const searchParams = useSearchParams();
+  const [overspentCount, setOverspentCount] = useState(0);
+  const primaryCurrency = settings.data?.primaryCurrency;
+
+  const isLoading = useMemo(
+    () => budgets.isPending || settings.isPending,
+    [budgets.isPending, settings.isPending]
+  );
+
+  const ranked = useMemo(
+    () =>
+      (budgets.data ?? [])
+        .sort((left, right) => overspendOf(right) - overspendOf(left))
+        .filter(budget => budget.currency === primaryCurrency)
+        .slice(0, TopOverspendCount),
+    [budgets.data, primaryCurrency]
+  );
+
+  useEffect(() => {
+    setOverspentCount(ranked.filter(budget => overspendOf(budget) > 0).length);
+  }, [ranked]);
+
+  const OverspendRow = ({ budget }: { budget: BudgetRow }) => (
+    <ListRow title={budget.categoryName} description={budget.groupName}>
+      {budget.spentMinor && <Amount amountMinor={budget.spentMinor} currency={budget.currency} />}
+      {overspendOf(budget) > 0 && <Badge tone="danger">Over</Badge>}
+    </ListRow>
+  );
+
+  return (
+    <Panel
+      title="Biggest overspends"
+      action={
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => exportBudgets(ranked, searchParams.get('currency'))}
+        >
+          Export
+        </Button>
+      }
+    >
+      <QueryContent
+        pending={isLoading}
+        loading="Loading budgets…"
+        empty={!ranked.length && <EmptyState title="No budgets this month" />}
+      >
+        {() => (
+          <Stack>
+            <Badge tone={overspentCount > 0 ? 'danger' : 'success'}>
+              {overspentCount} over budget
+            </Badge>
+            {ranked.map(budget => (
+              <OverspendRow key={budget.id} budget={budget} />
+            ))}
+          </Stack>
+        )}
+      </QueryContent>
+    </Panel>
+  );
+}

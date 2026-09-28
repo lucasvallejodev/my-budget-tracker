@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    command: ['postgres', '-c', 'log_min_duration_statement=500']
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-budget_tracker}
+      POSTGRES_USER: ${POSTGRES_USER:-budget_tracker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - budget-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-network
+
+  migrate:
+    profiles: ['app']
+    build: &api-build
+      context: .
+      target: api
+    command: ['node', 'dist/cli/migrate.js']
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-budget_tracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-budget_tracker}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: 'no'
+    networks:
+      - app-network
+
+  api:
+    profiles: ['app']
+    build: *api-build
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-budget_tracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-budget_tracker}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      SESSION_DAYS: ${SESSION_DAYS:-30}
+      AUTH_ATTEMPTS_PER_MINUTE: ${AUTH_ATTEMPTS_PER_MINUTE:-10}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  web:
+    profiles: ['app']
+    build:
+      context: .
+      target: web
+      args:
+        API_URL: http://api:4000
+    ports:
+      - '${WEB_BIND_ADDRESS:-127.0.0.1}:3000:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  budget-postgres-data:
+
+networks:
+  app-network:
+    driver: bridge

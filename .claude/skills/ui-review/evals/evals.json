@@ -1,0 +1,64 @@
+{
+  "skill_name": "ui-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review the notification settings panel for accessibility and UI quality before I ship it. My current version is provided at `.claude/skills/ui-review/evals/files/settings-panels.tsx.txt`; treat it as `apps/web/src/components/finance/settings-view/settings-panels.tsx` (the rest of the settings screen is in the repo as usual).",
+      "expected_output": "A report grouped under the Blocker / Serious / Moderate / Minor scale with one `path:line - criterion - problem → fix` line per finding, line numbers taken from the fixture (identical to settings-panels.tsx): Title Case copy ('Delivery Method' and 'Active Sessions' headings, 'Email Only' style channel labels) flagged as Minor with sentence-case fixes; fixes in house vocabulary (tokens, BEM, mixins); a Not verified section for keyboard, 320 px and theme checks if the app was not run. Skill-only: #1 and #2 (SKILL.md › Severity and Output format), #4 (SKILL.md Workflow step 3 and Output format: unrun checks go under Not verified).",
+      "files": [".claude/skills/ui-review/evals/files/settings-panels.tsx.txt"],
+      "assertions": [
+        "Findings are grouped under headings from the scale Blocker, Serious, Moderate, Minor (empty levels may be omitted), not under another scale such as High/Medium/Low or a free-form list",
+        "Every finding is one line of the form path:line - WCAG criterion or house rule - problem → fix",
+        "A finding names settings-panels.tsx with the line of the Title Case heading 'Delivery Method' (fixture line 214) and gives the sentence-case fix 'Delivery method'",
+        "Runtime checks (keyboard order, 320 px reflow, dark theme) are either reported as actually performed in a browser or listed under a Not verified section; static reasoning is not presented as a passed runtime check",
+        "No fix proposes Tailwind classes, inline styles, or a hex color outside apps/web/src/styles/tokens.scss"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I built a net worth panel for the overview page: a big total that counts up on load, a net worth line and a savings bar chart. The component is provided at `.claude/skills/ui-review/evals/files/net-worth-trend.tsx.txt` and its stylesheet at `.claude/skills/ui-review/evals/files/net-worth-trend.scss.txt`; treat them as `apps/web/src/components/finance/net-worth-trend/net-worth-trend.tsx` and `net-worth-trend.scss`. Review it for accessibility and UI quality before I add it.",
+      "expected_output": "Serious: the total is formatted with Intl.NumberFormat and `/ MinorUnitsPerMajor` (tsx:51,57), which breaks 0- and 3-decimal currencies → formatMoney(shownMinor, currency) or <Amount />. Moderate: the requestAnimationFrame count-up (tsx:24-45) ignores prefers-reduced-motion because the globals.scss rule only switches off CSS animations and transitions → check matchMedia('(prefers-reduced-motion: reduce)') and render the final value at once; the Bar forces isAnimationActive (tsx:83) → drop it so Recharts' default 'auto' honours the preference. The Area chart, which keeps the default, is not a motion finding. `transition: all` (scss:9) → list the properties. Skill-only: #1 (references/checklist.md › Motion: the CSS rule does not reach JavaScript animation; iteration-1 baseline said reduced motion is 'handled globally'), #3 (checklist.md › Motion: Recharts defaults isAnimationActive to 'auto'), #5 (SKILL.md › Severity and Output format).",
+      "files": [
+        ".claude/skills/ui-review/evals/files/net-worth-trend.tsx.txt",
+        ".claude/skills/ui-review/evals/files/net-worth-trend.scss.txt"
+      ],
+      "assertions": [
+        "The requestAnimationFrame count-up (useCountUp) is flagged as ignoring prefers-reduced-motion, and the report makes clear that the reduced-motion rule in globals.scss does not cover it because that rule only disables CSS animations and transitions; the fix shows the final value immediately when the user prefers reduced motion (matchMedia or an equivalent hook)",
+        "The Bar that sets isAnimationActive explicitly is flagged for motion, with a fix that removes the prop (or otherwise makes it follow the reduced-motion preference)",
+        "The report does not flag the Area chart, which leaves isAnimationActive at its default, as ignoring reduced motion (Recharts 3 defaults it to 'auto', which honours the preference)",
+        "The Intl.NumberFormat total divided by MinorUnitsPerMajor is flagged as a money-display defect, rated Serious, with a fix through formatMoney or <Amount /> and a mention that currencies with 0 or 3 decimals are shown wrongly",
+        "Findings are grouped under Blocker / Serious / Moderate / Minor headings, each as path:line - criterion or rule - problem → fix, with line numbers that match the fixture files under the net-worth-trend.tsx / net-worth-trend.scss paths"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Is the budgets page usable on a phone? Check it properly.",
+      "expected_output": "Reviews budget-overview and its children (budget-card, budget-progress, budget-dialog) at 375 px, 320 px (1.4.10 reflow), 768 px and 1440 px, either with the browser tools on a throwaway account or by listing these under Not verified; checks target sizes against 2.5.8, long category names and large amounts at narrow widths, and proposes any layout fix as mobile-first SCSS with media-up and space(). Skill-only: #1 (references/responsive.md › Viewports to check; iteration-1 baseline named only phone widths), #2 and #5 (SKILL.md › Workflow step 3, Severity and Output format).",
+      "files": ["apps/web/src/components/finance/budget-overview/budget-overview.tsx"],
+      "assertions": [
+        "The report names the viewports 375, 320 (reflow, WCAG 1.4.10), 768 and 1440 and states for each whether it was checked in a browser",
+        "Any viewport, zoom or keyboard check that was not performed in a rendered page is listed under a Not verified section; the report does not declare 320 px reflow as passing from static reading alone",
+        "Any layout fix uses base styles for phones plus @include media-up(...), not max-width media queries, media-down, or JavaScript width checks",
+        "Target size is judged against WCAG 2.5.8 (24 × 24 CSS px minimum)",
+        "Findings are grouped under Blocker / Serious / Moderate / Minor headings, each as path:line - criterion or rule - problem → fix"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I built a bulk review list for the transactions screen: rows with a checkbox and a delete button, a sticky heading, and an action bar pinned to the bottom of the screen. The component is provided at `.claude/skills/ui-review/evals/files/bulk-review.tsx.txt` and its stylesheet at `.claude/skills/ui-review/evals/files/bulk-review.scss.txt`; treat them as `apps/web/src/components/finance/bulk-review/bulk-review.tsx` and `bulk-review.scss`. Most of our users are on phones and some only use a keyboard. Review it before I wire it in.",
+      "expected_output": "Blocker: the 480 px fixed bar (scss:53) overflows a 320 px viewport (1.4.10) → full-width phone base plus @include media-up(tablet) for the narrower centred bar. Serious or Moderate: the delete button is opacity 0 until row :hover (scss:24-26,44), so it is invisible when keyboard-focused and unusable on touch → show it by default or on :focus-within; 2.4.11 Focus Not Obscured: the sticky header (scss:6-12) and fixed bar (scss:47-58) can cover the focused row → scroll-margin on .bulk-review__row (or scroll-padding) sized to them; the bar ignores env(safe-area-inset-bottom). Moderate: 14 px checkbox and bare icon button (scss:29-33,40-45) below 2.5.8's 24 × 24 px. Also likely: the payee nowrap (scss:37) → truncate mixin and min-width: 0; the 'N selected' count (tsx:56) not in an aria-live region (4.1.3). Skill-only: #1 (references/checklist.md › Keyboard and focus, 2.4.11 with scroll-margin), #3 (references/responsive.md › Fixed elements), #4 severity placement and #6 (SKILL.md › Severity and Output format).",
+      "files": [
+        ".claude/skills/ui-review/evals/files/bulk-review.tsx.txt",
+        ".claude/skills/ui-review/evals/files/bulk-review.scss.txt"
+      ],
+      "assertions": [
+        "The report flags that the sticky header and/or the fixed action bar can hide the keyboard-focused row, citing WCAG 2.4.11 Focus Not Obscured (Minimum), with a CSS fix such as scroll-margin on the row (or scroll-padding on the scroller) sized to the header and bar",
+        "The fixed bar's width: 480px is flagged under WCAG 1.4.10 Reflow at a 320 px viewport, and the fix makes the phone layout the base style (full width or inset) and adds the wider bar with @include media-up(...), not a max-width media query or media-down",
+        "The fixed bottom bar is flagged for not respecting env(safe-area-inset-bottom) (it can sit under the phone's home indicator or system bar)",
+        "The 14 px checkbox and/or the unpadded icon-only delete button are flagged under WCAG 2.5.8 Target Size (24 × 24 CSS px), and that finding sits under the Moderate heading",
+        "The delete button hidden with opacity until row :hover is flagged as invisible to keyboard users when focused and unavailable on touch, with a fix that shows it on :focus-within and/or by default",
+        "Findings are grouped under Blocker / Serious / Moderate / Minor headings, each as path:line - criterion or rule - problem → fix, with line numbers that match the fixture files under the bulk-review.tsx / bulk-review.scss paths, and runtime checks not performed are listed under Not verified"
+      ]
+    }
+  ]
+}

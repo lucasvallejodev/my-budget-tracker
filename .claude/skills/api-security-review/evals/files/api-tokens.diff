@@ -1,0 +1,335 @@
+diff --git a/apps/api/drizzle/0001_api_tokens.sql b/apps/api/drizzle/0001_api_tokens.sql
+new file mode 100644
+--- /dev/null
++++ b/apps/api/drizzle/0001_api_tokens.sql
+@@ -0,0 +1,12 @@
++CREATE TABLE "api_tokens" (
++	"id" text PRIMARY KEY NOT NULL,
++	"user_id" text NOT NULL,
++	"name" text NOT NULL,
++	"token" text NOT NULL,
++	"last_used_at" timestamp with time zone,
++	"created_at" timestamp with time zone DEFAULT now() NOT NULL
++);
++--> statement-breakpoint
++ALTER TABLE "api_tokens" ADD CONSTRAINT "api_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
++CREATE UNIQUE INDEX "api_tokens_token_key" ON "api_tokens" USING btree ("token");--> statement-breakpoint
++CREATE INDEX "api_tokens_user_idx" ON "api_tokens" USING btree ("user_id");
+diff --git a/apps/api/src/db/schema.ts b/apps/api/src/db/schema.ts
+--- a/apps/api/src/db/schema.ts
++++ b/apps/api/src/db/schema.ts
+@@ -85,6 +85,22 @@ export const sessions = pgTable(
+   ]
+ );
+ 
++export const apiTokens = pgTable(
++  'api_tokens',
++  {
++    id: id(),
++    userId: userId(),
++    name: text('name').notNull(),
++    token: text('token').notNull(),
++    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
++    createdAt: createdAt(),
++  },
++  columns => [
++    uniqueIndex('api_tokens_token_key').on(columns.token),
++    index('api_tokens_user_idx').on(columns.userId),
++  ]
++);
++
+ export const currencies = pgTable('currencies', {
+   code: char('code', { length: 3 }).primaryKey(),
+   name: text('name').notNull(),
+diff --git a/packages/shared/src/schema/auth.ts b/packages/shared/src/schema/auth.ts
+--- a/packages/shared/src/schema/auth.ts
++++ b/packages/shared/src/schema/auth.ts
+@@ -66,6 +66,22 @@ export const sessionSchema = z.object({
+ 
+ export type Session = z.infer<typeof sessionSchema>;
+ 
++export const createApiTokenSchema = z.object({
++  name: z.string().trim().min(1, 'Name is required').max(FieldLengths.name),
++});
++
++export type CreateApiTokenValues = z.infer<typeof createApiTokenSchema>;
++
++export const apiTokenSchema = z.object({
++  createdAt: z.string(),
++  id: z.string(),
++  lastUsedAt: z.string().nullable(),
++  name: z.string(),
++  token: z.string(),
++});
++
++export type ApiToken = z.infer<typeof apiTokenSchema>;
++
+ const PasswordsDifferMessage = 'The passwords do not match';
+ 
+ export const signUpFormSchema = signUpSchema
+diff --git a/apps/api/src/auth/api-tokens.ts b/apps/api/src/auth/api-tokens.ts
+new file mode 100644
+--- /dev/null
++++ b/apps/api/src/auth/api-tokens.ts
+@@ -0,0 +1,74 @@
++import { and, desc, eq } from 'drizzle-orm';
++import { randomUUID } from 'node:crypto';
++
++import { apiTokens, users } from '@/db/schema';
++import { Db, notFound } from '@/modules/db';
++import type { ApiToken } from '@coinkeeper/shared/schema/auth';
++
++import type { AuthenticatedUser } from './sessions';
++
++export type ResolvedApiToken = {
++  id: string;
++  user: AuthenticatedUser;
++};
++
++const toApiToken = (row: typeof apiTokens.$inferSelect): ApiToken => ({
++  createdAt: row.createdAt.toISOString(),
++  id: row.id,
++  lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
++  name: row.name,
++  token: row.token,
++});
++
++export const createApiTokenStore = (db: Db) => ({
++  async create(userId: string, name: string): Promise<ApiToken> {
++    const [row] = await db
++      .insert(apiTokens)
++      .values({ name, token: randomUUID(), userId })
++      .returning();
++
++    return toApiToken(row);
++  },
++  async list(userId: string): Promise<ApiToken[]> {
++    const rows = await db
++      .select()
++      .from(apiTokens)
++      .where(eq(apiTokens.userId, userId))
++      .orderBy(desc(apiTokens.createdAt));
++
++    return rows.map(toApiToken);
++  },
++  async resolve(token: string): Promise<ResolvedApiToken | null> {
++    const [row] = await db
++      .select({
++        createdAt: users.createdAt,
++        email: users.email,
++        id: apiTokens.id,
++        name: users.name,
++        userId: users.id,
++      })
++      .from(apiTokens)
++      .innerJoin(users, eq(users.id, apiTokens.userId))
++      .where(eq(apiTokens.token, token))
++      .limit(1);
++
++    if (!row) return null;
++
++    await db.update(apiTokens).set({ lastUsedAt: new Date() }).where(eq(apiTokens.id, row.id));
++
++    return {
++      id: row.id,
++      user: { createdAt: row.createdAt, email: row.email, id: row.userId, name: row.name },
++    };
++  },
++  async revoke(userId: string, id: string): Promise<void> {
++    const deleted = await db
++      .delete(apiTokens)
++      .where(and(eq(apiTokens.id, id), eq(apiTokens.userId, userId)))
++      .returning({ id: apiTokens.id });
++
++    if (!deleted.length) notFound('API token');
++  },
++});
++
++export type ApiTokenStore = ReturnType<typeof createApiTokenStore>;
+diff --git a/apps/api/src/modules/services.ts b/apps/api/src/modules/services.ts
+--- a/apps/api/src/modules/services.ts
++++ b/apps/api/src/modules/services.ts
+@@ -1,5 +1,6 @@
+ import { asc, eq } from 'drizzle-orm';
+ 
++import { createApiTokenStore } from '@/auth/api-tokens';
+ import { createAuthService } from '@/auth/service';
+ import { createSessionStore } from '@/auth/sessions';
+ import { currencies, userSettings } from '@/db/schema';
+@@ -41,6 +42,7 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
+ 
+   return {
+     accounts: createAccountService(db),
++    apiTokens: createApiTokenStore(db),
+     auth: createAuthService(db),
+     bootstrap: (userId: string, primaryCurrency?: string) =>
+       ensureUserBootstrap(db, userId, primaryCurrency),
+diff --git a/apps/api/src/plugins/authentication.ts b/apps/api/src/plugins/authentication.ts
+--- a/apps/api/src/plugins/authentication.ts
++++ b/apps/api/src/plugins/authentication.ts
+@@ -5,6 +5,8 @@ import type { AppConfig } from '@/config';
+ 
+ import { requireAuth } from './context';
+ 
++const BEARER_PREFIX = 'Bearer ';
++
+ const CookieOptions = (config: AppConfig) =>
+   ({
+     httpOnly: true,
+@@ -32,11 +34,27 @@ export const clearSessionCookie = (reply: FastifyReply, config: AppConfig): void
+ export const sessionTokenOf = (request: FastifyRequest, config: AppConfig): string | undefined =>
+   request.cookies[config.sessionCookieName] || undefined;
+ 
++const bearerTokenOf = (request: FastifyRequest): string | undefined => {
++  const header = request.headers.authorization;
++
++  return header?.startsWith(BEARER_PREFIX) ? header.slice(BEARER_PREFIX.length) : undefined;
++};
++
+ export const registerAuthentication = async (app: FastifyInstance): Promise<void> => {
+   await app.register(cookie);
+   app.decorateRequest('auth', null);
+ 
+   app.addHook('onRequest', async (request, reply) => {
++    const bearer = bearerTokenOf(request);
++
++    if (bearer) {
++      const apiToken = await app.services.apiTokens.resolve(bearer);
++
++      if (apiToken) request.auth = { sessionId: apiToken.id, user: apiToken.user };
++
++      return;
++    }
++
+     const token = sessionTokenOf(request, app.config);
+ 
+     if (!token) return;
+diff --git a/apps/api/src/routes/auth.ts b/apps/api/src/routes/auth.ts
+--- a/apps/api/src/routes/auth.ts
++++ b/apps/api/src/routes/auth.ts
+@@ -5,7 +5,9 @@ import { HttpStatus } from '@/constants/http';
+ import { clearSessionCookie, sessionTokenOf, setSessionCookie } from '@/plugins/authentication';
+ import { requireAuth, userIdOf } from '@/plugins/context';
+ import {
++  apiTokenSchema,
+   changePasswordSchema,
++  createApiTokenSchema,
+   sessionSchema,
+   signInSchema,
+   signUpSchema,
+@@ -125,6 +127,46 @@ export const meRoutes: FastifyPluginAsyncZod = async app => {
+     }
+   );
+ 
++  app.get(
++    '/me/tokens',
++    {
++      schema: { response: withErrors({ [HttpStatus.ok]: listOf(apiTokenSchema) }), tags: ['me'] },
++    },
++    async request => ({ items: await app.services.apiTokens.list(userIdOf(request)) })
++  );
++
++  app.post(
++    '/me/tokens',
++    {
++      schema: {
++        body: createApiTokenSchema,
++        response: withErrors({ [HttpStatus.created]: apiTokenSchema }),
++        tags: ['me'],
++      },
++    },
++    async (request, reply) => {
++      const token = await app.services.apiTokens.create(userIdOf(request), request.body.name);
++
++      return reply.status(HttpStatus.created).send(token);
++    }
++  );
++
++  app.delete(
++    '/me/tokens/:id',
++    {
++      schema: {
++        params: idParamsSchema,
++        response: withErrors({ [HttpStatus.noContent]: noContent }),
++        tags: ['me'],
++      },
++    },
++    async (request, reply) => {
++      await app.services.apiTokens.revoke(userIdOf(request), request.params.id);
++
++      return reply.status(HttpStatus.noContent).send();
++    }
++  );
++
+   app.get(
+     '/me/sessions',
+     {
+diff --git a/apps/api/src/routes/auth.test.ts b/apps/api/src/routes/auth.test.ts
+--- a/apps/api/src/routes/auth.test.ts
++++ b/apps/api/src/routes/auth.test.ts
+@@ -313,3 +313,24 @@ describe('client address', () => {
+     }
+   }, 30000);
+ });
++
++describe('API tokens', () => {
++  it('creates a token that authenticates scripts and can be revoked', async () => {
++    const client = await signUp(context.app, 'ada@example.com');
++    const created = await client.request('POST', '/me/tokens', { name: 'Bank sync' });
++
++    expect(created.statusCode).toBe(201);
++
++    const { id, token } = created.json();
++    const withToken = () =>
++      context.app.inject({
++        headers: { authorization: `Bearer ${token}` },
++        method: 'GET',
++        url: '/api/v1/accounts',
++      });
++
++    expect((await withToken()).statusCode).toBe(200);
++    expect((await client.request('DELETE', `/me/tokens/${id}`)).statusCode).toBe(204);
++    expect((await withToken()).statusCode).toBe(401);
++  });
++});
+diff --git a/apps/web/src/api/mutations.ts b/apps/web/src/api/mutations.ts
+--- a/apps/web/src/api/mutations.ts
++++ b/apps/web/src/api/mutations.ts
+@@ -4,7 +4,9 @@ import type {
+   AccountSummary,
+ } from '@coinkeeper/shared/schema/accounts';
+ import type {
++  ApiToken,
+   ChangePasswordValues,
++  CreateApiTokenValues,
+   SignInValues,
+   SignUpValues,
+   UpdateProfileValues,
+@@ -37,6 +39,8 @@ import { apiRequest } from './client';
+ 
+ type TransactionReference = Pick<TransactionRow, 'id' | 'transferId'>;
+ 
++const API_TOKEN_STORAGE_KEY = 'coinkeeper.apiToken';
++
+ const rateKeyPath = ({ base, date, quote }: ExchangeRateKey) =>
+   `/exchange-rates/${base}/${quote}/${date}`;
+ 
+@@ -54,6 +58,18 @@ export const changePassword = (values: ChangePasswordValues) =>
+ 
+ export const revokeSession = (id: string) => apiRequest<void>('DELETE', `/me/sessions/${id}`);
+ 
++export const createApiToken = async (values: CreateApiTokenValues) => {
++  const created = await apiRequest<ApiToken>('POST', '/me/tokens', values);
++
++  localStorage.setItem(API_TOKEN_STORAGE_KEY, created.token);
++
++  return created;
++};
++
++export const storedApiToken = (): string | null => localStorage.getItem(API_TOKEN_STORAGE_KEY);
++
++export const revokeApiToken = (id: string) => apiRequest<void>('DELETE', `/me/tokens/${id}`);
++
+ export const createAccount = (values: AccountFormValues) =>
+   apiRequest<AccountSummary>('POST', '/accounts', values);
+ 

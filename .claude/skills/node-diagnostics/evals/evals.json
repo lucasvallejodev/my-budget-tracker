@@ -1,0 +1,75 @@
+{
+  "skill_name": "node-diagnostics",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "In CI, `npm test -- --run` prints every test as passed but the job then hangs until the 20 minute timeout. It started with my new budgets route test, which is not on this branch yet: the file is provided at `.claude/skills/node-diagnostics/evals/files/budgets.test.ts.txt`; treat it as `apps/api/src/routes/budgets.test.ts`. Find what keeps the run alive, fix it, and tell me how to prove it is fixed.",
+      "expected_output": "Reproduces with `npx vitest run --project api apps/api/src/routes/budgets.test.ts` plus `--reporter=hanging-process` (or `--detectAsyncLeaks`). The top-level context is closed correctly; the leak is `afterAll(() => fresh.close)` in the 'copying across a year boundary' block, which returns the function without calling it, so the second app (Fastify plus PGlite) stays open. Fix: `afterAll(async () => { await fresh.close(); })` in that block (or drop the second app). No vitest config, timeout or process.exit changes. Proves it with `--repeats 30` on the file, a shuffled run, then the full gate. Also notes the two year-boundary tests depend on each other. Skill-only: #5 (--repeats then gate, SKILL.md Verify and references/hanging-and-flaky-tests.md › Definition of done) and #6 (shuffle / order dependence, references/hanging-and-flaky-tests.md › Flaky tests).",
+      "files": [".claude/skills/node-diagnostics/evals/files/budgets.test.ts.txt"],
+      "assertions": [
+        "Reproduces narrowly in Vitest run mode on the api project and this one file (for example `npx vitest run --project api apps/api/src/routes/budgets.test.ts`), not watch-mode `npm test` without `--run`",
+        "Uses Vitest's hanging-process reporter (`--reporter=hanging-process`) or `--detectAsyncLeaks` on that narrow run to see which handle stays open",
+        "Identifies the defect in the 'copying across a year boundary' block: `afterAll(() => fresh.close)` returns the close function without calling it, so the second test app (Fastify and its PGlite database) is never closed; it does not name the top-level `context` teardown, which is correct, as the cause",
+        "Fixes it inside that same block (for example `afterAll(async () => { await fresh.close(); })`, or removing the second app and using the shared context with per-test data). The fix does not change `vitest.config.mts` or `apps/api/vitest.config.mts` (teardownTimeout, hookTimeout, pool, file parallelism), add `process.exit`, or raise the CI timeout; a CI guard such as a shorter `timeout-minutes` proposed in addition to the file fix is acceptable",
+        "Verification repeats the single file with `--repeats` (20 or more) and then runs the full gate `npm run lint && npm run typecheck && npm test -- --run && npm run build`",
+        "Points out that the two tests in the year-boundary block depend on each other (the copy test reads the December limits the first test created, with no per-test setup) and recommends per-test data or checking with a shuffled run (`--sequence.shuffle`, ideally with a fixed `--sequence.seed`)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I added a bulk 'set this month's limits' service for the budgets screen so the client can save every limit in one request. The diff against commit 8052d1f is provided at `.claude/skills/node-diagnostics/evals/files/budgets-set-month.diff` (it changes `apps/api/src/modules/budgets/service.ts`). I used Promise.all everywhere so it is fast, and the tests pass on PGlite. Can you review the concurrency before I open the PR? Point me to the lines in the diff.",
+      "expected_output": "Findings with the diff's new-side lines: 184-201 Promise.all of inserts inside db.transaction runs on the transaction's one connection, so there is no parallelism; await in sequence or, better, one multi-row insert with onConflictDoUpdate as copyFromPreviousMonth does. 182 ownership checks use `db`, not `tx`, so they run outside the transaction on other pool connections while the transaction holds one (pool starvation under concurrent requests). 206 `Promise.all(ids.map(get))` fans several queries per budget onto a pool of max 10; use one `list(userId, month, { ids })`. PGlite is a single in-process connection, so passing tests prove nothing about this; check on PostgreSQL 17. 'Fast' must be measured (queries per request, autocannon before/after). Skill-only: #3 pool max 10 and batching instead of fan-out (references/async-patterns.md › Pool arithmetic), #4 PGlite cannot show concurrency (references/hanging-and-flaky-tests.md › What PGlite cannot tell you), #5 measure before/after (references/profiling.md).",
+      "files": [".claude/skills/node-diagnostics/evals/files/budgets-set-month.diff"],
+      "assertions": [
+        "States that the inserts wrapped in `Promise.all` inside `db.transaction` (new-side lines 184-201) all run on the transaction's single connection, so they gain no parallelism and complicate error handling; recommends awaiting them in sequence or, better, a single multi-row insert with `onConflictDoUpdate`",
+        "Flags new-side line 182: the ownership checks call `ownedActiveCategory(db, …)` instead of using the transaction, so they run outside it on extra pool connections while the transaction holds one",
+        "Flags new-side line 206: `Promise.all(ids.map(id => get(userId, id)))` runs several queries per budget in parallel against the pg pool (max 10 connections), and recommends one batched read (for example `list(userId, month, { ids })`) instead of one `get` per id",
+        "States that passing on PGlite does not prove the concurrency is correct or fast, because PGlite is a single in-process connection with no pool contention, and that it must be checked against PostgreSQL",
+        "Answers the 'is it fast' claim by measurement rather than assertion: count the queries per request or compare the same load before and after (for example autocannon against the built API)",
+        "Each finding is located by a new-side line number of the diff (within 1 line) or by quoting the exact code line"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "`GET /api/v1/transactions?limit=2000` takes close to a second on my machine, but the same SELECT runs in a few milliseconds in psql. I want to know where the time goes before anyone touches the code. Give me the exact steps and commands to measure it on Windows (Git Bash is fine), and tell me what you expect to find.",
+      "expected_output": "Build the API (`npm run build -w @coinkeeper/api`), start it from apps/api (the repository .env is resolved relative to the working directory) with `node --cpu-prof --cpu-prof-dir=../../temp/<task>/profiles --enable-source-maps dist/server.js`, sign up a throwaway account with Origin: http://localhost:3000, seed data, drive `npx autocannon -c 10 -d 20` with the cookie, stop with Ctrl+C so the .cpuprofile is written, read bottom-up in DevTools. Expect Zod response serialization of 2000 rows (serializerCompiler) to dominate; compare with a smaller page. If the profile is mostly idle, the time is in the database or pool: switch to database-change and EXPLAIN (ANALYZE, BUFFERS). Report before/after numbers. Skill-only: #1 built bundle not tsx watch, #3 profile written on exit via the signal handler, #5 Zod serialization hot spot, #6 idle profile means database-change (all references/profiling.md).",
+      "files": [],
+      "assertions": [
+        "Profiles the built bundle (`npm run build -w @coinkeeper/api`, then `node --cpu-prof … dist/server.js`, with `--enable-source-maps` or another way to map frames back to `src/`), not `npm run dev:api` or `tsx watch`",
+        "Starts the built server from `apps/api` because the API loads the repository `.env` relative to the working directory, or otherwise passes `DATABASE_URL` explicitly",
+        "Explains that the `.cpuprofile` is written when the process exits and stops the server with Ctrl+C / SIGINT (not by killing the process) to get it; keeps profiles and results under `temp/`",
+        "Drives a fixed load with autocannon run through `npx` (not added to package.json), authenticated with the session cookie of a throwaway account signed up through `POST /api/v1/auth/sign-up` with the `Origin: http://localhost:3000` header, and seeds enough transactions for a 2000-row page",
+        "Names response serialization through the Zod serializer compiler (every one of the 2000 rows checked against the response schema before `JSON.stringify`) as the leading suspect, and suggests comparing against a smaller `limit`",
+        "Says that if the profile is mostly idle while requests are slow, the time is spent waiting on the database or the pool rather than in JavaScript, and routes that to the database-change skill / `EXPLAIN (ANALYZE, BUFFERS)`; and asks for before and after numbers (requests per second, p50, p99) from the same command"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "We want users to download all their transactions as CSV from the server instead of the browser. Should that be streamed, and how?",
+      "expected_output": "Today's export is built in the browser (apps/web/src/components/finance/export-transactions.ts). For a server export: authenticated route, one service reading pages by cursor filtered by user and deleted_at IS NULL, an async generator sent with Readable.from (or pipeline for a transform), stop on client disconnect via request.signal, one shared cell-escaping and formula-injection guard in packages/shared/src/lib/csv.ts (reuse toCsvCell where it already lives there), amounts via minorToDecimalString, content type declared and the endpoint documented by hand because a Zod response schema does not apply to a stream. Skill-only: #5 shared csv.ts module (references/streams.md), #7 response schema does not apply to a stream, documented by hand in docs/reference/rest-api.md (references/streams.md).",
+      "files": [],
+      "assertions": [
+        "Identifies that the export is built in the browser today and names the existing helper module `apps/web/src/components/finance/export-transactions.ts` (or its exported functions) as the starting point",
+        "Reads rows page by page with a cursor rather than one unbounded query",
+        "Filters by the signed-in user and excludes soft-deleted rows",
+        "Streams the body from an async generator with `Readable.from` (or composes a transform with `pipeline` from `node:stream/promises`), not chained `.pipe()` and not a full string built in memory",
+        "Uses one implementation of the cell escaping and formula-injection guard for web and API in `packages/shared/src/lib/csv.ts`: reuses it if it already lives there, or moves it there if it does not; a copy in apps/api or a new parallel CSV module does not pass",
+        "Stops reading pages when the client disconnects (for example checking `request.signal.aborted` between pages, passing `request.signal` to `pipeline`, or an equivalent disconnect check)",
+        "Notes that the route's Zod response schema does not apply to a streamed CSV body, so the content type is declared explicitly and the endpoint is documented by hand in `docs/reference/rest-api.md`"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I added a confirmation step to the password reset CLI. The new version is provided at `.claude/skills/node-diagnostics/evals/files/reset-password.ts.txt`; treat it as `apps/api/src/cli/reset-password.ts`. On my Windows laptop `npm run user:reset-password -- test@example.com` now prints the 'Password updated' line but never returns to the prompt, and I have to press Ctrl+C. How do I find out what is keeping it alive, and what is the fix?",
+      "expected_output": "The readline interface created in confirmReset is never closed, so stdin keeps the event loop alive; the pool is closed in finally and is not the cause. Fix: close it in a finally inside confirmReset (as readPassword does), not process.exit(0). Diagnosis on Windows: temporarily log process.getActiveResourcesInfo() just before main returns, or attach the inspector; why-is-node-running needs SIGUSR1, which Windows lacks. Remove the diagnostic log afterwards. Verify that the CLI exits on its own on both the confirm and cancel paths, then run the gate. Skill-only: #3 getActiveResourcesInfo / SIGUSR1 not on Windows and #4 remove the temporary log (references/stuck-processes-and-leaks.md › Stuck processes).",
+      "files": [".claude/skills/node-diagnostics/evals/files/reset-password.ts.txt"],
+      "assertions": [
+        "Identifies the readline interface created in `confirmReset` and never closed (still reading stdin) as what keeps the process alive, and does not blame the database pool, which is closed in `finally`",
+        "Fixes it by closing that interface in a `finally` inside `confirmReset` (or by sharing one interface that is closed in a `finally`), not by adding `process.exit(0)` after the success message",
+        "Gives a way to see the open handles that works on Windows: temporarily logging `process.getActiveResourcesInfo()` where the process should exit, or the Node inspector; if `why-is-node-running` is suggested, it notes that its SIGUSR1 trigger does not exist on Windows",
+        "Says the temporary diagnostic logging is removed after the investigation and not committed",
+        "Verifies by running the CLI again and checking that it exits on its own, on both the confirmed and the cancelled path, then runs the gate (`npm run lint && npm run typecheck && npm test -- --run && npm run build`)"
+      ]
+    }
+  ]
+}

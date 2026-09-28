@@ -1,0 +1,10 @@
+# Bank formats
+
+Column layouts of the banks users import most often.
+
+| Bank    | Delimiter | Date format  | Amount columns    |
+| ------- | --------- | ------------ | ----------------- |
+| ING     | `;`       | `DD-MM-YYYY` | one signed column |
+| Revolut | `,`       | `YYYY-MM-DD` | one signed column |
+
+ING has two export variants; see [ING export variants](banks/ing.md) for how to map each one.

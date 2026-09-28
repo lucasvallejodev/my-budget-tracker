@@ -1,0 +1,86 @@
+// @vitest-environment node
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+
+import { HttpStatus } from '@/constants/http';
+import { createTestApp, inject, signUp, TestClient, TestContext } from '@/test/app';
+
+type Method = 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
+
+type GuardedRoute = {
+  method: Method;
+  path: string;
+};
+
+type ForeignCase = {
+  body?: unknown;
+  method: Method;
+  path: (accountId: string) => string;
+};
+
+const PLACEHOLDER_ID = 'placeholder';
+const RejectedWithoutSession: number[] = [HttpStatus.unauthorized, HttpStatus.badRequest];
+
+const GuardedRoutes: GuardedRoute[] = [
+  { method: 'GET', path: '/accounts' },
+  { method: 'POST', path: '/accounts' },
+  { method: 'GET', path: `/accounts/${PLACEHOLDER_ID}` },
+  { method: 'PATCH', path: `/accounts/${PLACEHOLDER_ID}` },
+  { method: 'DELETE', path: `/accounts/${PLACEHOLDER_ID}` },
+  { method: 'POST', path: `/accounts/${PLACEHOLDER_ID}/restore` },
+  { method: 'GET', path: '/transactions' },
+  { method: 'POST', path: '/transactions' },
+  { method: 'GET', path: `/transactions/${PLACEHOLDER_ID}` },
+  { method: 'GET', path: '/categories' },
+  { method: 'GET', path: '/budgets?month=2026-09' },
+  { method: 'GET', path: '/reports/summary?month=2026-09' },
+  { method: 'GET', path: '/me' },
+  { method: 'GET', path: '/me/sessions' },
+];
+
+const ForeignAccountCases: ForeignCase[] = [
+  { method: 'GET', path: id => `/accounts/${id}` },
+  { body: { name: 'Taken over' }, method: 'PATCH', path: id => `/accounts/${id}` },
+  { method: 'POST', path: id => `/accounts/${id}/archive` },
+  { method: 'DELETE', path: id => `/accounts/${id}` },
+];
+
+let context: TestContext;
+let ada: TestClient;
+let bob: TestClient;
+
+beforeAll(async () => {
+  context = await createTestApp();
+}, 30000);
+afterAll(async () => {
+  await context.close();
+});
+beforeEach(async () => {
+  await context.database.reset();
+  ada = await signUp(context.app, 'ada@example.com');
+  bob = await signUp(context.app, 'bob@example.com');
+});
+
+describe('authorization', () => {
+  it('rejects every guarded route without a session', async () => {
+    for (const route of GuardedRoutes) {
+      const response = await inject(context.app, route.method, route.path);
+
+      expect(RejectedWithoutSession).toContain(response.statusCode);
+    }
+  });
+
+  it('answers 404 when another user uses an account id', async () => {
+    const created = await ada.request('POST', '/accounts', {
+      currency: 'EUR',
+      name: 'Checking',
+      type: 'checking',
+    });
+    const accountId = created.json().id;
+
+    for (const foreign of ForeignAccountCases) {
+      const response = await bob.request(foreign.method, foreign.path(accountId), foreign.body);
+
+      expect(response.statusCode).toBe(HttpStatus.notFound);
+    }
+  });
+});

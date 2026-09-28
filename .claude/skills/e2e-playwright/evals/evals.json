@@ -1,0 +1,73 @@
+{
+  "skill_name": "e2e-playwright",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our new end-to-end test for recording an expense is provided at `.claude/skills/e2e-playwright/evals/files/record-expense.spec.ts.txt`; treat it as `e2e/record-expense.spec.ts`. It passes in CI and on my laptop during the day, but it has failed a handful of times on my laptop in Madrid, always when I ran the suite shortly after midnight. Retries do not help at that hour. Find the cause and make the test reliable.",
+      "expected_output": "Diagnoses that the transaction dialog's default date is the browser's local date (today() with date-fns format in transaction-dialog.tsx) while the expected date comes from toIsoDate (UTC) and the transactions screen filters by the UTC month (currentMonth() uses toISOString()); between 00:00 and 02:00 in Madrid the two disagree by a day, and on the first of a month the new row is not in the listed month at all. Fixes the test so browser date and expected date/month agree regardless of the host zone: timezoneId: 'UTC' in the project or test use (the skill's fix), or setting the date field explicitly, or pinning the browser clock and deriving expectations from it. Reproduces by forcing a zone (for example timezoneId or TZ set to a far-east zone) rather than waiting for midnight. No sleeps, retries or longer timeouts. Skill-only: #2 (month-boundary consequence) and #3 (timezoneId as the fix), references/fixtures.md › Seeding data and references/projects-and-ci.md › Flaky tests.",
+      "files": [".claude/skills/e2e-playwright/evals/files/record-expense.spec.ts.txt"],
+      "assertions": [
+        "The answer identifies the mismatch between the dialog's default date, which uses the browser's local time zone, and the UTC dates used by toIsoDate and the screens (the transactions list's current month comes from toISOString in UTC)",
+        "The answer explains that besides the date text, on the first day of a month the new row falls outside the UTC month the transactions screen lists, so the row itself is missing (or the fix is shown to cover that case too)",
+        "The fix makes the browser's date and the expected date and month agree whatever the host time zone: timezoneId set to 'UTC' in the project or test `use`, the date field set explicitly to a known date within the listed month, or an equivalent such as pinning the browser clock and deriving the expectation from it; changing only how the expected string is computed in Node does not count",
+        "The answer shows a way to reproduce the failure on demand (for example running with a forced timezoneId or TZ far from UTC, or a pinned clock just after midnight) instead of waiting for midnight",
+        "The fix adds no page.waitForTimeout, no per-test retries and no longer timeouts"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I want CI to also run the Playwright suite once against the production Docker images (`docker compose --profile app`), in addition to the existing run against the dev servers. Make the Playwright config and workflow changes needed.",
+      "expected_output": "An explicit switch (for example E2E_TARGET=images) that sets webServer to undefined, because the webServer entries wait for http://127.0.0.1:4000/api/v1/health/ready, which compose does not publish (the API is internal), so with reuseExistingServer Playwright would start a dev API next to the containers, and in CI (reuseExistingServer false) the dev web server would clash with the container on :3000. A separate job that sets POSTGRES_PASSWORD and a raised AUTH_ATTEMPTS_PER_MINUTE for the compose API (the webServer env no longer applies, and the compose default is 10), starts the stack, waits for http://localhost:3000/sign-in (or up --wait with healthchecks), runs the suite, uploads playwright-report, prints docker compose logs on failure, and uses a separate compose project or down -v because tests leave users in the volume. Skill-only: #1 (why reuseExistingServer is not enough; explicit switch) and #4 (compose project isolation), references/projects-and-ci.md › Against the built images.",
+      "files": [],
+      "assertions": [
+        "Playwright gets an explicit switch for the image run (an environment variable, a separate config or project) under which it starts no webServer, and the answer explains why relying on reuseExistingServer does not work: the API readiness URL on 127.0.0.1:4000 is not published by the compose stack, so Playwright would start a dev API (or, in CI where reuseExistingServer is false, fail or clash on port 3000)",
+        "The image run raises AUTH_ATTEMPTS_PER_MINUTE for the compose API (job env or .env), or otherwise explains how the suite avoids 429s, since the raised limit in playwright.config.ts applies only to the API Playwright starts and compose defaults to 10",
+        "The job waits until the web container answers (for example polling http://localhost:3000/sign-in or docker compose up --wait with healthchecks) before running the tests",
+        "The image run isolates its data: a separate compose project name (-p) or docker compose down -v afterwards, because tests leave users in the database volume",
+        "The CI job uploads the Playwright report and prints docker compose logs when it fails",
+        "The job provides POSTGRES_PASSWORD to docker compose, which the compose file requires"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a mobile viewport run to our Playwright setup and make the accessibility checks also scan the add-transaction dialog while it is open.",
+      "expected_output": "A Chromium-based mobile project (for example Pixel 7) limited by a tag grep, navigation through 'Open navigation'; a new test in e2e/accessibility.spec.ts that seeds data, opens the dialog, waits for the dialog or its content and scans with AxeBuilder and the existing WcagTags in both color schemes, asserting no violations; no new dependency. Skill-only: #2 (tag plus grep to keep sign-ups under the auth limit), references/projects-and-ci.md › Mobile viewport project.",
+      "files": [],
+      "assertions": [
+        "The mobile project uses a Chromium-based device descriptor, or the answer adds webkit to the playwright install step if it picks an iPhone",
+        "The mobile project runs only tagged tests (a tag plus grep or an equivalent filter) instead of the whole suite, citing run time or the extra sign-ups against the auth rate limit",
+        "The dialog scan is added to e2e/accessibility.spec.ts reusing the existing WcagTags and @axe-core/playwright, and no dependency is added to package.json",
+        "The scan runs after a web-first assertion that the dialog, or content inside the getByRole('dialog') locator, is visible",
+        "The scan asserts that there are no violations, and no axe rule is disabled to make it pass"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The 'deletes a transaction' e2e test fails about one run in ten. The current spec is provided at `.claude/skills/e2e-playwright/evals/files/ledger-flaky.spec.ts.txt`; treat it as `e2e/ledger.spec.ts`. Stabilize it.",
+      "expected_output": "Reproduce first with npx playwright test ... --repeat-each (with --workers and --trace on) and read a failing trace; replace both sleeps with web-first assertions on the outcome (toast 'Transaction deleted' / 'Restored', row toHaveCount(0)) and/or waitForResponse started before the click, asserting before navigating away; replace the one-shot count() read with toHaveCount(0); scope Delete to getByRole('dialog') instead of .last(); no added retries or timeouts; mention failOnFlakyTests: !!process.env.CI once stable or test.fixme with a tracking issue. Skill-only: #1 (reproduce and read a trace before changing code) and #6 (flaky policy), references/projects-and-ci.md › Flaky tests.",
+      "files": [".claude/skills/e2e-playwright/evals/files/ledger-flaky.spec.ts.txt"],
+      "assertions": [
+        "Before changing code, the answer reproduces the flake with npx playwright test ... --repeat-each and reads the trace of a failing run (running it is optional; prescribing it as the first step counts)",
+        "Both page.waitForTimeout calls are removed, and before each navigation that follows a write (delete, restore) the test waits for that write's outcome with a web-first assertion (toast, row) or a waitForResponse registered before the click",
+        "The one-shot `expect(await ….count()).toBe(0)` read is replaced by a retrying assertion such as toHaveCount(0) or toBeHidden",
+        "The Delete confirmation is located inside getByRole('dialog') instead of with .last() on a page-wide locator",
+        "The answer adds no per-test retries, longer timeouts or waitForLoadState('networkidle')",
+        "The answer states the flaky-test policy: set failOnFlakyTests (for example failOnFlakyTests: !!process.env.CI) once the suite is stable, or mark an unfixable test test.fixme with a tracking issue"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "QA wants proof in a real browser that sign-in locks you out after ten wrong passwords. Add a Playwright test for it to our e2e suite.",
+      "expected_output": "Pushes back instead of adding a test that exhausts the real limit: nothing locks the account: the per-IP limit (AUTH_ATTEMPTS_PER_MINUTE) refuses further attempts from one address for the rest of the minute, and the per-account throttle (SIGN_IN_FAILURES_PER_ACCOUNT, default 5) only slows attempts for that email, 1 s growing to 5 s apart, while the right password still signs in; the API Playwright starts raises the per-IP limit to 200 (E2E_AUTH_ATTEMPTS_PER_MINUTE) but not the per-account throttle, so ten wrong passwords in the browser only make sign-in slow; every e2e test comes from the same address and shares the per-route counter, so exhausting it would make other tests fail with 429 in setup; the rule is already tested in apps/api/src/routes/auth.test.ts (rate limiting). If the 429 message on the form needs coverage, use a component test of the auth form or fulfil a 429 with page.route, not the real limit. No spoofed X-Forwarded-For, no change to the default. Skill-only: #3 (shared per-IP counter breaks parallel tests) and #1 (rate-limit test belongs in the route tests), references/fixtures.md › The auth rate limit.",
+      "files": [],
+      "assertions": [
+        "The answer does not add a browser test that drives real failed sign-ins until the API answers 429; it states that this rule belongs in the API route tests and points to the existing rate-limit test in apps/api/src/routes/auth.test.ts",
+        "The answer corrects the premise: nothing locks the account; it names the per-IP limit (AUTH_ATTEMPTS_PER_MINUTE) and states that the per-account throttle (SIGN_IN_FAILURES_PER_ACCOUNT) only slows attempts, so the right password still signs in",
+        "The answer explains that every e2e test signs up or signs in from the same address, so exhausting the limit in the browser suite would make other tests fail with 429 in setup",
+        "The answer notes that the API Playwright starts raises the per-IP limit to 200 (E2E_AUTH_ATTEMPTS_PER_MINUTE in playwright.config.ts) but not the per-account throttle, so ten wrong passwords in the e2e run would slow that account rather than produce a lockout",
+        "If the answer covers the user-visible 429 message, it does so without the real limit: a component test of the auth form or a browser test that fulfils a 429 response with page.route",
+        "The answer does not spoof X-Forwarded-For and does not change the AUTH_ATTEMPTS_PER_MINUTE default in apps/api/src/config.ts or .env.example"
+      ]
+    }
+  ]
+}

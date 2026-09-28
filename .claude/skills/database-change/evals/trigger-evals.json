@@ -1,0 +1,40 @@
+[
+  { "query": "add a notes column to budgets and write the migration", "should_trigger": true },
+  {
+    "query": "the monthly report takes 3 seconds, can you look at the SQL and the indexes?",
+    "should_trigger": true
+  },
+  {
+    "query": "is it safe to add CREATE INDEX CONCURRENTLY to a drizzle migration?",
+    "should_trigger": true
+  },
+  {
+    "query": "db:generate is asking me whether I renamed a column, what do I do",
+    "should_trigger": true
+  },
+  {
+    "query": "wrap the CSV import in a transaction and stop inserting row by row",
+    "should_trigger": true
+  },
+  { "query": "set statement_timeout on the postgres pool", "should_trigger": true },
+  {
+    "query": "add a GET /api/v1/payees/:id endpoint with a route test",
+    "should_trigger": false
+  },
+  {
+    "query": "add a readiness endpoint that checks the database and a graceful shutdown",
+    "should_trigger": false
+  },
+  {
+    "query": "vitest hangs after the api tests finish and never exits",
+    "should_trigger": false
+  },
+  {
+    "query": "pin postgres:17-alpine by digest and drop capabilities for the db service in compose",
+    "should_trigger": false
+  },
+  {
+    "query": "the transactions page re-renders on every keystroke in the search box",
+    "should_trigger": false
+  }
+]

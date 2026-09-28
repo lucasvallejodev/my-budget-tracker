@@ -1,0 +1,85 @@
+{
+  "skill_name": "react-client-patterns",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this new component before I merge it. It is provided at `.claude/skills/react-client-patterns/evals/files/overspend-panel.tsx.txt`; treat it as `apps/web/src/components/finance/overspend-panel/overspend-panel.tsx` (the same PR adds `export-budgets.ts` next to it, so that import is fine). I only want the review, no rewrite.",
+      "expected_output": "One line per finding in the form `path:line - rule-id - fix`, highest impact first: the critical ones (line 39 `.sort()` mutates the cached budgets array -> `toSorted` (js-tosorted-immutable); line 51 `budget.spentMinor &&` renders 0 -> explicit comparison or ternary (rendering-conditional-render); line 49 `OverspendRow` declared inside the component -> module scope (rerender-no-inline-components); lines 28 and 45-47 count mirrored into state by an effect -> derive during render (rerender-derived-state-no-effect)) before the medium ones (line 27 `useSearchParams` subscribed but only read in the Export handler at line 63 -> read `window.location.search` in the handler (rerender-defer-reads); lines 31-34 `useMemo` around a boolean expression -> plain expression (rerender-simple-expression-in-memo)). The boolean `&&` at line 52 is not a defect. Skill-only: #1 and #2 (SKILL.md › Workflow step 4 output format and the impact tables with rule ids), #5 (references/rerender.md › rerender-defer-reads).",
+      "files": [".claude/skills/react-client-patterns/evals/files/overspend-panel.tsx.txt"],
+      "assertions": [
+        "Every finding is one line in the form path:line - rule-id - fix, where rule-id is a rule name from the skill's tables (for example js-tosorted-immutable, rendering-conditional-render, rerender-no-inline-components)",
+        "Findings are ordered by impact: the sort mutation, the zero-rendering conditional, the inline component and the effect-mirrored count all come before the useSearchParams and useMemo findings",
+        "It flags line 39: .sort() mutates the budgets array held in the query cache, fix with toSorted (or sorting a copy)",
+        "It flags line 51: budget.spentMinor && renders the text 0 when nothing was spent, fix with an explicit comparison or a ternary",
+        "It flags that useSearchParams (line 27) subscribes the panel to every query-string change although the value is only read inside the Export click handler (line 63), and fixes it by reading the URL (window.location.search) inside the handler",
+        "Line numbers match the fixture within one line, and the boolean conditional at line 52 (overspendOf(budget) > 0 && …) is not reported as a defect"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "On the budgets page, stepping back through months shows 'Loading budgets…' on every click, and most people go back one month at a time to compare. Make that feel instant, including the first time a month is opened.",
+      "expected_output": "Defines the budgets query once with `queryOptions()` next to `useBudgets` in use-finance-data.ts, spreads it into `useBudgets` with `placeholderData: keepPreviousData`, and prefetches the previous month with `queryClient.prefetchQuery(budgetsQuery(previousMonth))` on focus and pointer enter of the Previous month control (without making MonthPicker, which the overview and transactions screens also use, fetch budgets there), adds a test, and updates agents/conventions.md › Client patterns because `queryOptions` becomes a house pattern. Skill-only: #2 (references/data-fetching.md › Reads 7), #3 focus as well as hover (data-fetching.md PreviousMonthButton example, references/bundle.md › bundle-preload), #6 (SKILL.md › Keep the docs true names queryOptions).",
+      "files": [
+        "apps/web/src/components/finance/use-finance-data.ts",
+        "apps/web/src/components/finance/month-picker/month-picker.tsx",
+        "apps/web/src/components/finance/budget-overview/budget-overview.tsx"
+      ],
+      "assertions": [
+        "useBudgets keeps QueryKeys.budgets(month) as its key and sets placeholderData: keepPreviousData (imported from @tanstack/react-query), so the previous month stays on screen while the next one loads",
+        "The budgets query is defined once with TanStack Query's queryOptions() in use-finance-data.ts and that definition is spread into both useBudgets and the prefetch call, so the key and queryFn are not written a second time",
+        "The previous month's budgets are put in the cache before the click with queryClient.prefetchQuery (or ensureQueryData), and the trigger also fires for keyboard users (on focus of the Previous month control, or whenever the month changes), not only on mouse hover",
+        "No fetch call, useEffect-based loading or copy of query data into useState is introduced, and the month change does not await the prefetch",
+        "A test covers the new behaviour, for example that focusing or hovering Previous month fills QueryKeys.budgets(previous month), or that the old month stays rendered while the new one is pending",
+        "agents/conventions.md › Client patterns is updated in the same change to describe the shared queryOptions definition (and prefetching on intent) as the house pattern"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "In the review inbox, clicking Done or picking a category waits for the server before the row disappears, and the budgets page lags behind too. Make it instant: remove the row straight away and, in the same step, add the transaction's amount to that category's spent figure in the cached budgets so the progress bars are right immediately. If the save fails, nothing should look changed.",
+      "expected_output": "Makes the row removal optimistic in ReviewInbox: onMutate cancels and snapshots the review list query (QueryKeys.transactions({ limit: '500', needsReview: '1' }) or the ['transactions'] prefix), writes a filtered copy, onError restores the snapshot and toasts error.message, and useRefreshFinance() refreshes every FinanceKeys query afterwards. It declines to edit the cached budgets: spent and progress are SQL over the ledger and per currency (the transaction's currency and month may not match a budget row, transfers never count, the old category's spent would also change), so they come back from the refetch. The test checks the row is gone before the mocked categorizeTransaction resolves and returns when it rejects. Skill-only: #4 (references/data-fetching.md › Optimistic updates: only fields the row owns, never balances, totals or budget progress on the client).",
+      "files": [
+        "apps/web/src/components/finance/review-inbox/review-inbox.tsx",
+        "apps/web/src/components/finance/review-inbox/review-inbox.test.tsx",
+        "apps/web/src/components/finance/use-finance-data.ts"
+      ],
+      "assertions": [
+        "onMutate cancels in-flight queries for the review list (QueryKeys.transactions({ limit: '500', needsReview: '1' }) or the ['transactions'] prefix) before snapshotting it and writing a copy without the row (filter or equivalent, the cached array is not mutated)",
+        "onError writes the snapshot back so the row reappears and shows the error message in a toast",
+        "After the write, useRefreshFinance() (or invalidation of every FinanceKeys query) runs so budgets and the summary are refetched from the API",
+        "No budget, spent, progress or summary value is written into the cache on the client (no setQueryData or setQueriesData on the budgets or summary keys), and the answer explains that these figures come from the ledger and are per currency, so they are refreshed from the server instead of computed optimistically",
+        "The review-inbox test covers both paths: the row is gone before the mocked categorizeTransaction resolves, and it is back after the mocked call rejects"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The overview page ships recharts up front. Lazy-load the charts, and while you are at it get rid of the barrel imports that slow the bundle down.",
+      "expected_output": "Moves the recharts code out of the overview's initial bundle with next/dynamic declared at module scope, either in overview.tsx or inside the chart components (splitting only the plot keeps the panel static), with a literal import path to a component folder or a private sibling file, the named export picked with .then, ssr: false only in a 'use client' file, and a fallback that fills the reserved chart-frame space. Keeps the project barrels (agents/components.md, ESLint) and does not add lucide-react, recharts or date-fns to optimizePackageImports because Next already optimizes them. Keeps the chart and screen tests working by mocking next/dynamic or waiting with findBy, and does not claim a size win it did not measure. Skill-only: #3 reserved space, #4 tests (references/bundle.md › bundle-dynamic-imports), #5 Next's default optimizePackageImports list (bundle.md › bundle-barrel-imports), #6 (SKILL.md › Verify).",
+      "files": [
+        "apps/web/src/components/finance/overview/overview.tsx",
+        "apps/web/src/components/finance/cash-flow-chart/cash-flow-chart.tsx",
+        "apps/web/src/components/finance/distribution-chart/distribution-chart.tsx"
+      ],
+      "assertions": [
+        "The recharts code is no longer statically reachable from the overview screen: next/dynamic is declared at module scope (in overview.tsx or inside the chart components, either is acceptable), never inside a component body",
+        "Each dynamic import uses a literal path to a component folder or to a private file in the same component folder and selects the named export (for example with .then); no file inside another component's folder is imported",
+        "While the chunk loads, a fallback (for example a Spinner) occupies the chart's reserved space, such as the chart-frame height, so the layout does not shift; ssr: false appears only in 'use client' files",
+        "The existing chart or overview tests keep working, and the answer says how: they mock next/dynamic or wait for the lazily loaded chart with findBy or waitFor",
+        "Project barrels and folder imports are kept with agents/components.md or its ESLint rules given as the reason, and lucide-react, recharts or date-fns are not added to optimizePackageImports nor deep-imported, because Next.js already optimizes them",
+        "The answer does not claim a bundle-size or load-time improvement it did not measure: it either reports measured build output or says it was not measured and how to measure it"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Design a BudgetEditor component whose amount field and save button can be placed separately, for example the save button inside a Dialog footer.",
+      "expected_output": "Creates finance/budget-editor/ with a provider BudgetEditor and parts for the amount and the save action (any names) as plain named exports of the folder barrel, a context whose value is a type grouped into state, actions and meta kept in a private file, parts reading it with use() and throwing outside the provider, the provider rendered as <BudgetEditorContext value>, the amount held as a string and saved through upsertBudget via useEntityMutation (or React Hook Form plus useEntityMutation), plus a test. Skill-only: #2 (references/composition.md › state-context-interface).",
+      "files": [],
+      "assertions": [
+        "The amount part and the save part (any names) are separate named exports listed in budget-editor/index.ts and in finance/index.ts; no static property such as BudgetEditor.Amount is assigned",
+        "The context value is declared with type (not interface) and grouped into three members: state (values such as the amount or pending flag), actions (functions such as save) and meta (ids or refs)",
+        "Parts read the context with use() and throw a clear error when rendered outside BudgetEditor, and the provider is rendered as <BudgetEditorContext value={…}> rather than a .Provider element",
+        "The amount is kept as a string and saved through upsertBudget from @/api/mutations (through useEntityMutation or useMutation), never parsed to a float on the client",
+        "The save part works from a Dialog footer because it calls the provider's action rather than relying on being inside the <form> element, and the folder contains budget-editor.tsx, budget-editor.test.tsx and index.ts"
+      ]
+    }
+  ]
+}

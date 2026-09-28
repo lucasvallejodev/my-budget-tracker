@@ -8,10 +8,11 @@
 2. Write plans, scratch diagrams and intermediate output to `temp/` (never to `docs/`, `agents/` or the source tree).
 3. Check the existing tests for the area you touch; they encode the invariants.
 4. Before writing a helper, constant, colour or style value, search `packages/shared/src/lib/`, `packages/shared/src/constants/`, `apps/web/src/lib/`, `apps/web/src/constants/`, `apps/web/src/styles/theme.ts`, `apps/web/src/styles/tokens.scss` and `apps/web/src/styles/abstracts/` and extend what exists (`agents/conventions.md` > Reuse first). Before writing markup, check `apps/web/src/components/ui/index.ts`.
+5. Check "Project skills by task" below: when a project skill covers the change, load it and follow its workflow.
 
 ## Add a feature (end to end)
 
-1. **Schema** (if needed): edit `apps/api/src/db/schema.ts` → `npm run db:generate` (runs in the API workspace) → review and, if needed, hand-edit the SQL in `apps/api/drizzle/` → `npm run db:migrate`. Update `agents/data-model.md` and `docs/architecture/data-model.md`, and add the migration to `docs/reference/migrations.md`.
+1. **Schema** (if needed): edit `apps/api/src/db/schema.ts` → `npm run db:generate` (runs in the API workspace) → review and, if needed, hand-edit the SQL in `apps/api/drizzle/` → `npm run db:migrate` (skill: `database-change`). Update `agents/data-model.md` and `docs/architecture/data-model.md`, and add the migration to `docs/reference/migrations.md`.
 2. **Contracts**: request and response Zod schemas in `packages/shared/src/schema/<domain>.ts` (inputs `…Schema` / `…Values`, responses with inferred types).
 3. **Service**: add functions to `apps/api/src/modules/<domain>/service.ts` (new domains: create the folder, register in `apps/api/src/modules/services.ts`). Enforce ownership, invariants and soft deletes there.
 4. **Endpoint**: follow "Add an API endpoint" below.
@@ -29,11 +30,11 @@
 
 ## Add an API endpoint
 
-Follow `docs/architecture/api.md` › Adding an endpoint: Zod schemas in `packages/shared/src/schema/<domain>.ts` → service function in `apps/api/src/modules/<domain>/service.ts` (`userId` first, `ServiceError`) → route in `apps/api/src/routes/<resource>.ts` with `schema: { params, querystring, body, response: withErrors({ … }), tags }` and `userIdOf(request)` (a new resource file is registered in `routes/index.ts`, inside the authenticated scope unless it must be public) → route test with `createTestApp()` / `signUp()` (happy path, `400`, other user's id → `404`, the rule) → row in `docs/reference/rest-api.md`. In the web app: a hook in `use-finance-data.ts` for reads, a function in `apps/web/src/api/mutations.ts` for writes, wired with a toast and `useRefreshFinance()`.
+Use the `fastify-api` skill. Follow `docs/architecture/api.md` › Adding an endpoint: Zod schemas in `packages/shared/src/schema/<domain>.ts` → service function in `apps/api/src/modules/<domain>/service.ts` (`userId` first, `ServiceError`) → route in `apps/api/src/routes/<resource>.ts` with `schema: { params, querystring, body, response: withErrors({ … }), tags }` and `userIdOf(request)` (a new resource file is registered in `routes/index.ts`, inside the authenticated scope unless it must be public) → route test with `createTestApp()` / `signUp()` (happy path, `400`, other user's id → `404`, the rule) → row in `docs/reference/rest-api.md`. In the web app: a hook in `use-finance-data.ts` for reads, a function in `apps/web/src/api/mutations.ts` for writes, wired with a toast and `useRefreshFinance()`.
 
 ## Add a screen
 
-Folder `apps/web/src/components/finance/<screen>/` (component, test with `QueryKeys` fixtures and `vi.mock('@/api/mutations', …)`, `index.ts`, stylesheet only if it needs its own look) → data through hooks in `use-finance-data.ts` and writes through `@/api/mutations` (add an API endpoint first if one is missing) → export it from `finance/index.ts` → page under `apps/web/src/app/(main)/` importing `@/components/finance` (the `proxy.ts` guard covers it automatically) → optional `routes.ts` entry → `docs/features/<name>.md` with `<!-- screenshot: … -->` placeholders → `docs/_sidebar.md`.
+Folder `apps/web/src/components/finance/<screen>/` (component, test with `QueryKeys` fixtures and `vi.mock('@/api/mutations', …)`, `index.ts`, stylesheet only if it needs its own look) → data through hooks in `use-finance-data.ts` and writes through `@/api/mutations` (add an API endpoint first if one is missing) → export it from `finance/index.ts` → page under `apps/web/src/app/(main)/` importing `@/components/finance` (the `proxy.ts` guard covers it automatically) → optional `routes.ts` entry → `docs/features/<name>.md` with `<!-- screenshot: … -->` placeholders → `docs/_sidebar.md`. Write it with the `react-client-patterns` skill and check it with `ui-review` before merging.
 
 ## Add or change a component
 
@@ -61,7 +62,24 @@ Search for `<!-- screenshot:` in `docs/`, run `npm run dev`, sign up a local acc
 
 ## Documentation-only change
 
-Edit the page, keep the `> Summary:` line accurate, update `docs/_sidebar.md` if pages were added or renamed, and `agents/docs-map.md` if the mapping changed.
+Use the `docs-writing` skill. Edit the page, keep the `> Summary:` line accurate, update `docs/_sidebar.md` if pages were added or renamed, and `agents/docs-map.md` if the mapping changed.
+
+## Project skills by task
+
+Skills live in `.claude/skills/` (index: `.claude/skills/README.md`). They add version-specific knowledge and checklists on top of these workflows; the house rules in `CLAUDE.md` and `agents/` still win.
+
+| Task                                                                                        | Skill                   |
+| ------------------------------------------------------------------------------------------- | ----------------------- |
+| Endpoint, plugin, hook, error mapping, env var, timeouts, shutdown, health, logging (API)   | `fastify-api`           |
+| Schema change, migration, index, slow or batched SQL, transactions                          | `database-change`       |
+| Tests that hang or flake in Vitest, memory or CPU problems, caching or streaming decisions  | `node-diagnostics`      |
+| Components, hooks, query hooks and mutations, re-renders, bundle size, component APIs (web) | `react-client-patterns` |
+| Accessibility, responsive and interface review of a screen or component                     | `ui-review`             |
+| Playwright end-to-end tests and their CI job                                                | `e2e-playwright`        |
+| Dockerfile, compose, reverse proxy, GitHub Actions supply chain                             | `container-hardening`   |
+| Security review of API, auth, session, header or proxy changes                              | `api-security-review`   |
+| Pages in `docs/`, `agents/`, README and other prose                                         | `docs-writing`          |
+| Pull request title and description                                                          | `pr-description`        |
 
 ## Write a pull request description
 

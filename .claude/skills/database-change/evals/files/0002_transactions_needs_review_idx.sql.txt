@@ -1,0 +1,1 @@
+CREATE INDEX "transactions_needs_review_idx" ON "transactions" USING btree ("user_id") WHERE "transactions"."needs_review" AND "transactions"."deleted_at" IS NULL;

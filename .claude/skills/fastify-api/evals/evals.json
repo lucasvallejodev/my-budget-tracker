@@ -1,0 +1,89 @@
+{
+  "skill_name": "fastify-api",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The API's development logs are one long JSON line per event and I can't read them while running npm run dev. Make them human-readable when I develop locally, but production must keep writing exactly the JSON it writes today.",
+      "expected_output": "An explicit LOG_PRETTY-style flag (z.stringbool) in environmentSchema, mapped onto AppConfig in loadConfig; the pino-pretty transport is added to the existing logger options only when the flag is on, so level, redact and any logMethod hook still apply; nothing outside loadConfig branches on NODE_ENV; Fastify still gets options (or a Pino instance through loggerInstance, never through logger); pino-pretty is a devDependency of the API workspace and the answer notes the production image does not install it; config.test.ts covers default and override; .env.example and docs/architecture/api.md › Configuration list the flag. Skill-only: #1 (references/production.md › Logging and redaction: 'pass a transport only when an explicit LOG_PRETTY-style flag is set, not based on NODE_ENV'; references/configuration.md › Rules: NODE_ENV only picks defaults inside loadConfig), #3 (references/production.md › Lifecycle: loggerInstance is the Fastify 5 option for a ready-made Pino instance).",
+      "files": [],
+      "assertions": [
+        "Pretty output is switched by a dedicated environment variable (LOG_PRETTY or similar) declared in environmentSchema in apps/api/src/config.ts and exposed on AppConfig; no code outside loadConfig reads NODE_ENV or process.env to decide whether to pretty-print",
+        "The transport is added to the logger options the API already builds, so the configured level and the redact configuration still apply to pretty output (no separate logger or options object that drops them)",
+        "Fastify receives either logger options or a Pino instance passed as loggerInstance; no Pino instance is passed to the logger option",
+        "pino-pretty is added as a devDependency (not a runtime dependency) and the answer notes that the production image installs without dev dependencies, so the flag must stay off there",
+        "apps/api/src/config.test.ts covers the default (off) and an override, and .env.example and docs/architecture/api.md › Configuration list the new variable"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A teammate opened a PR that adds a Server-Timing header so we can see how long the API spent on each request in the browser's network panel. The diff is provided at `.claude/skills/fastify-api/evals/files/server-timing.diff` (paths inside it are repo-relative). Review it before I merge: for every problem give the file and line (new side of the diff) and the fix.",
+      "expected_output": "Four API defects with new-side lines: (1) apps/api/src/plugins/server-timing.ts:20 decorateRequest('timing', { startedAt: 0 }) uses an object initial value, which Fastify 5 rejects at start (FST_ERR_DEC_REFERENCE_TYPE) and which would otherwise share one object across concurrent requests; decorate with null and assign a fresh value per request in onRequest; (2) :26-28 the header is set in onResponse, after the response has been sent; set it in onSend (onResponse is for logging or measuring after the send); (3) apps/api/src/app.ts:40 app.register(registerServerTiming) puts the hooks in an encapsulated child context that contains no routes, so they never run; call await registerServerTiming(app) directly like registerSecurity, the house pattern, without fastify-plugin; (4) :10-14 the module augmentation belongs in plugins/context.ts with the eslint-disable-next-line @typescript-eslint/consistent-type-definitions directive (a bare interface fails lint). Plus: the test at server-timing.test.ts:19 never asserts the header. Skill-only: #1 (references/plugins-and-hooks.md › Decorators: Fastify 5 rejects reference types, null initial value), #3 in its fix (references/plugins-and-hooks.md › How buildApp is assembled: plain registerX(app) calls, not fastify-plugin wrappers), #4 (references/plugins-and-hooks.md › Decorators and declaration merging).",
+      "files": [".claude/skills/fastify-api/evals/files/server-timing.diff"],
+      "assertions": [
+        "Flags the decorateRequest call with an object initial value (apps/api/src/plugins/server-timing.ts, new-side line 20): Fastify 5 refuses reference-type initial values at start-up (or, stated equivalently, one object would be shared by every request); the fix decorates with null and assigns a new value per request in the onRequest hook",
+        "Flags that the header is set in an onResponse hook (server-timing.ts, lines 26-28), which runs after the response was sent, and moves it to onSend (or another hook that runs before the send)",
+        "Flags apps/api/src/app.ts new-side line 40 (app.register(registerServerTiming)): the hooks land in an encapsulated child context and never apply to the API routes",
+        "The fix for the app.ts problem calls the function directly on the root instance from buildApp (await registerServerTiming(app)), matching registerSecurity and registerAuthentication, rather than wrapping the plugin in fastify-plugin or adding a dependency",
+        "Flags the declare module 'fastify' block in server-timing.ts (lines 10-14): the FastifyRequest augmentation belongs in apps/api/src/plugins/context.ts with the eslint-disable-next-line @typescript-eslint/consistent-type-definitions directive, because a bare interface fails lint",
+        "Notes that the new test (server-timing.test.ts, line 19) asserts only the status and never checks the Server-Timing header"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We're about to run three copies of the API container behind a load balancer, all pointing at the same PostgreSQL. Before we flip the switch, go through apps/api and tell me what will behave differently or break with more than one process, and fix whatever belongs in the API code.",
+      "expected_output": "An inventory of process-local behavior: the @fastify/rate-limit store is in memory per process (limits multiply by the replica count and reset on restart), so it needs a shared store (PostgreSQL or Redis); the hourly expired-session purge in server.ts runs in every replica and is guarded with pg_try_advisory_lock under a named key (or moved to one scheduled job); any other module-level or closure-held mutable state (for example an in-memory sign-in throttle map) is listed with its file; pool sizing against max_connections (max 10 per replica) is handed to the database-change skill; the answer says PGlite tests are single-connection and cannot prove the cross-process behavior. Skill-only: #2 advisory lock (references/production.md › Process-wide state and background work), #4 (references/production.md › Timeouts: pool settings are owned by database-change), #5 (references/testing.md › Layers: PGlite does not exercise advisory-lock races).",
+      "files": [],
+      "assertions": [
+        "Identifies that @fastify/rate-limit keeps its counters in memory per process (each replica counts separately and counters reset on restart) and proposes or implements a shared store such as PostgreSQL or Redis",
+        "Identifies that the hourly expired-session purge in apps/api/src/server.ts runs in every replica and guards it with a PostgreSQL advisory lock (pg_try_advisory_lock or an equivalent) whose key is a named constant, or moves it to a single scheduled job",
+        "Lists any other process-local mutable state found in apps/api (module-level or closure-held Maps, caches or counters) with its file path, or states explicitly that none remains after checking",
+        "Points out that every replica opens its own pg pool (max 10) against PostgreSQL's connection limit and hands pool or database connection settings to the database-change skill instead of changing them in this change",
+        "States that the PGlite-based route and service tests use a single connection and cannot prove the advisory lock or shared-store behavior across processes, and says how to verify it instead (real PostgreSQL, several processes)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "We still deploy the release/1.x branch, and there the API sometimes hangs on stop until Docker kills it, and it always exits with code 0. That branch's apps/api/src/server.ts is provided at `.claude/skills/fastify-api/evals/files/release-server.ts.txt` and its Dockerfile at `.claude/skills/fastify-api/evals/files/release-Dockerfile.txt`. Fix the shutdown for that branch and give me the new server.ts.",
+      "expected_output": "A bounded shutdown for the fixture's server.ts: a named deadline shorter than Docker's 10 s grace period, app.close() and then the pool close, exit code 1 when a step fails or the deadline passes, unhandledRejection and uncaughtException logged at fatal and routed through the same shutdown with a failure code, the purge interval cleared, a second signal ignored. The answer reads the fixture Dockerfile, sees CMD [\"sh\", \"-c\", \"node dist/cli/migrate.js && node dist/server.js\"], explains that sh as PID 1 does not forward SIGTERM so the handler never runs in the container, and hands the image fix to the container-hardening skill. Skill-only: #3 (references/production.md › Graceful shutdown, target behavior 3), #5 (references/production.md › Lifecycle: fixing the image is the container-hardening skill's job).",
+      "files": [
+        ".claude/skills/fastify-api/evals/files/release-server.ts.txt",
+        ".claude/skills/fastify-api/evals/files/release-Dockerfile.txt"
+      ],
+      "assertions": [
+        "The shutdown deadline is a named constant below Docker's default 10 s grace period",
+        "The process exits with a non-zero code when closing fails or the deadline passes, and with 0 only after a clean close",
+        "unhandledRejection and uncaughtException are handled: the error is logged at fatal level and the same shutdown runs with a failure exit code",
+        "The database pool is closed after app.close() settles",
+        "The response reads the provided Dockerfile, identifies that the api image starts node through sh -c (so SIGTERM never reaches the handler in the container) and names this as a separate image change for the container-hardening skill",
+        "Non-test code names every number (deadline, exit codes) and contains no code comments; literals inside test files are allowed, as eslint.config.mjs turns no-magic-numbers off for *.test.ts"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "At the start of each month everyone imports their bank CSVs at once, and the API's event loop gets so busy that every request, even simple page loads, takes many seconds until the web app gives up. Add load shedding so an overloaded API turns work away quickly instead of letting everything queue.",
+      "expected_output": "@fastify/under-pressure (or an equivalent event-loop check) registered from buildApp before the routes, with thresholds (event-loop delay or utilization, heap, RSS) as named defaults in environmentSchema with overrides on AppConfig; its 503 answered by the existing error handler as 503 UNAVAILABLE (no new ErrorCode, no custom handler that sends its own body); liveness kept independent of pressure (its status route is not the health check and GET /health/live keeps answering under load) so Docker does not restart a busy but healthy container; a route test proving 503 UNAVAILABLE; the answer says to choose the thresholds from measurements (sign-in's argon2id is the most CPU-expensive route) with the node-diagnostics skill; config.test.ts, .env.example and docs/architecture/api.md updated. Skill-only: #3 and #5 (references/production.md › Load shedding); #2 is also stated in docs/architecture/api.md › Errors, so it guards correctness rather than discriminating.",
+      "files": [],
+      "assertions": [
+        "Load shedding is registered from buildApp before the API routes, with its thresholds as named default constants in environmentSchema in apps/api/src/config.ts and overridable through environment variables mapped onto AppConfig",
+        "An overloaded request is answered through the existing error handler as 503 with error.code UNAVAILABLE: no new ErrorCode is added and no hook or pressure handler sends its own error body with reply.send",
+        "Liveness stays independent of load: under-pressure's status route or healthCheck option is not used as the Docker health check, and the answer keeps GET /health/live answering 200 under pressure (by exempting it or scoping shedding away from it) or explains why it must, because a failing liveness check makes Docker restart a busy but healthy container",
+        "A route test with createTestApp or buildApp forces the overload condition (for example tiny thresholds passed through the environment) and asserts 503 with error.code UNAVAILABLE",
+        "The answer says the threshold defaults must come from measurement (load test or profile, for example of the argon2id sign-in route) and points to the node-diagnostics skill for it instead of presenting guessed values as final",
+        "config.test.ts covers the new variables, and .env.example and docs/architecture/api.md › Configuration list them"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "A teammate opened a PR that lets users pull the latest published exchange rates instead of typing them in; the web app will call POST /api/v1/exchange-rates/sync?base=EUR&days=7&overwrite=false. The diff is provided at `.claude/skills/fastify-api/evals/files/rate-sync.diff` (paths inside it are repo-relative; the provider client fx/published-rates.ts was reviewed separately and is not part of it). Review the API side before I merge: for every problem give the file and line (new side of the diff) and the fix.",
+      "expected_output": "Findings with new-side lines: packages/shared/src/schema/exchange-rates.ts:47 days is z.number() in a querystring schema; fastify-type-provider-zod replaces Ajv, so query values stay strings and every request with ?days= answers 400; use z.coerce.number() (as pageSizeSchema does); :48 overwrite is z.coerce.boolean(), which turns the string 'false' into true, so ?overwrite=false overwrites the user's rates; use z.stringbool() (as deletedQuerySchema and includeArchivedQuerySchema do); apps/api/src/modules/fx/sync.ts:13 and 35-40 a ServiceError with status 502 gets no mapped code (DefaultCodes has none for 502, so it goes out as RULE_VIOLATION) and misdescribes an outage; use HttpStatus.serviceUnavailable so it is 503 UNAVAILABLE with its user-facing message, and keep the original error as cause; tests are missing for the query parsing, the provider failure (503 UNAVAILABLE) and ownership; docs/reference/rest-api.md needs a row. Skill-only: #1 (references/routes-and-contracts.md › Coercion under the Zod validator: Ajv coercion does not run), #3 (references/errors.md › Traps: only 503 keeps a meaningful 5xx code, ServiceError with serviceUnavailable gets UNAVAILABLE).",
+      "files": [".claude/skills/fastify-api/evals/files/rate-sync.diff"],
+      "assertions": [
+        "Flags days: z.number() in exchangeRateSyncQuerySchema (packages/shared/src/schema/exchange-rates.ts, new-side line 47): under the Zod type provider Fastify's Ajv coercion does not run, query values arrive as strings and any request with ?days= fails validation with 400; the fix is z.coerce.number() with the same bounds",
+        "Flags overwrite: z.coerce.boolean() (same file, line 48): the string 'false' coerces to true, so ?overwrite=false overwrites existing rates; the fix is z.stringbool() as in the shared deletedQuerySchema",
+        "Flags the ServiceError thrown with status 502 (apps/api/src/modules/fx/sync.ts, line 13 and lines 35-40) and fixes it to HttpStatus.serviceUnavailable so the client gets 503 with error.code UNAVAILABLE and the user-facing message, explaining that 503 is the only 5xx status with its own error code (a 502 ServiceError gets no matching code)",
+        "Asks for route tests that cover ?overwrite=false and ?days=7 being parsed correctly and the provider failure answering 503 UNAVAILABLE",
+        "Each finding cites a file and a new-side line number from the diff"
+      ]
+    }
+  ]
+}

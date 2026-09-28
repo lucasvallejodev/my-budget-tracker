@@ -1,0 +1,34 @@
+[
+  { "query": "Audit the accounts screen for accessibility issues", "should_trigger": true },
+  {
+    "query": "Does the transaction dialog work with only a keyboard and a screen reader?",
+    "should_trigger": true
+  },
+  {
+    "query": "Check how the budgets page looks on a phone and on a tablet",
+    "should_trigger": true
+  },
+  {
+    "query": "Is the color contrast of the dashboard cards OK in dark mode?",
+    "should_trigger": true
+  },
+  {
+    "query": "Review this new ui component for a11y and responsive problems before I merge it",
+    "should_trigger": true
+  },
+  { "query": "Does the import wizard meet WCAG 2.2 AA?", "should_trigger": true },
+  { "query": "Write a Playwright test that runs axe on every page", "should_trigger": false },
+  {
+    "query": "The overview page takes too long to render after I change month",
+    "should_trigger": false
+  },
+  {
+    "query": "Proofread the accessibility section of docs/architecture/components.md",
+    "should_trigger": false
+  },
+  {
+    "query": "Review the sign-in route and cookie handling for security issues",
+    "should_trigger": false
+  },
+  { "query": "Add a healthcheck to the web container", "should_trigger": false }
+]

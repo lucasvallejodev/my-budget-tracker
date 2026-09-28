@@ -1,0 +1,79 @@
+{
+  "skill_name": "docs-writing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I built a savings goals feature on a local branch. It is not merged into this checkout, so the whole change is provided as a diff at `.claude/skills/docs-writing/evals/files/savings-goals.diff`; treat that diff as the code. Write the documentation for it.",
+      "expected_output": "Reads the diff, lists the matching agents/docs-map.md rows by name (schema and drizzle, packages/shared/src/schema/*, apps/api/src/routes/*, modules/services.ts, apps/web/src/api/mutations.ts, apps/web/src/components/**, sidebar routes) and delivers: a new docs/features/savings-goals.md (title, Summary line, 'What a savings goal is', 'Step by step' with bold UI labels from the diff such as **Goals**, **New goal**, **Colour**, **Savings account**, **Target amount**, **Save goal**, **Delete**, **Undo**', a screenshot placeholder, 'How it works' naming the savings_goals table, the service, the five endpoints, progress computed from the linked account's ledger balance, the currency taken from the account, soft delete with Undo and POST /restore, no Deleted items tab); a Features entry in docs/_sidebar.md; rows in docs/reference/rest-api.md; data-model updates in docs/architecture/data-model.md, docs/reference/migrations.md and agents/data-model.md; the agents/architecture.md service catalog; the frontend hook and mutations in docs/architecture/frontend.md; and a new agents/docs-map.md row. New prose is in American English although the neighboring pages are British. Skill-only: #6 (SKILL.md › Workflow step 1: name the docs-map rows) and #7 (references/style.md › Spelling and punctuation: American English in new text, UI labels keep the code's spelling).",
+      "files": [".claude/skills/docs-writing/evals/files/savings-goals.diff"],
+      "assertions": [
+        "Delivers the full content of a new docs/features/savings-goals.md that starts with a '# ' title immediately followed by a '> Summary:' line describing the page",
+        "The page has a 'Step by step' numbered list whose UI labels are in bold and match labels in the diff (at least **New goal** and **Save goal**), followed by a '<!-- screenshot: ... (docs/assets/screenshots/<name>.png) -->' placeholder, and it references no image file",
+        "The 'How it works' section matches the diff: it names the savings_goals table and apps/api/src/modules/savings-goals/service.ts, says the saved amount is computed from the linked account's ledger balance (not stored), says the goal takes its currency from the account, and describes delete as a soft delete reversed by Undo or POST /api/v1/savings-goals/:id/restore; it does not claim that goals appear on the Deleted items screen",
+        "Adds an entry for the page to the Features section of docs/_sidebar.md and rows for all five savings-goals endpoints to docs/reference/rest-api.md, with 201 for create and 204 for delete",
+        "Updates the data-model docs (at least docs/architecture/data-model.md and agents/data-model.md) and adds a new agents/docs-map.md row for the savings-goals code",
+        "Names at least three existing agents/docs-map.md rows that match the changed paths (for example the apps/api/src/db/schema.ts row, the packages/shared/src/schema/* row, the apps/api/src/routes/* row, the apps/web/src/api/client.ts and mutations.ts row, the apps/web/src/components/** row, the sidebar routes row) as the source of the page list",
+        "Prose the response writes uses American spelling (for example 'color', 'behavior', 'catalog'); British spellings such as 'colour', 'behaviour', 'catalogue' or 'organise' appear only in the UI label **Colour** copied from the dialog, in code identifiers, or in the names of existing sections it links to"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I want to add a rate limiting section to docs/architecture/api.md. My draft is at `.claude/skills/docs-writing/evals/files/rate-limiting-draft.md.txt` (line numbers refer to that file). Review it and give me a fixed version.",
+      "expected_output": "Findings first, one per line as '<line>  <category>  <finding and suggested text>' under the draft's path, ordered facts, then structure, then style, ending with a count per category; then the fixed section. Facts checked against the code: @fastify/rate-limit is registered with global: false in apps/api/src/plugins/security.ts and only sign-up, sign-in and password change opt in (config.rateLimit in apps/api/src/routes/auth.ts); the default AUTH_ATTEMPTS_PER_MINUTE is 10 (apps/api/src/config.ts), not 100; the count is per client IP (request.ip, TRUST_PROXY), not per account; the page already covers the limit in Access layers and Configuration. The fixed version removes the 'As of September 2026' date, tags the code block and drops the '$' prompt, uses sentence case without a colon subtitle, cuts filler, the em dash and the exclamation mark, and gives the link descriptive text. Skill-only: #1, #2, #3 (SKILL.md › Reviewing instead of writing, references/checklist.md › Review output format), #5 (SKILL.md › House rules: no dates like 'as of'), #6 ('$' prompt rule in references/style.md › Code blocks).",
+      "files": [".claude/skills/docs-writing/evals/files/rate-limiting-draft.md.txt"],
+      "assertions": [
+        "Before the fixed version, findings are listed one per line, each with a line number from the draft file and a category label (fact, structure, style or equivalent)",
+        "Every fact finding is listed before any style finding (findings ordered by impact rather than by line number or by word)",
+        "The findings end with a total count broken down by category (for example '9 findings: 3 fact, 2 structure, 4 style')",
+        "Fact findings correct all three wrong claims, matching the code: the limit applies only to sign-up, sign-in and password change (global: false in apps/api/src/plugins/security.ts, config.rateLimit in apps/api/src/routes/auth.ts), the default AUTH_ATTEMPTS_PER_MINUTE is 10 rather than 100, and requests are counted per client IP rather than per user account",
+        "The fixed version removes the 'As of September 2026' date instead of keeping or updating it",
+        "The fixed version's code block has a language tag and the command has no leading '$ ' prompt"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "This change to the CSV import is ready to merge: bigger files, a configurable match window, and a longer window for transfer suggestions. It is not applied in this checkout; the diff is at `.claude/skills/docs-writing/evals/files/import-windows.diff`. Update the docs for it.",
+      "expected_output": "Uses agents/docs-map.md (apps/api/src/modules/import/*, packages/shared/src/schema/*, packages/shared/src/constants/*, apps/web/src/components/**) and Grep for 'four days', '7 days' and '2 MB' to find docs/features/import.md (Matches existing row, step 3 or a new step with **Match window (days)**, step 6, Supported formats, the transferSuggestions bullet), docs/features/transfers-and-credit-cards.md (the 'within four days' sentence) and docs/reference/rest-api.md (the POST /imports/preview row: 5 MB, matchWindowDays?). Prose writes the allowed window as '1 to 14 days' (an en dash only inside a table), sizes as '5 MB'. The edited transferSuggestions sentence changes 'uncategorised' to 'uncategorized'; unedited sentences keep their British spelling. Skill-only: #3 (references/style.md › Numbers, units and money: ranges with 'to' in prose), #4 (references/style.md › Spelling and punctuation: convert the sentences you edit, do not respell whole pages), #5 (SKILL.md › Workflow step 1).",
+      "files": [".claude/skills/docs-writing/evals/files/import-windows.diff"],
+      "assertions": [
+        "Updates every stale fact in docs/features/import.md: the Matches existing row (7 days by default, now adjustable), a step that names the new field in bold as **Match window (days)**, 'four days' changed to seven days in both step 6 and the transferSuggestions bullet, and the file limit changed from 2 MB to 5 MB",
+        "Also updates the 'within four days' sentence in docs/features/transfers-and-credit-cards.md and the POST /imports/preview row in docs/reference/rest-api.md (5 MB and the optional matchWindowDays in the mapping)",
+        "Wherever prose (outside a table cell) states the allowed match window, the range is written with 'to' (for example '1 to 14 days'), not with a hyphen or an en dash",
+        "In the transferSuggestions bullet it edits, the British spelling 'uncategorised' does not survive (it becomes 'uncategorized' or the sentence is rephrased without it), while sentences the change did not otherwise require editing are left with their existing spelling",
+        "Names the agents/docs-map.md rows it used, including the apps/api/src/modules/import/* row and at least one of the packages/shared/src/schema/* or apps/web/src/components/** rows"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I am about to rename the SESSION_DAYS environment variable to SESSION_LIFETIME_DAYS. The code change is ready and provided as a diff at `.claude/skills/docs-writing/evals/files/session-lifetime-rename.diff` (config.ts and its test). Update whatever documentation needs it so it can go in the same change.",
+      "expected_output": "Greps the repository for SESSION_DAYS and updates every mention outside docs/legacy and temp: docs/architecture/api.md (Sessions and Maximum age bullets, Configuration table), docs/getting-started/setup.md (the variables table and the Docker paragraph), docs/features/account-and-security.md, .env.example (the variable and the comment that names it) and docker-compose.yml (key and ${SESSION_DAYS:-30} default). Leaves the internal sessionDays option in docs/architecture/server.md and agents/architecture.md alone because the diff keeps it. Names the agents/docs-map.md rows used (apps/api/src/config.ts row: architecture/api.md › Configuration, setup.md when an env var changed, README when an env var changed; package.json/Dockerfile/docker-compose.yml/.env.example row) and says README.md was checked and has no mention. Skill-only: #4 (SKILL.md › Workflow step 1: name the rows), #5 (SKILL.md › Workflow step 5 and Keep the docs true: state what was checked).",
+      "files": [".claude/skills/docs-writing/evals/files/session-lifetime-rename.diff"],
+      "assertions": [
+        "Every mention of SESSION_DAYS in docs/ outside docs/legacy/ (grader: run `git grep -n SESSION_DAYS -- docs ':!docs/legacy'`; at least docs/architecture/api.md, docs/getting-started/setup.md and docs/features/account-and-security.md) is changed to SESSION_LIFETIME_DAYS in the response's diffs or full-file content",
+        "Updates .env.example (the variable line and the comment that names it) and docker-compose.yml (both the key and the ${SESSION_DAYS:-30} substitution)",
+        "Leaves the internal sessionDays option unchanged in docs/architecture/server.md and agents/architecture.md, since the diff renames only the environment variable",
+        "Names the agents/docs-map.md rows used to choose the pages, including the row for apps/api/src/config.ts",
+        "States that README.md was checked and either updates it or says explicitly that it does not mention the variable"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I drafted a new project skill for CSV imports and want to add it as `.claude/skills/csv-import/`. The draft files are provided under `.claude/skills/docs-writing/evals/files/csv-import-skill/` (`SKILL.md.txt`, `references/bank-formats.md.txt`, `references/banks/ing.md.txt`, `references/troubleshooting.md.txt`; treat each as the same path without `.txt`). Review it before I add it.",
+      "expected_output": "A review, not a rewrite: findings grouped by file as '<line>  <category>  <finding and suggested text>', facts first, then structure, then style, with 'No findings' for references/troubleshooting.md and banks/ing.md if clean, and a per-category count at the end. Facts: parseCsv lives in packages/shared/src/lib/csv.ts (no apps/api/src/modules/import/parser.ts), the file limit is 2 MB (FieldLengths.importCsv), the preview route is POST /api/v1/imports/preview. Structure: the description is first person and never says when a sibling skill applies instead (database-change owns the import's multi-row transaction, node-diagnostics streaming large CSVs, e2e-playwright the import journey, fastify-api endpoints); references/bank-formats.md has no '> Summary:' line; the reference chain SKILL.md → bank-formats.md → banks/ing.md is deeper than one level. Style: title with a colon subtitle and title case, 'navigate the complexities', 'simply'. Skill-only: #1 and #2 (references/checklist.md › Review output format), #3 and #4 (references/page-types.md › Other prose in the repository, skill files row), #6 (SKILL.md › Reviewing instead of writing).",
+      "files": [
+        ".claude/skills/docs-writing/evals/files/csv-import-skill/SKILL.md.txt",
+        ".claude/skills/docs-writing/evals/files/csv-import-skill/references/bank-formats.md.txt",
+        ".claude/skills/docs-writing/evals/files/csv-import-skill/references/banks/ing.md.txt",
+        ".claude/skills/docs-writing/evals/files/csv-import-skill/references/troubleshooting.md.txt"
+      ],
+      "assertions": [
+        "Findings are grouped by file, each with a line number and a category (fact, structure, style or equivalent), fact findings first, and the review ends with a count per category",
+        "references/troubleshooting.md is listed in the review with an explicit 'No findings' (or an equivalent clean verdict) rather than being omitted",
+        "Flags that the description never says when a sibling skill applies instead, and names at least one real overlapping CoinKeeper skill (database-change, node-diagnostics, e2e-playwright or fastify-api)",
+        "Flags that references/bank-formats.md has no '> Summary:' line under its title",
+        "Flags at least two wrong facts, consistent with the repository: parseCsv is in packages/shared/src/lib/csv.ts (apps/api/src/modules/import/parser.ts does not exist), the file limit is 2 MB rather than 10 MB, and the preview route is POST /api/v1/imports/preview rather than /import/preview",
+        "Delivers findings with suggested text and does not deliver rewritten replacement files for the skill, since the user asked for a review"
+      ]
+    }
+  ]
+}

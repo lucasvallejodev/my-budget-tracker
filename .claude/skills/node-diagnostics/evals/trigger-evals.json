@@ -1,0 +1,28 @@
+[
+  { "query": "vitest says close timed out and the process never exits", "should_trigger": true },
+  {
+    "query": "this api test passes alone but fails when I run the whole suite",
+    "should_trigger": true
+  },
+  { "query": "profile why GET /transactions?limit=2000 is slow", "should_trigger": true },
+  { "query": "the api's memory keeps growing after every import", "should_trigger": true },
+  { "query": "should we add an lru cache for account balances in the api", "should_trigger": true },
+  {
+    "query": "stream the CSV export from the server instead of building it in memory",
+    "should_trigger": true
+  },
+  {
+    "query": "add a graceful shutdown deadline and non-zero exit code to server.ts",
+    "should_trigger": false
+  },
+  {
+    "query": "the budgets query does a sequential scan, add an index and check EXPLAIN",
+    "should_trigger": false
+  },
+  { "query": "the Playwright transfer spec is flaky on CI", "should_trigger": false },
+  { "query": "the transactions screen re-renders on every keystroke", "should_trigger": false },
+  {
+    "query": "set a memory limit and cpus for the api service in docker compose",
+    "should_trigger": false
+  }
+]

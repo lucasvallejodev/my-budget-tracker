@@ -1,0 +1,28 @@
+[
+  { "query": "document the new budgets rollover feature in the docs site", "should_trigger": true },
+  { "query": "review docs/architecture/api.md for tone and clarity", "should_trigger": true },
+  {
+    "query": "I changed the import endpoint, which docs pages do I need to update?",
+    "should_trigger": true
+  },
+  { "query": "add a section to agents/conventions.md about request ids", "should_trigger": true },
+  { "query": "rewrite the README setup section so it is shorter", "should_trigger": true },
+  { "query": "write the PR description for this branch", "should_trigger": false },
+  {
+    "query": "add TSDoc to the new helper in packages/shared/src/lib/money.ts",
+    "should_trigger": false
+  },
+  {
+    "query": "draw an architecture diagram of the request flow as an SVG",
+    "should_trigger": false
+  },
+  {
+    "query": "review the budgets screen for accessibility and mobile layout",
+    "should_trigger": false
+  },
+  { "query": "add an endpoint to export budgets as JSON", "should_trigger": false },
+  {
+    "query": "write a Playwright test that checks the deleted items page",
+    "should_trigger": false
+  }
+]

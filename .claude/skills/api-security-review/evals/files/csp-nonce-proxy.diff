@@ -1,0 +1,102 @@
+diff --git a/apps/web/src/proxy.ts b/apps/web/src/proxy.ts
+--- a/apps/web/src/proxy.ts
++++ b/apps/web/src/proxy.ts
+@@ -3,6 +3,12 @@ import { type NextRequest, NextResponse } from 'next/server';
+ const SessionCookieNames = ['__Host-ck_session', 'ck_session'];
+ const PublicPaths = ['/sign-in', '/sign-up'];
+ const SIGN_IN_PATH = '/sign-in';
++const NONCE_BYTES = 16;
++const NONCE_HEADER = 'x-nonce';
++const CONTENT_SECURITY_POLICY_HEADER = 'Content-Security-Policy';
++
++const ProxyMatcher =
++  '/((?!api/|_next/|favicon.ico|[^?]*\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)';
+ 
+ const hasSessionCookie = (request: NextRequest): boolean =>
+   SessionCookieNames.some(name => request.cookies.has(name));
+@@ -10,10 +16,42 @@ const hasSessionCookie = (request: NextRequest): boolean =>
+ const isPublic = (pathname: string): boolean =>
+   PublicPaths.some(path => pathname === path || pathname.startsWith(`${path}/`));
+ 
++const createNonce = (): string =>
++  Buffer.from(crypto.getRandomValues(new Uint8Array(NONCE_BYTES))).toString('base64');
++
++const contentSecurityPolicyFor = (nonce: string): string =>
++  [
++    "default-src 'self'",
++    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
++    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
++    "img-src 'self'",
++    "font-src 'self'",
++    "connect-src 'self'",
++    "object-src 'none'",
++    "base-uri 'self'",
++    "form-action 'self'",
++    "frame-ancestors 'none'",
++  ].join('; ');
++
++const withContentSecurityPolicy = (request: NextRequest): NextResponse => {
++  const nonce = createNonce();
++  const policy = contentSecurityPolicyFor(nonce);
++  const requestHeaders = new Headers(request.headers);
++
++  requestHeaders.set(NONCE_HEADER, nonce);
++  requestHeaders.set(CONTENT_SECURITY_POLICY_HEADER, policy);
++
++  const response = NextResponse.next({ request: { headers: requestHeaders } });
++
++  response.headers.set(CONTENT_SECURITY_POLICY_HEADER, policy);
++
++  return response;
++};
++
+ export function proxy(request: NextRequest) {
+   const { pathname, search } = request.nextUrl;
+ 
+-  if (isPublic(pathname) || hasSessionCookie(request)) return NextResponse.next();
++  if (isPublic(pathname) || hasSessionCookie(request)) return withContentSecurityPolicy(request);
+ 
+   const signIn = new URL(SIGN_IN_PATH, request.url);
+ 
+@@ -23,7 +61,5 @@ export function proxy(request: NextRequest) {
+ }
+ 
+ export const config = {
+-  matcher: [
+-    '/((?!api/|_next/|favicon.ico|[^?]*\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+-  ],
++  matcher: [ProxyMatcher],
+ };
+diff --git a/apps/web/next.config.ts b/apps/web/next.config.ts
+--- a/apps/web/next.config.ts
++++ b/apps/web/next.config.ts
+@@ -9,29 +9,10 @@ loadEnvConfig(RepositoryRoot);
+ const DEFAULT_API_URL = 'http://127.0.0.1:4000';
+ const apiUrl = (process.env.API_URL ?? DEFAULT_API_URL).replace(/\/$/, '');
+ 
+-const isDevelopment = process.env.NODE_ENV === 'development';
+-
+-const ScriptSources = ["'self'", "'unsafe-inline'"];
+-const DevelopmentScriptSources = [...ScriptSources, "'unsafe-eval'"];
+-
+-const ReportOnlyPolicyDirectives = [
+-  "default-src 'self'",
+-  `script-src ${(isDevelopment ? DevelopmentScriptSources : ScriptSources).join(' ')}`,
+-  "style-src 'self' 'unsafe-inline'",
+-  "img-src 'self'",
+-  "font-src 'self'",
+-  "connect-src 'self'",
+-  "object-src 'none'",
+-  "base-uri 'self'",
+-  "form-action 'self'",
+-];
+-
+ const SecurityHeaders = [
+   { key: 'X-Frame-Options', value: 'DENY' },
+   { key: 'X-Content-Type-Options', value: 'nosniff' },
+   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+-  { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+-  { key: 'Content-Security-Policy-Report-Only', value: ReportOnlyPolicyDirectives.join('; ') },
+ ];
+ 
+ const config: NextConfig = {
