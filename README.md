@@ -42,11 +42,13 @@ npm run dev                   # API on http://127.0.0.1:4000, web app on http://
 
 Open http://localhost:3000 and create an account (password of 12 to 128 characters). Sign-up creates your settings and seeds the default categories. A forgotten password is reset from the command line with `npm run user:reset-password -- <email>`. Step-by-step details and troubleshooting: [docs/getting-started/setup.md](docs/getting-started/setup.md).
 
-To run PostgreSQL, the API (which applies migrations at start) and the web app on port 3000 in Docker:
+To run PostgreSQL, a one-shot `migrate` container, the API and the web app (on `127.0.0.1:3000`) in Docker:
 
 ```bash
 docker compose --profile app up -d --build
 ```
+
+The Compose stack uses secure session cookies and binds the web app to loopback; to serve it to other devices, terminate TLS in a reverse proxy in front of it. `COOKIE_SECURE`, `TRUST_PROXY` and `WEB_BIND_ADDRESS` are explained in [docs/getting-started/setup.md › Running in Docker](docs/getting-started/setup.md#running-in-docker).
 
 ## Commands
 

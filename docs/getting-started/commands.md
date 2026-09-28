@@ -47,8 +47,8 @@ The database commands run in the API workspace, which owns the schema. See [Data
 
 | Command                                      | What it does                                                                                                |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `docker compose --profile app up -d --build` | Builds and runs the `api` and `web` containers next to PostgreSQL; the web app is on http://localhost:3000. |
-| `docker compose down`                        | Stops everything; the database volume survives.                                                             |
+| `docker compose --profile app up -d --build` | Builds the images, runs the one-shot `migrate` container, then the `api` and `web` containers next to PostgreSQL; the web app is on http://localhost:3000 (loopback only). |
+| `docker compose down`                        | Stops everything; the database volume survives.                                                                                                                             |
 
 ## Typical loops
 

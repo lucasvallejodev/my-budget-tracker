@@ -1,6 +1,6 @@
 # API service
 
-> Summary: the Fastify service in `apps/api`: folder layout, how a request flows through plugins and routes, sign-up, sign-in and cookie sessions, the layers that keep other sites and strangers out, error responses, soft deletes, and how to add or test an endpoint.
+> Summary: the Fastify service in `apps/api`: folder layout, how a request flows through plugins and routes, start-up and graceful shutdown, sign-up, sign-in and cookie sessions, the layers that keep other sites and strangers out, the client IP behind a reverse proxy, error responses, soft deletes, and how to add or test an endpoint.
 
 The API is a standalone Fastify 5 application (`@coinkeeper/api`). It owns the database: the Drizzle schema, the migrations, every business rule and every query. The web app talks to it over HTTP under `/api/v1`. The endpoint list is in the [REST API reference](../reference/rest-api.md).
 
@@ -12,6 +12,7 @@ apps/api/
 ├─ scripts/                 database.mjs (npm run db:check) and its helper
 ├─ src/
 │  ├─ server.ts             Entry point: loads .env, opens the pool, builds the app, listens, purges expired sessions hourly
+│  ├─ shutdown.ts           shutDown(): on SIGTERM/SIGINT closes Fastify, then the pool, within 8 s; exit code 0 or 1
 │  ├─ app.ts                buildApp({ config, db }): registers compilers, services, plugins and routes; never listens (tests use it)
 │  ├─ config.ts             Environment variables validated with Zod (see Configuration)
 │  ├─ environment.ts        Reads the root .env and opens the database for the server and the CLI
@@ -48,6 +49,10 @@ sequenceDiagram
 
 Routes that need a user are registered inside one scope with an `onRequest` hook (`requireSession`), so forgetting the check on a new route is not possible. Only `GET /health` and `POST /auth/sign-up | sign-in | sign-out` are outside it.
 
+### Start and shutdown
+
+`server.ts` never migrates: migrations are a separate one-shot command (`node dist/cli/migrate.js`, the `migrate` service in Docker Compose), so restarting the API does not touch the schema. On `SIGTERM` or `SIGINT` the server stops the session purge timer and calls `shutDown()` (`src/shutdown.ts`): Fastify stops accepting connections and waits for requests in flight, then the PostgreSQL pool closes (even if closing Fastify failed). The process exits `0` when both finish, and `1` when either fails or the whole shutdown takes longer than 8 seconds, which is inside Docker's default 10-second grace period before `SIGKILL`. In the container image `tini` is PID 1 and `node` is started directly (exec form), so the signal reaches Node; a second signal during shutdown ends the process at once.
+
 ## Sign-up, sign-in and sessions
 
 - **Users** live in `users` (`email` unique and stored lower-case, `password_hash`, optional `name`). Passwords are hashed with argon2id (`@node-rs/argon2`, 19 MiB memory, 2 iterations). Passwords must have 12 to 128 characters.
@@ -63,7 +68,7 @@ Routes that need a user are registered inside one scope with an `onRequest` hook
 | ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Name       | `__Host-ck_session` (production), `ck_session` (plain-HTTP development) | The `__Host-` prefix makes browsers accept the cookie only when it is `Secure`, has `Path=/` and no `Domain`, so a subdomain cannot set or read it.                      |
 | `HttpOnly` | yes                                                                     | Page JavaScript cannot read the token, so an injected script cannot steal it.                                                                                            |
-| `Secure`   | in production (`COOKIE_SECURE`)                                         | Only sent over HTTPS.                                                                                                                                                    |
+| `Secure`   | in production and in Docker Compose (`COOKIE_SECURE`)                   | Only sent over HTTPS.                                                                                                                                                    |
 | `SameSite` | `Lax`                                                                   | The browser does not attach the cookie to requests started by other sites (forms, `fetch`, images); it only sends it on our own pages and on top-level navigation to us. |
 | `Expires`  | session expiry                                                          | Renewed with the session.                                                                                                                                                |
 
@@ -78,13 +83,13 @@ Browser ──► https://app.example.com   (Next.js, the only public entry poin
 
 | Layer                  | What it does                                                                                                                                                                                                                                                       | Where                                          |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| 1. Network             | Fastify is not published to the internet; Next.js forwards `/api/*` to it. In development it listens on `127.0.0.1`.                                                                                                                                               | `API_HOST`, Docker Compose network             |
+| 1. Network             | Fastify is not published to the internet; Next.js forwards `/api/*` to it. In development it listens on `127.0.0.1`; Docker Compose publishes only the web app, on `127.0.0.1`, for a TLS-terminating reverse proxy.                                             | `API_HOST`, Docker Compose network             |
 | 2. Session check       | Every route except health and sign-up/in/out needs a valid session: no cookie, an unknown token or an expired one → `401`. This is what stops a stranger.                                                                                                          | `plugins/authentication.ts`, `routes/index.ts` |
 | 3. Cookie attributes   | `HttpOnly`, `Secure`, `SameSite=Lax`, `__Host-` prefix (table above).                                                                                                                                                                                              | `plugins/authentication.ts`                    |
 | 4. Origin check (CSRF) | For `POST`, `PUT`, `PATCH` and `DELETE`, a browser always sends `Origin`; if it is not in `ALLOWED_ORIGINS`, or `Sec-Fetch-Site` says `cross-site`, the answer is `403 ORIGIN_NOT_ALLOWED`. Requests without either header (scripts, `curl`) still need a session. | `plugins/security.ts`                          |
 | 5. CORS                | Registered with the `CORS_ORIGINS` allow-list, empty by default: no `Access-Control-Allow-Origin` header, so no other site's JavaScript can read a response.                                                                                                       | `plugins/security.ts`                          |
 | 6. Security headers    | `@fastify/helmet`: `X-Frame-Options`, `X-Content-Type-Options`, HSTS and friends.                                                                                                                                                                                  | `plugins/security.ts`                          |
-| 7. Rate limiting       | Sign-up, sign-in and password change: `AUTH_ATTEMPTS_PER_MINUTE` per client IP (10 by default) → `429 RATE_LIMITED`. `TRUST_PROXY` makes the real IP come from `X-Forwarded-For`.                                                                                  | `routes/auth.ts`                               |
+| 7. Rate limiting       | Sign-up, sign-in and password change: `AUTH_ATTEMPTS_PER_MINUTE` per client IP (10 by default) → `429 RATE_LIMITED`. The IP is the connection address unless `TRUST_PROXY` lists the proxy (see [Behind a reverse proxy](#behind-a-reverse-proxy)).              | `routes/auth.ts`                               |
 | 8. Ownership           | Every service filters by `user_id`; ids of other users answer `404`.                                                                                                                                                                                               | `modules/*`                                    |
 
 What each kind of caller meets:
@@ -97,6 +102,22 @@ What each kind of caller meets:
 | You, from a script                                     | Allowed: sign in, keep the cookie, send it back.                                                                                                      |
 
 Other applications (a mobile app, integrations) should get personal access tokens sent as `Authorization: Bearer …` rather than cookies; that is future work. To let a web app on another origin call the API, add it to `CORS_ORIGINS` (it is then also accepted by the origin check).
+
+### Behind a reverse proxy
+
+The rate limit and the address shown in the session list use `request.ip`. By default (`TRUST_PROXY=false`) that is the address of the TCP connection, and `X-Forwarded-For` is ignored, because anyone can send that header: trusting it blindly would let a caller pick a new IP for every request and never hit the limit.
+
+Next.js does not add its own entry to `X-Forwarded-For`: it only fills the header in when the request has none, and otherwise forwards whatever the client sent. So behind Next.js alone the header proves nothing, and the API sees every request coming from the web app (`127.0.0.1` with `npm run dev`, the web container in Docker). The limit then applies to all clients together, which errs on the safe side.
+
+To limit each client separately, put a reverse proxy in front of the web app that **replaces** `X-Forwarded-For` with the address it received the connection from (Caddy does by default; with nginx use `proxy_set_header X-Forwarded-For $remote_addr;`), make the web app reachable **only** through that proxy, and set `TRUST_PROXY` to the address of the web app as the API sees it:
+
+| Setup                                          | `TRUST_PROXY`                                                                                   |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| No reverse proxy                               | `false` (default)                                                                               |
+| Reverse proxy → `npm start` on the same host   | `loopback`                                                                                      |
+| Reverse proxy → Docker Compose `web` container | the Compose network's subnet (`docker network inspect <project>_app-network`), or `uniquelocal` |
+
+`TRUST_PROXY` accepts `false` or a comma-separated list of IP addresses, CIDR ranges and the names `loopback`, `linklocal` and `uniquelocal` (the private ranges); `true` and hop counts are rejected at start-up. The API then takes the last `X-Forwarded-For` entry that is not itself a trusted address.
 
 ## Errors
 
@@ -153,7 +174,7 @@ Read from the environment (and the root `.env` in development):
 | `COOKIE_SECURE`            | `true` in production      | Adds `Secure` and switches to the `__Host-` cookie name.                              |
 | `SESSION_DAYS`             | `30`                      | Session lifetime.                                                                     |
 | `AUTH_ATTEMPTS_PER_MINUTE` | `10`                      | Rate limit for sign-up, sign-in and password change.                                  |
-| `TRUST_PROXY`              | `true`                    | Read the client IP from `X-Forwarded-For` (Next.js or a reverse proxy sits in front). |
+| `TRUST_PROXY`              | `false`                   | Proxies whose `X-Forwarded-For` is believed (see [Behind a reverse proxy](#behind-a-reverse-proxy)). |
 | `API_DOCS`                 | `true` outside production | Serve Swagger UI at `/api/docs` (the JSON document is at `/api/docs/json`).           |
 | `LOG_LEVEL`                | `info`                    | Pino log level.                                                                       |
 

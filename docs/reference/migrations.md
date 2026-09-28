@@ -20,7 +20,7 @@ The history starts at `0000_init.sql` because no production data existed when th
 4. `npm run db:migrate` applies it locally. `npm test -- --run` applies every migration to PGlite from scratch (`apps/api/src/test/database.ts`), so a broken migration fails the suite.
 5. Never edit a migration that has already been applied somewhere; add a new one.
 
-`npm run db:check` (`apps/api/scripts/database.mjs`) compares the live schema with the result of applying all migrations to an in-memory database and reports any drift without changing anything. In the Docker setup, the API container applies pending migrations when it starts.
+`npm run db:check` (`apps/api/scripts/database.mjs`) compares the live schema with the result of applying all migrations to an in-memory database and reports any drift without changing anything. In the Docker setup, the one-shot `migrate` service applies pending migrations before the API container starts; restarting the API does not run them again.
 
 ## Resetting a database created with the old history
 

@@ -21,7 +21,32 @@ describe('loadConfig', () => {
       port: 4000,
       sessionCookieName: 'ck_session',
       sessionDays: 30,
+      trustedProxies: [],
     });
+  });
+
+  it('trusts no proxy by default and otherwise only the listed addresses', () => {
+    expect(loadConfig({ NODE_ENV: 'production' }).trustedProxies).toEqual([]);
+    expect(loadConfig({ TRUST_PROXY: 'false' }).trustedProxies).toEqual([]);
+    expect(
+      loadConfig({ TRUST_PROXY: 'loopback, 192.0.2.0/24, 198.51.100.7, 2001:db8::/32' })
+        .trustedProxies
+    ).toEqual(['loopback', '192.0.2.0/24', '198.51.100.7', '2001:db8::/32']);
+  });
+
+  it('refuses to trust every proxy and rejects entries that are not addresses', () => {
+    expect(() => loadConfig({ TRUST_PROXY: 'true' })).toThrow('TRUST_PROXY must be false');
+
+    for (const invalid of [
+      '1',
+      'web',
+      '192.0.2.0/33',
+      '192.0.2.0/',
+      '192.0.2.0/24/1',
+      '2001:db8::/129',
+    ]) {
+      expect(() => loadConfig({ TRUST_PROXY: invalid }), invalid).toThrow('TRUST_PROXY');
+    }
   });
 
   it('switches to secure cookies and hides the docs in production', () => {

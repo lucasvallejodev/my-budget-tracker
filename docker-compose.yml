@@ -18,24 +18,43 @@ services:
     networks:
       - app-network
 
-  # The API is not published to the host: only the web container reaches it (see
-  # docs/architecture/api.md › Who can reach the API). It applies migrations when it starts.
-  api:
+  # One-shot: applies pending migrations and exits; the api starts only after it succeeds.
+  migrate:
     profiles: ['app']
-    build:
+    build: &api-build
       context: .
       target: api
+    command: ['node', 'dist/cli/migrate.js']
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-budget_tracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-budget_tracker}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
-      COOKIE_SECURE: ${COOKIE_SECURE:-false}
-      SESSION_DAYS: ${SESSION_DAYS:-30}
-      AUTH_ATTEMPTS_PER_MINUTE: ${AUTH_ATTEMPTS_PER_MINUTE:-10}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: 'no'
+    networks:
+      - app-network
+
+  # The API is not published to the host: only the web container reaches it (see
+  # docs/architecture/api.md › Who can reach the API).
+  api:
+    profiles: ['app']
+    build: *api-build
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-budget_tracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-budget_tracker}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      # Secure by default; COOKIE_SECURE=false only for a plain-HTTP trial (docs/getting-started/setup.md).
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      SESSION_DAYS: ${SESSION_DAYS:-30}
+      AUTH_ATTEMPTS_PER_MINUTE: ${AUTH_ATTEMPTS_PER_MINUTE:-10}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - app-network
@@ -47,8 +66,9 @@ services:
       target: web
       args:
         API_URL: http://api:4000
+    # Loopback only: put a TLS-terminating reverse proxy in front, or set WEB_BIND_ADDRESS.
     ports:
-      - '3000:3000'
+      - '${WEB_BIND_ADDRESS:-127.0.0.1}:3000:3000'
     depends_on:
       api:
         condition: service_healthy

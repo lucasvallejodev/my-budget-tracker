@@ -1,5 +1,6 @@
 import { buildApp } from './app';
 import { openRuntime } from './environment';
+import { EXIT_FAILURE, shutDown } from './shutdown';
 
 const ShutdownSignals = ['SIGINT', 'SIGTERM'] as const;
 const SESSION_PURGE_INTERVAL_MS = 3_600_000;
@@ -15,10 +16,13 @@ const start = async () => {
   for (const signal of ShutdownSignals) {
     process.once(signal, () => {
       clearInterval(purge);
-      void app
-        .close()
-        .then(close)
-        .finally(() => process.exit(0));
+      app.log.info({ signal }, 'Shutting down');
+      void shutDown({
+        closeApp: () => app.close(),
+        closeDatabase: close,
+        exit: code => process.exit(code),
+        log: app.log,
+      });
     });
   }
 
@@ -27,5 +31,5 @@ const start = async () => {
 
 start().catch((error: unknown) => {
   console.error(error);
-  process.exit(1);
+  process.exit(EXIT_FAILURE);
 });

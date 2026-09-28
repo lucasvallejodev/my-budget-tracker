@@ -1,6 +1,7 @@
 # One Dockerfile, two images: `--target api` (Fastify) and `--target web` (Next.js).
+# tini is PID 1 in both, so SIGTERM reaches node and zombies are reaped.
 FROM node:24-alpine AS base
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat tini
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -39,7 +40,9 @@ WORKDIR /app/apps/api
 EXPOSE 4000
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 \
   CMD node -e "fetch('http://127.0.0.1:4000/api/v1/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-CMD ["sh", "-c", "node dist/cli/migrate.js && node dist/server.js"]
+# Migrations are a separate one-shot command: `node dist/cli/migrate.js` (the `migrate` Compose service).
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "dist/server.js"]
 
 FROM base AS web
 ENV NODE_ENV=production
@@ -51,4 +54,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/
 COPY --from=builder /app/apps/web/public ./apps/web/public
 USER nextjs
 EXPOSE 3000
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "apps/web/server.js"]

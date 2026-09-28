@@ -11,6 +11,10 @@ import {
   TestPassword,
 } from '@/test/app';
 
+const PEER_ADDRESS = '192.0.2.10';
+const SPOOFED_ADDRESS = '203.0.113.66';
+const CLIENT_ADDRESS = '198.51.100.7';
+
 let context: TestContext;
 
 beforeAll(async () => {
@@ -256,6 +260,56 @@ describe('rate limiting', () => {
       expect(blocked.json().error.code).toBe('RATE_LIMITED');
     } finally {
       await limited.close();
+    }
+  }, 30000);
+
+  it('ignores X-Forwarded-For by default, so rotating it does not reset the limit', async () => {
+    const limited = await createTestApp({ AUTH_ATTEMPTS_PER_MINUTE: '2' });
+
+    try {
+      const attemptFrom = (forwardedFor: string) =>
+        inject(limited.app, 'POST', '/auth/sign-in', {
+          headers: { 'x-forwarded-for': forwardedFor },
+          payload: { email: 'ada@example.com', password: TestPassword },
+          remoteAddress: PEER_ADDRESS,
+        });
+
+      expect((await attemptFrom('203.0.113.1')).statusCode).toBe(401);
+      expect((await attemptFrom('203.0.113.2')).statusCode).toBe(401);
+      expect((await attemptFrom('203.0.113.3')).statusCode).toBe(429);
+    } finally {
+      await limited.close();
+    }
+  }, 30000);
+});
+
+describe('client address', () => {
+  const sessionAddressAfterSignUp = async (app: TestContext['app'], forwardedFor: string) => {
+    const response = await inject(app, 'POST', '/auth/sign-up', {
+      headers: { 'x-forwarded-for': forwardedFor },
+      payload: { email: 'ada@example.com', password: TestPassword },
+      remoteAddress: PEER_ADDRESS,
+    });
+
+    const client = clientFor(app, sessionCookieOf(response));
+    const [session] = (await client.request('GET', '/me/sessions')).json().items;
+
+    return session.ipAddress;
+  };
+
+  it('uses the connection address, not a spoofed X-Forwarded-For, under the default config', async () => {
+    expect(await sessionAddressAfterSignUp(context.app, SPOOFED_ADDRESS)).toBe(PEER_ADDRESS);
+  });
+
+  it('reads the address the trusted proxy saw when the peer is listed in TRUST_PROXY', async () => {
+    const proxied = await createTestApp({ TRUST_PROXY: '192.0.2.0/24' });
+
+    try {
+      const forwardedFor = `${SPOOFED_ADDRESS}, ${CLIENT_ADDRESS}`;
+
+      expect(await sessionAddressAfterSignUp(proxied.app, forwardedFor)).toBe(CLIENT_ADDRESS);
+    } finally {
+      await proxied.close();
     }
   }, 30000);
 });

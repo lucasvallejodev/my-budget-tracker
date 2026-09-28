@@ -24,7 +24,7 @@ export type AppOptions = {
 export const buildApp = async ({ config, db, logger }: AppOptions) => {
   const app = Fastify({
     logger: logger ?? { level: config.logLevel },
-    trustProxy: config.trustProxy,
+    trustProxy: config.trustedProxies.length > 0 ? config.trustedProxies : false,
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
