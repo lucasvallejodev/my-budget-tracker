@@ -215,15 +215,36 @@ Pull requests from forks skip the scan because they cannot read the secret.
 
 Every push to `main` and every pull request also runs these workflows:
 
-| Workflow         | What it checks                                                                                                                                                                                                                                                                                                                                                   |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `quality.yml`    | Before lint and tests: `npm audit --omit=dev --audit-level=high` (a known high or critical advisory in a production dependency fails the build) and `npm audit signatures`.                                                                                                                                                                                      |
-| `playwright.yml` | After `db:migrate`: `npm run db:check`, so a migration that leaves the schema different from what the migrations describe fails before the browser tests.                                                                                                                                                                                                        |
-| `codeql.yml`     | CodeQL `security-extended` queries for JavaScript and TypeScript (taint tracking that Sonar and ESLint do not do). Also weekly.                                                                                                                                                                                                                                  |
-| `secrets.yml`    | gitleaks over the full git history, with findings redacted in the log. Also weekly. If it finds a real secret, rotate it; removing it from history is not enough.                                                                                                                                                                                                |
-| `docker.yml`     | hadolint on the `Dockerfile`; builds the `api` and `web` targets, uploads an SPDX SBOM for each (`sbom-api.spdx.json`, `sbom-web.spdx.json`) and fails on a critical vulnerability that has a fix (Grype); starts the Compose stack and waits for every health check, runs the backup and restore drill, and checks that the API exits with code 0 on `SIGTERM`. |
+| Workflow         | What it checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `quality.yml`    | Before lint and tests: `npm audit --omit=dev --audit-level=high` (a known high or critical advisory in a production dependency fails the build) and `npm audit signatures`.                                                                                                                                                                                                                                                                                                     |
+| `playwright.yml` | After `db:migrate`: `npm run db:check`, so a migration that leaves the schema different from what the migrations describe fails before the browser tests.                                                                                                                                                                                                                                                                                                                       |
+| `codeql.yml`     | CodeQL `security-extended` queries for JavaScript and TypeScript (taint tracking that Sonar and ESLint do not do). Also weekly.                                                                                                                                                                                                                                                                                                                                                 |
+| `secrets.yml`    | gitleaks over the full git history, with findings redacted in the log. Also weekly. If it finds a real secret, rotate it; removing it from history is not enough.                                                                                                                                                                                                                                                                                                               |
+| `docker.yml`     | hadolint on the `Dockerfile`; builds the `api` and `web` targets, uploads an SPDX SBOM for each (`sbom-api.spdx.json`, `sbom-web.spdx.json`) and fails on a high or critical vulnerability that has a fix (Grype), except the reviewed exceptions in `.grype.yaml` (see [Image scan exceptions](#image-scan-exceptions)); starts the Compose stack and waits for every health check, runs the backup and restore drill, and checks that the API exits with code 0 on `SIGTERM`. |
 
 Every workflow starts from `permissions: contents: read` (only CodeQL adds `security-events: write`), checks out without persisting the token, and pins every action to a full commit SHA with the version in a trailing comment. Images used in CI are pinned by digest. Dependabot (`.github/dependabot.yml`) proposes updates weekly for npm, the pinned actions, the `Dockerfile` base image and the Compose images; the gitleaks image in `secrets.yml` is bumped by hand.
+
+### Image scan exceptions
+
+The image scan fails the build on a **high** or **critical** vulnerability only when a fixed version exists: a flaw nobody can fix yet cannot block a merge, and lower severities are listed in the job summary and the `grype-api` / `grype-web` artifacts. Most failures go away with a base-image or dependency update (Dependabot proposes them weekly). When a finding cannot be fixed yet and does not affect CoinKeeper, for example a vulnerable function the app never calls, record a reviewed exception instead of weakening the check:
+
+1. Read the advisory and check whether the vulnerable package or code path is reachable in that image.
+2. Add an entry to `.grype.yaml` at the repository root:
+
+   ```yaml
+   ignore:
+     - vulnerability: CVE-2026-12345
+       package:
+         name: busybox
+       reason: busybox wget is not used; the images make no outbound requests with it
+       expires: 2026-12-31
+   ```
+
+3. Keep `expires` short (weeks, not years), so the exception is reviewed again. The **Check the scan exceptions** step fails the build when an entry has no `reason`, no `expires`, or an `expires` date in the past; renew it only after checking the advisory again, otherwise remove it.
+4. Mention the exception in the pull request so a reviewer sees it.
+
+Never lower `severity-cutoff` or turn off `fail-build` in `docker.yml` to get a green build.
 
 Three repository settings complete this, and only the repository owner can change them: turn on secret scanning with push protection (**Settings > Code security**), set **Settings > Actions > General > Workflow permissions** to read-only, and require the checks above on `main` with branch protection. On a private repository, CodeQL needs GitHub Advanced Security.
 

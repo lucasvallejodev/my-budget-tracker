@@ -25,7 +25,7 @@
       "files": [],
       "assertions": [
         "Adds a new workflow file (or a new job in a new file) instead of adding the image build to quality.yml, and builds both `--target api` and `--target web` from the single Dockerfile (matrix or two jobs)",
-        "A vulnerability scan (Trivy, Grype or equivalent) runs on each built image and fails the job on HIGH/CRITICAL findings (non-zero exit code on those severities)",
+        "A vulnerability scan (Trivy, Grype or equivalent) runs on each built image and fails the job on HIGH/CRITICAL findings that have a fix (only-fixed / --ignore-unfixed); it does not weaken the gate (no lower cutoff, no fail-build: false), and an unfixable or unreachable finding is handled as a reviewed exception with a reason and an expiry date (for Grype, .grype.yaml)",
         "The SBOM is produced in a way that survives a local build: generated from the loaded image (Syft/anchore sbom-action, Trivy `--format cyclonedx|spdx-json`, or similar) and uploaded as a workflow artifact; the answer does not rely on build-push-action `sbom: true`/`provenance` attestations together with `load: true`, or if it mentions them it explains they are dropped by the local image store and need a registry push",
         "Permissions are least privilege: a top-level read-only default (`contents: read`, or `permissions: {}` with per-job `contents: read`), no `packages: write` or other write scope since nothing is pushed, and `actions/checkout` uses `persist-credentials: false`",
         "Every `uses:` is pinned to a 40-character commit SHA, and any scanner or tool container run with `docker run` (e.g. aquasec/trivy) is pinned by `@sha256:` digest rather than a tag such as `latest`"
