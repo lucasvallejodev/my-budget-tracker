@@ -107,6 +107,43 @@ export const toIsoDate = (date: Date): string => date.toISOString().slice(0, ISO
 export const toIsoMonth = (date: Date): string => date.toISOString().slice(0, ISO_MONTH_LENGTH);
 
 /**
+ * Formats a date as `YYYY-MM-DD` using the runtime's local calendar day.
+ *
+ * @remarks
+ * Transaction dates are calendar days with no time zone, so "today" must be the day the user sees
+ * on their clock, not the UTC day. Use this for defaults such as a new transaction's date, an
+ * opening balance date or a new exchange rate; use {@link toIsoDate} for dates that are already
+ * UTC calendar days.
+ *
+ * @param date - The instant whose local day is wanted.
+ * @returns The ISO 8601 date, e.g. `'2026-10-01'` at 00:30 on 1 October in Madrid.
+ *
+ * @example
+ * ```ts
+ * localIsoDate(new Date(2026, 9, 1, 0, 30)); // '2026-10-01'
+ * ```
+ */
+export const localIsoDate = (date: Date): string =>
+  toIsoDate(new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())));
+
+/**
+ * Formats a date as `YYYY-MM` using the runtime's local calendar month.
+ *
+ * @remarks
+ * The web app's "current month" for the dashboard, budgets and transactions. Matches
+ * {@link localIsoDate}, so a transaction created today always falls in the current month.
+ *
+ * @param date - The instant whose local month is wanted.
+ * @returns The ISO 8601 month, e.g. `'2026-10'`.
+ *
+ * @example
+ * ```ts
+ * localIsoMonth(new Date(2026, 9, 1, 0, 30)); // '2026-10'
+ * ```
+ */
+export const localIsoMonth = (date: Date): string => localIsoDate(date).slice(0, ISO_MONTH_LENGTH);
+
+/**
  * Returns the ISO date of the first day of a month, optionally shifted by whole months.
  *
  * @remarks

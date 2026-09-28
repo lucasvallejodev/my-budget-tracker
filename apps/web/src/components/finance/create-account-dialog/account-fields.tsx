@@ -20,6 +20,7 @@ import {
   TextField,
 } from '@/components/ui';
 import { AccountTypes } from '@/constants/account';
+import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import { AccountFormValues } from '@coinkeeper/shared/schema/accounts';
 import type { Currency } from '@coinkeeper/shared/schema/currencies';
 
@@ -54,7 +55,14 @@ export const accountDefaults = (
 export const saveAccount = (
   account: AccountSummary | undefined,
   { openingBalance, ...values }: AccountFormValues
-) => (account ? updateAccount(account.id, values) : createAccount({ ...values, openingBalance }));
+) =>
+  account
+    ? updateAccount(account.id, values)
+    : createAccount({
+        ...values,
+        openingBalance,
+        openingDate: localIsoDate(new Date()),
+      });
 import { AccountSummary } from '../use-finance-data';
 
 function AccountTypeField({ control }: AccountFieldProps) {

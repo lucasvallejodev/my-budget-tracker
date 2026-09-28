@@ -46,14 +46,14 @@ The suite runs against development servers. Running it once against the producti
 1. Reproduce: `npx playwright test <file> --repeat-each=20 --workers=4 --trace on`. Read the trace of a failing run before changing code.
 2. Fix the cause. The usual ones here:
 
-   | Symptom                                              | Cause and fix                                                                                |
-   | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-   | Setup fails with `429`                               | Auth rate limit; see `fixtures.md`.                                                          |
-   | Passes alone, fails in parallel                      | Shared user or shared data; give each test its own user.                                     |
-   | Fails near midnight or on the first of the month     | The dialog's local default date versus the screens' UTC month; set the date or `timezoneId`. |
-   | Clicks before the list refetched                     | Missing `waitForResponse` or web-first assertion on the updated row.                         |
-   | Toast assertion misses                               | Asserted too late or after navigation; assert right after the action.                        |
-   | Strict-mode violation (locator matched two elements) | Scope to a landmark, dialog or row.                                                          |
+   | Symptom                                              | Cause and fix                                                                                                  |
+   | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+   | Setup fails with `429`                               | Auth rate limit; see `fixtures.md`.                                                                            |
+   | Passes alone, fails in parallel                      | Shared user or shared data; give each test its own user.                                                       |
+   | Fails near midnight or on the first of the month     | A seed or assertion built with the UTC day (`toIsoDate`) while the app uses the local day; use `localIsoDate`. |
+   | Clicks before the list refetched                     | Missing `waitForResponse` or web-first assertion on the updated row.                                           |
+   | Toast assertion misses                               | Asserted too late or after navigation; assert right after the action.                                          |
+   | Strict-mode violation (locator matched two elements) | Scope to a landmark, dialog or row.                                                                            |
 
 3. If it cannot be fixed now, mark it `test.fixme()` with a tracking issue named in the test title and list it in the pull request. Do not add per-test `retries`, longer timeouts or `waitForTimeout` to hide it.
 4. When the suite is stable, set `failOnFlakyTests: !!process.env.CI` in `playwright.config.ts` so a test that passes only on retry fails the job, and keep the traces.

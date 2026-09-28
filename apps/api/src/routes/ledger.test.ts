@@ -9,14 +9,15 @@ let bob: TestClient;
 
 type Account = { id: string };
 
+const ValidAccount = {
+  currency: 'EUR',
+  name: 'Checking',
+  openingBalance: '1000',
+  type: 'checking',
+};
+
 const createAccount = async (client: TestClient, overrides: Record<string, unknown> = {}) => {
-  const response = await client.request('POST', '/accounts', {
-    currency: 'EUR',
-    name: 'Checking',
-    openingBalance: '1000',
-    type: 'checking',
-    ...overrides,
-  });
+  const response = await client.request('POST', '/accounts', { ...ValidAccount, ...overrides });
 
   expect(response.statusCode).toBe(201);
 
@@ -75,6 +76,20 @@ describe('accounts', () => {
     const unarchived = await ada.request('POST', `/accounts/${account.id}/unarchive`);
 
     expect(unarchived.json().archivedAt).toBeNull();
+  });
+
+  it('dates the opening balance on the day the client sends, not the server clock', async () => {
+    const account = await createAccount(ada, { openingDate: '2026-10-01' });
+
+    const rows = (await ada.request('GET', '/transactions')).json().items as {
+      accountId: string;
+      date: string;
+    }[];
+
+    expect(rows.find(row => row.accountId === account.id)?.date).toBe('2026-10-01');
+    expect(
+      (await ada.request('POST', '/accounts', { ...ValidAccount, openingDate: '1 Oct' })).statusCode
+    ).toBe(400);
   });
 
   it('soft-deletes an empty account, lists it as deleted and restores it', async () => {

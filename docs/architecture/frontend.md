@@ -1,6 +1,6 @@
 # Frontend
 
-> Summary: how the Next.js client in `apps/web` is organised: pages, feature screens, shared `ui` components, the API client, React Query hooks and mutation functions, the sign-in pages and route guard, the user menu, Settings › Profile and Security, the Deleted items screen, `useHydrated`, and the styling and state conventions.
+> Summary: how the Next.js client in `apps/web` is organised: pages, feature screens, shared `ui` components, the API client, React Query hooks and mutation functions, the sign-in pages and route guard, the user menu, Settings › Profile and Security, the Deleted items screen, local dates and the current month, `useHydrated`, and the styling and state conventions.
 
 `apps/web` has no server code of its own: no route handlers, server actions or database access. Every read and write is an HTTP call to the Fastify API under `/api/v1`, which Next.js forwards (see [Overview](overview.md) and [API service](api.md)).
 
@@ -90,6 +90,10 @@ Dialog forms are assembled from shared pieces rather than written field by field
 | `AccountFormFields`, `accountDefaults`, `saveAccount`      | `apps/web/src/components/finance/create-account-dialog/account-fields.tsx` (private to the dialog)  | The account form's type, currency and detail fields and its create/update wiring.                                                                                        |
 
 The transaction dialog (`apps/web/src/components/finance/transaction-dialog/`) has three modes, expense, income and transfer, and works for both creating and editing; editing a transfer leg edits the whole transfer. Its default values come from `standardDefaults` and `transferDefaults`, which merge an existing row or a caller preset with blank values.
+
+## Dates and the current month
+
+Transaction dates are calendar days (`YYYY-MM-DD`) with no time zone, so every "today" in the web app is the user's local day: `localIsoDate(new Date())` for the default date of a new transaction, an account's opening balance and a new exchange rate, and `currentMonth()` (`localIsoMonth(new Date())`) for the month the dashboard, budgets and transactions open on. Both helpers live in `packages/shared/src/lib/date-helpers.ts`. Never take today from `new Date().toISOString()`: that is the UTC day, which differs from the user's day around midnight, so a transaction entered just after midnight on the 1st would land outside the month on screen. The web app always sends the month and dates it means; the API's own defaults (`month` on `/reports/summary`, `openingDate`) use UTC because the server does not know the user's time zone.
 
 ## Pickers
 

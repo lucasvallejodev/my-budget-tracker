@@ -22,7 +22,7 @@ Facts that change the usual advice:
 - **Auth rate limits**: `/auth/sign-up` and `/auth/sign-in` each allow `AUTH_ATTEMPTS_PER_MINUTE` requests per minute per IP, and every test comes from the same address. The API that Playwright starts runs with 200 (`E2E_AUTH_ATTEMPTS_PER_MINUTE` in `playwright.config.ts`); a dev API you started yourself and Playwright reuses keeps the default of 10 and answers `429` after ten sign-ups in a minute. Failed sign-ins also count per account: after `SIGN_IN_FAILURES_PER_ACCOUNT` (default 5, not raised for e2e) wrong passwords, attempts for that email are slowed 1 s growing to 5 s apart, never locked. See [references/fixtures.md](references/fixtures.md).
 - **`page.request` shares the page's cookies**: after the page signs up, `page.request.post('/api/v1/…')` acts as that user through the same-origin `/api` rewrite. Seed data that way, not through the UI, unless the UI step is what the test is about.
 - **Origin check**: writes with a foreign `Origin` answer `403 ORIGIN_NOT_ALLOWED`. Send `Origin: http://localhost:3000` on API writes so the test does not depend on the check's handling of a missing header.
-- **Money and dates**: amounts go to the API as strings (`'12.50'`) and come back as minor units; dates are `YYYY-MM-DD`. Build expected text with `formatMoney` and `toIsoDate` from `@coinkeeper/shared` (they resolve in specs) rather than hand-typed strings.
+- **Money and dates**: amounts go to the API as strings (`'12.50'`) and come back as minor units; dates are `YYYY-MM-DD`. Build expected text with `formatMoney` and `localIsoDate` (the user's local day, which the app uses; never `toIsoDate`, the UTC day) from `@coinkeeper/shared` (they resolve in specs) rather than hand-typed strings.
 
 ## Workflow
 

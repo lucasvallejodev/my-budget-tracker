@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { FieldLengths } from '../constants/field-lengths';
-import { deletedQuerySchema, includeArchivedQuerySchema } from './common';
+import { deletedQuerySchema, includeArchivedQuerySchema, isoDateSchema } from './common';
 import { AccountClassificationValues, AccountTypeValues } from './enums';
 
 export const accountFormSchema = z.object({
@@ -12,13 +12,14 @@ export const accountFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(FieldLengths.name),
   notes: z.string().max(FieldLengths.notes).optional(),
   openingBalance: z.string().max(FieldLengths.amountInput).optional(),
+  openingDate: isoDateSchema.optional(),
   type: z.enum(AccountTypeValues),
 });
 
 export type AccountFormValues = z.infer<typeof accountFormSchema>;
 
 export const updateAccountSchema = accountFormSchema
-  .omit({ openingBalance: true })
+  .omit({ openingBalance: true, openingDate: true })
   .partial()
   .extend({ id: z.string().min(1) });
 
@@ -44,7 +45,9 @@ export const accountSummarySchema = z.object({
 
 export type AccountSummary = z.infer<typeof accountSummarySchema>;
 
-export const accountPatchSchema = accountFormSchema.omit({ openingBalance: true }).partial();
+export const accountPatchSchema = accountFormSchema
+  .omit({ openingBalance: true, openingDate: true })
+  .partial();
 
 export type AccountPatchValues = z.infer<typeof accountPatchSchema>;
 

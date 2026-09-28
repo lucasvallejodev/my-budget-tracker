@@ -29,7 +29,7 @@ import {
   TableRow,
   ToggleSwitch,
 } from '@/components/ui';
-import { ISO_DATE_LENGTH } from '@coinkeeper/shared/constants/time';
+import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 
 import {
   ExchangeRateRow,
@@ -129,7 +129,7 @@ export function CurrencySettings() {
 
   const [form, setForm] = useState({
     base: '',
-    date: new Date().toISOString().slice(0, ISO_DATE_LENGTH),
+    date: localIsoDate(new Date()),
     quote: '',
     rate: '',
   });
