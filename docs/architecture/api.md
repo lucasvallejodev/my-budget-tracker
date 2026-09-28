@@ -12,7 +12,7 @@ apps/api/
 ├─ scripts/                 database.mjs (npm run db:check) and its helper
 ├─ src/
 │  ├─ server.ts             Entry point: loads .env, opens the pool, builds the app, listens, purges expired sessions hourly
-│  ├─ shutdown.ts           shutDown(): on SIGTERM/SIGINT closes Fastify, then the pool, within 8 s; exit code 0 or 1
+│  ├─ shutdown.ts           shutDown(): on SIGTERM/SIGINT closes Fastify, then the pool, within 8 s; exit code 0 or 1; shutDownAfterFatal() for crashes
 │  ├─ app.ts                buildApp({ config, db, logger? }): server timeouts, request ids, logger, plugins and routes; never listens (tests use it)
 │  ├─ config.ts             Environment variables validated with Zod (see Configuration)
 │  ├─ environment.ts        Reads the root .env and opens the database for the server and the CLI
@@ -52,7 +52,7 @@ Routes that need a user are registered inside one scope with an `onRequest` hook
 
 ### Start and shutdown
 
-`server.ts` never migrates: migrations are a separate one-shot command (`node dist/cli/migrate.js`, the `migrate` service in Docker Compose), so restarting the API does not touch the schema. On `SIGTERM` or `SIGINT` the server stops the session purge timer and calls `shutDown()` (`src/shutdown.ts`): Fastify stops accepting connections and waits for requests in flight, then the PostgreSQL pool closes (even if closing Fastify failed). The process exits `0` when both finish, and `1` when either fails or the whole shutdown takes longer than 8 seconds, which is inside Docker's default 10-second grace period before `SIGKILL`. In the container image `tini` is PID 1 and `node` is started directly (exec form), so the signal reaches Node; a second signal during shutdown ends the process at once.
+`server.ts` never migrates: migrations are a separate one-shot command (`node dist/cli/migrate.js`, the `migrate` service in Docker Compose), so restarting the API does not touch the schema. On `SIGTERM` or `SIGINT` the server stops the session purge timer and calls `shutDown()` (`src/shutdown.ts`): Fastify stops accepting connections and waits for requests in flight, then the PostgreSQL pool closes (even if closing Fastify failed). The process exits `0` when both finish, and `1` when either fails or the whole shutdown takes longer than 8 seconds, which is inside Docker's default 10-second grace period before `SIGKILL`. In the container image `tini` is PID 1 and `node` is started directly (exec form), so the signal reaches Node; a second signal during shutdown ends the process at once. An uncaught exception or unhandled promise rejection is logged at `fatal` level and runs the same shutdown (`shutDownAfterFatal`), but the process always exits `1`, so Docker's `restart: unless-stopped` starts a fresh API.
 
 ## Sign-up, sign-in and sessions
 
