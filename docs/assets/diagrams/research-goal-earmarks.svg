@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="research-goal-earmarks-title research-goal-earmarks-desc">
+      <title id="research-goal-earmarks-title">One savings account, several goals</title>
+      <desc id="research-goal-earmarks-desc">Treemap of a 6,000 EUR savings account balance split by goal earmarks: Emergency fund 3,000 EUR, Holiday in Japan 1,200 EUR, New car 800 EUR and 1,000 EUR free to use; goals earmark part of the real account balance without moving money, and the free part is what is left for everything else.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;family=Noto+Serif:ital@0;1&amp;family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400&amp;family=Noto+Sans+TC:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400&amp;display=swap');</style></defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- Account frame: every cell is part of one real balance -->
+      <text x="40" y="44" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">SAVINGS ACCOUNT · BALANCE 6,000 EUR</text>
+      <text x="920" y="44" fill="#4f5d75" font-size="10" font-family="'Geist', sans-serif" text-anchor="end">Goals earmark part of the balance; no money moves. The free part is left for everything else.</text>
+      <rect x="36" y="56" width="888" height="456" rx="4" fill="none" stroke="#2d3142" stroke-opacity="0.30" stroke-width="1"/>
+
+      <!-- Cells: squarified, 4px gutters, area = amount (each within 1% of its true share) -->
+
+      <!-- Emergency fund: 436x448 -->
+      <rect x="40" y="60" width="436" height="448" rx="2" fill="#f5f5f5"/>
+      <rect x="40" y="60" width="436" height="448" rx="2" data-share="50.00" fill="#2d3142" fill-opacity="0.14" stroke="#2d3142" stroke-opacity="0.30" stroke-width="1"/>
+      <text x="56" y="88" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Emergency fund</text>
+      <text x="56" y="108" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">3,000 EUR · 50% of balance</text>
+      <text x="56" y="124" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">50% of 6,000 EUR target</text>
+
+      <!-- Holiday in Japan FOCAL: 440x176 -->
+      <rect x="480" y="60" width="440" height="176" rx="2" fill="#f5f5f5"/>
+      <rect x="480" y="60" width="440" height="176" rx="2" data-share="20.00" fill="#eb6c36" fill-opacity="0.16" stroke="#eb6c36" stroke-width="1.5"/>
+      <text x="496" y="88" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Holiday in Japan</text>
+      <text x="496" y="108" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">1,200 EUR · 20% of balance</text>
+      <text x="496" y="124" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">60% of 2,000 EUR target by June</text>
+
+      <!-- New car: 192x268 -->
+      <rect x="480" y="240" width="192" height="268" rx="2" fill="#f5f5f5"/>
+      <rect x="480" y="240" width="192" height="268" rx="2" data-share="13.33" fill="#2d3142" fill-opacity="0.07" stroke="#2d3142" stroke-opacity="0.30" stroke-width="1"/>
+      <text x="496" y="268" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif">New car</text>
+      <text x="496" y="288" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">800 EUR · 13%</text>
+      <text x="496" y="304" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">10% of 8,000 EUR target</text>
+
+      <!-- Free to use (not a goal): 244x268, dashed, near-paper fill -->
+      <rect x="676" y="240" width="244" height="268" rx="2" fill="#f5f5f5"/>
+      <rect x="676" y="240" width="244" height="268" rx="2" data-share="16.67" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.30" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="692" y="268" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif">Free to use</text>
+      <text x="692" y="288" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">1,000 EUR · 17%</text>
+      <text x="692" y="304" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">not earmarked</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="540" x2="920" y2="540" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+      <text x="40" y="556" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <text x="920" y="556" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em" text-anchor="end">AREA = AMOUNT · ILLUSTRATIVE BALANCE 6,000 EUR · PARTS SUM TO THE BALANCE</text>
+
+      <rect x="40" y="568" width="16" height="10" rx="2" fill="#eb6c36" fill-opacity="0.16" stroke="#eb6c36" stroke-width="1"/>
+      <text x="64" y="577" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Holiday in Japan · the focal goal</text>
+
+      <rect x="240" y="568" width="16" height="10" rx="2" fill="#2d3142" fill-opacity="0.14" stroke="#2d3142" stroke-opacity="0.30" stroke-width="1"/>
+      <text x="264" y="577" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Other goals · stronger contrast is larger</text>
+
+      <rect x="480" y="568" width="16" height="10" rx="2" fill="#2d3142" fill-opacity="0.02" stroke="#2d3142" stroke-opacity="0.30" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="504" y="577" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Free to use · not earmarked, available for everything else</text>
+    </svg>

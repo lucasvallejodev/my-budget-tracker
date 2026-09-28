@@ -1,8 +1,8 @@
 # Research
 
-> Summary: index of the competitor research: why and how 20 budgeting and spending-tracker apps were studied, one line per app study describing what it covers and what CoinKeeper could borrow, the synthesis page, and how to keep the research current.
+> Summary: index of the competitor research: why and how 20 budgeting and spending-tracker apps were studied, one line per app study describing what it covers and what CoinKeeper could borrow, the plain-language feature guide, the synthesis page, and how to keep the research current.
 
-This section studies the budgeting and spending-tracker apps people use most, to decide which features make CoinKeeper more useful. Each app has its own study with its strongest feature, how its main features work, how they could be built in CoinKeeper, and the sources to read more. Start with [Feature opportunities](feature-opportunities.md) for the combined conclusions and the proposed roadmap.
+This section studies the budgeting and spending-tracker apps people use most, to decide which features make CoinKeeper more useful. Each app has its own study with its strongest feature, how its main features work, how they could be built in CoinKeeper, and the sources to read more. Start with the [Feature guide](feature-guide.md), which explains every proposed feature in plain language with examples and diagrams and shows how it fits CoinKeeper; then use [Feature opportunities](feature-opportunities.md) for the full ranked tables, formulas and roadmap.
 
 ## The user we evaluated against
 

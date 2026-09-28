@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="research-budget-pace-title research-budget-pace-desc">
+      <title id="research-budget-pace-title">Spending pace on a 400 EUR groceries budget</title>
+      <desc id="research-budget-pace-desc">Line chart of cumulative groceries spending across a 30-day month against a 400 EUR budget: by day 18 the user has spent 300 EUR where even pace expects 240 EUR, 60 EUR ahead of plan, and continuing at the current rate projects 500 EUR by day 30, 100 EUR over the limit.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;family=Noto+Serif:ital@0;1&amp;family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400&amp;family=Noto+Sans+TC:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400&amp;display=swap');</style>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- Y-axis title -->
+      <text transform="rotate(-90 24 258)" x="24" y="258" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em" text-anchor="middle">EUR SPENT</text>
+
+      <!-- Gridlines. y = 440 − 0.7·v (0 to 520 EUR), x = 80 + 26·day (0 to 30) -->
+      <line x1="80" y1="370" x2="860" y2="370" stroke="#2d3142" stroke-opacity="0.08" stroke-width="0.8"/>
+      <line x1="80" y1="300" x2="860" y2="300" stroke="#2d3142" stroke-opacity="0.08" stroke-width="0.8"/>
+      <line x1="80" y1="230" x2="860" y2="230" stroke="#2d3142" stroke-opacity="0.08" stroke-width="0.8"/>
+      <line x1="80" y1="90" x2="860" y2="90" stroke="#2d3142" stroke-opacity="0.08" stroke-width="0.8"/>
+
+      <!-- Axes -->
+      <line x1="80" y1="76" x2="80" y2="440" stroke="#2d3142" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="80" y1="440" x2="860" y2="440" stroke="#2d3142" stroke-opacity="0.25" stroke-width="1"/>
+
+      <!-- Y-axis ticks -->
+      <text x="72" y="374" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">100</text>
+      <text x="72" y="304" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">200</text>
+      <text x="72" y="234" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">300</text>
+      <text x="72" y="164" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">400</text>
+      <text x="72" y="94" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">500</text>
+
+      <!-- X-axis ticks -->
+      <text x="80" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0</text>
+      <text x="210" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">5</text>
+      <text x="340" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10</text>
+      <text x="470" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">15</text>
+      <text x="600" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">20</text>
+      <text x="730" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">25</text>
+      <text x="860" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">30</text>
+      <text x="470" y="476" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em" text-anchor="middle">DAY OF MONTH</text>
+
+      <!-- Today, day 18 -->
+      <line x1="548" y1="76" x2="548" y2="440" stroke="#2d3142" stroke-opacity="0.30" stroke-width="1"/>
+      <text x="548" y="68" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em" text-anchor="middle">TODAY · DAY 18</text>
+
+      <!-- Budget limit at 400 -->
+      <line x1="80" y1="160" x2="860" y2="160" stroke="#2d3142" stroke-opacity="0.55" stroke-width="1"/>
+      <text x="868" y="163" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">LIMIT 400</text>
+
+      <!-- Even pace (plan): 0 → 400 over 30 days -->
+      <line x1="80" y1="440" x2="860" y2="160" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="3,3"/>
+
+      <!-- Projection at the current rate: 300 on day 18 → 500 on day 30 (FOCAL) -->
+      <line x1="548" y1="230" x2="860" y2="90" stroke="#eb6c36" stroke-width="1.8" stroke-dasharray="6,4"/>
+      <circle cx="860" cy="90" r="4" fill="#eb6c36"/>
+
+      <!-- Spent so far: 0, 45, 110, 150, 230, 270, 300 on days 0 to 18 -->
+      <polyline points="80,440 158,408.5 236,363 314,335 392,279 470,251 548,230" fill="none" stroke="#2d3142" stroke-width="1.8" stroke-linejoin="round"/>
+      <circle cx="80" cy="440" r="3" fill="#2d3142"/>
+      <circle cx="158" cy="408.5" r="3" fill="#2d3142"/>
+      <circle cx="236" cy="363" r="3" fill="#2d3142"/>
+      <circle cx="314" cy="335" r="3" fill="#2d3142"/>
+      <circle cx="392" cy="279" r="3" fill="#2d3142"/>
+      <circle cx="470" cy="251" r="3" fill="#2d3142"/>
+      <circle cx="548" cy="230" r="3" fill="#2d3142"/>
+      <text x="540" y="218" fill="#2d3142" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">300</text>
+
+      <!-- Callout 1: gap to plan on day 18 -->
+      <text x="584" y="344" fill="#2d3142" font-size="14" font-style="italic" font-family="'Instrument Serif', 'Noto Serif', serif">60 EUR ahead of plan (expected 240)</text>
+      <path d="M 590 330 Q 566 304 552 276" fill="none" stroke="#2d3142" stroke-opacity="0.40" stroke-width="1" stroke-dasharray="4,3"/>
+      <circle cx="548" cy="272" r="2.5" fill="#2d3142"/>
+
+      <!-- Callout 2: projected end -->
+      <text x="836" y="56" fill="#2d3142" font-size="14" font-style="italic" font-family="'Instrument Serif', 'Noto Serif', serif" text-anchor="end">Projected 500 of 400</text>
+      <path d="M 840 54 Q 856 60 858 82" fill="none" stroke="#2d3142" stroke-opacity="0.40" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- Legend -->
+      <line x1="40" y1="520" x2="920" y2="520" stroke="#2d3142" stroke-opacity="0.10" stroke-width="0.8"/>
+      <text x="40" y="536" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <line x1="40" y1="553" x2="64" y2="553" stroke="#2d3142" stroke-width="1.8"/>
+      <circle cx="52" cy="553" r="3" fill="#2d3142"/>
+      <text x="72" y="557" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Spent so far</text>
+
+      <line x1="180" y1="553" x2="204" y2="553" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="3,3"/>
+      <text x="212" y="557" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Even pace (plan)</text>
+
+      <line x1="340" y1="553" x2="364" y2="553" stroke="#eb6c36" stroke-width="1.8" stroke-dasharray="6,4"/>
+      <text x="372" y="557" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Projection at the current rate</text>
+
+      <line x1="540" y1="553" x2="564" y2="553" stroke="#2d3142" stroke-opacity="0.55" stroke-width="1"/>
+      <text x="572" y="557" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Budget limit</text>
+
+      <text x="920" y="557" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em" text-anchor="end">30-DAY MONTH · AMOUNTS IN EUR</text>
+    </svg>
