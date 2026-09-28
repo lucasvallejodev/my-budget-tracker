@@ -1,7 +1,6 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
 import { ReactNode, useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
@@ -30,6 +29,7 @@ import {
   SelectValue,
   Stack,
 } from '@/components/ui';
+import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import { minorToDecimalString } from '@coinkeeper/shared/lib/money';
 import {
   standardTransactionSchema,
@@ -61,7 +61,7 @@ type TransactionDialogProps = {
   trigger?: ReactNode;
 };
 
-const today = () => format(new Date(), 'yyyy-MM-dd');
+const today = () => localIsoDate(new Date());
 
 const modeOf = (transaction?: TransactionRow, preset?: Preset): Mode => {
   if (!transaction) return preset?.mode ?? 'expense';

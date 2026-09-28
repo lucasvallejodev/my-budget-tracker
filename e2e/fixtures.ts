@@ -1,6 +1,6 @@
 import { test as base, expect, type Page } from '@playwright/test';
 
-import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
+import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 
 export const AppOrigin = 'http://localhost:3000';
 export const Password = 'an end to end password';
@@ -49,7 +49,7 @@ export const seedAccountWithExpense = async (page: Page, memo: string) => {
   await apiPost(page, '/transactions', {
     accountId: account.id,
     amount: '12.50',
-    date: toIsoDate(new Date()),
+    date: localIsoDate(new Date()),
     direction: 'expense',
     memo,
   });

@@ -1,6 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { getStartAndEndOfMonth, isoDateOfMonthStart, toIsoDate, toIsoMonth } from './date-helpers';
+import {
+  getStartAndEndOfMonth,
+  isoDateOfMonthStart,
+  localIsoDate,
+  localIsoMonth,
+  toIsoDate,
+  toIsoMonth,
+} from './date-helpers';
 
 describe('getStartAndEndOfMonth', () => {
   const mockDate = new Date(2025, 4, 1);
@@ -155,5 +162,38 @@ describe('ISO date helpers', () => {
 
   it('throws a RangeError for text that is not a month', () => {
     expect(() => isoDateOfMonthStart('September')).toThrow(RangeError);
+  });
+});
+
+describe('local calendar helpers', () => {
+  const originalTimeZone = process.env.TZ;
+
+  afterEach(() => {
+    process.env.TZ = originalTimeZone;
+  });
+
+  it('match the TSDoc examples', () => {
+    expect(localIsoDate(new Date(2026, 9, 1, 0, 30))).toBe('2026-10-01');
+    expect(localIsoMonth(new Date(2026, 9, 1, 0, 30))).toBe('2026-10');
+  });
+
+  it('use the local day just after midnight where the UTC day is still the previous one', () => {
+    process.env.TZ = 'Europe/Madrid';
+
+    const justAfterLocalMidnight = new Date(Date.UTC(2026, 8, 30, 22, 30));
+
+    expect(toIsoDate(justAfterLocalMidnight)).toBe('2026-09-30');
+    expect(localIsoDate(justAfterLocalMidnight)).toBe('2026-10-01');
+    expect(localIsoMonth(justAfterLocalMidnight)).toBe('2026-10');
+  });
+
+  it('use the local day late in the evening where the UTC day is already the next one', () => {
+    process.env.TZ = 'America/New_York';
+
+    const lateLocalEvening = new Date(Date.UTC(2026, 9, 1, 3, 30));
+
+    expect(toIsoMonth(lateLocalEvening)).toBe('2026-10');
+    expect(localIsoDate(lateLocalEvening)).toBe('2026-09-30');
+    expect(localIsoMonth(lateLocalEvening)).toBe('2026-09');
   });
 });

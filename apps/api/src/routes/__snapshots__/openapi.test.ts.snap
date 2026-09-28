@@ -222,6 +222,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "maxLength": 30,
                     "type": "string",
                   },
+                  "openingDate": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string",
+                  },
                   "type": {
                     "enum": [
                       "checking",

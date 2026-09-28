@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiGet, apiList } from '@/api/client';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
+import { localIsoMonth } from '@coinkeeper/shared/lib/date-helpers';
 import type { AccountSummary } from '@coinkeeper/shared/schema/accounts';
 import type { Session, User } from '@coinkeeper/shared/schema/auth';
 import type { BudgetRow } from '@coinkeeper/shared/schema/budgets';
@@ -179,7 +180,7 @@ export const FinanceKeys = [
 ];
 
 export function currentMonth() {
-  return new Date().toISOString().slice(0, ISO_MONTH_LENGTH);
+  return localIsoMonth(new Date());
 }
 
 export function shiftMonth(month: string, delta: number) {

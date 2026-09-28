@@ -14,7 +14,7 @@ npm run lint && npm run typecheck && npm test -- --run && npm run build
 
 Before writing a helper, constant, colour or style value, search for an existing one and extend it:
 
-- helpers used by the web app and the API: `packages/shared/src/lib/` (`money.ts`, `date-helpers.ts` with `toIsoDate` / `toIsoMonth`, `patterns.ts`, `csv.ts` with `toCsvCell`, `arrays.ts` with `chunk` / `hasDistinctItems`), imported as `@coinkeeper/shared/lib/<file>`; web-only helpers: `apps/web/src/lib/` (`math.ts`, `styles.ts`, `appearance.ts`, `hydration.ts`, `navigation.ts` with `safeNextPath`);
+- helpers used by the web app and the API: `packages/shared/src/lib/` (`money.ts`, `date-helpers.ts` with `toIsoDate` / `toIsoMonth` (UTC) and `localIsoDate` / `localIsoMonth` (the user's day and month: use these for any "today" in the web app), `patterns.ts`, `csv.ts` with `toCsvCell`, `arrays.ts` with `chunk` / `hasDistinctItems`), imported as `@coinkeeper/shared/lib/<file>`; web-only helpers: `apps/web/src/lib/` (`math.ts`, `styles.ts`, `appearance.ts`, `hydration.ts`, `navigation.ts` with `safeNextPath`);
 - lookup tables, limits and units: `packages/shared/src/constants/` (`field-lengths.ts`, `money.ts`, `time.ts`, `pagination.ts`, `icon-names.ts`, `palette.ts`), `apps/web/src/constants/` (`account.ts`, `icons.ts`) and `apps/api/src/constants/http.ts` (`HttpStatus`), the `*Keys` / `*Names` exports next to the feature;
 - colours and chart styles in TypeScript: `Colors`, `GroupColors`, `ChartStyle` in `apps/web/src/styles/theme.ts`;
 - colours, shadows and gradients in SCSS: the tokens in `apps/web/src/styles/tokens.scss`;
