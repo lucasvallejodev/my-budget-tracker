@@ -6,24 +6,37 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Verify registry signatures
+        run: npm audit signatures
       - name: Lint (ESLint + Stylelint)
         run: npm run lint
       - name: Type check
         run: npm run typecheck
       - name: Unit, component and database tests
-        run: npm test -- --run
+        run: npm run test:coverage
       - name: Duplicated code
         run: npm run lint:dupes
       - name: Build (API bundle and Next.js)

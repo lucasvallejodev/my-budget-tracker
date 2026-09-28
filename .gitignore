@@ -59,3 +59,6 @@ node_modules/
 # Temporary working files (plans, scratch diagrams). Only the README is tracked.
 /temp/*
 !/temp/README.md
+
+# Database dumps from the Compose backup service (docker compose --profile backup run --rm backup)
+/backups/

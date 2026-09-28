@@ -6,13 +6,20 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   e2e:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
         env:
           POSTGRES_DB: budget_tracker
           POSTGRES_USER: budget_tracker
@@ -29,8 +36,10 @@ jobs:
       ALLOWED_ORIGINS: http://localhost:3000
       LOG_LEVEL: warn
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: npm
@@ -38,11 +47,13 @@ jobs:
         run: npm ci
       - name: Apply migrations
         run: npm run db:migrate
+      - name: Check the live schema matches the migrations
+        run: npm run db:check
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: Run end-to-end tests (starts the API and the web app)
         run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ !cancelled() }}
         with:
           name: playwright-report

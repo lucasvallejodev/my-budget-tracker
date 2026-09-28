@@ -1,6 +1,26 @@
+# Runtime restrictions shared by every CoinKeeper container. tini is already PID 1 in the
+# api and web images, so `init: true` is not set. See docs/getting-started/setup.md › Running in Docker.
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ['no-new-privileges:true']
+  tmpfs:
+    - /tmp:size=64m
+
+x-database-url: &database-url postgresql://${POSTGRES_USER:-budget_tracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-budget_tracker}
+
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    <<: *hardening
+    # The entrypoint fixes data-directory ownership and drops to the postgres user.
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    tmpfs:
+      - /tmp:size=64m
+      - /var/run/postgresql:size=16m
+    shm_size: 256m
+    mem_limit: 1g
+    pids_limit: 512
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-budget_tracker}
@@ -24,9 +44,12 @@ services:
     build: &api-build
       context: .
       target: api
+    <<: *hardening
+    mem_limit: 256m
+    pids_limit: 64
     command: ['node', 'dist/cli/migrate.js']
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-budget_tracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-budget_tracker}
+      DATABASE_URL: *database-url
       LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       postgres:
@@ -42,14 +65,23 @@ services:
   api:
     profiles: ['app']
     build: *api-build
+    <<: *hardening
+    # Each argon2id hash holds 19 MiB while it runs; 512 MiB leaves room for a burst of sign-ins.
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-budget_tracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-budget_tracker}
+      DATABASE_URL: *database-url
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       # Secure by default; COOKIE_SECURE=false only for a plain-HTTP trial (docs/getting-started/setup.md).
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       SESSION_DAYS: ${SESSION_DAYS:-30}
+      # Empty values fall back to the defaults in apps/api/src/config.ts.
+      SESSION_MAX_AGE_DAYS: ${SESSION_MAX_AGE_DAYS:-}
       AUTH_ATTEMPTS_PER_MINUTE: ${AUTH_ATTEMPTS_PER_MINUTE:-10}
+      SIGN_IN_FAILURES_PER_ACCOUNT: ${SIGN_IN_FAILURES_PER_ACCOUNT:-}
+      HANDLER_TIMEOUT_MS: ${HANDLER_TIMEOUT_MS:-}
       TRUST_PROXY: ${TRUST_PROXY:-false}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
@@ -66,6 +98,13 @@ services:
       target: web
       args:
         API_URL: http://api:4000
+    <<: *hardening
+    tmpfs:
+      - /tmp:size=64m
+      - /app/apps/web/.next/cache:size=128m,uid=1001,gid=1001
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
     # Loopback only: put a TLS-terminating reverse proxy in front, or set WEB_BIND_ADDRESS.
     ports:
       - '${WEB_BIND_ADDRESS:-127.0.0.1}:3000:3000'
@@ -73,6 +112,40 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - app-network
+
+  # One-shot: `docker compose --profile backup run --rm backup` writes a dated pg_dump
+  # custom-format archive to BACKUP_DIR and deletes archives older than BACKUP_RETENTION_DAYS.
+  backup:
+    profiles: ['backup']
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    <<: *hardening
+    user: '${BACKUP_UID:-1000}:${BACKUP_GID:-1000}'
+    mem_limit: 256m
+    pids_limit: 64
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-budget_tracker}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      PGDATABASE: ${POSTGRES_DB:-budget_tracker}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    entrypoint: ['/bin/sh', '-euc']
+    command:
+      - |
+        archive="/backups/$${PGDATABASE}-$$(date -u +%Y%m%dT%H%M%SZ).dump"
+        trap 'rm -f "$${archive}.partial"' EXIT
+        pg_dump --format=custom --file="$${archive}.partial"
+        pg_restore --list "$${archive}.partial" > /dev/null
+        mv "$${archive}.partial" "$${archive}"
+        echo "Wrote $${archive}"
+        find /backups -maxdepth 1 -name "$${PGDATABASE}-*.dump" -mtime "+$${BACKUP_RETENTION_DAYS}" -print -delete
+    volumes:
+      - ${BACKUP_DIR:-./backups}:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
     networks:
       - app-network
 
