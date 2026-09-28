@@ -1,0 +1,5 @@
+# Reviewed exceptions for the image scan in .github/workflows/docker.yml.
+# Each entry needs vulnerability, package.name, reason and expires (YYYY-MM-DD);
+# CI fails when an entry is missing a reason or expiry, or has expired.
+# How to decide and add one: docs/getting-started/setup.md > CI security checks.
+ignore: []
