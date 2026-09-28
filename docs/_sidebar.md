@@ -38,6 +38,7 @@
 
 - Research
   - [Overview](research/README.md)
+  - [Feature guide](research/feature-guide.md)
   - [Feature opportunities](research/feature-opportunities.md)
   - App studies
     - [Actual Budget](research/apps/actual-budget.md)

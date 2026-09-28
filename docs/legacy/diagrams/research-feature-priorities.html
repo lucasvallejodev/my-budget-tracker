@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Which features to build first</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --color-paper: #f5f5f5; --color-ink: #2d3142; --color-muted: #4f5d75; --color-accent: #eb6c36; --font-sans: 'Geist', system-ui, sans-serif; --font-serif: 'Instrument Serif', 'Noto Serif', serif; --font-mono: 'Geist Mono', ui-monospace, monospace; }
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: var(--color-ink); margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Quadrant · Diagram Design</p>
+    <h1>Which features to build first</h1>
+
+    <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="research-feature-priorities-title research-feature-priorities-desc">
+      <title id="research-feature-priorities-title">Which features to build first</title>
+      <desc id="research-feature-priorities-desc">Value against effort matrix placing twelve proposed features: pace, daily allowance and budget suggestions are cheap quick wins; recurring bills, left to spend, savings goals and category funds are high-value bets of moderate effort, with recurring bills and savings goals marked as the foundation; debts sit among the nice touches; tags, split transactions, shared households and envelope budgeting can wait.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- Axis cross -->
+      <line x1="120" y1="280" x2="848" y2="280" stroke="rgba(45,49,66,0.45)" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="480" y1="488" x2="480" y2="64" stroke="rgba(45,49,66,0.45)" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- Axis labels: one word beyond each arrow tip -->
+      <text x="860" y="280" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start" dominant-baseline="middle" letter-spacing="0.18em">EFFORT</text>
+      <text x="480" y="52" fill="#2d3142" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.18em">VALUE</text>
+
+      <!-- Quadrant names -->
+      <text x="136" y="92" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.18em">QUICK WINS</text>
+      <text x="832" y="92" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.18em">BIG BETS</text>
+      <text x="136" y="476" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.18em">NICE TOUCHES</text>
+      <text x="832" y="476" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.18em">LATER</text>
+
+      <!-- Quick wins (low effort, high value) -->
+      <circle cx="264" cy="120" r="4" fill="#2d3142"/>
+      <text x="276" y="124" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif">Pace and projection</text>
+
+      <circle cx="240" cy="184" r="4" fill="#2d3142"/>
+      <text x="252" y="188" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif">Daily allowance</text>
+
+      <circle cx="288" cy="248" r="4" fill="#2d3142"/>
+      <text x="300" y="252" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif">Budget suggestions</text>
+
+      <!-- Big bets (moderate effort, high value) -->
+      <circle cx="552" cy="112" r="6" fill="#eb6c36"/>
+      <text x="566" y="116" fill="#2d3142" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Recurring bills</text>
+
+      <circle cx="600" cy="136" r="4" fill="#2d3142"/>
+      <text x="612" y="140" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif">Left to spend</text>
+
+      <circle cx="568" cy="160" r="6" fill="#eb6c36"/>
+      <text x="582" y="164" fill="#2d3142" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Savings goals</text>
+
+      <circle cx="584" cy="248" r="4" fill="#2d3142"/>
+      <text x="596" y="252" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif">Category funds (rollover)</text>
+
+      <!-- Nice touches (low effort, lower value) -->
+      <circle cx="408" cy="376" r="4" fill="#2d3142"/>
+      <text x="396" y="380" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif" text-anchor="end">Debts with people</text>
+
+      <!-- Later (higher effort, lower value) -->
+      <circle cx="552" cy="312" r="4" fill="#2d3142"/>
+      <text x="564" y="316" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif">Tags and trips</text>
+
+      <circle cx="584" cy="376" r="4" fill="#2d3142"/>
+      <text x="596" y="380" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif">Split transactions</text>
+
+      <circle cx="752" cy="376" r="4" fill="#2d3142"/>
+      <text x="764" y="380" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif">Shared households</text>
+
+      <circle cx="768" cy="440" r="4" fill="#2d3142"/>
+      <text x="756" y="444" fill="#4f5d75" font-size="11" font-family="'Geist', sans-serif" text-anchor="end">Envelope budgeting</text>
+
+      <!-- Legend strip -->
+      <line x1="40" y1="528" x2="920" y2="528" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+      <text x="40" y="544" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <circle cx="46" cy="561" r="6" fill="#eb6c36"/>
+      <text x="60" y="564" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Foundation: others build on it</text>
+
+      <circle cx="200" cy="561" r="4" fill="#2d3142"/>
+      <text x="212" y="564" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Proposed feature</text>
+
+      <text x="320" y="564" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif" font-style="italic">Right means more work to build; up means more value for someone tracking their own money.</text>
+    </svg>
+  </div>
+</body>
+</html>

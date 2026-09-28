@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How the proposed features build on each other</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --color-paper: #f5f5f5; --color-ink: #2d3142; --color-muted: #4f5d75; --color-accent: #eb6c36; --font-sans: 'Geist', system-ui, sans-serif; --font-serif: 'Instrument Serif', 'Noto Serif', serif; --font-mono: 'Geist Mono', ui-monospace, monospace; }
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: var(--color-ink); margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Dependency graph · Diagram Design</p>
+    <h1>How the proposed features build on each other</h1>
+
+    <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="research-feature-dependencies-title research-feature-dependencies-desc">
+      <title id="research-feature-dependencies-title">How the proposed features build on each other</title>
+      <desc id="research-feature-dependencies-desc">Dependency graph showing the existing transaction ledger feeding monthly budgets and two new building blocks, recurring series and goals, which in turn feed the new user-facing features; left to spend combines budgets, recurring series and goals, and recurring series also drive the projected balance and insights.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- Column heads -->
+      <text x="40" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">SOURCE OF TRUTH</text>
+      <text x="320" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">BUILDING BLOCKS</text>
+      <text x="720" y="52" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">WHAT THE USER SEES</text>
+
+      <!-- Connectors drawn before boxes -->
+      <!-- ledger -> budgets / recurring / goals -->
+      <path d="M 200,272 H 252 Q 260,272 260,264 V 156 Q 260,148 268,148 H 320" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="200" y1="284" x2="320" y2="284" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 200,296 H 252 Q 260,296 260,304 V 452 Q 260,460 268,460 H 320" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- budgets -> category funds / pace / insights / left to spend -->
+      <path d="M 480,130 H 504 Q 512,130 512,122 V 108 Q 512,100 520,100 H 720" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 480,142 H 680 Q 688,142 688,150 V 172 Q 688,180 696,180 H 720" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 480,154 H 648 Q 656,154 656,162 V 240 Q 656,248 664,248 H 720" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+      <!-- budgets -> left to spend, hops over recurring -> insights at (624,272) -->
+      <path d="M 480,166 H 616 Q 624,166 624,174 V 264 a 8,8 0 0,1 0,16 V 318 Q 624,326 632,326 H 720" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- recurring -> insights / left to spend / projected balance -->
+      <line x1="480" y1="272" x2="720" y2="272" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+      <path d="M 480,284 H 584 Q 592,284 592,292 V 332 Q 592,340 600,340 H 720" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+      <!-- recurring -> projected balance, hops over goals -> left to spend at (560,354) -->
+      <path d="M 480,296 H 552 Q 560,296 560,304 V 346 a 8,8 0 0,1 0,16 V 412 Q 560,420 568,420 H 720" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- goals -> left to spend -->
+      <path d="M 480,460 H 520 Q 528,460 528,452 V 362 Q 528,354 536,354 H 720" fill="none" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- Transaction ledger (exists) -->
+      <rect x="40" y="256" width="160" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="40" y="256" width="160" height="56" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+      <rect x="48" y="262" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="66" y="271" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXISTS</text>
+      <rect x="164" y="262" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="178" y="271" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">0 IN</text>
+      <text x="120" y="290" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Transaction ledger</text>
+      <text x="120" y="305" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">signed minor units</text>
+
+      <!-- Monthly budgets (exists) -->
+      <rect x="320" y="120" width="160" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="320" y="120" width="160" height="56" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+      <rect x="328" y="126" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="346" y="135" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXISTS</text>
+      <rect x="444" y="126" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="458" y="135" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">1 IN</text>
+      <text x="400" y="154" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Monthly budgets</text>
+      <text x="400" y="169" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per category · month</text>
+
+      <!-- Recurring series (new, focal: foundation) -->
+      <rect x="320" y="256" width="160" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="320" y="256" width="160" height="56" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+      <rect x="328" y="262" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+      <text x="342" y="271" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NEW</text>
+      <rect x="444" y="262" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="458" y="271" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">1 IN</text>
+      <text x="400" y="290" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Recurring series</text>
+      <text x="400" y="305" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">bills · subscriptions</text>
+
+      <!-- Goals and allocations (new) -->
+      <rect x="320" y="432" width="160" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="320" y="432" width="160" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="328" y="438" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="342" y="447" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NEW</text>
+      <rect x="444" y="438" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="458" y="447" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">1 IN</text>
+      <text x="400" y="466" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Goals and allocations</text>
+      <text x="400" y="481" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">targets · set-asides</text>
+
+      <!-- Category funds (new) -->
+      <rect x="720" y="72" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="720" y="72" width="200" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="728" y="78" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="742" y="87" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NEW</text>
+      <rect x="884" y="78" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="898" y="87" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">1 IN</text>
+      <text x="820" y="106" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Category funds (rollover)</text>
+      <text x="820" y="121" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">unspent carries over</text>
+
+      <!-- Pace and daily allowance (new) -->
+      <rect x="720" y="152" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="720" y="152" width="200" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="728" y="158" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="742" y="167" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NEW</text>
+      <rect x="884" y="158" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="898" y="167" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">1 IN</text>
+      <text x="820" y="186" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Pace and daily allowance</text>
+      <text x="820" y="201" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">spent vs day of month</text>
+
+      <!-- Insights and alerts (new) -->
+      <rect x="720" y="232" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="720" y="232" width="200" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="728" y="238" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="742" y="247" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NEW</text>
+      <rect x="884" y="238" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="898" y="247" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">2 IN</text>
+      <text x="820" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Insights and alerts</text>
+      <text x="820" y="281" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">price rises · overspending</text>
+
+      <!-- Left to spend (new, focal: headline number) -->
+      <rect x="720" y="312" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="720" y="312" width="200" height="56" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+      <rect x="728" y="318" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+      <text x="742" y="327" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NEW</text>
+      <rect x="884" y="318" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="898" y="327" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">3 IN</text>
+      <text x="820" y="346" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Left to spend</text>
+      <text x="820" y="361" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">e.g. 250 EUR this month</text>
+
+      <!-- Projected balance (new) -->
+      <rect x="720" y="392" width="200" height="56" rx="6" fill="#f5f5f5"/>
+      <rect x="720" y="392" width="200" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="728" y="398" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="742" y="407" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NEW</text>
+      <rect x="884" y="398" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="898" y="407" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">1 IN</text>
+      <text x="820" y="426" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Projected balance</text>
+      <text x="820" y="441" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">month end · per account</text>
+
+      <!-- Legend strip -->
+      <line x1="40" y1="528" x2="920" y2="528" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+      <text x="40" y="544" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <rect x="40" y="556" width="14" height="10" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+      <text x="60" y="564" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Exists today</text>
+
+      <rect x="136" y="556" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="156" y="564" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">New feature</text>
+
+      <rect x="232" y="556" width="14" height="10" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+      <text x="252" y="564" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Focal: the foundation and the headline number</text>
+
+      <line x1="456" y1="561" x2="484" y2="561" stroke="#4f5d75" stroke-width="1" marker-end="url(#arrow)"/>
+      <text x="492" y="564" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Feeds</text>
+
+      <rect x="544" y="555" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="558" y="564" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">2 IN</text>
+      <text x="580" y="564" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Features it builds on</text>
+    </svg>
+  </div>
+</body>
+</html>
