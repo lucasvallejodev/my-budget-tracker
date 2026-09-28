@@ -11,7 +11,7 @@ x-database-url: &database-url postgresql://${POSTGRES_USER:-budget_tracker}:${PO
 
 services:
   postgres:
-    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
     <<: *hardening
     # The entrypoint fixes data-directory ownership and drops to the postgres user.
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
@@ -119,7 +119,7 @@ services:
   # custom-format archive to BACKUP_DIR and deletes archives older than BACKUP_RETENTION_DAYS.
   backup:
     profiles: ['backup']
-    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
     <<: *hardening
     user: '${BACKUP_UID:-1000}:${BACKUP_GID:-1000}'
     mem_limit: 256m
