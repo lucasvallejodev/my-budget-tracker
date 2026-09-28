@@ -1,0 +1,37 @@
+[
+  {
+    "query": "security review my branch before I merge the new account export endpoint",
+    "should_trigger": true
+  },
+  { "query": "is our session cookie setup safe? check against OWASP ASVS", "should_trigger": true },
+  {
+    "query": "can another user read my transactions by guessing ids? audit the routes",
+    "should_trigger": true
+  },
+  {
+    "query": "review this change to rejectForeignOrigin in plugins/security.ts",
+    "should_trigger": true
+  },
+  {
+    "query": "should we switch to JWT and SameSite=Strict? evaluate the security trade-offs for our API",
+    "should_trigger": true
+  },
+  {
+    "query": "add an endpoint that exports an account's transactions as CSV",
+    "should_trigger": false
+  },
+  { "query": "add Pino redact paths and request ids to the Fastify app", "should_trigger": false },
+  {
+    "query": "add a partial index for live transactions and check the EXPLAIN plan",
+    "should_trigger": false
+  },
+  {
+    "query": "write a Playwright test that signs in and creates a transfer",
+    "should_trigger": false
+  },
+  {
+    "query": "add gitleaks and CodeQL to our GitHub Actions and pin the actions by SHA",
+    "should_trigger": false
+  },
+  { "query": "/security-review", "should_trigger": false }
+]

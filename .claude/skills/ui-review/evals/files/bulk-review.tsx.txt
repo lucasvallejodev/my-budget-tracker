@@ -1,0 +1,63 @@
+'use client';
+
+import './bulk-review.scss';
+
+import { Trash2 } from 'lucide-react';
+
+import { Amount, Button } from '@/components/ui';
+
+import { describeTransaction } from '../transaction-labels';
+import { TransactionRow } from '../use-finance-data';
+
+const DeleteIconSize = 14;
+
+export function BulkReview({
+  onCategorize,
+  onDelete,
+  onToggle,
+  rows,
+  selectedIds,
+}: {
+  onCategorize: () => void;
+  onDelete: (id: string) => void;
+  onToggle: (id: string) => void;
+  rows: TransactionRow[];
+  selectedIds: string[];
+}) {
+  return (
+    <section className="bulk-review">
+      <header className="bulk-review__header">
+        <h2>Needs review</h2>
+      </header>
+      <ul className="bulk-review__list">
+        {rows.map(row => (
+          <li key={row.id} className="bulk-review__row">
+            <input
+              type="checkbox"
+              className="bulk-review__check"
+              aria-label={`Select ${describeTransaction(row)}`}
+              checked={selectedIds.includes(row.id)}
+              onChange={() => onToggle(row.id)}
+            />
+            <span className="bulk-review__payee">{describeTransaction(row)}</span>
+            <Amount amountMinor={row.amountMinor} currency={row.currency} signed />
+            <button
+              type="button"
+              className="bulk-review__delete"
+              aria-label={`Delete ${describeTransaction(row)}`}
+              onClick={() => onDelete(row.id)}
+            >
+              <Trash2 size={DeleteIconSize} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="bulk-review__bar">
+        <span>{selectedIds.length} selected</span>
+        <Button disabled={!selectedIds.length} onClick={onCategorize}>
+          Categorize selected
+        </Button>
+      </div>
+    </section>
+  );
+}

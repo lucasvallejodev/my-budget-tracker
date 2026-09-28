@@ -1,0 +1,761 @@
+diff --git a/apps/api/drizzle/0001_savings_goals.sql b/apps/api/drizzle/0001_savings_goals.sql
+new file mode 100644
+index 0000000..743dce2
+--- /dev/null
++++ b/apps/api/drizzle/0001_savings_goals.sql
+@@ -0,0 +1,19 @@
++CREATE TABLE "savings_goals" (
++	"id" text PRIMARY KEY NOT NULL,
++	"user_id" text NOT NULL,
++	"account_id" text NOT NULL,
++	"name" text NOT NULL,
++	"color" text NOT NULL,
++	"currency" char(3) NOT NULL,
++	"target_minor" bigint NOT NULL,
++	"target_date" date,
++	"deleted_at" timestamp with time zone,
++	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
++	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
++	CONSTRAINT "savings_goals_target_positive" CHECK ("savings_goals"."target_minor" > 0)
++);
++--> statement-breakpoint
++ALTER TABLE "savings_goals" ADD CONSTRAINT "savings_goals_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
++ALTER TABLE "savings_goals" ADD CONSTRAINT "savings_goals_account_id_accounts_id_fk" FOREIGN KEY ("account_id") REFERENCES "public"."accounts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
++ALTER TABLE "savings_goals" ADD CONSTRAINT "savings_goals_currency_currencies_code_fk" FOREIGN KEY ("currency") REFERENCES "public"."currencies"("code") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
++CREATE INDEX "savings_goals_user_idx" ON "savings_goals" USING btree ("user_id");
+diff --git a/apps/api/src/db/schema.ts b/apps/api/src/db/schema.ts
+index e7cb4f7..a8d0dab 100644
+--- a/apps/api/src/db/schema.ts
++++ b/apps/api/src/db/schema.ts
+@@ -276,6 +276,31 @@ export const budgets = pgTable(
+   ]
+ );
+ 
++export const savingsGoals = pgTable(
++  'savings_goals',
++  {
++    id: id(),
++    userId: userId(),
++    accountId: text('account_id')
++      .notNull()
++      .references(() => accounts.id),
++    name: text('name').notNull(),
++    color: text('color').notNull(),
++    currency: char('currency', { length: 3 })
++      .notNull()
++      .references(() => currencies.code),
++    targetMinor: bigint('target_minor', { mode: 'number' }).notNull(),
++    targetDate: date('target_date', { mode: 'string' }),
++    deletedAt: deletedAt(),
++    createdAt: createdAt(),
++    updatedAt: updatedAt(),
++  },
++  columns => [
++    index('savings_goals_user_idx').on(columns.userId),
++    check('savings_goals_target_positive', sql`${columns.targetMinor} > 0`),
++  ]
++);
++
+ export const rules = pgTable(
+   'rules',
+   {
+@@ -316,3 +341,4 @@ export type Transaction = typeof transactions.$inferSelect;
+ export type ExchangeRate = typeof exchangeRates.$inferSelect;
+ export type Budget = typeof budgets.$inferSelect;
+ export type Rule = typeof rules.$inferSelect;
++export type SavingsGoal = typeof savingsGoals.$inferSelect;
+diff --git a/apps/api/src/modules/savings-goals/service.ts b/apps/api/src/modules/savings-goals/service.ts
+new file mode 100644
+index 0000000..f4e2ecc
+--- /dev/null
++++ b/apps/api/src/modules/savings-goals/service.ts
+@@ -0,0 +1,136 @@
++import { and, asc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
++
++import { accounts, savingsGoals, transactions } from '@/db/schema';
++import type { SavingsGoalRow } from '@coinkeeper/shared/schema/savings-goals';
++
++import { Db, notFound, ServiceError, toIsoTimestamp } from '../db';
++
++type GoalInput = {
++  accountId: string;
++  color: string;
++  name: string;
++  targetDate: string | null;
++  targetMinor: number;
++};
++
++type GoalPatch = Partial<Omit<GoalInput, 'accountId'>>;
++
++type ListOptions = { deleted?: boolean; ids?: string[] };
++
++const assertPositiveTarget = (targetMinor: number | undefined) => {
++  if (targetMinor !== undefined && targetMinor <= 0) {
++    throw new ServiceError('The target must be a positive amount');
++  }
++};
++
++export const createSavingsGoalService = (db: Db) => {
++  const ownedGoal = async (userId: string, id: string, deleted: boolean) => {
++    const [goal] = await db
++      .select()
++      .from(savingsGoals)
++      .where(
++        and(
++          eq(savingsGoals.id, id),
++          eq(savingsGoals.userId, userId),
++          deleted ? isNotNull(savingsGoals.deletedAt) : isNull(savingsGoals.deletedAt)
++        )
++      )
++      .limit(1);
++
++    return goal ?? notFound('Savings goal');
++  };
++
++  const list = async (userId: string, options: ListOptions = {}): Promise<SavingsGoalRow[]> => {
++    const rows = await db
++      .select({
++        accountId: savingsGoals.accountId,
++        accountName: accounts.name,
++        color: savingsGoals.color,
++        currency: savingsGoals.currency,
++        deletedAt: savingsGoals.deletedAt,
++        id: savingsGoals.id,
++        name: savingsGoals.name,
++        savedMinor: sql<string>`COALESCE((SELECT sum(t.amount_minor) FROM ${transactions} t WHERE t.account_id = ${savingsGoals.accountId} AND t.deleted_at IS NULL), 0)`,
++        targetDate: savingsGoals.targetDate,
++        targetMinor: savingsGoals.targetMinor,
++      })
++      .from(savingsGoals)
++      .innerJoin(accounts, eq(accounts.id, savingsGoals.accountId))
++      .where(
++        and(
++          eq(savingsGoals.userId, userId),
++          options.deleted ? isNotNull(savingsGoals.deletedAt) : isNull(savingsGoals.deletedAt),
++          options.ids ? inArray(savingsGoals.id, options.ids) : undefined
++        )
++      )
++      .orderBy(asc(savingsGoals.createdAt));
++
++    return rows.map(row => {
++      const savedMinor = Number(row.savedMinor);
++
++      return {
++        ...row,
++        deletedAt: toIsoTimestamp(row.deletedAt),
++        reached: savedMinor >= row.targetMinor,
++        savedMinor,
++      };
++    });
++  };
++
++  const rowOf = async (userId: string, id: string): Promise<SavingsGoalRow> => {
++    const [row] = await list(userId, { ids: [id] });
++
++    return row ?? notFound('Savings goal');
++  };
++
++  const create = async (userId: string, input: GoalInput) => {
++    assertPositiveTarget(input.targetMinor);
++
++    const [account] = await db
++      .select()
++      .from(accounts)
++      .where(
++        and(
++          eq(accounts.id, input.accountId),
++          eq(accounts.userId, userId),
++          isNull(accounts.deletedAt)
++        )
++      )
++      .limit(1);
++
++    if (!account) return notFound('Account');
++
++    if (account.archivedAt) throw new ServiceError('Choose an account that is not archived');
++
++    const [goal] = await db
++      .insert(savingsGoals)
++      .values({ ...input, currency: account.currency, userId })
++      .returning({ id: savingsGoals.id });
++
++    return rowOf(userId, goal.id);
++  };
++
++  const update = async (userId: string, id: string, patch: GoalPatch) => {
++    assertPositiveTarget(patch.targetMinor);
++    await ownedGoal(userId, id, false);
++
++    await db.update(savingsGoals).set(patch).where(eq(savingsGoals.id, id));
++
++    return rowOf(userId, id);
++  };
++
++  const remove = async (userId: string, id: string) => {
++    await ownedGoal(userId, id, false);
++    await db.update(savingsGoals).set({ deletedAt: new Date() }).where(eq(savingsGoals.id, id));
++  };
++
++  const restore = async (userId: string, id: string) => {
++    await ownedGoal(userId, id, true);
++
++    await db.update(savingsGoals).set({ deletedAt: null }).where(eq(savingsGoals.id, id));
++
++    return rowOf(userId, id);
++  };
++
++  return { create, list, remove, restore, update };
++};
+diff --git a/apps/api/src/modules/services.ts b/apps/api/src/modules/services.ts
+index 053bfc1..b9ca871 100644
+--- a/apps/api/src/modules/services.ts
++++ b/apps/api/src/modules/services.ts
+@@ -17,6 +17,7 @@ import { createLedgerService } from './ledger/service';
+ import { createPayeeService } from './payees/service';
+ import { createReportService } from './reports/service';
+ import { createRuleService } from './rules/service';
++import { createSavingsGoalService } from './savings-goals/service';
+ 
+ const DEFAULT_SESSION_DAYS = 30;
+ 
+@@ -69,6 +70,7 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
+     payees: createPayeeService(db),
+     reports: createReportService(db),
+     rules: createRuleService(db),
++    savingsGoals: createSavingsGoalService(db),
+     sessions: createSessionStore(db, options.sessionDays ?? DEFAULT_SESSION_DAYS),
+     async updateSettings(
+       userId: string,
+diff --git a/apps/api/src/routes/index.ts b/apps/api/src/routes/index.ts
+index b0a171e..37f5430 100644
+--- a/apps/api/src/routes/index.ts
++++ b/apps/api/src/routes/index.ts
+@@ -12,6 +12,7 @@ import { importsRoutes } from './imports';
+ import { payeesRoutes } from './payees';
+ import { reportsRoutes } from './reports';
+ import { rulesRoutes } from './rules';
++import { savingsGoalsRoutes } from './savings-goals';
+ import { settingsRoutes } from './settings';
+ import { transactionsRoutes, transfersRoutes } from './transactions';
+ 
+@@ -27,6 +28,7 @@ const AuthenticatedRoutes = [
+   payeesRoutes,
+   reportsRoutes,
+   rulesRoutes,
++  savingsGoalsRoutes,
+   settingsRoutes,
+   transactionsRoutes,
+   transfersRoutes,
+diff --git a/apps/api/src/routes/savings-goals.ts b/apps/api/src/routes/savings-goals.ts
+new file mode 100644
+index 0000000..6020cf7
+--- /dev/null
++++ b/apps/api/src/routes/savings-goals.ts
+@@ -0,0 +1,98 @@
++import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
++
++import { HttpStatus } from '@/constants/http';
++import { userIdOf } from '@/plugins/context';
++import { idParamsSchema, listOf } from '@coinkeeper/shared/schema/common';
++import {
++  savingsGoalFormSchema,
++  savingsGoalListQuerySchema,
++  savingsGoalPatchSchema,
++  savingsGoalRowSchema,
++} from '@coinkeeper/shared/schema/savings-goals';
++
++import { parseMagnitude } from './inputs';
++import { noContent, withErrors } from './responses';
++
++const Tags = ['savings-goals'];
++const goal = withErrors({ [HttpStatus.ok]: savingsGoalRowSchema });
++
++export const savingsGoalsRoutes: FastifyPluginAsyncZod = async app => {
++  app.get(
++    '/savings-goals',
++    {
++      schema: {
++        querystring: savingsGoalListQuerySchema,
++        response: withErrors({ [HttpStatus.ok]: listOf(savingsGoalRowSchema) }),
++        tags: Tags,
++      },
++    },
++    async request => ({
++      items: await app.services.savingsGoals.list(userIdOf(request), request.query),
++    })
++  );
++
++  app.post(
++    '/savings-goals',
++    {
++      schema: {
++        body: savingsGoalFormSchema,
++        response: withErrors({ [HttpStatus.created]: savingsGoalRowSchema }),
++        tags: Tags,
++      },
++    },
++    async (request, reply) => {
++      const userId = userIdOf(request);
++      const { targetAmount, ...values } = request.body;
++      const account = await app.services.accounts.get(userId, values.accountId);
++
++      const created = await app.services.savingsGoals.create(userId, {
++        ...values,
++        targetMinor: parseMagnitude(targetAmount, account.currency),
++      });
++
++      return reply.status(HttpStatus.created).send(created);
++    }
++  );
++
++  app.patch(
++    '/savings-goals/:id',
++    {
++      schema: { body: savingsGoalPatchSchema, params: idParamsSchema, response: goal, tags: Tags },
++    },
++    async request => {
++      const userId = userIdOf(request);
++      const { targetAmount, ...values } = request.body;
++      const [current] = await app.services.savingsGoals.list(userId, { ids: [request.params.id] });
++
++      return app.services.savingsGoals.update(userId, request.params.id, {
++        ...values,
++        targetMinor:
++          targetAmount === undefined || !current
++            ? undefined
++            : parseMagnitude(targetAmount, current.currency),
++      });
++    }
++  );
++
++  app.delete(
++    '/savings-goals/:id',
++    {
++      schema: {
++        params: idParamsSchema,
++        response: withErrors({ [HttpStatus.noContent]: noContent }),
++        tags: Tags,
++      },
++    },
++    async (request, reply) => {
++      await app.services.savingsGoals.remove(userIdOf(request), request.params.id);
++
++      return reply.status(HttpStatus.noContent).send();
++    }
++  );
++
++  app.post(
++    '/savings-goals/:id/restore',
++    { schema: { params: idParamsSchema, response: goal, tags: Tags } },
++    async request => app.services.savingsGoals.restore(userIdOf(request), request.params.id)
++  );
++};
+diff --git a/apps/web/src/api/mutations.ts b/apps/web/src/api/mutations.ts
+index 2632f0b..7d1a907 100644
+--- a/apps/web/src/api/mutations.ts
++++ b/apps/web/src/api/mutations.ts
+@@ -25,6 +25,10 @@ import type {
+ import type { ColumnMapping, ImportCommitResult, Preview } from '@coinkeeper/shared/schema/imports';
+ import type { PayeeFormValues, PayeePatchValues, PayeeRow } from '@coinkeeper/shared/schema/payees';
+ import type { RuleFormValues, RuleRow } from '@coinkeeper/shared/schema/rules';
++import type {
++  SavingsGoalFormValues,
++  SavingsGoalRow,
++} from '@coinkeeper/shared/schema/savings-goals';
+ import type { SettingsFormValues, UserSettings } from '@coinkeeper/shared/schema/settings';
+ import type {
+   StandardTransactionValues,
+@@ -167,3 +171,14 @@ export const deleteBudget = (id: string) => apiRequest<void>('DELETE', `/budgets
+ 
+ export const copyBudgets = (month: string) =>
+   apiRequest<{ copied: number }>('POST', '/budgets/copy-previous-month', { month });
++
++export const createSavingsGoal = (values: SavingsGoalFormValues) =>
++  apiRequest<SavingsGoalRow>('POST', '/savings-goals', values);
++
++export const updateSavingsGoal = (id: string, values: Omit<SavingsGoalFormValues, 'accountId'>) =>
++  apiRequest<SavingsGoalRow>('PATCH', `/savings-goals/${id}`, values);
++
++export const deleteSavingsGoal = (id: string) => apiRequest<void>('DELETE', `/savings-goals/${id}`);
++
++export const restoreSavingsGoal = (id: string) =>
++  apiRequest<SavingsGoalRow>('POST', `/savings-goals/${id}/restore`);
+diff --git a/apps/web/src/app/(main)/goals/page.tsx b/apps/web/src/app/(main)/goals/page.tsx
+new file mode 100644
+index 0000000..0bd57b6
+--- /dev/null
++++ b/apps/web/src/app/(main)/goals/page.tsx
+@@ -0,0 +1,5 @@
++import { SavingsGoals } from '@/components/finance';
++
++export default function Page() {
++  return <SavingsGoals />;
++}
+diff --git a/apps/web/src/app/(main)/routes.ts b/apps/web/src/app/(main)/routes.ts
+index 350e004..bfe3cfe 100644
+--- a/apps/web/src/app/(main)/routes.ts
++++ b/apps/web/src/app/(main)/routes.ts
+@@ -4,6 +4,7 @@ import {
+   House,
+   Inbox,
+   Landmark,
++  PiggyBank,
+   ReceiptText,
+   Settings,
+   Upload,
+@@ -48,6 +49,12 @@ export const MainRouteItems: RouteItem[] = [
+     name: 'Budgets',
+     path: '/budgets',
+   },
++  {
++    icon: PiggyBank,
++    id: 9,
++    name: 'Goals',
++    path: '/goals',
++  },
+   {
+     icon: Landmark,
+     id: 6,
+diff --git a/apps/web/src/components/finance/index.ts b/apps/web/src/components/finance/index.ts
+index 4518b64..287bc38 100644
+--- a/apps/web/src/components/finance/index.ts
++++ b/apps/web/src/components/finance/index.ts
+@@ -36,6 +36,7 @@ export { PaymentCardList } from './payment-card-list';
+ export { PaymentCards } from './payment-cards';
+ export { ReviewInbox } from './review-inbox';
+ export { RulesSettings } from './rules-settings';
++export { SavingsGoals } from './savings-goals';
+ export { SettingsView } from './settings-view';
+ export { TargetCard } from './target-card';
+ export { TransactionActions } from './transaction-actions';
+@@ -78,6 +79,7 @@ export {
+   usePayees,
+   useRefreshFinance,
+   useRules,
++  useSavingsGoals,
+   useSessions,
+   useSettings,
+   useSummary,
+diff --git a/apps/web/src/components/finance/savings-goals/index.ts b/apps/web/src/components/finance/savings-goals/index.ts
+new file mode 100644
+index 0000000..d9701b3
+--- /dev/null
++++ b/apps/web/src/components/finance/savings-goals/index.ts
+@@ -0,0 +1 @@
++export { SavingsGoals } from './savings-goals';
+diff --git a/apps/web/src/components/finance/savings-goals/savings-goal-dialog.tsx b/apps/web/src/components/finance/savings-goals/savings-goal-dialog.tsx
+new file mode 100644
+index 0000000..a122ca0
+--- /dev/null
++++ b/apps/web/src/components/finance/savings-goals/savings-goal-dialog.tsx
+@@ -0,0 +1,97 @@
++'use client';
++
++import { useState } from 'react';
++
++import { createSavingsGoal, updateSavingsGoal } from '@/api/mutations';
++import {
++  Button,
++  ColorPicker,
++  Dialog,
++  DialogContent,
++  DialogTitle,
++  Field,
++  FormStack,
++  Input,
++} from '@/components/ui';
++import { Colors } from '@/styles/theme';
++import { minorToDecimalString } from '@coinkeeper/shared/lib/money';
++
++import { AccountPicker } from '../account-picker';
++import { useEntityMutation } from '../use-entity-mutation';
++import { SavingsGoalRow } from '../use-finance-data';
++
++export function SavingsGoalDialog({
++  goal,
++  onClose,
++  onSaved,
++}: {
++  goal: Partial<SavingsGoalRow>;
++  onClose: () => void;
++  onSaved: () => void;
++}) {
++  const [name, setName] = useState(goal.name ?? '');
++  const [color, setColor] = useState(goal.color ?? Colors.primary);
++  const [accountId, setAccountId] = useState(goal.accountId);
++  const [targetDate, setTargetDate] = useState(goal.targetDate ?? '');
++
++  const [targetAmount, setTargetAmount] = useState(
++    goal.targetMinor && goal.currency ? minorToDecimalString(goal.targetMinor, goal.currency) : ''
++  );
++
++  const values = { color, name, targetAmount, targetDate: targetDate || null };
++
++  const save = useEntityMutation({
++    mutationFn: () =>
++      goal.id
++        ? updateSavingsGoal(goal.id, values)
++        : createSavingsGoal({ ...values, accountId: accountId! }),
++    onSuccess: onSaved,
++    successMessage: 'Goal saved',
++  });
++
++  return (
++    <Dialog open onOpenChange={open => !open && onClose()}>
++      <DialogContent>
++        <DialogTitle>{goal.id ? 'Edit goal' : 'New goal'}</DialogTitle>
++        <FormStack
++          onSubmit={event => {
++            event.preventDefault();
++            save.mutate();
++          }}
++        >
++          <Field>
++            Name
++            <Input value={name} onChange={event => setName(event.target.value)} />
++          </Field>
++          <Field as="div">
++            Colour
++            <ColorPicker value={color} onChange={setColor} />
++          </Field>
++          <Field as="div">
++            Savings account
++            <AccountPicker value={accountId} onChange={setAccountId} disabled={!!goal.id} />
++          </Field>
++          <Field>
++            Target amount
++            <Input
++              inputMode="decimal"
++              value={targetAmount}
++              onChange={event => setTargetAmount(event.target.value)}
++            />
++          </Field>
++          <Field>
++            Target date (optional)
++            <Input
++              type="date"
++              value={targetDate}
++              onChange={event => setTargetDate(event.target.value)}
++            />
++          </Field>
++          <Button type="submit" disabled={save.isPending}>
++            Save goal
++          </Button>
++        </FormStack>
++      </DialogContent>
++    </Dialog>
++  );
++}
+diff --git a/apps/web/src/components/finance/savings-goals/savings-goals.tsx b/apps/web/src/components/finance/savings-goals/savings-goals.tsx
+new file mode 100644
+index 0000000..3c7b17d
+--- /dev/null
++++ b/apps/web/src/components/finance/savings-goals/savings-goals.tsx
+@@ -0,0 +1,124 @@
++'use client';
++
++import { useMutation } from '@tanstack/react-query';
++import { useState } from 'react';
++import { toast } from 'sonner';
++
++import { deleteSavingsGoal, restoreSavingsGoal } from '@/api/mutations';
++import {
++  Badge,
++  Button,
++  Cluster,
++  EmptyState,
++  Grid,
++  Page,
++  PageHeading,
++  ProgressBar,
++  QueryContent,
++  Text,
++} from '@/components/ui';
++import { formatMoney } from '@coinkeeper/shared/lib/money';
++
++import { SavingsGoalRow, useRefreshFinance, useSavingsGoals } from '../use-finance-data';
++import { SavingsGoalDialog } from './savings-goal-dialog';
++
++function GoalCard({
++  goal,
++  onDelete,
++  onEdit,
++}: {
++  goal: SavingsGoalRow;
++  onDelete: () => void;
++  onEdit: () => void;
++}) {
++  const saved = formatMoney(goal.savedMinor, goal.currency);
++  const target = formatMoney(goal.targetMinor, goal.currency);
++
++  return (
++    <article>
++      <Cluster justify="between">
++        <div>
++          <h3>{goal.name}</h3>
++          <Text tone="muted">
++            {goal.accountName} · Saved {saved} of {target}
++            {goal.targetDate ? ` · By ${goal.targetDate}` : ''}
++          </Text>
++        </div>
++        <Badge tone={goal.reached ? 'success' : 'neutral'}>
++          {goal.reached ? 'Reached' : 'In progress'}
++        </Badge>
++      </Cluster>
++      <ProgressBar
++        label={`${goal.name} progress`}
++        max={goal.targetMinor}
++        value={Math.max(goal.savedMinor, 0)}
++      />
++      <Cluster>
++        <Button variant="outline" size="sm" onClick={onEdit}>
++          Edit
++        </Button>
++        <Button variant="destructive" size="sm" onClick={onDelete}>
++          Delete
++        </Button>
++      </Cluster>
++    </article>
++  );
++}
++
++export function SavingsGoals() {
++  const goals = useSavingsGoals();
++  const refresh = useRefreshFinance();
++  const [editing, setEditing] = useState<Partial<SavingsGoalRow> | null>(null);
++
++  const remove = useMutation({
++    mutationFn: deleteSavingsGoal,
++    onError: (error: Error) => toast.error(error.message),
++    onSuccess: (_, id) => {
++      refresh();
++      toast.success('Goal deleted', {
++        action: { label: 'Undo', onClick: () => void restoreSavingsGoal(id).then(refresh) },
++      });
++    },
++  });
++
++  return (
++    <Page>
++      <PageHeading
++        title="Goals"
++        description="Track what you are saving for in a savings account."
++        action={<Button onClick={() => setEditing({})}>New goal</Button>}
++      />
++      <QueryContent query={goals}>
++        {items =>
++          items.length === 0 ? (
++            <EmptyState
++              title="No goals yet"
++              description="Link a goal to a savings account to see how far you are."
++            />
++          ) : (
++            <Grid>
++              {items.map(goal => (
++                <GoalCard
++                  key={goal.id}
++                  goal={goal}
++                  onEdit={() => setEditing(goal)}
++                  onDelete={() => remove.mutate(goal.id)}
++                />
++              ))}
++            </Grid>
++          )
++        }
++      </QueryContent>
++      {editing && (
++        <SavingsGoalDialog
++          goal={editing}
++          onClose={() => setEditing(null)}
++          onSaved={() => {
++            setEditing(null);
++            refresh();
++          }}
++        />
++      )}
++    </Page>
++  );
++}
+diff --git a/apps/web/src/components/finance/use-finance-data.ts b/apps/web/src/components/finance/use-finance-data.ts
+index e190b79..cebe6db 100644
+--- a/apps/web/src/components/finance/use-finance-data.ts
++++ b/apps/web/src/components/finance/use-finance-data.ts
+@@ -14,6 +14,7 @@ import type { ExchangeRateRow } from '@coinkeeper/shared/schema/exchange-rates';
+ import type { PayeeRow } from '@coinkeeper/shared/schema/payees';
+ import type { Summary } from '@coinkeeper/shared/schema/reports';
+ import type { RuleRow } from '@coinkeeper/shared/schema/rules';
++import type { SavingsGoalRow } from '@coinkeeper/shared/schema/savings-goals';
+ import type { UserSettings } from '@coinkeeper/shared/schema/settings';
+ import type { TransactionRow } from '@coinkeeper/shared/schema/transaction';
+ 
+@@ -24,6 +25,7 @@ export type {
+   ExchangeRateRow,
+   PayeeRow,
+   RuleRow,
++  SavingsGoalRow,
+   Session,
+   Summary,
+   TransactionRow,
+@@ -42,6 +44,7 @@ export const QueryKeys = {
+   me: ['me'] as const,
+   payees: ['payees'] as const,
+   rules: ['rules'] as const,
++  savingsGoals: ['savings-goals'] as const,
+   sessions: ['sessions'] as const,
+   settings: ['settings'] as const,
+   summary: (month?: string) => ['summary', month ?? 'current'] as const,
+@@ -98,6 +101,13 @@ export function useRules() {
+   });
+ }
+ 
++export function useSavingsGoals() {
++  return useQuery({
++    queryFn: () => apiList<SavingsGoalRow>('/savings-goals'),
++    queryKey: QueryKeys.savingsGoals,
++  });
++}
++
+ export function useExchangeRates() {
+   return useQuery({
+     queryFn: () => apiList<ExchangeRateRow>('/exchange-rates'),
+diff --git a/packages/shared/src/schema/savings-goals.ts b/packages/shared/src/schema/savings-goals.ts
+new file mode 100644
+index 0000000..37e1b39
+--- /dev/null
++++ b/packages/shared/src/schema/savings-goals.ts
+@@ -0,0 +1,35 @@
++import { z } from 'zod';
++
++import { FieldLengths } from '../constants/field-lengths';
++import { Patterns } from '../lib/patterns';
++import { deletedQuerySchema, isoDateSchema } from './common';
++
++export const savingsGoalFormSchema = z.object({
++  accountId: z.uuid('Choose a savings account'),
++  color: z.string().regex(Patterns.hexColor, 'Choose a colour'),
++  name: z.string().trim().min(1, 'Name is required').max(FieldLengths.name),
++  targetAmount: z.string().trim().min(1, 'Target is required').max(FieldLengths.amountInput),
++  targetDate: isoDateSchema.nullable(),
++});
++
++export type SavingsGoalFormValues = z.infer<typeof savingsGoalFormSchema>;
++
++export const savingsGoalPatchSchema = savingsGoalFormSchema.omit({ accountId: true }).partial();
++
++export const savingsGoalRowSchema = z.object({
++  accountId: z.string(),
++  accountName: z.string(),
++  color: z.string(),
++  currency: z.string(),
++  deletedAt: z.string().nullable(),
++  id: z.string(),
++  name: z.string(),
++  reached: z.boolean(),
++  savedMinor: z.number().int(),
++  targetDate: z.string().nullable(),
++  targetMinor: z.number().int(),
++});
++
++export type SavingsGoalRow = z.infer<typeof savingsGoalRowSchema>;
++
++export const savingsGoalListQuerySchema = deletedQuerySchema;

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createTestApp, signUp, TestClient, TestContext } from '@/test/app';
 
@@ -88,6 +88,33 @@ describe('categories', () => {
     const ids = (await groups(ada)).map(candidate => candidate.id).reverse();
 
     expect((await ada.request('PUT', '/category-groups/order', { ids })).statusCode).toBe(204);
+    expect((await groups(ada)).map(candidate => candidate.id)).toEqual(ids);
+  });
+
+  it('rejects a reorder with repeated ids (400) or another user ids (404) and keeps the order', async () => {
+    const ids = (await groups(ada)).map(candidate => candidate.id);
+    const [bobGroup] = await groups(bob);
+    const repeated = await ada.request('PUT', '/category-groups/order', { ids: [ids[0], ids[0]] });
+
+    expect(repeated.statusCode).toBe(400);
+    expect(repeated.json().error.fields).toHaveProperty('ids');
+    expect(
+      (
+        await ada.request('PUT', '/category-groups/order', {
+          ids: [...ids].reverse().concat(bobGroup.id),
+        })
+      ).statusCode
+    ).toBe(404);
+
+    const bobCategory = bobGroup.categories[0].id;
+
+    expect(
+      (
+        await ada.request('PUT', `/category-groups/${ids[1]}/categories/order`, {
+          ids: [bobCategory],
+        })
+      ).statusCode
+    ).toBe(404);
     expect((await groups(ada)).map(candidate => candidate.id)).toEqual(ids);
   });
 
@@ -286,10 +313,41 @@ describe('reports and settings', () => {
     expect((await ada.request('GET', '/currencies')).json().items.length).toBeGreaterThan(10);
   });
 
-  it('reports health without a session', async () => {
+  it('reports liveness without a session or the database', async () => {
+    const execute = vi.spyOn(context.app.services.db, 'execute');
+    const response = await context.app.inject({ method: 'GET', url: '/api/v1/health/live' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ status: 'ok' });
+    expect(execute).not.toHaveBeenCalled();
+    execute.mockRestore();
+  });
+
+  it('reports readiness without a session when the database answers', async () => {
+    const response = await context.app.inject({ method: 'GET', url: '/api/v1/health/ready' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ database: 'ok', status: 'ok' });
+  });
+
+  it('answers readiness with 503 UNAVAILABLE when the database is down', async () => {
+    const execute = vi
+      .spyOn(context.app.services.db, 'execute')
+      .mockRejectedValueOnce(new Error('connect ECONNREFUSED 127.0.0.1:5432'));
+
+    const response = await context.app.inject({ method: 'GET', url: '/api/v1/health/ready' });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toEqual({
+      error: { code: 'UNAVAILABLE', message: 'The database is not reachable' },
+    });
+    execute.mockRestore();
+  });
+
+  it('no longer serves the old combined health route', async () => {
     const response = await context.app.inject({ method: 'GET', url: '/api/v1/health' });
 
-    expect(response.json()).toEqual({ database: 'ok', status: 'ok' });
+    expect(response.statusCode).toBe(404);
   });
 });
 

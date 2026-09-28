@@ -8,6 +8,13 @@ import { ServiceError } from '@/modules/db';
 
 const SafeMethods = new Set(['GET', 'HEAD', 'OPTIONS']);
 const CROSS_SITE = 'cross-site';
+const PLAIN_TEXT = 'text/plain';
+const NO_SOURCE = "'none'";
+
+const ApiContentSecurityPolicy = {
+  directives: { defaultSrc: [NO_SOURCE], frameAncestors: [NO_SOURCE] },
+  useDefaults: false,
+};
 
 const originOf = (request: FastifyRequest): string | undefined => {
   const origin = request.headers.origin;
@@ -33,7 +40,8 @@ const rejectForeignOrigin = (allowedOrigins: string[]) => async (request: Fastif
 export const registerSecurity = async (app: FastifyInstance): Promise<void> => {
   const { allowedOrigins, corsOrigins } = app.config;
 
-  await app.register(helmet, { contentSecurityPolicy: false });
+  app.removeContentTypeParser(PLAIN_TEXT);
+  await app.register(helmet, { contentSecurityPolicy: ApiContentSecurityPolicy });
   await app.register(cors, { credentials: true, origin: corsOrigins.length ? corsOrigins : false });
   await app.register(rateLimit, { global: false });
   app.addHook('onRequest', rejectForeignOrigin([...allowedOrigins, ...corsOrigins]));

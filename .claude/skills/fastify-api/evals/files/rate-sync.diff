@@ -1,0 +1,148 @@
+diff --git a/packages/shared/src/schema/exchange-rates.ts b/packages/shared/src/schema/exchange-rates.ts
+index ad7ed6d..3375213 100644
+--- a/packages/shared/src/schema/exchange-rates.ts
++++ b/packages/shared/src/schema/exchange-rates.ts
+@@ -4,6 +4,8 @@ import { FieldLengths } from '../constants/field-lengths';
+ import { Patterns } from '../lib/patterns';
+ import { deletedQuerySchema, isoDateSchema } from './common';
+ 
++const MAX_SYNC_DAYS = 31;
++
+ const currencyCode = z.string().length(FieldLengths.currencyCode);
+ 
+ export const exchangeRateKeySchema = z.object({
+@@ -39,3 +41,18 @@ export const exchangeRateListQuerySchema = deletedQuerySchema.extend({
+   quote: currencyCode.optional(),
+   to: isoDateSchema.optional(),
+ });
++
++export const exchangeRateSyncQuerySchema = z.object({
++  base: currencyCode,
++  days: z.number().int().positive().max(MAX_SYNC_DAYS).optional(),
++  overwrite: z.coerce.boolean().optional(),
++});
++
++export type ExchangeRateSyncQuery = z.infer<typeof exchangeRateSyncQuerySchema>;
++
++export const exchangeRateSyncResultSchema = z.object({
++  saved: z.number().int(),
++  skipped: z.number().int(),
++});
++
++export type ExchangeRateSyncResult = z.infer<typeof exchangeRateSyncResultSchema>;
+diff --git a/apps/api/src/modules/services.ts b/apps/api/src/modules/services.ts
+index 053bfc1..63bc1cd 100644
+--- a/apps/api/src/modules/services.ts
++++ b/apps/api/src/modules/services.ts
+@@ -11,7 +11,9 @@ import { createBudgetService } from './budgets/service';
+ import { ensureUserBootstrap } from './categories/seed';
+ import { createCategoryService } from './categories/service';
+ import { Db, notFound, ServiceError } from './db';
++import { fetchPublishedRates } from './fx/published-rates';
+ import { createFxService, ManualRateProvider } from './fx/service';
++import { createRateSyncService } from './fx/sync';
+ import { createImportService } from './import/service';
+ import { createLedgerService } from './ledger/service';
+ import { createPayeeService } from './payees/service';
+@@ -67,6 +69,7 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
+         .orderBy(asc(currencies.code));
+     },
+     payees: createPayeeService(db),
++    rateSync: createRateSyncService(db, fetchPublishedRates),
+     reports: createReportService(db),
+     rules: createRuleService(db),
+     sessions: createSessionStore(db, options.sessionDays ?? DEFAULT_SESSION_DAYS),
+diff --git a/apps/api/src/routes/exchange-rates.ts b/apps/api/src/routes/exchange-rates.ts
+index d1d426b..7fd03e3 100644
+--- a/apps/api/src/routes/exchange-rates.ts
++++ b/apps/api/src/routes/exchange-rates.ts
+@@ -9,6 +9,8 @@ import {
+   exchangeRateKeySchema,
+   exchangeRateListQuerySchema,
+   exchangeRateSchema,
++  exchangeRateSyncQuerySchema,
++  exchangeRateSyncResultSchema,
+ } from '@coinkeeper/shared/schema/exchange-rates';
+ 
+ import { noContent, withErrors } from './responses';
+@@ -89,4 +91,16 @@ export const exchangeRatesRoutes: FastifyPluginAsyncZod = async app => {
+     },
+     async request => app.services.fx.restore(userIdOf(request), request.params)
+   );
++
++  app.post(
++    '/exchange-rates/sync',
++    {
++      schema: {
++        querystring: exchangeRateSyncQuerySchema,
++        response: withErrors({ [HttpStatus.ok]: exchangeRateSyncResultSchema }),
++        tags: Tags,
++      },
++    },
++    async request => app.services.rateSync.sync(userIdOf(request), request.query)
++  );
+ };
+diff --git a/apps/api/src/modules/fx/sync.ts b/apps/api/src/modules/fx/sync.ts
+new file mode 100644
+index 0000000..c1c9a91
+--- /dev/null
++++ b/apps/api/src/modules/fx/sync.ts
+@@ -0,0 +1,58 @@
++import { sql } from 'drizzle-orm';
++
++import { exchangeRates } from '@/db/schema';
++import type {
++  ExchangeRateSyncQuery,
++  ExchangeRateSyncResult,
++} from '@coinkeeper/shared/schema/exchange-rates';
++
++import { Db, ServiceError } from '../db';
++import type { RateQuote } from './provider';
++
++const DEFAULT_SYNC_DAYS = 7;
++const PROVIDER_FAILED_STATUS = 502;
++
++const RateKeyColumns = [
++  exchangeRates.userId,
++  exchangeRates.base,
++  exchangeRates.quote,
++  exchangeRates.date,
++];
++
++export type RemoteRates = (base: string, days: number) => Promise<RateQuote[]>;
++
++const toRow = (userId: string, quote: RateQuote) => ({
++  base: quote.base,
++  date: quote.date,
++  quote: quote.quote,
++  rate: String(quote.rate),
++  source: quote.source,
++  userId,
++});
++
++export const createRateSyncService = (db: Db, fetchRemoteRates: RemoteRates) => ({
++  async sync(userId: string, query: ExchangeRateSyncQuery): Promise<ExchangeRateSyncResult> {
++    const quotes = await fetchRemoteRates(query.base, query.days ?? DEFAULT_SYNC_DAYS).catch(() => {
++      throw new ServiceError(
++        'The exchange rate provider is not responding. Try again in a few minutes.',
++        PROVIDER_FAILED_STATUS
++      );
++    });
++
++    if (!quotes.length) return { saved: 0, skipped: 0 };
++
++    const rows = quotes.map(quote => toRow(userId, quote));
++    const insert = db.insert(exchangeRates).values(rows);
++
++    const saved = query.overwrite
++      ? await insert
++          .onConflictDoUpdate({
++            set: { rate: sql`excluded.rate`, source: sql`excluded.source` },
++            target: RateKeyColumns,
++          })
++          .returning({ date: exchangeRates.date })
++      : await insert.onConflictDoNothing().returning({ date: exchangeRates.date });
++
++    return { saved: saved.length, skipped: rows.length - saved.length };
++  },
++});

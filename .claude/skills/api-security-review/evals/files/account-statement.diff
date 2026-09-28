@@ -1,0 +1,107 @@
+diff --git a/packages/shared/src/schema/accounts.ts b/packages/shared/src/schema/accounts.ts
+--- a/packages/shared/src/schema/accounts.ts
++++ b/packages/shared/src/schema/accounts.ts
+@@ -1,7 +1,7 @@
+ import { z } from 'zod';
+ 
+ import { FieldLengths } from '../constants/field-lengths';
+-import { deletedQuerySchema, includeArchivedQuerySchema } from './common';
++import { deletedQuerySchema, includeArchivedQuerySchema, isoDateSchema } from './common';
+ import { AccountClassificationValues, AccountTypeValues } from './enums';
+ 
+ export const accountFormSchema = z.object({
+@@ -49,3 +49,10 @@ export const accountPatchSchema = accountFormSchema.omit({ openingBalance: true
+ export type AccountPatchValues = z.infer<typeof accountPatchSchema>;
+ 
+ export const accountListQuerySchema = includeArchivedQuerySchema.extend(deletedQuerySchema.shape);
++
++export const accountStatementQuerySchema = z.object({
++  from: isoDateSchema,
++  to: isoDateSchema,
++});
++
++export type AccountStatementQuery = z.infer<typeof accountStatementQuerySchema>;
+diff --git a/apps/api/src/routes/accounts.ts b/apps/api/src/routes/accounts.ts
+--- a/apps/api/src/routes/accounts.ts
++++ b/apps/api/src/routes/accounts.ts
+@@ -6,6 +6,7 @@ import {
+   accountFormSchema,
+   accountListQuerySchema,
+   accountPatchSchema,
++  accountStatementQuerySchema,
+   accountSummarySchema,
+ } from '@coinkeeper/shared/schema/accounts';
+ import { idParamsSchema, listOf } from '@coinkeeper/shared/schema/common';
+@@ -41,6 +42,19 @@ export const accountsRoutes: FastifyPluginAsyncZod = async app => {
+     async request => app.services.accounts.get(userIdOf(request), request.params.id)
+   );
+ 
++  app.get(
++    '/accounts/:id/statement',
++    {
++      schema: {
++        params: idParamsSchema,
++        querystring: accountStatementQuerySchema,
++        tags: Tags,
++      },
++    },
++    async request =>
++      app.services.accounts.statement(request.params.id, request.query.from, request.query.to)
++  );
++
+   app.post(
+     '/accounts',
+     {
+diff --git a/apps/api/src/modules/accounts/service.ts b/apps/api/src/modules/accounts/service.ts
+--- a/apps/api/src/modules/accounts/service.ts
++++ b/apps/api/src/modules/accounts/service.ts
+@@ -1,4 +1,4 @@
+-import { and, asc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
++import { and, asc, eq, gte, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm';
+ 
+ import { accounts, currencies, transactions } from '@/db/schema';
+ import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
+@@ -187,6 +187,19 @@ export const createAccountService = (db: Db) => {
+ 
+       return get(userId, id);
+     },
++    async statement(id: string, from: string, to: string) {
++      return db
++        .select()
++        .from(transactions)
++        .where(
++          and(
++            eq(transactions.accountId, id),
++            gte(transactions.date, from),
++            lte(transactions.date, to)
++          )
++        )
++        .orderBy(asc(transactions.date));
++    },
+     async update(userId: string, id: string, data: AccountPatch): Promise<AccountSummary> {
+       const account = await owned(userId, id);
+       const patch: Partial<typeof accounts.$inferInsert> = { ...data };
+diff --git a/apps/api/src/routes/ledger.test.ts b/apps/api/src/routes/ledger.test.ts
+--- a/apps/api/src/routes/ledger.test.ts
++++ b/apps/api/src/routes/ledger.test.ts
+@@ -96,6 +96,20 @@ describe('accounts', () => {
+     expect(restored.json().deletedAt).toBeNull();
+   });
+ 
++  it('lists the statement of an account for a date range', async () => {
++    const account = await createAccount(ada);
++
++    await ada.request('POST', '/transactions', spend(account.id, '12.50'));
++
++    const statement = await ada.request(
++      'GET',
++      `/accounts/${account.id}/statement?from=2026-09-01&to=2026-09-30`
++    );
++
++    expect(statement.statusCode).toBe(200);
++    expect(statement.json()).toHaveLength(1);
++  });
++
+   it('keeps every account private to its owner', async () => {
+     const account = await createAccount(ada);
+ 

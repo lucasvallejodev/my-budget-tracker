@@ -1,0 +1,92 @@
+'use client';
+
+import './net-worth-trend.scss';
+
+import { useEffect, useState } from 'react';
+import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
+
+import { Panel, Text } from '@/components/ui';
+import { ChartStyle, Colors } from '@/styles/theme';
+import { formatMoney } from '@coinkeeper/shared/lib/money';
+
+import { ChartFrame } from '../chart-frame';
+
+const CountUpDurationMs = 1200;
+const MinorUnitsPerMajor = 100;
+const SavedBarAnimationMs = 900;
+
+export type NetWorthPoint = {
+  label: string;
+  netWorthMinor: number;
+  savedMinor: number;
+};
+
+function useCountUp(target: number) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    const start = performance.now();
+    let frame = 0;
+
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / CountUpDurationMs, 1);
+
+      setValue(Math.round(target * progress));
+
+      if (progress < 1) frame = requestAnimationFrame(step);
+    };
+
+    frame = requestAnimationFrame(step);
+
+    return () => cancelAnimationFrame(frame);
+  }, [target]);
+
+  return value;
+}
+
+export function NetWorthTrend({ currency, points }: { currency: string; points: NetWorthPoint[] }) {
+  const latestMinor = points.at(-1)?.netWorthMinor ?? 0;
+  const savedMinor = points.reduce((total, point) => total + point.savedMinor, 0);
+  const shownMinor = useCountUp(latestMinor);
+  const totalFormat = new Intl.NumberFormat('en-US', { currency, style: 'currency' });
+  const formatTooltip = (value: unknown) => formatMoney(Number(value), currency);
+
+  return (
+    <Panel title="Net worth" description="Across all accounts in this currency">
+      <p className="net-worth-trend__total">
+        {totalFormat.format(shownMinor / MinorUnitsPerMajor)}
+      </p>
+      <ChartFrame>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={points} accessibilityLayer>
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
+            <Tooltip formatter={formatTooltip} contentStyle={ChartStyle.tooltip} />
+            <Area
+              type="monotone"
+              name="Net worth"
+              dataKey="netWorthMinor"
+              stroke={Colors.chart.income}
+              fill="transparent"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ChartFrame>
+      <ChartFrame>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={points} accessibilityLayer>
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
+            <Tooltip formatter={formatTooltip} contentStyle={ChartStyle.tooltip} />
+            <Bar
+              name="Saved"
+              dataKey="savedMinor"
+              fill={Colors.chart.income}
+              isAnimationActive
+              animationDuration={SavedBarAnimationMs}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartFrame>
+      <Text tone="muted">Saved over the period: {formatMoney(savedMinor, currency)}</Text>
+    </Panel>
+  );
+}

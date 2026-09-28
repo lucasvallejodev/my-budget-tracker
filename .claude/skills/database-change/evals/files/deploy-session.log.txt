@@ -1,0 +1,72 @@
+$ git log --oneline -4 -- apps/api/drizzle
+e41c9a7 perf(api): add a partial index for the needs-review count (renumber migration to 0002 after rebase)
+b82f310 perf(api): add a partial index for the needs-review count
+6d0e5a2 feat(api): backfill accounts.institution
+3f7c1d9 feat(api): initial API schema
+
+$ ls apps/api/drizzle apps/api/drizzle/meta
+apps/api/drizzle:
+0000_init.sql
+0001_accounts_institution_backfill.sql
+0002_transactions_needs_review_idx.sql
+meta
+
+apps/api/drizzle/meta:
+0000_snapshot.json
+0001_snapshot.json
+0002_snapshot.json
+_journal.json
+
+$ head -3 apps/api/drizzle/meta/0001_snapshot.json apps/api/drizzle/meta/0002_snapshot.json
+==> apps/api/drizzle/meta/0001_snapshot.json <==
+{
+  "id": "5d0c2f7e-9b1a-4c3e-8f7d-2a6b1c9e4f10",
+  "prevId": "38a4b6bc-7078-46f0-8d95-a9afd5b43923",
+
+==> apps/api/drizzle/meta/0002_snapshot.json <==
+{
+  "id": "c7e91a42-3f6d-4b8a-9e25-7d4f0b1a6c83",
+  "prevId": "38a4b6bc-7078-46f0-8d95-a9afd5b43923",
+
+$ npm test -- --run
+ Test Files  61 passed (61)
+      Tests  548 passed (548)
+
+$ docker compose --profile app up -d --build
+[+] Running 4/4
+ ✔ Container my-budget-tracker-postgres-1  Healthy
+ ✔ Container my-budget-tracker-migrate-1   Exited (0)
+ ✔ Container my-budget-tracker-api-1       Started
+ ✔ Container my-budget-tracker-web-1       Started
+
+$ docker compose logs migrate
+migrate-1  | Migrations applied from /app/drizzle.
+
+$ npm run db:check
+> coinkeeper@0.1.0 db:check
+> npm run db:check -w @coinkeeper/api
+
+> @coinkeeper/api@0.1.0 db:check
+> node scripts/database.mjs
+
+Schema comparison differs (columns, constraints, indexes or enums). 2/3 migrations recorded. Run npm run db:migrate.
+
+$ npm run db:migrate
+> coinkeeper@0.1.0 db:migrate
+> npm run db:migrate -w @coinkeeper/api
+
+> @coinkeeper/api@0.1.0 db:migrate
+> drizzle-kit migrate
+
+Reading config file '/srv/coinkeeper/apps/api/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] migrations applied successfully!
+
+$ npm run db:check
+> coinkeeper@0.1.0 db:check
+> npm run db:check -w @coinkeeper/api
+
+> @coinkeeper/api@0.1.0 db:check
+> node scripts/database.mjs
+
+Schema comparison differs (columns, constraints, indexes or enums). 2/3 migrations recorded. Run npm run db:migrate.

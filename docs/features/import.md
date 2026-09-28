@@ -1,6 +1,6 @@
 # Import
 
-> Summary: importing a bank CSV, mapping columns, what the preview statuses mean, duplicates, matching and transfer suggestions.
+> Summary: importing a bank CSV, mapping columns, what the preview statuses mean, duplicates, matching, transfer suggestions, and why an import is written all at once and only once.
 
 ## Step by step
 
@@ -33,7 +33,7 @@
 
 ## Re-importing
 
-Importing the same file again is safe. Every row gets a deterministic import id (the reference column if mapped, otherwise date + amount + occurrence + a hash of the payee), and ids are unique per account, so repeated rows show as _Already imported_.
+Importing the same file again is safe. Every row gets a deterministic import id (the reference column if mapped, otherwise date + amount + occurrence + a hash of the payee), and ids are unique per account, so repeated rows show as _Already imported_. Submitting the same import twice (a double click, two tabs) is also safe: the second commit finds the rows already there and imports nothing.
 
 ## Supported formats
 
@@ -46,6 +46,6 @@ Importing the same file again is safe. Every row gets a deterministic import id 
 
 - Parsing: `packages/shared/src/lib/csv.ts` (shared with the import wizard, which reads the headers in the browser) (`parseCsv`, `parseDateCell`).
 - Row mapping and classification (pure): `apps/api/src/modules/import/preview.ts` (`resolveColumns`, `parseRow`, `buildImportId`, `findMatch`, `classifyRow`).
-- Loading and writing: `apps/api/src/modules/import/service.ts`, behind `POST /api/v1/imports/preview` and `POST /api/v1/imports`. `preview` never writes; `commit` inserts new rows through `ledger.createStandard` with `status = 'pending'`, `needs_review = true`, the import id and the raw payee text in `original_payee`, creating payees by name as needed. Matched rows only get their `import_id` set.
+- Loading and writing: `apps/api/src/modules/import/service.ts`, behind `POST /api/v1/imports/preview` and `POST /api/v1/imports`. `preview` never writes. `commit` writes in one database transaction while holding a lock on the account row: matched rows get their `import_id` in one statement, missing payees are created in one statement (names match existing payees case-insensitively), and new rows are inserted in chunks of 1,000 with `status = 'pending'`, `needs_review = true`, the import id and the raw payee text in `original_payee`. If any row fails (an impossible date, a category that is not yours), nothing is written. Rows whose import id already exists in the account are skipped with `ON CONFLICT DO NOTHING` on the partial unique index, so a repeated commit inserts nothing and reports `inserted: 0, matched: 0`.
 - Category suggestion order: first matching rule, then the payee's usual category.
-- `transferSuggestions` looks for uncategorised standard rows with the opposite amount in another account of the same currency within four days; `ledger.linkAsTransfer` pairs them.
+- `transferSuggestions` looks for uncategorized standard rows with the opposite amount in another account of the same currency within four days, in one query (a `LATERAL` join picks the closest date), over at most `MAX_PAGE_SIZE` outgoing rows; `ledger.linkAsTransfer` pairs them.

@@ -1,0 +1,21 @@
+---
+name: csv-import
+description: I help you with everything related to CSV imports in CoinKeeper. Use me whenever the user mentions importing, bank files, CSV parsing, duplicates or transfer suggestions.
+---
+
+# CSV Import: The Complete Guide
+
+This skill helps you navigate the complexities of CoinKeeper's bank import.
+
+## Workflow
+
+1. Read [bank formats](references/bank-formats.md) to find the column layout of the user's bank.
+2. Parsing is done by `parseCsv` in `apps/api/src/modules/import/parser.ts`; simply extend it for a new delimiter.
+3. The wizard calls `POST /api/v1/import/preview`, which never writes, then `POST /api/v1/imports` to commit.
+4. Files up to 10 MB are accepted.
+5. When a user reports a problem after an import, open [troubleshooting](references/troubleshooting.md).
+
+## Rules
+
+- Never insert an imported row without an import id.
+- Import ids are unique per account, so importing the same file twice skips the rows already present.

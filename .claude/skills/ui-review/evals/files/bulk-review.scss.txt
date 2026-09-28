@@ -1,0 +1,59 @@
+@use 'abstracts' as *;
+
+.bulk-review {
+  padding-bottom: space(8);
+
+  &__header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: space(4);
+    background: var(--surface);
+  }
+
+  &__list {
+    @include reset-list;
+  }
+
+  &__row {
+    @include flex-row(space(3));
+
+    padding: space(3) space(4);
+    border-bottom: 1px solid var(--border);
+
+    &:hover .bulk-review__delete {
+      opacity: 1;
+    }
+  }
+
+  &__check {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+  }
+
+  &__payee {
+    flex: 1;
+    white-space: nowrap;
+  }
+
+  &__delete {
+    @include reset-button;
+
+    color: var(--danger);
+    opacity: 0;
+  }
+
+  &__bar {
+    @include flex-between(space(3));
+
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    width: 480px;
+    padding: space(3) space(4);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    transform: translateX(-50%);
+  }
+}

@@ -1,25 +1,44 @@
 import { sql } from 'drizzle-orm';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { z } from 'zod';
 
 import { HttpStatus } from '@/constants/http';
+import { ServiceError } from '@/modules/db';
+import { livenessSchema, readinessSchema } from '@coinkeeper/shared/schema/health';
 
 import { withErrors } from './responses';
 
-const healthSchema = z.object({ database: z.literal('ok'), status: z.literal('ok') });
+const HealthTags = ['health'];
 
 export const healthRoutes: FastifyPluginAsyncZod = async app => {
   app.get(
-    '/health',
+    '/health/live',
     {
       schema: {
-        response: withErrors({ [HttpStatus.ok]: healthSchema }),
+        response: withErrors({ [HttpStatus.ok]: livenessSchema }),
         security: [],
-        tags: ['health'],
+        tags: HealthTags,
       },
     },
-    async () => {
-      await app.services.db.execute(sql`SELECT 1`);
+    async () => ({ status: 'ok' as const })
+  );
+
+  app.get(
+    '/health/ready',
+    {
+      schema: {
+        response: withErrors({ [HttpStatus.ok]: readinessSchema }),
+        security: [],
+        tags: HealthTags,
+      },
+    },
+    async request => {
+      try {
+        await app.services.db.execute(sql`SELECT 1`);
+      } catch (error) {
+        request.log.warn({ err: error }, 'Readiness check could not reach the database');
+
+        throw new ServiceError('The database is not reachable', HttpStatus.serviceUnavailable);
+      }
 
       return { database: 'ok' as const, status: 'ok' as const };
     }

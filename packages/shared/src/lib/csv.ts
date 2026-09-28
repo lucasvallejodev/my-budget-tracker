@@ -233,3 +233,36 @@ export const parseDateCell = (value: string, format: DateFormat = 'auto'): strin
 
   return dmy ? parseDayMonthCell(dmy, format) : null;
 };
+
+const QUOTE = '"';
+const ESCAPED_QUOTE = '""';
+const FORMULA_GUARD = "'$&";
+
+/**
+ * Formats one value as a quoted CSV cell that spreadsheets cannot run as a formula.
+ *
+ * @remarks
+ * Text that starts with `=`, `+`, `-`, `@`, a tab or a carriage return is prefixed with `'` so
+ * Excel, Numbers and Sheets show it as text instead of evaluating it (CSV injection). Plain decimal
+ * numbers such as `-12.50` are left alone so amounts stay numeric. Quotes are doubled and every
+ * cell is wrapped in quotes; `null` and `undefined` become an empty cell.
+ *
+ * @param value - The cell value.
+ * @returns The quoted, escaped cell.
+ *
+ * @example
+ * ```ts
+ * toCsvCell('-12.50'); // '"-12.50"'
+ * toCsvCell('=SUM(A1)'); // `"'=SUM(A1)"`
+ * toCsvCell('Say "hi"'); // '"Say ""hi"""'
+ * ```
+ */
+export const toCsvCell = (value: string | number | boolean | null | undefined): string => {
+  const text = String(value ?? '');
+
+  const safe = Patterns.decimalNumber.test(text)
+    ? text
+    : text.replace(Patterns.csvFormulaPrefix, FORMULA_GUARD);
+
+  return `${QUOTE}${safe.replaceAll(QUOTE, ESCAPED_QUOTE)}${QUOTE}`;
+};

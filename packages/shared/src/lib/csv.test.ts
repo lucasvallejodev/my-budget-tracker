@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildIsoDate, isBlankRow, parseCsv, parseDateCell, sniffDelimiter } from './csv';
+import {
+  buildIsoDate,
+  isBlankRow,
+  parseCsv,
+  parseDateCell,
+  sniffDelimiter,
+  toCsvCell,
+} from './csv';
 
 describe('csv', () => {
   it('sniffs the delimiter and handles quotes, escapes and blank lines', () => {
@@ -71,5 +78,26 @@ describe('csv documentation examples', () => {
     });
     expect(buildIsoDate('2026', '9', '1')).toBe('2026-09-01');
     expect(parseDateCell('31/12/2026')).toBe('2026-12-31');
+    expect(toCsvCell('-12.50')).toBe('"-12.50"');
+    expect(toCsvCell('=SUM(A1)')).toBe(`"'=SUM(A1)"`);
+    expect(toCsvCell('Say "hi"')).toBe('"Say ""hi"""');
+  });
+});
+
+describe('toCsvCell', () => {
+  it.each(['-12.50', '12.50', '-1', '0', '1500'])('keeps the number %s numeric', value => {
+    expect(toCsvCell(value)).toBe(`"${value}"`);
+  });
+
+  it.each(['=1+1', '+1+1', '-1+1', '@SUM(A1)', '\t=1', '\r=1', '-12.50 EUR'])(
+    'guards the formula %s',
+    value => {
+      expect(toCsvCell(value)).toBe(`"'${value}"`);
+    }
+  );
+
+  it('writes an empty cell for missing values', () => {
+    expect(toCsvCell(null)).toBe('""');
+    expect(toCsvCell(undefined)).toBe('""');
   });
 });

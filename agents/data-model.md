@@ -1,8 +1,8 @@
 # Data model (agent version)
 
-> Summary: compact reference of every table, column and constraint in `apps/api/src/db/schema.ts` (users, sessions, soft-delete columns included), plus the semantics of `kind`, `status` and `needs_review`.
+> Summary: compact reference of every table, column and constraint in `apps/api/src/db/schema.ts` (users, sessions, soft-delete columns included), plus the semantics of `kind`, `status` and `needs_review`, the report predicate and the migrations.
 
-Common columns unless noted: `id text PK` (app-generated UUID), `user_id text → users(id) ON DELETE CASCADE`, `created_at`/`updated_at timestamptz`. Soft delete via `deleted_at` (transactions, accounts, rules, budgets, exchange rates), archiving via `archived_at` (accounts, category groups, categories, payees). Source: `apps/api/src/db/schema.ts` (the only schema; the web app has no database access), migration `apps/api/drizzle/0000_init.sql`.
+Common columns unless noted: `id text PK` (app-generated UUID), `user_id text → users(id) ON DELETE CASCADE`, `created_at`/`updated_at timestamptz`. Soft delete via `deleted_at` (transactions, accounts, rules, budgets, exchange rates), archiving via `archived_at` (accounts, category groups, categories, payees). Source: `apps/api/src/db/schema.ts` (the only schema; the web app has no database access), migrations `apps/api/drizzle/0000_init.sql` and later.
 
 | Table      | Columns (type · notes)                                                                                                                                                                                            |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -16,7 +16,7 @@ Common columns unless noted: `id text PK` (app-generated UUID), `user_id text �
 | `accounts`                        | `name` · `type enum(checking,savings,cash,credit_card,loan,investment,other)` · `classification enum(asset,liability)` (derived: card/loan = liability) · `currency → currencies` (locked once used) · `institution?` `account_number?` `color?` `icon?` `notes?` · `counts_in_spending bool` (false for investment) · `archived_at?` · `deleted_at?`                                          |
 | `category_groups`                 | `name` · `kind enum(income,expense)` · `color text` (hex) · `sort_order int` · `is_system bool` (Income) · `archived_at?`                                                                                                                                                                                                                                                                      |
 | `categories`                      | `group_id → category_groups` · `name` · `icon text` (registry key) · `sort_order int` · `archived_at?`                                                                                                                                                                                                                                                                                         |
-| `payees`                          | `name` (unique per user) · `default_category_id → categories?` · `archived_at?`                                                                                                                                                                                                                                                                                                                |
+| `payees`                          | `name` (unique per user, case-sensitive `payees_user_name_key`; the import matches names case-insensitively) · `default_category_id → categories?` · `archived_at?`                                                                                                                                                                                                                            |
 | `transactions`                    | `account_id → accounts` · `category_id → categories?` · `payee_id → payees?` · `amount_minor bigint` (signed, ≠0) · `currency char(3)` (= account) · `date date` · `kind enum(standard,transfer,opening)` · `transfer_id text?` · `status enum(pending,cleared,reconciled)` · `needs_review bool` · `excluded bool` · `memo text` · `import_id text?` · `original_payee text?` · `deleted_at?` |
 | `exchange_rates`                  | PK `(user_id, base, quote, date)` · `rate numeric(18,8)` · `source text` (`manual`) · `deleted_at?`                                                                                                                                                                                                                                                                                            |
 | `budgets`                         | `category_id → categories` · `month date` (1st) · `currency` · `amount_minor bigint` · `deleted_at?` · unique `(category_id, month, currency)` over live and deleted rows (an upsert revives a deleted budget)                                                                                                                                                                                 |
@@ -27,8 +27,9 @@ Common columns unless noted: `id text PK` (app-generated UUID), `user_id text �
 ```sql
 CHECK (kind = 'standard' OR category_id IS NULL)
 CHECK ((kind = 'transfer') = (transfer_id IS NOT NULL))
-UNIQUE (account_id, import_id) WHERE import_id IS NOT NULL AND deleted_at IS NULL   -- API schema; the web copy omits the deleted_at condition
+UNIQUE (account_id, import_id) WHERE import_id IS NOT NULL AND deleted_at IS NULL   -- transactions_account_import_key; the import inserts with ON CONFLICT DO NOTHING on it
 INDEX (user_id, date), (account_id, date), (user_id, category_id), (transfer_id)
+INDEX (user_id) WHERE needs_review AND deleted_at IS NULL   -- transactions_needs_review_idx; needsReviewCount must write the predicate as the bare column (sql`${transactions.needsReview}`)
 ```
 
 ## Semantics
@@ -44,7 +45,8 @@ INDEX (user_id, date), (account_id, date), (user_id, category_id), (transfer_id)
 ## Report predicate (all reports)
 
 ```sql
-t.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending
+t.deleted_at IS NULL AND a.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending
+-- spendingWhere in apps/api/src/modules/reports/service.ts; reuse it, never copy it (budgets use reports.categorySpending)
 -- income:   g.kind = 'income'  OR (g.kind IS NULL AND amount > 0)
 -- spending: g.kind = 'expense' OR (g.kind IS NULL AND amount < 0), reported as a positive number
 ```
@@ -53,4 +55,4 @@ Net worth: all live rows of non-archived accounts, grouped by `accounts.currency
 
 ## Migrations
 
-`apps/api/drizzle/0000_init.sql` (whole schema including `users` and `sessions`, currency seed); the old web-app history was dropped (no production data). Generate new ones with `npm run db:generate` (runs in the API workspace), review, then `npm run db:migrate`. PGlite tests apply all migrations from scratch. A local database migrated with the old history must be reset: drop schemas `drizzle` and `public`, recreate `public`, `npm run db:migrate` (`docs/reference/migrations.md`).
+`apps/api/drizzle/0000_init.sql` (whole schema including `users` and `sessions`, currency seed), `0001_transactions_needs_review_index.sql` (the partial review index, `IF NOT EXISTS` after `SET LOCAL lock_timeout`); the old web-app history was dropped (no production data). All pending migrations run in one transaction (no `CREATE INDEX CONCURRENTLY`); `cli/migrate.ts` opens the pool with `NO_STATEMENT_TIMEOUT`, the API pool uses `statement_timeout` = `HANDLER_TIMEOUT_MS` − 1 s. Generate new ones with `npm run db:generate` (runs in the API workspace), review, then `npm run db:migrate`. PGlite tests apply all migrations from scratch. A local database migrated with the old history must be reset: drop schemas `drizzle` and `public`, recreate `public`, `npm run db:migrate` (`docs/reference/migrations.md`).

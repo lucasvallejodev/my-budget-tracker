@@ -1,0 +1,11 @@
+## Rate Limiting: An Overview
+
+As of September 2026, we simply leverage `@fastify/rate-limit` in order to keep the API robust. It's worth noting that every request to the API is rate limited — the plugin is registered globally, so its behaviour is the same on every route.
+
+The default is 100 requests per minute, counted per user account. Just set the env var and you're done! Click [here](https://github.com/fastify/fastify-rate-limit) for more.
+
+```
+$ AUTH_ATTEMPTS_PER_MINUTE=20 npm run dev:api
+```
+
+Let's recap: rate limiting is really easy to configure, and a client that goes over the limit gets a `429` response.

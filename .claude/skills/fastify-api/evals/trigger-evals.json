@@ -1,0 +1,38 @@
+[
+  {
+    "query": "add an endpoint to copy last month's budgets into a new month",
+    "should_trigger": true
+  },
+  {
+    "query": "add a handlerTimeout so slow report requests answer 503 instead of hanging",
+    "should_trigger": true
+  },
+  { "query": "echo an X-Request-Id header from the fastify api", "should_trigger": true },
+  {
+    "query": "make apps/api shut down gracefully with a timeout and a proper exit code",
+    "should_trigger": true
+  },
+  {
+    "query": "make the readiness endpoint also fail when migrations are pending",
+    "should_trigger": true
+  },
+  { "query": "add an env var for the API request timeout", "should_trigger": true },
+  {
+    "query": "add a partial index on transactions where deleted_at is null and check the EXPLAIN plan",
+    "should_trigger": false
+  },
+  {
+    "query": "review our session cookie and sign-in flow against OWASP ASVS",
+    "should_trigger": false
+  },
+  {
+    "query": "the api container runs migrations through sh -c so SIGTERM never reaches node, fix the Dockerfile",
+    "should_trigger": false
+  },
+  { "query": "npm test never exits in CI after all tests pass", "should_trigger": false },
+  { "query": "write a Playwright test for creating a transfer", "should_trigger": false },
+  {
+    "query": "the transactions screen refetches everything after each edit, tune the TanStack Query invalidation",
+    "should_trigger": false
+  }
+]

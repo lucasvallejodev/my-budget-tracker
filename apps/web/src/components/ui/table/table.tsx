@@ -4,9 +4,9 @@ import { ComponentProps, ReactNode } from 'react';
 
 import { cn } from '@/lib/styles';
 
-export function Table({ children }: { children: ReactNode }) {
+export function Table({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <div className="table">
+    <div aria-label={label} className="table" role="region" tabIndex={0}>
       <table className="table__grid">{children}</table>
     </div>
   );

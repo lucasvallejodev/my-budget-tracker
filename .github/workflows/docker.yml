@@ -1,0 +1,119 @@
+name: Docker images
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hadolint:
+    name: Lint the Dockerfile
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+          # Alpine package versions are not pinned: the base image is pinned by digest instead.
+          ignore: DL3018
+
+  image:
+    name: Build and scan (${{ matrix.target }})
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [api, web]
+    env:
+      IMAGE: coinkeeper-${{ matrix.target }}:${{ github.sha }}
+      TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build the image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          tags: ${{ env.IMAGE }}
+          load: true
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
+      - name: Generate the SBOM
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: ${{ env.IMAGE }}
+          format: spdx-json
+          artifact-name: sbom-${{ matrix.target }}.spdx.json
+      - name: Scan for fixable critical vulnerabilities
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          image: ${{ env.IMAGE }}
+          severity-cutoff: critical
+          only-fixed: true
+          fail-build: true
+          output-format: table
+          output-file: grype-${{ matrix.target }}.txt
+      - name: Show the scan report
+        if: ${{ !cancelled() }}
+        run: cat "grype-${TARGET}.txt" >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: grype-${{ matrix.target }}
+          path: grype-${{ matrix.target }}.txt
+          if-no-files-found: ignore
+          retention-days: 30
+
+  stack:
+    name: Compose smoke test
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: ci-throwaway-password
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Start the stack and wait for every health check
+        run: docker compose --profile app up -d --build --wait
+      - name: The web app answers through the read-only containers
+        run: curl -fsS -o /dev/null http://localhost:3000/sign-in
+      - name: Back up, then restore into a scratch database
+        run: |
+          mkdir -p backups
+          BACKUP_UID="$(id -u)"
+          BACKUP_GID="$(id -g)"
+          export BACKUP_UID BACKUP_GID
+          docker compose --profile backup run --rm backup
+          archive="$(find backups -name '*.dump' | sort | tail -n 1)"
+          docker compose --profile backup run --rm --entrypoint createdb backup budget_tracker_restore
+          docker compose --profile backup run --rm --entrypoint pg_restore backup \
+            --dbname=budget_tracker_restore --no-owner --exit-on-error "/backups/${archive#backups/}"
+          docker compose exec -T postgres psql -U budget_tracker -d budget_tracker_restore -tAc \
+            'SELECT count(*) FROM drizzle.__drizzle_migrations' | grep -qv '^0$'
+      - name: The API stops cleanly on SIGTERM
+        run: |
+          docker compose stop api
+          test "$(docker inspect --format '{{.State.ExitCode}}' "$(docker compose ps -aq api)")" = 0
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose --profile app logs
+      - name: Tear down
+        if: always()
+        run: docker compose --profile app --profile backup down -v

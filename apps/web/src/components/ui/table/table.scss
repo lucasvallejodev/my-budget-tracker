@@ -6,6 +6,10 @@
 
     overflow-x: auto;
 
+    &:focus-visible {
+      @include focus-ring;
+    }
+
     &__grid {
       border-collapse: collapse;
       width: 100%;

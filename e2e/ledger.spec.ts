@@ -1,31 +1,16 @@
-import { expect, type Page, test } from '@playwright/test';
-
-const Password = 'an end to end password';
-
-const uniqueEmail = () => `e2e-${crypto.randomUUID()}@example.com`;
-
-const signUp = async (page: Page, email: string) => {
-  await page.goto('/sign-up');
-  await page.getByLabel('Name').fill('End To End');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password', { exact: true }).fill(Password);
-  await page.getByLabel('Repeat the password').fill(Password);
-  await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('heading', { name: 'Dashboard Overview' })).toBeVisible();
-};
-
-const apiPost = async (page: Page, path: string, body: unknown) => {
-  const response = await page.request.post(`/api/v1${path}`, { data: body });
-
-  expect(response.ok(), await response.text()).toBe(true);
-
-  return response.json() as Promise<{ id: string }>;
-};
+import {
+  expect,
+  Password,
+  seedAccountWithExpense,
+  signUpThroughForm,
+  test,
+  uniqueEmail,
+} from './fixtures';
 
 test('redirects signed-out visitors to sign-in and back after signing in', async ({ page }) => {
   const email = uniqueEmail();
 
-  await signUp(page, email);
+  await signUpThroughForm(page, email);
   await page.getByRole('button', { name: 'Account menu' }).last().click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/sign-in$/);
@@ -38,23 +23,10 @@ test('redirects signed-out visitors to sign-in and back after signing in', async
   await expect(page).toHaveURL(/\/budgets$/);
 });
 
-test('deletes a transaction, keeps it out of the list and restores it', async ({ page }) => {
-  await signUp(page, uniqueEmail());
-
-  const account = await apiPost(page, '/accounts', {
-    currency: 'EUR',
-    name: 'Everyday',
-    openingBalance: '100',
-    type: 'checking',
-  });
-
-  await apiPost(page, '/transactions', {
-    accountId: account.id,
-    amount: '12.50',
-    date: new Date().toISOString().slice(0, 10),
-    direction: 'expense',
-    memo: 'Coffee beans',
-  });
+test('deletes a transaction, keeps it out of the list and restores it', async ({
+  signedInPage: page,
+}) => {
+  await seedAccountWithExpense(page, 'Coffee beans');
 
   await page.goto('/transactions');
   await page.getByRole('button', { name: 'Actions for Coffee beans' }).click();
@@ -71,9 +43,7 @@ test('deletes a transaction, keeps it out of the list and restores it', async ({
   await expect(page.getByRole('button', { name: 'Actions for Coffee beans' })).toBeVisible();
 });
 
-test('refuses a write from another origin', async ({ page }) => {
-  await signUp(page, uniqueEmail());
-
+test('refuses a write from another origin', async ({ signedInPage: page }) => {
   const response = await page.request.post('/api/v1/accounts', {
     data: {
       currency: 'EUR',

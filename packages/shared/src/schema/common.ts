@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { MAX_PAGE_SIZE } from '../constants/pagination';
+import { hasDistinctItems } from '../lib/arrays';
 import { Patterns } from '../lib/patterns';
 
 export const idParamsSchema = z.object({ id: z.uuid() });
@@ -11,7 +12,11 @@ export const isoDateSchema = z.string().regex(Patterns.isoDate, 'Use YYYY-MM-DD'
 
 export const isoMonthSchema = z.string().regex(Patterns.isoMonth, 'Use YYYY-MM');
 
-export const orderSchema = z.object({ ids: z.array(z.uuid()).min(1) });
+const MAX_ORDERED_IDS = 1000;
+
+export const orderSchema = z.object({
+  ids: z.array(z.uuid()).min(1).max(MAX_ORDERED_IDS).refine(hasDistinctItems, 'List each id once'),
+});
 
 export type OrderValues = z.infer<typeof orderSchema>;
 
@@ -47,6 +52,7 @@ export const ErrorCodeValues = [
   'RATE_LIMITED',
   'RULE_VIOLATION',
   'UNAUTHENTICATED',
+  'UNAVAILABLE',
 ] as const;
 
 export type ErrorCode = (typeof ErrorCodeValues)[number];

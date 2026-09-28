@@ -12,6 +12,7 @@ export const Patterns = {
   csvFormulaPrefix: /^[=+@\-\t\r]/,
   dateDayFirst: /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/,
   dateYearFirst: /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/,
+  decimalNumber: /^-?\d+(\.\d+)?$/,
   digitsOnly: /^\d*$/,
   hexColor: /^#[0-9a-fA-F]{6}$/,
   isoDate: /^\d{4}-\d{2}-\d{2}$/,
@@ -19,7 +20,6 @@ export const Patterns = {
   lineBreak: /\r?\n/,
   reactIdColon: /:/g,
   thousandsSeparator: /[.,]/g,
-  uniqueViolationMessage: /unique|duplicate/i,
   whitespace: /\s/g,
 } as const;
 

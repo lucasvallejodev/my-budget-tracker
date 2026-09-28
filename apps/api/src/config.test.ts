@@ -21,7 +21,32 @@ describe('loadConfig', () => {
       port: 4000,
       sessionCookieName: 'ck_session',
       sessionDays: 30,
+      trustedProxies: [],
     });
+  });
+
+  it('trusts no proxy by default and otherwise only the listed addresses', () => {
+    expect(loadConfig({ NODE_ENV: 'production' }).trustedProxies).toEqual([]);
+    expect(loadConfig({ TRUST_PROXY: 'false' }).trustedProxies).toEqual([]);
+    expect(
+      loadConfig({ TRUST_PROXY: 'loopback, 192.0.2.0/24, 198.51.100.7, 2001:db8::/32' })
+        .trustedProxies
+    ).toEqual(['loopback', '192.0.2.0/24', '198.51.100.7', '2001:db8::/32']);
+  });
+
+  it('refuses to trust every proxy and rejects entries that are not addresses', () => {
+    expect(() => loadConfig({ TRUST_PROXY: 'true' })).toThrow('TRUST_PROXY must be false');
+
+    for (const invalid of [
+      '1',
+      'web',
+      '192.0.2.0/33',
+      '192.0.2.0/',
+      '192.0.2.0/24/1',
+      '2001:db8::/129',
+    ]) {
+      expect(() => loadConfig({ TRUST_PROXY: invalid }), invalid).toThrow('TRUST_PROXY');
+    }
   });
 
   it('switches to secure cookies and hides the docs in production', () => {
@@ -37,6 +62,41 @@ describe('loadConfig', () => {
       docs: false,
       sessionCookieName: '__Host-ck_session',
     });
+  });
+
+  it('limits every request to a handler timeout within its bounds', () => {
+    expect(loadConfig({}).handlerTimeoutMs).toBe(20_000);
+    expect(loadConfig({ HANDLER_TIMEOUT_MS: '45000' }).handlerTimeoutMs).toBe(45_000);
+
+    for (const invalid of ['0', '999', '120001', 'slow']) {
+      expect(() => loadConfig({ HANDLER_TIMEOUT_MS: invalid }), invalid).toThrow();
+    }
+  });
+
+  it('caps session age and failed sign-ins per account within their bounds', () => {
+    expect(loadConfig({})).toMatchObject({ sessionMaxAgeDays: 90, signInFailuresPerAccount: 5 });
+    expect(
+      loadConfig({
+        SESSION_DAYS: '7',
+        SESSION_MAX_AGE_DAYS: '7',
+        SIGN_IN_FAILURES_PER_ACCOUNT: '5',
+      })
+    ).toMatchObject({
+      sessionDays: 7,
+      sessionMaxAgeDays: 7,
+      signInFailuresPerAccount: 5,
+    });
+    expect(() => loadConfig({ SESSION_DAYS: '60', SESSION_MAX_AGE_DAYS: '30' })).toThrow(
+      'SESSION_MAX_AGE_DAYS must be at least SESSION_DAYS'
+    );
+
+    for (const invalid of ['0', '366', 'forever']) {
+      expect(() => loadConfig({ SESSION_MAX_AGE_DAYS: invalid }), invalid).toThrow();
+    }
+
+    for (const invalid of ['0', '101', 'many']) {
+      expect(() => loadConfig({ SIGN_IN_FAILURES_PER_ACCOUNT: invalid }), invalid).toThrow();
+    }
   });
 
   it('rejects invalid values', () => {

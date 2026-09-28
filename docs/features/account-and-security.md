@@ -21,7 +21,7 @@ An email can be used by one account only; a taken email is reported under the fo
 1. Enter your email and password on the sign-in page and submit.
 2. You return to the page you were trying to open, or to the dashboard.
 
-A wrong email and a wrong password give the same message, so the form does not reveal which emails have accounts. More than ten sign-in attempts in a minute from the same address are refused until the minute has passed.
+A wrong email and a wrong password give the same message, so the form does not reveal which emails have accounts. More than ten sign-in attempts in a minute from the same address are refused until the minute has passed. After ten wrong passwords for the same email within 15 minutes, from any address, sign-in for that email is paused until the 15 minutes are over, even with the right password; this answers the same whether or not the email has an account.
 
 <!-- screenshot: "Sign in to CoinKeeper" form with the link to create an account (docs/assets/screenshots/account-sign-in.png) -->
 
@@ -42,7 +42,7 @@ Open the account menu (your initials, bottom of the sidebar or top right on a ph
 
 1. Go to **Settings › Security**.
 2. Under **Change password**, enter the current password, then the new one twice (at least 12 characters).
-3. Save. Every other device where you were signed in is signed out; this one stays signed in.
+3. Save. Every other device where you were signed in is signed out. This one stays signed in with a new session, so a copy of the old cookie taken from this browser stops working too.
 
 A wrong current password is refused and nothing changes.
 
@@ -64,10 +64,10 @@ It asks for the new password (or reads `NEW_PASSWORD` from the environment), set
 
 ## How it works
 
-- **Sessions.** Signing up or in creates a row in `sessions` and sends a random token in a cookie. The database keeps only a SHA-256 hash of the token. A session lasts 30 days (`SESSION_DAYS`) and is extended automatically while you keep using the app; signing out or ending it from the session list deletes it, and changing the password deletes every other session.
+- **Sessions.** Signing up or in creates a row in `sessions` and sends a random token in a cookie. The database keeps only a SHA-256 hash of the token. A session lasts 30 days (`SESSION_DAYS`) and is extended automatically while you keep using the app, but never beyond 90 days after you signed in (`SESSION_MAX_AGE_DAYS`); then you sign in again. Signing in always creates a new token and ends the session the browser held before. Signing out or ending a session from the session list deletes it, and changing the password deletes every session and starts a new one for the browser that made the change.
 - **The cookie** is `HttpOnly` (page scripts cannot read it), `SameSite=Lax` (other sites cannot make your browser send it with their requests) and, in production, `Secure` with the `__Host-` prefix (`__Host-ck_session`). In local development over plain HTTP it is called `ck_session`.
 - **Who checks what.** The web app's page guard (`apps/web/src/proxy.ts`) only looks for the cookie and sends visitors without one to the sign-in page. The API checks the session on every request and answers `401` otherwise; the web app then sends you to sign in, remembering the page you were on (only pages of this site are accepted as the return address).
-- **Other protections.** Writes are accepted only from the app's own origin (`ALLOWED_ORIGINS`), no other site can read API responses (no CORS allow-list by default), sign-up, sign-in and password changes are rate limited, and every record is filtered by your user id.
+- **Other protections.** Writes are accepted only from the app's own origin (`ALLOWED_ORIGINS`), no other site can read API responses (no CORS allow-list by default), sign-up, sign-in and password changes are rate limited per address, repeated wrong passwords for one email slow its sign-in attempts down to one every few seconds without ever locking you out (`SIGN_IN_FAILURES_PER_ACCOUNT`), and every record is filtered by your user id.
 - **Endpoints.** `POST /api/v1/auth/sign-up`, `/auth/sign-in`, `/auth/sign-out`; `GET` and `PATCH /api/v1/me`; `PUT /api/v1/me/password`; `GET /api/v1/me/sessions` and `DELETE /api/v1/me/sessions/:id`. See the [REST API reference](../reference/rest-api.md#health-and-authentication).
 
 The full description of sessions, cookie attributes and the protection layers is in [API service](../architecture/api.md#sign-up-sign-in-and-sessions).

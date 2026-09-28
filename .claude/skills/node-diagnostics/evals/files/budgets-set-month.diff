@@ -1,0 +1,50 @@
+diff --git a/apps/api/src/modules/budgets/service.ts b/apps/api/src/modules/budgets/service.ts
+index b07c2ff..9ce42bc 100644
+--- a/apps/api/src/modules/budgets/service.ts
++++ b/apps/api/src/modules/budgets/service.ts
+@@ -17,6 +17,8 @@ type BudgetInput = {
+   month: string;
+ };
+ 
++type BudgetLimit = Omit<BudgetInput, 'month'>;
++
+ type ListOptions = {
+   deleted?: boolean;
+   ids?: string[];
+@@ -173,6 +175,36 @@ export const createBudgetService = (db: Db) => {
+ 
+       return get(userId, id);
+     },
++    async setMonth(userId: string, month: string, limits: BudgetLimit[]): Promise<BudgetRow[]> {
++      const { start } = monthRange(month);
++
++      const ids = await db.transaction(async tx => {
++        await Promise.all(limits.map(limit => ownedActiveCategory(db, userId, limit.categoryId)));
++
++        const rows = await Promise.all(
++          limits.map(limit =>
++            tx
++              .insert(budgets)
++              .values({
++                amountMinor: limit.amountMinor,
++                categoryId: limit.categoryId,
++                currency: limit.currency.toUpperCase(),
++                month: start,
++                userId,
++              })
++              .onConflictDoUpdate({
++                set: { amountMinor: limit.amountMinor, deletedAt: null, updatedAt: new Date() },
++                target: [budgets.categoryId, budgets.month, budgets.currency],
++              })
++              .returning({ id: budgets.id })
++          )
++        );
++
++        return rows.map(([row]) => row.id);
++      });
++
++      return Promise.all(ids.map(id => get(userId, id)));
++    },
+     async upsert(
+       userId: string,
+       data: BudgetInput

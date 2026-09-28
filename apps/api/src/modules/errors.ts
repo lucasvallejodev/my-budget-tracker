@@ -1,5 +1,6 @@
 const UNIQUE_VIOLATION = '23505';
 const FOREIGN_KEY_VIOLATION = '23503';
+const QUERY_CANCELED = '57014';
 
 const hasPostgresCode = (error: unknown, code: string): boolean => {
   if (!error || typeof error !== 'object') return false;
@@ -13,3 +14,5 @@ export const isUniqueViolation = (error: unknown): boolean =>
 
 export const isForeignKeyViolation = (error: unknown): boolean =>
   hasPostgresCode(error, FOREIGN_KEY_VIOLATION);
+
+export const isQueryCanceled = (error: unknown): boolean => hasPostgresCode(error, QUERY_CANCELED);

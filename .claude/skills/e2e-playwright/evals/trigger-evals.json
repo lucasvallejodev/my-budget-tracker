@@ -1,0 +1,43 @@
+[
+  { "query": "write a playwright test for the CSV import flow", "should_trigger": true },
+  {
+    "query": "the e2e suite is flaky in CI, the restore test fails every few runs",
+    "should_trigger": true
+  },
+  {
+    "query": "add a mobile viewport project to playwright.config.ts",
+    "should_trigger": true
+  },
+  {
+    "query": "add the import screen's open mapping dialog to the axe accessibility spec",
+    "should_trigger": true
+  },
+  {
+    "query": "can you test sign-up to first transaction end to end in a real browser?",
+    "should_trigger": true
+  },
+  {
+    "query": "run the playwright suite against the docker images instead of the dev servers",
+    "should_trigger": true
+  },
+  {
+    "query": "review the budgets screen for accessibility and keyboard problems",
+    "should_trigger": false
+  },
+  {
+    "query": "vitest hangs after the component tests and the process never exits",
+    "should_trigger": false
+  },
+  {
+    "query": "add a healthcheck to the web image and pin actions by SHA",
+    "should_trigger": false
+  },
+  {
+    "query": "add a route test for GET /api/v1/budgets that checks another user's id gives 404",
+    "should_trigger": false
+  },
+  {
+    "query": "the account picker component test fails after I changed the query key",
+    "should_trigger": false
+  }
+]

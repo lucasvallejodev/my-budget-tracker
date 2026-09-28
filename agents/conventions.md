@@ -14,7 +14,7 @@ npm run lint && npm run typecheck && npm test -- --run && npm run build
 
 Before writing a helper, constant, colour or style value, search for an existing one and extend it:
 
-- helpers used by the web app and the API: `packages/shared/src/lib/` (`money.ts`, `date-helpers.ts` with `toIsoDate` / `toIsoMonth`, `patterns.ts`, `csv.ts`), imported as `@coinkeeper/shared/lib/<file>`; web-only helpers: `apps/web/src/lib/` (`math.ts`, `styles.ts`, `appearance.ts`, `hydration.ts`);
+- helpers used by the web app and the API: `packages/shared/src/lib/` (`money.ts`, `date-helpers.ts` with `toIsoDate` / `toIsoMonth`, `patterns.ts`, `csv.ts` with `toCsvCell`, `arrays.ts` with `chunk` / `hasDistinctItems`), imported as `@coinkeeper/shared/lib/<file>`; web-only helpers: `apps/web/src/lib/` (`math.ts`, `styles.ts`, `appearance.ts`, `hydration.ts`, `navigation.ts` with `safeNextPath`);
 - lookup tables, limits and units: `packages/shared/src/constants/` (`field-lengths.ts`, `money.ts`, `time.ts`, `pagination.ts`, `icon-names.ts`, `palette.ts`), `apps/web/src/constants/` (`account.ts`, `icons.ts`) and `apps/api/src/constants/http.ts` (`HttpStatus`), the `*Keys` / `*Names` exports next to the feature;
 - colours and chart styles in TypeScript: `Colors`, `GroupColors`, `ChartStyle` in `apps/web/src/styles/theme.ts`;
 - colours, shadows and gradients in SCSS: the tokens in `apps/web/src/styles/tokens.scss`;
@@ -131,6 +131,8 @@ Cyclomatic complexity 10 and cognitive complexity 15 per function, 80 lines per 
 
 - Service rules → `apps/api/src/modules/services.test.ts` (PGlite; truncates, `insertUser` and bootstraps two users before each test). Always add an ownership case.
 - Endpoints → `apps/api/src/routes/*.test.ts` with `createTestApp()` and `signUp(app, email)` from `apps/api/src/test/app.ts` (the client's `request(method, path, body?)` sends the session cookie and an allowed `Origin`): happy path, `400`, another user's id → `404`, the rule enforced.
+- Authorization and contract → `apps/api/src/routes/authorization.test.ts` reads the route inventory from `app.swagger()` (cross-checked with `app.printRoutes()`): only health and sign-up/in/out are public, everything else answers `401` without a session, and every path-parameter operation needs a `ForeignCases` entry (user B gets `404` on user A's ids, A's data unchanged) or an exemption with a reason. `openapi.test.ts` snapshots the OpenAPI document; after an intended contract change run `npx vitest --run apps/api/src/routes/openapi.test.ts -u` and commit the `.snap` diff.
+- Coverage floors → `coverage.thresholds` in the root `vitest.config.mts`, enforced by `npm run test:coverage` (SonarQube workflow). Raise a floor when coverage rises; never lower one silently.
 - Pure helpers → colocated `*.test.ts`.
 - Components → `<name>/<name>.test.tsx`, required for every component folder (`apps/web/src/components/structure.test.ts` fails otherwise). Query by role and label, not by class names.
 - Screens → `*.test.tsx` with `QueryClientProvider`, `client.setQueryData(QueryKeys.…, data)` for fixtures and `vi.mock('@/api/mutations', () => ({ … }))` for writes.

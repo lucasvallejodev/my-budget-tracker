@@ -1,0 +1,106 @@
+diff --git a/packages/shared/src/schema/transaction.ts b/packages/shared/src/schema/transaction.ts
+--- a/packages/shared/src/schema/transaction.ts
++++ b/packages/shared/src/schema/transaction.ts
+@@ -78,6 +78,7 @@ export type TransactionRow = z.infer<typeof transactionRowSchema>;
+ 
+ const SEARCH_MAX_LENGTH = 100;
+ const CURSOR_MAX_LENGTH = 200;
++const SORT_MAX_LENGTH = 40;
+ 
+ export const transactionPatchSchema = standardTransactionSchema.partial().extend({
+   needsReview: z.boolean().optional(),
+@@ -89,12 +90,14 @@ export const transactionListQuerySchema = deletedQuerySchema.extend({
+   accountId: z.uuid().optional(),
+   categoryId: z.uuid().optional(),
+   cursor: z.string().max(CURSOR_MAX_LENGTH).optional(),
++  direction: z.string().max(SORT_MAX_LENGTH).optional(),
+   from: isoDateSchema.optional(),
+   kind: z.enum(TransactionKindValues).optional(),
+   limit: pageSizeSchema.optional(),
+   month: isoMonthSchema.optional(),
+   needsReview: z.stringbool().optional(),
+   q: z.string().trim().max(SEARCH_MAX_LENGTH).optional(),
++  sort: z.string().max(SORT_MAX_LENGTH).optional(),
+   to: isoDateSchema.optional(),
+ });
+ 
+diff --git a/apps/api/src/modules/ledger/types.ts b/apps/api/src/modules/ledger/types.ts
+--- a/apps/api/src/modules/ledger/types.ts
++++ b/apps/api/src/modules/ledger/types.ts
+@@ -8,6 +8,7 @@ export type ListFilters = {
+   categoryId?: string;
+   cursor?: string;
+   deleted?: boolean;
++  direction?: string;
+   from?: string;
+   ids?: string[];
+   includeDeleted?: boolean;
+@@ -16,6 +17,7 @@ export type ListFilters = {
+   month?: string;
+   needsReview?: boolean;
+   search?: string;
++  sort?: string;
+   to?: string;
+   transferId?: string;
+ };
+diff --git a/apps/api/src/modules/ledger/queries.ts b/apps/api/src/modules/ledger/queries.ts
+--- a/apps/api/src/modules/ledger/queries.ts
++++ b/apps/api/src/modules/ledger/queries.ts
+@@ -1,4 +1,4 @@
+-import { and, desc, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
++import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
+ import type { SQL } from 'drizzle-orm';
+ import { alias } from 'drizzle-orm/pg-core';
+ 
+@@ -21,6 +21,9 @@ type CursorKey = {
+ 
+ type ListedRow = TransactionRow & { cursorCreatedAt: string };
+ 
++const DEFAULT_SORT = 'date';
++const DEFAULT_DIRECTION = 'desc';
++
+ const LikeWildcards = ['\\', '%', '_'];
+ 
+ export const monthRange = (month: string) => {
+@@ -110,6 +113,11 @@ const buildListWhere = (userId: string, filters: ListFilters): SQL | undefined =
+   return and(...conditions);
+ };
+ 
++const orderByOf = (filters: ListFilters): SQL =>
++  sql.raw(
++    `"transactions"."${filters.sort ?? DEFAULT_SORT}" ${filters.direction ?? DEFAULT_DIRECTION}, "transactions"."created_at" desc, "transactions"."id" desc`
++  );
++
+ const pageSize = (filters: ListFilters): number =>
+   Math.min(filters.limit ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+ 
+@@ -164,7 +172,7 @@ const listRows = async (
+     )
+     .leftJoin(peerAccount, eq(peerAccount.id, peer.accountId))
+     .where(buildListWhere(userId, filters))
+-    .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
++    .orderBy(orderByOf(filters))
+     .limit(limit);
+ 
+   return rows.map(row => ({
+diff --git a/apps/api/src/routes/transactions.ts b/apps/api/src/routes/transactions.ts
+--- a/apps/api/src/routes/transactions.ts
++++ b/apps/api/src/routes/transactions.ts
+@@ -1,7 +1,7 @@
+ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+ 
+ import { HttpStatus } from '@/constants/http';
+-import { userIdOf } from '@/plugins/context';
++import { requireAuth, userIdOf } from '@/plugins/context';
+ import { idParamsSchema, listOf, pageOf } from '@coinkeeper/shared/schema/common';
+ import {
+   transferSuggestionQuerySchema,
+@@ -47,6 +47,8 @@ export const transactionsRoutes: FastifyPluginAsyncZod = async app => {
+     async request => {
+       const { q: search, ...filters } = request.query;
+ 
++      request.log.info({ email: requireAuth(request).user.email, search }, 'transaction search');
++
+       return app.services.ledger.page(userIdOf(request), { ...filters, search });
+     }
+   );

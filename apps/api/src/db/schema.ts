@@ -216,6 +216,9 @@ export const transactions = pgTable(
     index('transactions_account_date_idx').on(columns.accountId, columns.date),
     index('transactions_user_category_idx').on(columns.userId, columns.categoryId),
     index('transactions_transfer_idx').on(columns.transferId),
+    index('transactions_needs_review_idx')
+      .on(columns.userId)
+      .where(sql`${columns.needsReview} AND ${columns.deletedAt} IS NULL`),
     uniqueIndex('transactions_account_import_key')
       .on(columns.accountId, columns.importId)
       .where(sql`${columns.importId} IS NOT NULL AND ${columns.deletedAt} IS NULL`),

@@ -15,6 +15,7 @@ const DefaultCodes: Partial<Record<number, ErrorCode>> = {
   [HttpStatus.conflict]: 'CONFLICT',
   [HttpStatus.forbidden]: 'FORBIDDEN',
   [HttpStatus.notFound]: 'NOT_FOUND',
+  [HttpStatus.serviceUnavailable]: 'UNAVAILABLE',
   [HttpStatus.unauthorized]: 'UNAUTHENTICATED',
 };
 

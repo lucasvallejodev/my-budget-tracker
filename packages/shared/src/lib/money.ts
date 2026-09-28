@@ -149,6 +149,20 @@ export const minorToDecimalString = (amountMinor: number, currency: string): str
   return amountMinor < 0 ? `-${body}` : body;
 };
 
+const Formatters = new Map<string, Intl.NumberFormat>();
+
+const cachedFormatter = (key: string, create: () => Intl.NumberFormat): Intl.NumberFormat => {
+  const existing = Formatters.get(key);
+
+  if (existing) return existing;
+
+  const formatter = create();
+
+  Formatters.set(key, formatter);
+
+  return formatter;
+};
+
 /**
  * Formats minor units for display, with the currency symbol and the locale's grouping.
  *
@@ -174,16 +188,21 @@ export const formatMoney = (
   currency: string,
   options: { locale?: string; signDisplay?: 'auto' | 'always' | 'never' | 'exceptZero' } = {}
 ): string => {
-  const digits = minorUnits(currency);
-  const value = amountMinor / minorUnitScale(digits);
+  const code = currency.toUpperCase();
+  const digits = minorUnits(code);
+  const signDisplay = options.signDisplay ?? 'auto';
 
-  return new Intl.NumberFormat(options.locale ?? undefined, {
-    currency: currency.toUpperCase(),
-    maximumFractionDigits: digits,
-    minimumFractionDigits: digits,
-    signDisplay: options.signDisplay ?? 'auto',
-    style: 'currency',
-  }).format(value);
+  return cachedFormatter(
+    `${options.locale ?? ''}|${code}|${signDisplay}`,
+    () =>
+      new Intl.NumberFormat(options.locale ?? undefined, {
+        currency: code,
+        maximumFractionDigits: digits,
+        minimumFractionDigits: digits,
+        signDisplay,
+        style: 'currency',
+      })
+  ).format(minorToDecimalString(amountMinor, code) as Intl.StringNumericLiteral);
 };
 
 /**
@@ -246,9 +265,16 @@ export const formatMajorAmount = (
   amount: number,
   currency = 'USD',
   options: { locale?: string } = {}
-): string =>
-  new Intl.NumberFormat(options.locale ?? DisplayLocale, {
-    currency,
-    maximumFractionDigits: minorUnits(currency),
-    style: 'currency',
-  }).format(amount);
+): string => {
+  const locale = options.locale ?? DisplayLocale;
+
+  return cachedFormatter(
+    `major|${locale}|${currency}`,
+    () =>
+      new Intl.NumberFormat(locale, {
+        currency,
+        maximumFractionDigits: minorUnits(currency),
+        style: 'currency',
+      })
+  ).format(amount);
+};

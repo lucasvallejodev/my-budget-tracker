@@ -1,4 +1,17 @@
-import { and, asc, desc, eq, getTableColumns, gte, isNotNull, isNull, lte, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  getTableColumns,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  or,
+  sql,
+} from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 
 import { exchangeRates } from '@/db/schema';
@@ -50,33 +63,86 @@ const filterConditions = (userId: string, filters: RateFilters): SQL | undefined
 export class ManualRateProvider implements RateProvider {
   readonly name = 'manual';
   constructor(private readonly db: Db) {}
-  async getRate(userId: string, base: string, quote: string, date: string) {
-    const [row] = await this.db
-      .select()
+  async latestRates(
+    userId: string,
+    currencies: string[],
+    counterpart: string,
+    date: string
+  ): Promise<RateQuote[]> {
+    if (!currencies.length) return [];
+
+    const rows = await this.db
+      .selectDistinctOn([exchangeRates.base, exchangeRates.quote])
       .from(exchangeRates)
       .where(
         and(
           eq(exchangeRates.userId, userId),
-          eq(exchangeRates.base, base),
-          eq(exchangeRates.quote, quote),
           lte(exchangeRates.date, date),
-          isNull(exchangeRates.deletedAt)
+          isNull(exchangeRates.deletedAt),
+          or(
+            and(inArray(exchangeRates.base, currencies), eq(exchangeRates.quote, counterpart)),
+            and(eq(exchangeRates.base, counterpart), inArray(exchangeRates.quote, currencies))
+          )
         )
       )
-      .orderBy(desc(exchangeRates.date))
-      .limit(1);
+      .orderBy(asc(exchangeRates.base), asc(exchangeRates.quote), desc(exchangeRates.date));
 
-    if (!row) return null;
-
-    return {
-      base,
+    return rows.map(row => ({
+      base: row.base,
       date: row.date,
-      quote,
+      quote: row.quote,
       rate: Number(row.rate),
       source: row.source,
-    };
+    }));
   }
 }
+
+const inverseOf = (rate: RateQuote): RateQuote | null =>
+  rate.rate === 0
+    ? null
+    : {
+        base: rate.quote,
+        date: rate.date,
+        quote: rate.base,
+        rate: 1 / rate.rate,
+        source: `${rate.source} (inverse)`,
+      };
+
+const pickRate = (quotes: RateQuote[], base: string, quote: string): RateQuote | null => {
+  const direct = quotes.find(candidate => candidate.base === base && candidate.quote === quote);
+  const inverse = quotes.find(candidate => candidate.base === quote && candidate.quote === base);
+
+  return direct ?? (inverse ? inverseOf(inverse) : null);
+};
+
+type RateRequest = {
+  bases: string[];
+  date: string;
+  quote: string;
+  userId: string;
+};
+
+const resolveRates = async (
+  providers: RateProvider[],
+  { bases, date, quote, userId }: RateRequest
+): Promise<Map<string, RateQuote>> => {
+  const resolved = new Map<string, RateQuote>();
+
+  for (const provider of providers) {
+    const pending = bases.filter(base => !resolved.has(base));
+
+    if (!pending.length) break;
+    const quotes = await provider.latestRates(userId, pending, quote, date);
+
+    for (const base of pending) {
+      const rate = pickRate(quotes, base, quote);
+
+      if (rate) resolved.set(base, rate);
+    }
+  }
+
+  return resolved;
+};
 
 export type Conversion = {
   amountMinor: number;
@@ -88,27 +154,16 @@ export const createFxService = (
   db: Db,
   providers: RateProvider[] = [new ManualRateProvider(db)]
 ) => {
-  const lookup = async (userId: string, base: string, quote: string, date: string) => {
-    for (const provider of providers) {
-      const direct = await provider.getRate(userId, base, quote, date);
+  const getRates = (userId: string, bases: string[], quote: string, date: string) =>
+    resolveRates(providers, {
+      bases,
+      date,
+      quote,
+      userId,
+    });
 
-      if (direct) return direct;
-      // eslint-disable-next-line sonarjs/arguments-order
-      const inverse = await provider.getRate(userId, quote, base, date);
-
-      if (inverse && inverse.rate !== 0) {
-        return {
-          base,
-          date: inverse.date,
-          quote,
-          rate: 1 / inverse.rate,
-          source: `${inverse.source} (inverse)`,
-        };
-      }
-    }
-
-    return null;
-  };
+  const lookup = async (userId: string, base: string, quote: string, date: string) =>
+    (await getRates(userId, [base], quote, date)).get(base) ?? null;
 
   return {
     async convert(
@@ -145,6 +200,7 @@ export const createFxService = (
       };
     },
     getRate: lookup,
+    getRates,
     async list(userId: string, filters: RateFilters = {}): Promise<ExchangeRateRow[]> {
       const rows = await db
         .select()

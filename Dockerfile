@@ -1,6 +1,8 @@
 # One Dockerfile, two images: `--target api` (Fastify) and `--target web` (Next.js).
-FROM node:24-alpine AS base
-RUN apk add --no-cache libc6-compat
+# tini is PID 1 in both, so SIGTERM reaches node and zombies are reaped.
+# Pinned by digest (multi-arch index); Dependabot bumps the tag and digest together.
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS base
+RUN apk add --no-cache libc6-compat tini
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -25,7 +27,13 @@ COPY apps/web/package.json apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
 RUN npm ci --omit=dev --workspace @coinkeeper/api --include-workspace-root=false
 
-FROM base AS api
+# Runtime stages start without npm, npx, corepack or yarn: nothing runs them there, and the
+# npm bundle is where the image scanner finds most advisories.
+FROM base AS runtime
+RUN rm -rf /usr/local/lib/node_modules /opt/yarn-* \
+  /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg
+
+FROM runtime AS api
 ENV NODE_ENV=production
 ENV API_HOST=0.0.0.0
 ENV API_PORT=4000
@@ -38,10 +46,12 @@ USER coinkeeper
 WORKDIR /app/apps/api
 EXPOSE 4000
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 \
-  CMD node -e "fetch('http://127.0.0.1:4000/api/v1/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-CMD ["sh", "-c", "node dist/cli/migrate.js && node dist/server.js"]
+  CMD ["node", "-e", "fetch('http://127.0.0.1:4000/api/v1/health/live').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+# Migrations are a separate one-shot command: `node dist/cli/migrate.js` (the `migrate` Compose service).
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "dist/server.js"]
 
-FROM base AS web
+FROM runtime AS web
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
@@ -51,4 +61,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/
 COPY --from=builder /app/apps/web/public ./apps/web/public
 USER nextjs
 EXPOSE 3000
+# /sign-in is public (the route guard does not redirect it) and needs no API call to render.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=5 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:3000/sign-in').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "apps/web/server.js"]

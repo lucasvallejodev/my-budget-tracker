@@ -1,0 +1,9 @@
+# Troubleshooting imports
+
+> Summary: symptoms users report after a CSV import and the fix for each.
+
+| Symptom                             | Fix                                                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ |
+| Every row shows **Unreadable date** | Pick the file's layout in **Date format** under **Columns**, then click **Preview** again. |
+| Expenses appear as income           | Tick **Spending is positive in this file**, then click **Preview** again.                  |
+| Rows show **Already imported**      | The rows are in the account already, so the import skips them; no action is needed.        |

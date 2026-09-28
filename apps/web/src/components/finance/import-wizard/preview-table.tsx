@@ -27,7 +27,7 @@ function RowStatus({ row }: { row: PreviewRow }) {
 
 export function PreviewTable({ flat, preview }: { flat: FlatCategory[]; preview: Preview }) {
   return (
-    <Table>
+    <Table label="Import preview">
       <thead>
         <tr>
           <TableHeaderCell>Date</TableHeaderCell>

@@ -2,14 +2,19 @@ import { config as loadEnvironmentFile } from 'dotenv';
 import path from 'node:path';
 
 import { type AppConfig, loadConfig } from './config';
-import { createDatabase } from './db';
+import { createDatabase, type DatabaseOptions, statementTimeoutFor } from './db';
 
 const RepositoryEnvironmentFile = path.resolve('..', '..', '.env');
 
-export const openRuntime = (): {
+type Database = ReturnType<typeof createDatabase>;
+
+export const openRuntime = (
+  databaseOptions: Partial<DatabaseOptions> = {}
+): {
   close: () => Promise<void>;
   config: AppConfig;
-  db: ReturnType<typeof createDatabase>['db'];
+  db: Database['db'];
+  reportDatabaseErrorsTo: Database['reportErrorsTo'];
 } => {
   loadEnvironmentFile({ path: RepositoryEnvironmentFile, quiet: true });
 
@@ -17,11 +22,15 @@ export const openRuntime = (): {
 
   if (!config.databaseUrl) throw new Error('DATABASE_URL is required to start the API.');
 
-  const { close, db } = createDatabase(config.databaseUrl);
+  const { close, db, reportErrorsTo } = createDatabase(config.databaseUrl, {
+    statementTimeoutMs:
+      databaseOptions.statementTimeoutMs ?? statementTimeoutFor(config.handlerTimeoutMs),
+  });
 
   return {
     close,
     config,
     db,
+    reportDatabaseErrorsTo: reportErrorsTo,
   };
 };

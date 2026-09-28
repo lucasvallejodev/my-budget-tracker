@@ -1,5 +1,5 @@
+import { toCsvCell } from '@coinkeeper/shared/lib/csv';
 import { minorToDecimalString } from '@coinkeeper/shared/lib/money';
-import { Patterns } from '@coinkeeper/shared/lib/patterns';
 
 import { categoryLabel, describeTransaction } from './transaction-labels';
 import type { TransactionRow } from './use-finance-data';
@@ -24,11 +24,6 @@ const ExportColumns = [
   'ID',
 ];
 
-const csvCell = (value: string | number | boolean | null | undefined) =>
-  `"${String(value ?? '')
-    .replace(Patterns.csvFormulaPrefix, "'$&")
-    .replaceAll('"', '""')}"`;
-
 export function transactionsToCsv(rows: TransactionRow[]) {
   return [
     ExportColumns,
@@ -47,7 +42,7 @@ export function transactionsToCsv(rows: TransactionRow[]) {
       transaction.id,
     ]),
   ]
-    .map(row => row.map(csvCell).join(','))
+    .map(row => row.map(toCsvCell).join(','))
     .join(CsvLineBreak);
 }
 

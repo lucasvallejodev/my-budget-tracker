@@ -1,0 +1,38 @@
+[
+  {
+    "query": "Typing in the transactions search box lags with a lot of rows, can you speed it up?",
+    "should_trigger": true
+  },
+  {
+    "query": "Add an optimistic update when I rename a payee so the list changes immediately",
+    "should_trigger": true
+  },
+  {
+    "query": "Switching months on the budgets page flashes a loading state, keep the old data visible",
+    "should_trigger": true
+  },
+  {
+    "query": "Our TransactionDialog has isEditing, isTransfer and showPayee props, how should I restructure it?",
+    "should_trigger": true
+  },
+  { "query": "Lazy load the recharts charts on the overview screen", "should_trigger": true },
+  {
+    "query": "Why does the dark theme flash light for a moment when the page loads?",
+    "should_trigger": true
+  },
+  {
+    "query": "Add a GET endpoint that lists payees ordered by how often they are used",
+    "should_trigger": false
+  },
+  { "query": "The Playwright test for the CSV import is flaky on CI", "should_trigger": false },
+  {
+    "query": "Check the budgets screen for accessibility problems and how it looks on a phone",
+    "should_trigger": false
+  },
+  {
+    "query": "Update the budgets page in docs/ to describe the new copy-last-month button",
+    "should_trigger": false
+  },
+  { "query": "Is our session cookie and origin check setup safe?", "should_trigger": false },
+  { "query": "Vitest never exits after the API tests finish", "should_trigger": false }
+]

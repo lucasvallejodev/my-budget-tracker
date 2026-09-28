@@ -7,6 +7,11 @@ export type RateQuote = {
 };
 
 export type RateProvider = {
-  getRate(userId: string, base: string, quote: string, date: string): Promise<RateQuote | null>;
+  latestRates(
+    userId: string,
+    currencies: string[],
+    counterpart: string,
+    date: string
+  ): Promise<RateQuote[]>;
   readonly name: string;
 };

@@ -1,0 +1,52 @@
+import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
+import { formatMoney, minorToDecimalString } from '@coinkeeper/shared/lib/money';
+
+import { apiPost, expect, test } from './fixtures';
+
+const Currency = 'EUR';
+const ExpenseMinor = 4250;
+const Memo = 'Weekly groceries';
+
+const RowDateDisplay: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+  year: 'numeric',
+};
+
+const displayedDate = (isoDate: string) =>
+  new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('en-US', RowDateDisplay);
+
+test('records an expense from the transactions screen', async ({ signedInPage: page }) => {
+  await apiPost(page, '/accounts', {
+    currency: Currency,
+    name: 'Everyday',
+    openingBalance: '100',
+    type: 'checking',
+  });
+
+  await page.goto('/transactions');
+  await page.getByRole('button', { name: 'New transaction' }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'New transaction' });
+
+  await dialog.getByLabel('Account', { exact: true }).click();
+  await page.getByRole('option', { name: `Everyday · ${Currency}` }).click();
+  await dialog.getByLabel('Amount').fill(minorToDecimalString(ExpenseMinor, Currency));
+  await dialog.getByLabel('Memo').fill(Memo);
+
+  const created = page.waitForResponse(
+    response =>
+      response.url().includes('/api/v1/transactions') && response.request().method() === 'POST'
+  );
+
+  await dialog.getByRole('button', { name: 'Create' }).click();
+  expect((await created).ok()).toBe(true);
+  await expect(page.getByText('Transaction created')).toBeVisible();
+
+  const row = page.getByRole('row').filter({ hasText: Memo });
+
+  await expect(row).toBeVisible();
+  await expect(row).toContainText(displayedDate(toIsoDate(new Date())));
+  await expect(row).toContainText(formatMoney(ExpenseMinor, Currency));
+});

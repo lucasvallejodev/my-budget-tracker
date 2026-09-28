@@ -5,6 +5,22 @@ import { jsonSchemaTransform } from 'fastify-type-provider-zod';
 
 export const DOCS_PREFIX = '/api/docs';
 
+const SELF = "'self'";
+const NO_SOURCE = "'none'";
+const DATA_URLS = 'data:';
+
+const DocsContentSecurityPolicy = {
+  'base-uri': [SELF],
+  'default-src': [SELF],
+  'font-src': [SELF, DATA_URLS],
+  'form-action': [SELF],
+  'frame-ancestors': [NO_SOURCE],
+  'img-src': [SELF, DATA_URLS],
+  'object-src': [NO_SOURCE],
+  'script-src': [SELF],
+  'style-src': [SELF],
+};
+
 export const registerOpenApi = async (app: FastifyInstance): Promise<void> => {
   await app.register(swagger, {
     openapi: {
@@ -28,5 +44,10 @@ export const registerOpenApi = async (app: FastifyInstance): Promise<void> => {
     transform: jsonSchemaTransform,
   });
 
-  if (app.config.docs) await app.register(swaggerUi, { routePrefix: DOCS_PREFIX });
+  if (app.config.docs) {
+    await app.register(swaggerUi, {
+      routePrefix: DOCS_PREFIX,
+      staticCSP: DocsContentSecurityPolicy,
+    });
+  }
 };

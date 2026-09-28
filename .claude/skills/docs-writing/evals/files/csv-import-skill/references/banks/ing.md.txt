@@ -1,0 +1,8 @@
+# ING export variants
+
+> Summary: the two CSV exports ING offers and how to map their columns in the import wizard.
+
+| Variant  | Amount columns                   | Mapping                                    |
+| -------- | -------------------------------- | ------------------------------------------ |
+| Standard | one signed `Amount (EUR)` column | **Amount** → `Amount (EUR)`                |
+| Split    | `Debit` and `Credit` columns     | **Debit** → `Debit`, **Credit** → `Credit` |

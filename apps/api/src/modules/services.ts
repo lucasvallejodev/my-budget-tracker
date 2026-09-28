@@ -19,8 +19,9 @@ import { createReportService } from './reports/service';
 import { createRuleService } from './rules/service';
 
 const DEFAULT_SESSION_DAYS = 30;
+const DEFAULT_SESSION_MAX_AGE_DAYS = 90;
 
-type ServiceOptions = { sessionDays?: number };
+type ServiceOptions = { sessionDays?: number; sessionMaxAgeDays?: number };
 
 const toSettings = (row: typeof userSettings.$inferSelect): UserSettings => ({
   locale: row.locale,
@@ -69,7 +70,10 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
     payees: createPayeeService(db),
     reports: createReportService(db),
     rules: createRuleService(db),
-    sessions: createSessionStore(db, options.sessionDays ?? DEFAULT_SESSION_DAYS),
+    sessions: createSessionStore(db, {
+      maxAgeDays: options.sessionMaxAgeDays ?? DEFAULT_SESSION_MAX_AGE_DAYS,
+      sessionDays: options.sessionDays ?? DEFAULT_SESSION_DAYS,
+    }),
     async updateSettings(
       userId: string,
       data: {
