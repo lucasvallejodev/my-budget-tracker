@@ -26,6 +26,11 @@ describe('budgetStatus', () => {
     expect(budgetStatus(0.8)).toEqual({ label: 'Near limit', tone: 'warning' });
     expect(budgetStatus(1)).toEqual({ label: 'Exceeded', tone: 'danger' });
   });
+
+  it('warns about a fast pace before the limit is reached', () => {
+    expect(budgetStatus(0.5, true)).toEqual({ label: 'Spending too fast', tone: 'warning' });
+    expect(budgetStatus(1.2, true)).toEqual({ label: 'Exceeded', tone: 'danger' });
+  });
 });
 
 describe('BudgetCard', () => {
@@ -33,15 +38,38 @@ describe('BudgetCard', () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
 
-    render(<BudgetCard budget={budget} format={String} onEdit={onEdit} onDelete={onDelete} />);
+    render(
+      <BudgetCard
+        budget={budget}
+        format={String}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        today="2026-02-15"
+      />
+    );
 
     expect(screen.getByText('Near limit')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'View transactions' }).getAttribute('href')).toBe(
-      '/transactions?q=Food'
+      '/transactions?month=2026-01&q=Food'
     );
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     expect(onEdit).toHaveBeenCalledOnce();
     expect(onDelete).toHaveBeenCalledOnce();
+  });
+
+  it('shows the pace for the current month and flags spending that runs too fast', () => {
+    render(
+      <BudgetCard
+        budget={{ ...budget, spentMinor: 6000 }}
+        format={String}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        today="2026-01-10"
+      />
+    );
+
+    expect(screen.getByText('Spending too fast')).toBeTruthy();
+    expect(screen.getByText(/2775 ahead of plan · 181 a day for 22 days/)).toBeTruthy();
   });
 });

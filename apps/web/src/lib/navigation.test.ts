@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { safeNextPath } from './navigation';
+import { safeNextPath, transactionsHref } from './navigation';
 
 describe('safeNextPath', () => {
   it('keeps same-origin paths with their query and hash', () => {
@@ -28,5 +28,14 @@ describe('safeNextPath', () => {
 
   it('normalizes dot segments instead of leaving the app', () => {
     expect(safeNextPath('/../../evil.example')).toBe('/evil.example');
+  });
+});
+
+describe('transactionsHref', () => {
+  it('links to transactions filtered by text and month', () => {
+    expect(transactionsHref('Groceries', '2026-09')).toBe(
+      '/transactions?month=2026-09&q=Groceries'
+    );
+    expect(transactionsHref('Food & Dining')).toBe('/transactions?q=Food+%26+Dining');
   });
 });

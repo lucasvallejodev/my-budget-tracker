@@ -43,3 +43,14 @@ export const budgetListQuerySchema = deletedQuerySchema.extend({ month: isoMonth
 export const copyBudgetsSchema = z.object({ month: isoMonthSchema });
 
 export const copyBudgetsResultSchema = z.object({ copied: z.number().int() });
+
+export const budgetSuggestionSchema = z.object({
+  amountMinor: z.number().int(),
+  categoryId: z.string(),
+  currency: z.string(),
+  months: z.number().int(),
+});
+
+export type BudgetSuggestion = z.infer<typeof budgetSuggestionSchema>;
+
+export const budgetSuggestionQuerySchema = z.object({ month: isoMonthSchema });

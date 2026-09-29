@@ -64,7 +64,7 @@ export function TransactionExplorer({
 
   const filtered = transactions.filter(
     transaction =>
-      `${transaction.id} ${describeTransaction(transaction)} ${transaction.memo} ${categoryLabel(transaction)} ${transaction.accountName}`
+      `${transaction.id} ${describeTransaction(transaction)} ${transaction.memo} ${categoryLabel(transaction)} ${transaction.groupName ?? ''} ${transaction.accountName}`
         .toLowerCase()
         .includes(search.toLowerCase()) &&
       (!category || categoryLabel(transaction) === category) &&

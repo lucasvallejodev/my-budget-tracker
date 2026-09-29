@@ -3,7 +3,8 @@ import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { budgets, categories, categoryGroups } from '@/db/schema';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
 import { isoDateOfMonthStart } from '@coinkeeper/shared/lib/date-helpers';
-import type { BudgetRow } from '@coinkeeper/shared/schema/budgets';
+import { roundUpToWholeUnits } from '@coinkeeper/shared/lib/money';
+import type { BudgetRow, BudgetSuggestion } from '@coinkeeper/shared/schema/budgets';
 
 import { ownedActiveCategory } from '../categories/service';
 import { Db, notFound, ServiceError, toIsoTimestamp } from '../db';
@@ -16,6 +17,8 @@ type BudgetInput = {
   currency: string;
   month: string;
 };
+
+const SUGGESTION_MONTHS = 3;
 
 type ListOptions = {
   deleted?: boolean;
@@ -103,6 +106,25 @@ export const createBudgetService = (db: Db) => {
     return row ?? notFound('Budget');
   };
 
+  const suggestions = async (userId: string, month: string): Promise<BudgetSuggestion[]> => {
+    const { start } = monthRange(month);
+
+    const rows = await reports.categorySpendingBetween(
+      userId,
+      isoDateOfMonthStart(month, -SUGGESTION_MONTHS),
+      start
+    );
+
+    return rows
+      .filter(row => row.spentMinor > 0)
+      .map(row => ({
+        amountMinor: roundUpToWholeUnits(Math.ceil(row.spentMinor / row.months), row.currency),
+        categoryId: row.categoryId,
+        currency: row.currency,
+        months: row.months,
+      }));
+  };
+
   return {
     async copyFromPreviousMonth(userId: string, month: string): Promise<number> {
       const { start } = monthRange(month);
@@ -169,6 +191,7 @@ export const createBudgetService = (db: Db) => {
 
       return get(userId, id);
     },
+    suggestions,
     async upsert(
       userId: string,
       data: BudgetInput

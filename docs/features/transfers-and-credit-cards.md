@@ -51,5 +51,5 @@ Each leg is labelled with the other account: "Transfer to Visa" in checking, "Tr
 - `ledger.updateTransfer` rewrites both legs (`PUT /api/v1/transfers/:transferId`); `ledger.removeTransfer` (`DELETE /api/v1/transfers/:transferId`) sets `deleted_at` on both legs and `ledger.restoreTransfer` (`POST …/restore`) clears it on both, after checking that both accounts are live. Deleting a single leg through `/transactions/:id` is refused with `409`.
 - `ledger.linkAsTransfer` converts two existing standard rows (opposite signs, different accounts) into a transfer pair and clears their categories and payees.
 - The database enforces `kind = 'transfer'` ⇔ `transfer_id IS NOT NULL` and forbids a category on non-standard rows.
-- Every report filters `kind = 'standard'`, so exclusion needs no special casing (`apps/api/src/modules/reports/service.ts`, `spendingWhere`).
+- Every report filters `kind = 'standard'`, so exclusion needs no special casing (`apps/api/src/modules/reports/predicate.ts`, `spendingWhere`).
 - Interest charged by a card is a normal expense on the card account (category Financial › Interest & charges); it is spending.

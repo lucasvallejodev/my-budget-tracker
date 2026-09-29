@@ -154,6 +154,30 @@ export const minorToDecimalString = (amountMinor: number, currency: string): str
   return amountMinor < 0 ? `-${body}` : body;
 };
 
+/**
+ * Rounds a non-negative amount up to a whole number of major units, such as a budget suggestion.
+ *
+ * @remarks
+ * Uses the currency's exponent, so EUR rounds up to whole euros and JPY (no minor units) is left
+ * unchanged. Negative amounts round toward zero, which keeps the helper safe for refunds.
+ *
+ * @param amountMinor - Amount in minor units of `currency`.
+ * @param currency - ISO 4217 code of the amount.
+ * @returns The amount in minor units, a multiple of one major unit.
+ *
+ * @example
+ * ```ts
+ * roundUpToWholeUnits(18_667, 'EUR'); // 18_700
+ * roundUpToWholeUnits(18_600, 'EUR'); // 18_600
+ * roundUpToWholeUnits(1_234, 'JPY'); // 1_234
+ * ```
+ */
+export const roundUpToWholeUnits = (amountMinor: number, currency: string): number => {
+  const scale = minorUnitScale(minorUnits(currency));
+
+  return Math.ceil(amountMinor / scale) * scale;
+};
+
 const Formatters = new Map<string, Intl.NumberFormat>();
 
 const cachedFormatter = (key: string, create: () => Intl.NumberFormat): Intl.NumberFormat => {

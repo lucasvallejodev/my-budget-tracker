@@ -15,10 +15,10 @@ import { rowsOf, valueList } from '../batch';
 import { Db } from '../db';
 import { createFxService } from '../fx/service';
 import { monthRange } from '../ledger/service';
+import { spendingWhere } from './predicate';
+import { spendingByAccount, spendingByPayee } from './rankings';
 
 const DEFAULT_CASH_FLOW_MONTHS = 8;
-
-const spendingWhere = sql`t.deleted_at IS NULL AND a.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending`;
 
 type CategorySpending = {
   categoryId: string;
@@ -53,6 +53,42 @@ const categorySpending = async (
   return rows.map(row => ({
     categoryId: row.category_id,
     currency: row.currency,
+    spentMinor: Number(row.spent_minor),
+  }));
+};
+
+type CategorySpendingOverMonths = CategorySpending & { months: number };
+
+const categorySpendingBetween = async (
+  db: Db,
+  userId: string,
+  from: string,
+  to: string
+): Promise<CategorySpendingOverMonths[]> => {
+  const rows = await rowsOf<{
+    category_id: string;
+    currency: string;
+    months: string;
+    spent_minor: string;
+  }>(
+    db,
+    sql`
+    SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor,
+      COUNT(DISTINCT date_trunc('month', t.date)) AS months
+    FROM transactions t
+    JOIN accounts a ON a.id = t.account_id
+    JOIN categories c ON c.id = t.category_id
+    JOIN category_groups g ON g.id = c.group_id
+    WHERE t.user_id = ${userId} AND ${spendingWhere}
+      AND t.date >= ${from} AND t.date < ${to}
+      AND g.kind = 'expense' AND c.archived_at IS NULL
+    GROUP BY t.currency, t.category_id`
+  );
+
+  return rows.map(row => ({
+    categoryId: row.category_id,
+    currency: row.currency,
+    months: Number(row.months),
     spentMinor: Number(row.spent_minor),
   }));
 };
@@ -169,6 +205,9 @@ export const createReportService = (db: Db) => {
     categorySpending: (userId: string, month: string, currencies: string[]) =>
       categorySpending(db, userId, month, currencies),
 
+    categorySpendingBetween: (userId: string, from: string, to: string) =>
+      categorySpendingBetween(db, userId, from, to),
+
     async convertedTotals(
       userId: string,
       primary: string,
@@ -278,5 +317,9 @@ export const createReportService = (db: Db) => {
         netMinor: Number(row.assets_minor) + Number(row.liabilities_minor),
       }));
     },
+
+    spendingByAccount: (userId: string, month: string) => spendingByAccount(db, userId, month),
+
+    spendingByPayee: (userId: string, month: string) => spendingByPayee(db, userId, month),
   };
 };

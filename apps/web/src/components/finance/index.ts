@@ -37,6 +37,7 @@ export { PaymentCards } from './payment-cards';
 export { ReviewInbox } from './review-inbox';
 export { RulesSettings } from './rules-settings';
 export { SettingsView } from './settings-view';
+export { type RankingItem, SpendingRanking } from './spending-ranking';
 export { TargetCard } from './target-card';
 export { TransactionActions } from './transaction-actions';
 export { TransactionDialog } from './transaction-dialog';

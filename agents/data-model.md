@@ -46,7 +46,7 @@ INDEX (user_id) WHERE needs_review AND deleted_at IS NULL   -- transactions_need
 
 ```sql
 t.deleted_at IS NULL AND a.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending
--- spendingWhere in apps/api/src/modules/reports/service.ts; reuse it, never copy it (budgets use reports.categorySpending)
+-- spendingWhere in apps/api/src/modules/reports/predicate.ts; reuse it, never copy it (budgets use reports.categorySpending and categorySpendingBetween; rankings.ts uses it too)
 -- income:   g.kind = 'income'  OR (g.kind IS NULL AND amount > 0)
 -- spending: g.kind = 'expense' OR (g.kind IS NULL AND amount < 0), reported as a positive number
 ```

@@ -233,6 +233,46 @@ describe('budgets', () => {
     expect((await ada.request('GET', '/budgets')).statusCode).toBe(400);
     expect((await bob.request('DELETE', `/budgets/${id}`)).statusCode).toBe(404);
   });
+
+  it('suggests limits from the average of the last three months with spending', async () => {
+    const account = await createAccount(ada);
+    const groceries = await categoryId(ada, 'Groceries');
+    const restaurants = await categoryId(ada, 'Restaurants & bars');
+
+    const spend = (amount: string, category: string, date: string) =>
+      ada.request('POST', '/transactions', {
+        accountId: account.id,
+        amount,
+        categoryId: category,
+        date,
+        direction: 'expense',
+      });
+
+    await spend('30.00', groceries, '2026-06-10');
+    await spend('40.00', groceries, '2026-07-10');
+    await spend('51.10', groceries, '2026-08-10');
+    await spend('20.00', restaurants, '2026-08-12');
+    await spend('99.00', groceries, '2026-05-10');
+    await spend('99.00', groceries, '2026-09-02');
+
+    const suggestions = (await ada.request('GET', '/budgets/suggestions?month=2026-09')).json()
+      .items as { amountMinor: number; categoryId: string; months: number }[];
+
+    expect(suggestions.find(item => item.categoryId === groceries)).toEqual({
+      amountMinor: 4100,
+      categoryId: groceries,
+      currency: 'EUR',
+      months: 3,
+    });
+    expect(suggestions.find(item => item.categoryId === restaurants)).toMatchObject({
+      amountMinor: 2000,
+      months: 1,
+    });
+    expect((await bob.request('GET', '/budgets/suggestions?month=2026-09')).json().items).toEqual(
+      []
+    );
+    expect((await ada.request('GET', '/budgets/suggestions')).statusCode).toBe(400);
+  });
 });
 
 describe('exchange rates', () => {
@@ -301,6 +341,67 @@ describe('reports and settings', () => {
     expect((await ada.request('GET', '/reports/monthly-totals?month=09-2026')).statusCode).toBe(
       400
     );
+  });
+
+  it('ranks spending by payee and by account', async () => {
+    const everyday = await createAccount(ada);
+
+    const card = (
+      await ada.request('POST', '/accounts', {
+        currency: 'EUR',
+        name: 'Card',
+        type: 'credit_card',
+      })
+    ).json<{ id: string }>();
+
+    const market = (await ada.request('POST', '/payees', { name: 'Greenleaf Market' })).json();
+    const cafe = (await ada.request('POST', '/payees', { name: 'Corner Cafe' })).json();
+
+    const spend = (accountId: string, payeeId: string, amount: string) =>
+      ada.request('POST', '/transactions', {
+        accountId,
+        amount,
+        date: '2026-09-05',
+        direction: 'expense',
+        payeeId,
+      });
+
+    await spend(everyday.id, market.id, '40');
+    await spend(card.id, market.id, '25');
+    await spend(card.id, cafe.id, '3.50');
+
+    const byPayee = (await ada.request('GET', '/reports/breakdown?month=2026-09&by=payee')).json();
+
+    const byAccount = (
+      await ada.request('GET', '/reports/breakdown?month=2026-09&by=account')
+    ).json();
+
+    expect(byPayee.items).toEqual([
+      {
+        currency: 'EUR',
+        id: market.id,
+        name: 'Greenleaf Market',
+        spentMinor: 6500,
+        transactions: 2,
+      },
+      {
+        currency: 'EUR',
+        id: cafe.id,
+        name: 'Corner Cafe',
+        spentMinor: 350,
+        transactions: 1,
+      },
+    ]);
+    expect(byAccount.items.map((item: { name: string }) => item.name)).toEqual([
+      'Account EUR',
+      'Card',
+    ]);
+    expect(
+      (await bob.request('GET', '/reports/breakdown?month=2026-09&by=payee')).json().items
+    ).toEqual([]);
+    expect(
+      (await ada.request('GET', '/reports/breakdown?month=2026-09&by=merchant')).statusCode
+    ).toBe(400);
   });
 
   it('updates settings and rejects unknown currencies', async () => {

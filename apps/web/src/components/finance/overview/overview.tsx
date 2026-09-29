@@ -16,6 +16,7 @@ import {
   Stack,
 } from '@/components/ui';
 import { getPercentage } from '@/lib/math';
+import { transactionsHref } from '@/lib/navigation';
 import { formatCompactMoney, formatExchangeRate, formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { CashFlowChart } from '../cash-flow-chart';
@@ -27,6 +28,7 @@ import { TransactionDialog } from '../transaction-dialog';
 import { TransactionTable } from '../transaction-table';
 import type { Summary } from '../use-finance-data';
 import { currentMonth, monthLabel, useSummary, useTransactions } from '../use-finance-data';
+import { AnalyticsRankings } from './analytics-rankings';
 
 const MonthAbbreviationLength = 3;
 const RecentTransactionLimit = '6';
@@ -251,6 +253,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
                 .filter(slice => slice.currency === currency && slice.spentMinor > 0)
                 .map(slice => ({
                   color: slice.color,
+                  href: transactionsHref(slice.groupName, month),
                   name: slice.groupName,
                   value: slice.spentMinor,
                 }))}
@@ -258,6 +261,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
           ))}
         </Stack>
       </Columns>
+      {analytics && <AnalyticsRankings currencies={currencies} month={month} />}
     </Page>
   );
 }

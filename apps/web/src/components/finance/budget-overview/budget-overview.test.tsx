@@ -8,6 +8,10 @@ import { formatMoney } from '@coinkeeper/shared/lib/money';
 import { type BudgetRow, currentMonth, QueryKeys } from '../use-finance-data';
 import { BudgetOverview } from './budget-overview';
 
+vi.hoisted(() => {
+  vi.useFakeTimers({ now: new Date(2026, 8, 25, 12), toFake: ['Date'] });
+});
+
 const MutationContextArgument = expect.anything();
 
 vi.mock('@/api/mutations', () => ({
@@ -63,6 +67,14 @@ function renderBudgets(data: BudgetRow[] = rows) {
   client.setQueryData([...QueryKeys.accounts, false], []);
   client.setQueryData(QueryKeys.settings, { primaryCurrency: 'EUR', showConvertedTotals: false });
   client.setQueryData([...QueryKeys.categories, false], []);
+  client.setQueryData(QueryKeys.budgetSuggestions(month), [
+    {
+      amountMinor: 4100,
+      categoryId: 'c-groceries',
+      currency: 'EUR',
+      months: 3,
+    },
+  ]);
 
   return render(
     <QueryClientProvider client={client}>
@@ -85,6 +97,24 @@ describe('BudgetOverview', () => {
     expect(
       screen.getByText(`Coffee exceeded its budget by ${formatMoney(1500, 'EUR')}`)
     ).toBeTruthy();
+  });
+
+  it('shows the daily allowance for the current month', () => {
+    renderBudgets();
+    expect(screen.getByText('Left per day')).toBeTruthy();
+    expect(screen.getByText('for the 6 days left this month')).toBeTruthy();
+  });
+
+  it('offers the average of recent months as the limit', () => {
+    renderBudgets();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
+    expect(
+      screen.getByText(
+        `You spent about ${formatMoney(4100, 'EUR')} a month over the last 3 months.`
+      )
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: `Use ${formatMoney(4100, 'EUR')}` }));
+    expect(screen.getByDisplayValue('41.00')).toBeTruthy();
   });
 
   it('shows an empty state when the month has no budgets', () => {

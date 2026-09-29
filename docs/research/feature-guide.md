@@ -305,4 +305,4 @@ The seven open questions have answers. The full table and the reasoning are in [
 6. **Tags or events:** one `tags` table with a trip kind.
 7. **An assistant:** not before a minimum viable product; later, an opt-in assistant or an MCP server so the user's own agents can read and record transactions.
 
-Step 1 of the roadmap is approved and starts once the [demo account](../getting-started/demo-account.md) is merged.
+Step 1 of the roadmap is built; [Feature opportunities](feature-opportunities.md) › Decisions lists what shipped. Try it with the [demo account](../getting-started/demo-account.md).

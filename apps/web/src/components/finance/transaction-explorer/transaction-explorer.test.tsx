@@ -43,6 +43,13 @@ describe('Finance controls', () => {
     chooseOption('Type', 'Expense');
     expect(screen.getByText('No transactions found')).toBeTruthy();
   });
+  it('finds transactions by their category group', () => {
+    renderExplorer();
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Food & Dining' } });
+    expect(screen.getAllByText('Groceries').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Train ticket')).toBeNull();
+  });
+
   it('combines date and status filters and formats signed amounts', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 8, 5));

@@ -2,6 +2,7 @@
 
 import './distribution-chart.scss';
 
+import Link from 'next/link';
 import { ReactNode } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 
@@ -16,6 +17,7 @@ const SegmentCornerRadius = 6;
 
 export type Segment = {
   color?: string;
+  href?: string;
   name: string;
   value: number;
 };
@@ -72,7 +74,13 @@ export function DistributionChart({
             {data.map((segment, index) => (
               <div key={segment.name} className="distribution-chart__legend-row">
                 <ColorSwatch color={fill(segment, index)} />
-                {segment.name}
+                {segment.href ? (
+                  <Link className="distribution-chart__legend-link" href={segment.href}>
+                    {segment.name}
+                  </Link>
+                ) : (
+                  segment.name
+                )}
                 <strong className="distribution-chart__legend-value">
                   {format(segment.value)}
                 </strong>

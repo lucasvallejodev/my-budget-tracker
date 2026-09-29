@@ -17,12 +17,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Text,
 } from '@/components/ui';
-import { minorToDecimalString } from '@coinkeeper/shared/lib/money';
+import { formatMoney, minorToDecimalString } from '@coinkeeper/shared/lib/money';
+import type { BudgetSuggestion } from '@coinkeeper/shared/schema/budgets';
 
 import { CategoryPicker } from '../category-picker';
 import { useEntityMutation } from '../use-entity-mutation';
-import { BudgetRow, monthLabel } from '../use-finance-data';
+import { BudgetRow, monthLabel, useBudgetSuggestions } from '../use-finance-data';
 
 const FallbackCurrency = 'EUR';
 
@@ -55,6 +57,65 @@ function CurrencySelect({
   );
 }
 
+function SuggestionHint({
+  amountMinor,
+  currency,
+  months,
+  onUse,
+}: {
+  amountMinor: number;
+  currency: string;
+  months: number;
+  onUse: () => void;
+}) {
+  return (
+    <Field as="div">
+      <Text size="small" tone="muted">
+        You spent about {formatMoney(amountMinor, currency)} a month over the last {months} month
+        {months === 1 ? '' : 's'}.
+      </Text>
+      <Button type="button" variant="outline" size="sm" onClick={onUse}>
+        Use {formatMoney(amountMinor, currency)}
+      </Button>
+    </Field>
+  );
+}
+
+function LimitField({
+  amount,
+  currency,
+  onChange,
+  suggestion,
+}: {
+  amount: string;
+  currency: string;
+  onChange: (amount: string) => void;
+  suggestion?: BudgetSuggestion;
+}) {
+  return (
+    <>
+      <Field>
+        Monthly limit
+        <Input
+          inputMode="decimal"
+          placeholder="0.00"
+          value={amount}
+          onChange={event => onChange(event.target.value)}
+          required
+        />
+      </Field>
+      {suggestion && (
+        <SuggestionHint
+          amountMinor={suggestion.amountMinor}
+          currency={currency}
+          months={suggestion.months}
+          onUse={() => onChange(minorToDecimalString(suggestion.amountMinor, currency))}
+        />
+      )}
+    </>
+  );
+}
+
 export function BudgetDialog({
   budget,
   currencies,
@@ -75,6 +136,12 @@ export function BudgetDialog({
     budget.amountMinor
       ? minorToDecimalString(budget.amountMinor, budget.currency ?? FallbackCurrency)
       : ''
+  );
+
+  const suggestions = useBudgetSuggestions(month);
+
+  const suggestion = suggestions.data?.find(
+    item => item.categoryId === categoryId && item.currency === currency
   );
 
   const save = useEntityMutation({
@@ -119,16 +186,12 @@ export function BudgetDialog({
               onChange={setCurrency}
             />
           </Field>
-          <Field>
-            Monthly limit
-            <Input
-              inputMode="decimal"
-              placeholder="0.00"
-              value={amount}
-              onChange={event => setAmount(event.target.value)}
-              required
-            />
-          </Field>
+          <LimitField
+            amount={amount}
+            currency={currency}
+            onChange={setAmount}
+            suggestion={suggestion}
+          />
           <Button type="submit" disabled={save.isPending || !categoryId || !amount.trim()}>
             Save budget
           </Button>
