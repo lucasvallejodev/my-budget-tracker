@@ -1,6 +1,6 @@
 # Feature guide
 
-> Summary: a plain-language walk through the competitor research: what the 20 apps taught us, where CoinKeeper stands, each proposed feature explained with an example and diagrams, and exactly how it would fit into CoinKeeper's data, server and screens.
+> Summary: a plain-language walk through the competitor research: what the 20 apps taught us, where CoinKeeper stands, each proposed feature explained with an example and diagrams, exactly how it would fit into CoinKeeper's data, server and screens, and the decisions taken.
 
 This page explains the research so you can read it from start to finish without opening the 20 app studies. Every feature below says what it is, shows an example, names the apps that do it well and describes what would change in CoinKeeper. For the full tables, formulas and sources, see [Feature opportunities](feature-opportunities.md) and the studies listed in the [research index](README.md). Select any diagram to open it full size.
 
@@ -125,7 +125,7 @@ Occurrences are calculated, not stored, so editing a series never leaves stale r
 
 **Who does it.** [PocketGuard](apps/pocketguard.md) is built on it (Leftover), [Quicken Simplifi](apps/quicken-simplifi.md) calls it the Spending Plan, [Monzo](apps/monzo.md) and [Emma](apps/emma.md) subtract upcoming bills, and [Monarch](apps/monarch-money.md) has a single "Flex" number.
 
-**How it fits CoinKeeper.** No table of its own: it combines budgets, recurring series and goals, calculated per currency. A shared helper in `packages/shared/src/lib/` does the arithmetic, a plan endpoint runs one query per part, and the dashboard gets a headline card with a breakdown like the chart above. Effort M, after recurring series and goals exist. One decision is open: whether income means what already arrived or what you expect (see [Decisions for you](#decisions-for-you)).
+**How it fits CoinKeeper.** No table of its own: it combines budgets, recurring series and goals, calculated per currency. A shared helper in `packages/shared/src/lib/` does the arithmetic, a plan endpoint runs one query per part, and the dashboard gets a headline card with a breakdown like the chart above. Effort M, after recurring series and goals exist. It counts income already received ([Decisions taken](#decisions-taken)).
 
 ### 6. Projected account balance
 
@@ -257,21 +257,21 @@ Ana's balance is what she still owes you. Because these are transfers, your spen
 
 ### 16. Budget months that start on payday
 
-**What it is.** If your salary arrives on the 25th, your budget "month" runs from the 25th to the 24th.
+**What it is.** If your salary arrives on the 25th, your budget "month" runs from the 25th to the 24th. When the payday moves (the last working day, or a few days earlier some months), the period follows it, and any single period can be moved by hand.
 
 **Who does it.** [Emma](apps/emma.md) and [Monzo](apps/monzo.md). Monzo users complained when weekly and four-weekly periods disappeared.
 
-**How it fits CoinKeeper.** One setting, `user_settings.period_start_day`, but every budget and report query depends on it. That makes it expensive to add late, so the decision should be taken before building recurring series and left to spend, even if the feature ships later. Effort M to L.
+**How it fits CoinKeeper.** A period rule in `user_settings` plus a table of manual overrides, read through one shared helper that every budget and report query uses. Step 1 introduces the helper with calendar months only, so later rules drop in without rewriting queries. The full design is in [Pay-cycle periods](feature-opportunities.md#pay-cycle-periods). Effort M to L.
 
 ### 17. Bigger ideas for later
 
-| Idea                       | What it is                                                              | Why later                                                                           |
-| -------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Shared household budgets   | Two people manage one set of accounts and budgets                       | Changes the per-user rule every query follows; needs real memberships               |
-| Debt payoff planner        | Snowball or avalanche order with a debt-free date                       | Needs interest rate and minimum payment on loan and card accounts                   |
-| Envelope (zero-based) mode | Assign every unit of income to a category before spending, as YNAB does | A different way of budgeting; valuable for some users, confusing for others         |
-| Budget automations         | Fill the whole month's budget from per-category rules in one click      | Builds on category funds and targets                                                |
-| Opt-in assistant           | Ask questions about your money in plain language                        | Deterministic insights give most of the value without sending data to a third party |
+| Idea                           | What it is                                                                          | Why later                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Shared household budgets       | Two people manage one set of accounts and budgets                                   | Changes the per-user rule every query follows; needs real memberships       |
+| Debt payoff planner            | Snowball or avalanche order with a debt-free date                                   | Needs interest rate and minimum payment on loan and card accounts           |
+| Envelope (zero-based) mode     | Assign every unit of income to a category before spending, as YNAB does             | A different way of budgeting; valuable for some users, confusing for others |
+| Budget automations             | Fill the whole month's budget from per-category rules in one click                  | Builds on category funds and targets                                        |
+| Opt-in assistant or MCP server | Ask questions about your money, or let your own agents read and record transactions | Decided for after a minimum viable product                                  |
 
 ## How it all fits the data model
 
@@ -293,14 +293,16 @@ Each step gives you something visible on its own and prepares the next one.
 
 Step 1 can start straight away because it needs no migration.
 
-## Decisions for you
+## Decisions taken
 
-These choices change how the features are built. Each is explained in [Feature opportunities](feature-opportunities.md) › Decisions to make before building.
+The seven open questions have answers. The full table and the reasoning are in [Feature opportunities](feature-opportunities.md) › Decisions.
 
-1. **Payday months:** will budget months be able to start on another day? Decide before step 2.
-2. **Income in left to spend:** count income already received (safe but low early in the month) or income you expect (useful but wrong if income is irregular)?
-3. **Rollover and old edits:** when you edit a transaction from three months ago, should every later carried amount change (true to the ledger) or stay frozen?
-4. **Goals above the balance:** block an earmark larger than the account balance, or allow it with a warning?
-5. **One account per goal:** start with one account and one currency per goal, or allow a goal across accounts?
-6. **Tags or events:** one `tags` table with a trip kind (recommended), or a separate events table?
-7. **An assistant:** stay with deterministic insights, or add an opt-in assistant later?
+1. **Payday months:** yes, and paydays that move from month to month are supported: pick a rule (calendar month, fixed day, before month end, every N weeks or when the salary arrives) and move a single period by hand when needed. See [Pay-cycle periods](feature-opportunities.md#pay-cycle-periods).
+2. **Income in left to spend:** income already received. Left to spend becomes a dashboard widget; letting each user choose their widgets is decided later.
+3. **Rollover and old edits:** carried amounts follow the ledger, so editing an old transaction changes every later carry.
+4. **Goals above the balance:** allowed, with an "over-allocated" warning.
+5. **One account per goal:** yes, one account and one currency per goal for now.
+6. **Tags or events:** one `tags` table with a trip kind.
+7. **An assistant:** not before a minimum viable product; later, an opt-in assistant or an MCP server so the user's own agents can read and record transactions.
+
+Step 1 of the roadmap is approved and starts once the [demo account](../getting-started/demo-account.md) is merged.

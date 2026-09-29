@@ -1,6 +1,6 @@
 # Feature opportunities
 
-> Summary: the synthesis of the 20 app studies: which ideas recur across budgeting apps, what CoinKeeper already does better, a ranked list of features for our target user with their model, API and UI impact, one reconciled data-model proposal, a phased roadmap and the open questions to decide before building.
+> Summary: the synthesis of the 20 app studies: which ideas recur across budgeting apps, what CoinKeeper already does better, a ranked list of features for our target user with their model, API and UI impact, one reconciled data-model proposal, a phased roadmap, the decisions taken and the pay-cycle period design.
 
 This page reads across every report in [the research index](README.md). Each idea links to the app studies that describe it in detail; the per-app pages hold the mechanics, formulas and sources.
 
@@ -178,17 +178,84 @@ Each phase ships something a user notices on its own, and each builds the founda
 
 Phase 1 needs no migration and can start immediately. Phase 2 is the foundation for most of what follows, so it deserves the most design care.
 
-## Decisions to make before building
+## Decisions
 
-These questions came up in several studies and change the design:
+These questions came up in several studies and change the design. The product owner answered them after reading the research.
 
-1. **Budget period.** Emma and Monzo users value periods that start on payday, and Monzo users complained when weekly and 4-weekly periods disappeared. Every budget and report query depends on the period, so decide during phase 2 whether `period_start_day` is coming, even if it ships in phase 5, and route all period maths through one shared helper from the start.
-2. **Income in left to spend.** Use income received so far (safe, low early in the month) or expected income from recurring series (useful, wrong when income is irregular). Lunch Money offers expected, actual or the larger of the two; PocketGuard counts estimated income.
-3. **Rollover when history changes.** Editing an old transaction changes every later carry. That is correct for a ledger-first design, but Emma freezes rollover at period start to avoid surprises. The docs must state our choice.
-4. **Goal allocations above the account balance.** Reject, or allow with an "over-allocated" warning after spending. The Monarch and Monzo studies both lean towards a warning.
-5. **One goal, one account.** Firefly III lets a goal span accounts, which complicates currencies. Start with one account and one currency per goal.
-6. **Tags versus events.** One `tags` table with a `trip` kind (recommended) or a dedicated `events` table with one event per transaction ([money-lover.md](apps/money-lover.md) weighs both).
-7. **AI.** Cleo, Rocket Money, Monarch and Copilot all added language-model assistants. Deterministic insights with a friendly tone deliver most of the value without sending financial data to a third party; an opt-in assistant with read-only access can come later.
+| #   | Question                                   | Decision                                                                                                                                                                                                       |
+| --- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Can budget periods start on payday?        | Yes. Paydays that move from month to month must be supported, and people paid every two weeks or with no fixed payday keep simple periods. The design is in [Pay-cycle periods](#pay-cycle-periods).           |
+| 2   | Which income counts in left to spend?      | Income already received. Left to spend is built as a widget; a customisable dashboard, where each user picks the widgets they want, is decided later.                                                          |
+| 3   | Rollover when an old transaction changes   | Carried amounts follow the ledger: editing an old transaction changes every later carry. The budgets documentation must say so.                                                                                |
+| 4   | Goal allocations above the account balance | Allowed, with an "over-allocated" warning.                                                                                                                                                                     |
+| 5   | Goals across accounts                      | One account and one currency per goal for now.                                                                                                                                                                 |
+| 6   | Tags or events for trips                   | One `tags` table with a `trip` kind.                                                                                                                                                                           |
+| 7   | AI assistant                               | Not before a minimum viable product. After that, an opt-in assistant or an MCP server that lets the user's own agents read and record transactions can be considered. Until then, insights stay deterministic. |
+
+Phase 1 of the roadmap is approved. It starts after the [demo account](../getting-started/demo-account.md) is merged, so every screen can be checked against six months of realistic data.
+
+## Pay-cycle periods
+
+Most budgeting apps assume the month starts on the 1st. Many people are paid near the end of the month instead, and not always on the same day: a salary can land on the last working day, three days before the end, or five days before when a weekend intervenes. Others are paid every two weeks, or run a business with no payday at all. CoinKeeper should let each person choose, and let them move a single period when reality differs from the rule.
+
+### Period rules
+
+The user picks one rule in Settings:
+
+| Rule                | How the period start is found                                                              | Suits                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| Calendar month      | The 1st of each month (the default, and what CoinKeeper does today)                        | Freelancers, company owners, anyone without one payday |
+| Fixed day           | A day of the month (1 to 28); when it falls on a weekend, the working day before it        | Salaries paid on a set date, such as the 25th          |
+| Before month end    | The last working day of the month, or a chosen number of working days before it            | Salaries paid "in the last days of the month"          |
+| Every N weeks       | Every one, two or four weeks from an anchor date                                           | Weekly and bi-weekly pay                               |
+| When salary arrives | The day the salary is recorded; until it arrives, the date given by one of the rules above | Paydays that move every month                          |
+
+"When salary arrives" needs recurring series (phase 2): the user marks their salary series, and the period starts on the date of the transaction that matches it. If the salary is late, the current period stretches until it arrives and the dashboard says it is waiting for the salary. If it never arrives, the period falls back to the expected date after a few days' grace, so a missing salary never freezes the budget.
+
+### Moving one period
+
+Any single period can be moved by hand ("this month I was paid on the 3rd"). The move is stored as an override for that period only; the rule still decides the next one. Periods never overlap and never leave gaps: each one ends the day before the next one starts, so moving a start only shortens or lengthens its neighbour.
+
+```mermaid
+gantt
+  title Rule "last working day", with the October period moved by hand
+  dateFormat YYYY-MM-DD
+  axisFormat %d %b
+  section Periods
+  August                     :done, aug, 2026-07-31, 2026-08-28
+  September                  :done, sep, 2026-08-28, 2026-10-03
+  October, moved to the 3rd  :active, oct, 2026-10-03, 2026-10-30
+  November                   :nov, 2026-10-30, 2026-11-30
+```
+
+### Naming and keys
+
+A monthly period is named after the month it ends in, with its dates: "October (3 Oct to 29 Oct)". That keeps today's `budgets.month` key working for every monthly rule: a budget for `2026-10` applies to the October period, whatever its exact dates. Every-N-weeks periods do not map to months; their budgets need a key by period start date, which is a later migration and one reason that rule comes last.
+
+### Data model
+
+| Change                                   | Contents                                                                                                                                                                                 |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_settings.period_rule`              | Typed JSON validated by a shared Zod schema: `{ kind: 'calendar' }`, `{ kind: 'fixed_day', day }`, `{ kind: 'before_month_end', workingDays }`, `{ kind: 'every_weeks', weeks, anchor }` |
+| `user_settings.period_income_series_id?` | The salary series whose arrival starts a period (only with recurring series)                                                                                                             |
+| `user_settings.weekend_days`             | The days treated as the weekend, Saturday and Sunday by default, since some countries rest on Friday and Saturday. Public holidays are left out because they depend on the country       |
+| `budget_period_starts`                   | Overrides: `user_id`, `period_key`, `starts_on`, soft delete                                                                                                                             |
+
+### How the code should use it
+
+- One shared helper module, `packages/shared/src/lib/periods.ts`, owns the rules: `periodFor(date, settings, overrides)` and `periodRange(periodKey, settings, overrides)` return `{ key, from, to, days }`.
+- Every budget, report and dashboard query takes a date range from that helper instead of computing month boundaries itself.
+- Pace, the daily allowance and rollover use the period's real number of days, which varies between 28 and 35.
+- Changing the rule recalculates past periods from the ledger. Nothing is deleted or rewritten; Lunch Money deletes budget history when the period changes, which is the behaviour to avoid.
+
+### Order of work
+
+1. **Phase 1:** introduce the period helper with the calendar rule only, and write pace and the daily allowance against it. Nothing changes for users, but no new code assumes the 1st.
+2. **Phase 2:** fixed day, before month end and manual moves, with the Settings screen and the override table.
+3. **With recurring series:** "When salary arrives".
+4. **Later:** every N weeks, with budgets keyed by period start.
+
+The demo account already has a salary that moves around the last week of the month and avoids weekends, so each rule can be checked against it.
 
 ## What we will not copy
 

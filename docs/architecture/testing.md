@@ -95,7 +95,7 @@ Render inside `QueryClientProvider`, prefill the cache with `client.setQueryData
 
 ## End to end
 
-Playwright runs against the real API and web app (`npm run test:e2e`). `playwright.config.ts` starts both through `webServer` (`npm run dev:api`, waiting for readiness at `/api/v1/health/ready`, and `npm run dev:web`, waiting for `/sign-in`), or reuses servers that are already running outside CI. The API it starts allows 200 sign-ups and sign-ins per minute (`AUTH_ATTEMPTS_PER_MINUTE` in the `webServer` env) because every test signs up from the same address; a reused local API keeps its own limit of 10. The database is the one in `DATABASE_URL`, migrated beforehand. Only Chromium runs.
+Playwright runs against the real API and web app (`npm run test:e2e`). `playwright.config.ts` starts both through `webServer` (`npm run dev:api`, waiting for readiness at `/api/v1/health/ready`, and `npm run dev:web`, waiting for `/sign-in`), or reuses servers that are already running outside CI. The API it starts allows 200 sign-ups and sign-ins per minute (`AUTH_ATTEMPTS_PER_MINUTE` in the `webServer` env) because every test signs up from the same address; a reused local API keeps its own limit of 10. The database is the one in `DATABASE_URL`, migrated beforehand. Before the suite starts, `e2e/global-setup.ts` runs the demo seed (`apps/api/src/cli/seed-demo.ts`) so the [demo account](../getting-started/demo-account.md) exists with data up to today; it reads `.env` when present and generates a random `DEMO_USER_PASSWORD` when none is set, as in CI. Only Chromium runs.
 
 Every test signs up a fresh user (`e2e-<uuid>@example.com`). `e2e/fixtures.ts` holds the shared setup: the `signedInPage` fixture (sign-up through the API, so the page carries the session cookie), `signUpThroughForm`, `apiPost` (sends the app's `Origin`) and `seedAccountWithExpense`. Import `test` and `expect` from it.
 
@@ -106,6 +106,8 @@ Every test signs up a fresh user (`e2e-<uuid>@example.com`). `e2e/fixtures.ts` h
 - the origin check: a write with `Origin: https://evil.example` answers `403`.
 
 `e2e/accessibility.spec.ts` seeds an account and a transaction, opens the eight main screens (dashboard, transactions, review, import, analytics, budgets, accounts, settings) in the light and the dark theme (it stores the theme preference before the page loads, because the app ignores the operating system scheme unless the preference is `system`, and waits for CSS transitions to finish before scanning), and runs `@axe-core/playwright` with the WCAG 2.0, 2.1 and 2.2 A and AA tags on each. Any violation fails the test with the screen path, the rule id and the elements. axe finds only part of the WCAG failures; keyboard flow, focus order and wording still need a manual review.
+
+`e2e/demo-account.spec.ts` signs in as the demo user through the form and checks that the dashboard shows the review notice and the seeded accounts.
 
 `e2e/content-security-policy.spec.ts` checks that pages send the enforced and the report-only policy, and that the main screens log no Content Security Policy violation in the browser console ([Security headers](security-headers.md)).
 

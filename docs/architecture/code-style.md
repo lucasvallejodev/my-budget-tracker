@@ -78,6 +78,7 @@ Every name must say what the value is for. One-letter and abbreviated names are 
 - Numbers other than -1, 0 and 1 (and array indexes or parameter defaults) must be named constants: `const MaxPreviewRows = 500`. Strings that act as keys, sentinels or configuration are named too (`UnmappedColumnValue`); user-facing copy stays inline.
 - Regular expressions live only in `packages/shared/src/lib/patterns.ts`, in the `Patterns` object under a name that says what they match (`Patterns.isoDate`, `Patterns.amountSignWrapper`), with small helpers such as `isIsoDate(text)` for the common tests. ESLint rejects a regex literal or `new RegExp` anywhere else.
 - Comments are not allowed in application code (a local rule enforces it); only tool directives, the `keep order` marker and the TSDoc blocks described below pass. The intent goes into names, small helpers and types. Config files and the local ESLint rules are the exception.
+- Test files and the demo account's data files (`apps/api/src/demo/persona.ts`, `spending.ts`) may use numeric literals: their numbers are sample data, not logic ([Demo account](../getting-started/demo-account.md)).
 
 ## Documenting utilities with TSDoc
 
