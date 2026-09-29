@@ -15,10 +15,10 @@ import { rowsOf, valueList } from '../batch';
 import { Db } from '../db';
 import { createFxService } from '../fx/service';
 import { monthRange } from '../ledger/service';
+import { spendingWhere } from './predicate';
+import { spendingByAccount, spendingByPayee } from './rankings';
 
 const DEFAULT_CASH_FLOW_MONTHS = 8;
-
-const spendingWhere = sql`t.deleted_at IS NULL AND a.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_spending`;
 
 type CategorySpending = {
   categoryId: string;
@@ -317,5 +317,9 @@ export const createReportService = (db: Db) => {
         netMinor: Number(row.assets_minor) + Number(row.liabilities_minor),
       }));
     },
+
+    spendingByAccount: (userId: string, month: string) => spendingByAccount(db, userId, month),
+
+    spendingByPayee: (userId: string, month: string) => spendingByPayee(db, userId, month),
   };
 };

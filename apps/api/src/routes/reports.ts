@@ -14,6 +14,7 @@ import {
   groupSliceSchema,
   monthQuerySchema,
   netWorthBucketSchema,
+  rankingSliceSchema,
   summaryQuerySchema,
   summarySchema,
 } from '@coinkeeper/shared/schema/reports';
@@ -88,7 +89,9 @@ export const reportsRoutes: FastifyPluginAsyncZod = async app => {
       schema: {
         querystring: breakdownQuerySchema,
         response: withErrors({
-          [HttpStatus.ok]: listOf(z.union([groupSliceSchema, categorySliceSchema])),
+          [HttpStatus.ok]: listOf(
+            z.union([groupSliceSchema, categorySliceSchema, rankingSliceSchema])
+          ),
         }),
         tags: Tags,
       },
@@ -98,6 +101,8 @@ export const reportsRoutes: FastifyPluginAsyncZod = async app => {
       const { by, currency, month } = request.query;
 
       if (by === 'group') return { items: await reports.breakdownByGroup(userId, month) };
+      if (by === 'payee') return { items: await reports.spendingByPayee(userId, month) };
+      if (by === 'account') return { items: await reports.spendingByAccount(userId, month) };
 
       const target = currency ?? (await app.services.getSettings(userId)).primaryCurrency;
 

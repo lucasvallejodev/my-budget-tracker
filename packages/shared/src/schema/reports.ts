@@ -74,7 +74,7 @@ export type Summary = z.infer<typeof summarySchema>;
 
 const MAX_CASH_FLOW_MONTHS = 24;
 
-export const BreakdownDimensionValues = ['group', 'category'] as const;
+export const BreakdownDimensionValues = ['group', 'category', 'payee', 'account'] as const;
 
 const cashFlowMonthsSchema = z.coerce.number().int().min(1).max(MAX_CASH_FLOW_MONTHS);
 
@@ -105,3 +105,13 @@ export const categorySliceSchema = z.object({
 });
 
 export type CategorySlice = z.infer<typeof categorySliceSchema>;
+
+export const rankingSliceSchema = z.object({
+  currency: z.string(),
+  id: z.string().nullable(),
+  name: z.string(),
+  spentMinor: z.number().int(),
+  transactions: z.number().int(),
+});
+
+export type RankingSlice = z.infer<typeof rankingSliceSchema>;

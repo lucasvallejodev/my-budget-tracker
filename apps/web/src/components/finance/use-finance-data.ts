@@ -13,7 +13,7 @@ import type { PageResponse } from '@coinkeeper/shared/schema/common';
 import type { Currency } from '@coinkeeper/shared/schema/currencies';
 import type { ExchangeRateRow } from '@coinkeeper/shared/schema/exchange-rates';
 import type { PayeeRow } from '@coinkeeper/shared/schema/payees';
-import type { Summary } from '@coinkeeper/shared/schema/reports';
+import type { RankingSlice, Summary } from '@coinkeeper/shared/schema/reports';
 import type { RuleRow } from '@coinkeeper/shared/schema/rules';
 import type { UserSettings } from '@coinkeeper/shared/schema/settings';
 import type { TransactionRow } from '@coinkeeper/shared/schema/transaction';
@@ -33,6 +33,8 @@ export type {
 
 type TransactionParams = Record<string, string | undefined>;
 
+type RankingDimension = 'account' | 'payee';
+
 export const QueryKeys = {
   accounts: ['accounts'] as const,
   budgets: (month: string) => ['budgets', month] as const,
@@ -46,6 +48,8 @@ export const QueryKeys = {
   rules: ['rules'] as const,
   sessions: ['sessions'] as const,
   settings: ['settings'] as const,
+  spendingRanking: (month: string, by: RankingDimension) =>
+    ['summary', 'ranking', by, month] as const,
   summary: (month?: string) => ['summary', month ?? 'current'] as const,
   transactions: (params: TransactionParams = {}) => ['transactions', params] as const,
 };
@@ -119,6 +123,13 @@ export function useTransactions(params: TransactionParams = {}) {
     queryFn: async () =>
       (await apiGet<PageResponse<TransactionRow>>('/transactions', params)).items,
     queryKey: QueryKeys.transactions(params),
+  });
+}
+
+export function useSpendingRanking(month: string, by: RankingDimension) {
+  return useQuery({
+    queryFn: () => apiList<RankingSlice>('/reports/breakdown', { by, month }),
+    queryKey: QueryKeys.spendingRanking(month, by),
   });
 }
 

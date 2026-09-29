@@ -3,6 +3,7 @@ import './budget-card.scss';
 import Link from 'next/link';
 
 import { Badge, Button, Cluster, Icon, IconTile, Text } from '@/components/ui';
+import { transactionsHref } from '@/lib/navigation';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
 import { budgetPace } from '@coinkeeper/shared/lib/budget-pace';
 import { calendarPeriod } from '@coinkeeper/shared/lib/periods';
@@ -65,9 +66,7 @@ export function BudgetCard({
           Edit
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link href={`/transactions?q=${encodeURIComponent(budget.categoryName)}&month=${month}`}>
-            View transactions
-          </Link>
+          <Link href={transactionsHref(budget.categoryName, month)}>View transactions</Link>
         </Button>
         <Button variant="destructive" size="sm" onClick={onDelete}>
           Delete

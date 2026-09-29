@@ -1,0 +1,30 @@
+@use 'abstracts' as *;
+
+.spending-ranking {
+  @include reset-list;
+  @include flex-column(space(4));
+
+  &__row {
+    @include flex-column(space(2));
+  }
+
+  &__header {
+    @include flex-between(space(3));
+  }
+
+  &__name {
+    @include truncate;
+
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  &__amount {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  &__count {
+    @include muted-text(12px);
+  }
+}

@@ -29,3 +29,25 @@ export const safeNextPath = (next: string | undefined): string => {
 
   return `${resolved.pathname}${resolved.search}${resolved.hash}`;
 };
+
+const TransactionsPath = '/transactions';
+
+/**
+ * Builds a link to the Transactions page filtered by a search text and, optionally, a month.
+ *
+ * @remarks
+ * The page reads `q` as its search box and `month` (`YYYY-MM`) as the month picker, so charts,
+ * rankings and budgets can open exactly the transactions behind a number. Values are URL-encoded.
+ *
+ * @param search - Text to search for: a payee, category, group or account name.
+ * @param month - Month in `YYYY-MM` form; omitted to search every month.
+ * @returns A path such as `/transactions?month=2026-09&q=Groceries`.
+ *
+ * @example
+ * ```ts
+ * transactionsHref('Groceries', '2026-09'); // '/transactions?month=2026-09&q=Groceries'
+ * transactionsHref('Food & Dining'); // '/transactions?q=Food+%26+Dining'
+ * ```
+ */
+export const transactionsHref = (search: string, month?: string): string =>
+  `${TransactionsPath}?${new URLSearchParams(month ? { month, q: search } : { q: search })}`;

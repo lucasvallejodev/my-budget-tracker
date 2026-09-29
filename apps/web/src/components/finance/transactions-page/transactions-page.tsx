@@ -10,9 +10,21 @@ import { TransactionDialog } from '../transaction-dialog';
 import { TransactionExplorer } from '../transaction-explorer';
 import { currentMonth, useTransactions } from '../use-finance-data';
 
-export function TransactionsPage({ initialSearch = '' }: { initialSearch?: string }) {
+const startingMonth = (initialSearch: string, initialMonth?: string) => {
+  if (initialMonth) return initialMonth;
+
+  return initialSearch ? undefined : currentMonth();
+};
+
+export function TransactionsPage({
+  initialMonth,
+  initialSearch = '',
+}: {
+  initialMonth?: string;
+  initialSearch?: string;
+}) {
   const [month, setMonth] = useState<string | undefined>(
-    initialSearch ? undefined : currentMonth()
+    startingMonth(initialSearch, initialMonth)
   );
 
   const transactions = useTransactions({ limit: '2000', month });

@@ -33,4 +33,24 @@ describe('DistributionChart', () => {
 
     expect(screen.getByText('No activity yet')).toBeTruthy();
   });
+
+  it('links a legend entry to its transactions when the segment has a link', () => {
+    render(
+      <DistributionChart
+        data={[
+          {
+            href: '/transactions?q=Food',
+            name: 'Food',
+            value: 30,
+          },
+          { name: 'Rent', value: 70 },
+        ]}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Food' }).getAttribute('href')).toBe(
+      '/transactions?q=Food'
+    );
+    expect(screen.queryByRole('link', { name: 'Rent' })).toBeNull();
+  });
 });

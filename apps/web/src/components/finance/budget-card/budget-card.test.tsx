@@ -50,7 +50,7 @@ describe('BudgetCard', () => {
 
     expect(screen.getByText('Near limit')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'View transactions' }).getAttribute('href')).toBe(
-      '/transactions?q=Food&month=2026-01'
+      '/transactions?month=2026-01&q=Food'
     );
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));

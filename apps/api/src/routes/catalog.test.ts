@@ -343,6 +343,67 @@ describe('reports and settings', () => {
     );
   });
 
+  it('ranks spending by payee and by account', async () => {
+    const everyday = await createAccount(ada);
+
+    const card = (
+      await ada.request('POST', '/accounts', {
+        currency: 'EUR',
+        name: 'Card',
+        type: 'credit_card',
+      })
+    ).json<{ id: string }>();
+
+    const market = (await ada.request('POST', '/payees', { name: 'Greenleaf Market' })).json();
+    const cafe = (await ada.request('POST', '/payees', { name: 'Corner Cafe' })).json();
+
+    const spend = (accountId: string, payeeId: string, amount: string) =>
+      ada.request('POST', '/transactions', {
+        accountId,
+        amount,
+        date: '2026-09-05',
+        direction: 'expense',
+        payeeId,
+      });
+
+    await spend(everyday.id, market.id, '40');
+    await spend(card.id, market.id, '25');
+    await spend(card.id, cafe.id, '3.50');
+
+    const byPayee = (await ada.request('GET', '/reports/breakdown?month=2026-09&by=payee')).json();
+
+    const byAccount = (
+      await ada.request('GET', '/reports/breakdown?month=2026-09&by=account')
+    ).json();
+
+    expect(byPayee.items).toEqual([
+      {
+        currency: 'EUR',
+        id: market.id,
+        name: 'Greenleaf Market',
+        spentMinor: 6500,
+        transactions: 2,
+      },
+      {
+        currency: 'EUR',
+        id: cafe.id,
+        name: 'Corner Cafe',
+        spentMinor: 350,
+        transactions: 1,
+      },
+    ]);
+    expect(byAccount.items.map((item: { name: string }) => item.name)).toEqual([
+      'Account EUR',
+      'Card',
+    ]);
+    expect(
+      (await bob.request('GET', '/reports/breakdown?month=2026-09&by=payee')).json().items
+    ).toEqual([]);
+    expect(
+      (await ada.request('GET', '/reports/breakdown?month=2026-09&by=merchant')).statusCode
+    ).toBe(400);
+  });
+
   it('updates settings and rejects unknown currencies', async () => {
     const updated = await ada.request('PATCH', '/settings', { primaryCurrency: 'usd' });
 

@@ -12,6 +12,10 @@
     @include muted-text;
   }
 
+  &__legend-link {
+    color: inherit;
+  }
+
   &__legend-value {
     color: var(--ink);
     margin-left: auto;

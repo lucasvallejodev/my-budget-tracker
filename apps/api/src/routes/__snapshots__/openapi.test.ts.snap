@@ -4178,6 +4178,8 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
               "enum": [
                 "group",
                 "category",
+                "payee",
+                "account",
               ],
               "type": "string",
             },
@@ -4271,6 +4273,39 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                               "groupName",
                               "icon",
                               "spentMinor",
+                            ],
+                            "type": "object",
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "currency": {
+                                "type": "string",
+                              },
+                              "id": {
+                                "nullable": true,
+                                "type": "string",
+                              },
+                              "name": {
+                                "type": "string",
+                              },
+                              "spentMinor": {
+                                "maximum": 9007199254740991,
+                                "minimum": -9007199254740991,
+                                "type": "integer",
+                              },
+                              "transactions": {
+                                "maximum": 9007199254740991,
+                                "minimum": -9007199254740991,
+                                "type": "integer",
+                              },
+                            },
+                            "required": [
+                              "currency",
+                              "id",
+                              "name",
+                              "spentMinor",
+                              "transactions",
                             ],
                             "type": "object",
                           },
