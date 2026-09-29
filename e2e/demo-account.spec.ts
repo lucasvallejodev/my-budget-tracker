@@ -13,4 +13,12 @@ test('signs in to the seeded demo account and shows its history', async ({ page 
   await expect(page.getByText('2 transactions need a category.')).toBeVisible();
   await expect(page.getByText('USD account').first()).toBeVisible();
   await expect(page.getByText('Everyday account').first()).toBeVisible();
+
+  await page.goto('/budgets');
+  await expect(page.getByText('Left per day')).toBeVisible();
+  await expect(page.getByText(/a day for \d+ days?|Nothing left to spend/).first()).toBeVisible();
+
+  await page.goto('/analytics');
+  await expect(page.getByRole('heading', { name: 'Top payees · EUR' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Oakwood Lettings' })).toBeVisible();
 });
