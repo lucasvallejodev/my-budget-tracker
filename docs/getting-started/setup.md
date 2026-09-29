@@ -228,7 +228,7 @@ Every workflow starts from `permissions: contents: read` (only CodeQL adds `secu
 
 ### Image scan exceptions
 
-The image scan fails the build on a **high** or **critical** vulnerability only when a fixed version exists: a flaw nobody can fix yet cannot block a merge, and lower severities are listed in the job summary and the `grype-api` / `grype-web` artifacts. Most failures go away with a base-image or dependency update (Dependabot proposes them weekly). When a finding cannot be fixed yet and does not affect CoinKeeper, for example a vulnerable function the app never calls, record a reviewed exception instead of weakening the check:
+The image scan fails the build on a **high** or **critical** vulnerability only when a fixed version exists: a flaw nobody can fix yet cannot block a merge, and lower severities are listed in the job summary and the `grype-api` / `grype-web` artifacts. Most failures go away with a base-image or dependency update (Dependabot proposes them weekly). When a finding cannot be fixed yet and does not affect CoinKeeper, for example a vulnerable function the app never calls, record a reviewed exception instead of weakening the check: When the scan step itself fails (for example GitHub cannot serve the Grype download), the job runs it once more; a real finding fails both attempts, so the retry never lets one through.
 
 1. Read the advisory and check whether the vulnerable package or code path is reachable in that image.
 2. Add an entry to `.grype.yaml` at the repository root:

@@ -76,6 +76,18 @@ jobs:
             END { finish(); if (bad) exit 1; print "Scan exceptions OK" }
           ' .grype.yaml
       - name: Scan for fixable high and critical vulnerabilities
+        id: scan
+        continue-on-error: true
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          image: ${{ env.IMAGE }}
+          severity-cutoff: high
+          only-fixed: true
+          fail-build: true
+          output-format: table
+          output-file: grype-${{ matrix.target }}.txt
+      - name: Retry the scan (downloading Grype or its database can fail transiently)
+        if: ${{ steps.scan.outcome == 'failure' }}
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: ${{ env.IMAGE }}
