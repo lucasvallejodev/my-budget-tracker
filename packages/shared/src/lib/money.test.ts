@@ -9,6 +9,7 @@ import {
   minorToDecimalString,
   minorUnits,
   parseAmountInput,
+  roundUpToWholeUnits,
 } from './money';
 
 describe('money', () => {
@@ -293,5 +294,11 @@ describe('formatMoney precision', () => {
     expect(formatMoney(1250, 'eur', { locale: 'en-US' })).toBe(
       formatMoney(1250, 'EUR', { locale: 'en-US' })
     );
+  });
+  it('rounds suggestions up to whole major units', () => {
+    expect(roundUpToWholeUnits(18_667, 'EUR')).toBe(18_700);
+    expect(roundUpToWholeUnits(18_600, 'EUR')).toBe(18_600);
+    expect(roundUpToWholeUnits(1_234, 'JPY')).toBe(1_234);
+    expect(roundUpToWholeUnits(0, 'EUR')).toBe(0);
   });
 });
