@@ -45,6 +45,8 @@ apps/api/src/
 ├─ db/                     schema.ts (Drizzle tables and enums), index.ts (node-postgres pool), connection.ts (DATABASE_URL checks)
 ├─ constants/http.ts       HTTP status codes
 ├─ cli/reset-password.ts   npm run user:reset-password -- <email>
+├─ cli/seed-demo.ts        npm run db:seed:demo (never in production)
+├─ demo/                   The demo account: persona and spending data, buildDemoPlan(today), seedDemoAccount
 └─ test/                   database.ts (PGlite with every migration, insertUser), app.ts (createTestApp, signUp)
 ```
 

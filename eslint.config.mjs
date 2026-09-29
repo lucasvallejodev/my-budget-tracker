@@ -506,6 +506,10 @@ const config = [
     rules: { 'no-restricted-syntax': 'off' },
   },
   {
+    files: ['apps/api/src/demo/persona.ts', 'apps/api/src/demo/spending.ts'],
+    rules: { '@typescript-eslint/no-magic-numbers': 'off' },
+  },
+  {
     files: ['**/*.config.{ts,mts,js,mjs}', 'scripts/eslint-rules/**', 'scripts/stylelint-rules/**'],
     rules: {
       '@typescript-eslint/no-magic-numbers': 'off',

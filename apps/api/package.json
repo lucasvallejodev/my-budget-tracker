@@ -8,6 +8,7 @@
     "db:check": "node scripts/database.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed:demo": "tsx src/cli/seed-demo.ts",
     "db:studio": "drizzle-kit studio",
     "dev": "tsx watch src/server.ts",
     "migrate:deploy": "node dist/cli/migrate.js",

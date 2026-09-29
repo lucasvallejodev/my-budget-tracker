@@ -9,6 +9,7 @@ const E2E_AUTH_ATTEMPTS_PER_MINUTE = '200';
 export default defineConfig({
   forbidOnly: !!process.env.CI,
   fullyParallel: true,
+  globalSetup: './e2e/global-setup.ts',
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   reporter: process.env.CI ? [['html', { open: 'never' }], ['github']] : 'list',
   retries: process.env.CI ? CI_RETRIES : 0,

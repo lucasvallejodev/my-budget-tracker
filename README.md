@@ -37,6 +37,7 @@ cp .env.example .env          # set a URL-safe POSTGRES_PASSWORD (also inside DA
 npm run db:up                 # start PostgreSQL 17 in Docker
 npm run db:migrate            # apply the SQL migrations (also seeds the currencies table)
 npm run db:check              # optional: verify the live schema matches the migrations
+npm run db:seed:demo          # optional: demo user with six months of data (docs/getting-started/demo-account.md)
 npm run dev                   # API on http://127.0.0.1:4000, web app on http://localhost:3000
 ```
 

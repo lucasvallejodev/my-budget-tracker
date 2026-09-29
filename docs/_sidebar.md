@@ -4,6 +4,7 @@
   - [Setup](getting-started/setup.md)
   - [Commands](getting-started/commands.md)
   - [Project structure](getting-started/project-structure.md)
+  - [Demo account](getting-started/demo-account.md)
 
 - Architecture
   - [Overview](architecture/overview.md)
