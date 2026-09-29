@@ -20,7 +20,7 @@ import {
 } from '@/components/ui';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 
-import { TransactionDialog } from '../transaction-dialog';
+import { duplicatePreset, TransactionDialog } from '../transaction-dialog';
 import { categoryLabel, describeTransaction } from '../transaction-labels';
 import { TransactionRow, useRefreshFinance } from '../use-finance-data';
 
@@ -55,6 +55,7 @@ const restoreWithToast = async (transaction: TransactionRow, refresh: () => Prom
 export function TransactionActions({ transaction }: { transaction: TransactionRow }) {
   const [details, setDetails] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const refresh = useRefreshFinance();
   const isTransfer = transaction.kind === 'transfer';
@@ -89,6 +90,9 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
           {transaction.kind !== 'opening' && (
             <MenuItem onSelect={() => setEditing(true)}>Edit</MenuItem>
           )}
+          {transaction.kind !== 'opening' && (
+            <MenuItem onSelect={() => setDuplicating(true)}>Duplicate</MenuItem>
+          )}
           <MenuItem onSelect={() => setDeleting(true)}>Delete</MenuItem>
         </MenuContent>
       </Menu>
@@ -100,6 +104,13 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
       </Dialog>
       {editing && (
         <TransactionDialog open={editing} onOpenChange={setEditing} transaction={transaction} />
+      )}
+      {duplicating && (
+        <TransactionDialog
+          open={duplicating}
+          onOpenChange={setDuplicating}
+          preset={duplicatePreset(transaction)}
+        />
       )}
       <Dialog open={deleting} onOpenChange={setDeleting}>
         <DialogContent>

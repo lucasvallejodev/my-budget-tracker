@@ -20,6 +20,7 @@ import {
   Text,
 } from '@/components/ui';
 import { formatMoney, minorToDecimalString } from '@coinkeeper/shared/lib/money';
+import type { BudgetSuggestion } from '@coinkeeper/shared/schema/budgets';
 
 import { CategoryPicker } from '../category-picker';
 import { useEntityMutation } from '../use-entity-mutation';
@@ -77,6 +78,41 @@ function SuggestionHint({
         Use {formatMoney(amountMinor, currency)}
       </Button>
     </Field>
+  );
+}
+
+function LimitField({
+  amount,
+  currency,
+  onChange,
+  suggestion,
+}: {
+  amount: string;
+  currency: string;
+  onChange: (amount: string) => void;
+  suggestion?: BudgetSuggestion;
+}) {
+  return (
+    <>
+      <Field>
+        Monthly limit
+        <Input
+          inputMode="decimal"
+          placeholder="0.00"
+          value={amount}
+          onChange={event => onChange(event.target.value)}
+          required
+        />
+      </Field>
+      {suggestion && (
+        <SuggestionHint
+          amountMinor={suggestion.amountMinor}
+          currency={currency}
+          months={suggestion.months}
+          onUse={() => onChange(minorToDecimalString(suggestion.amountMinor, currency))}
+        />
+      )}
+    </>
   );
 }
 
@@ -150,24 +186,12 @@ export function BudgetDialog({
               onChange={setCurrency}
             />
           </Field>
-          <Field>
-            Monthly limit
-            <Input
-              inputMode="decimal"
-              placeholder="0.00"
-              value={amount}
-              onChange={event => setAmount(event.target.value)}
-              required
-            />
-          </Field>
-          {suggestion && (
-            <SuggestionHint
-              amountMinor={suggestion.amountMinor}
-              currency={currency}
-              months={suggestion.months}
-              onUse={() => setAmount(minorToDecimalString(suggestion.amountMinor, currency))}
-            />
-          )}
+          <LimitField
+            amount={amount}
+            currency={currency}
+            onChange={setAmount}
+            suggestion={suggestion}
+          />
           <Button type="submit" disabled={save.isPending || !categoryId || !amount.trim()}>
             Save budget
           </Button>

@@ -29,8 +29,7 @@ import {
   SelectValue,
   Stack,
 } from '@/components/ui';
-import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
-import { minorToDecimalString } from '@coinkeeper/shared/lib/money';
+import { RememberedFields, rememberValue } from '@/lib/form-memory';
 import {
   standardTransactionSchema,
   StandardTransactionValues,
@@ -41,6 +40,16 @@ import {
 import { useEntityMutation } from '../use-entity-mutation';
 import { TransactionRow, useAccounts, usePayees } from '../use-finance-data';
 import {
+  Direction,
+  Mode,
+  modeOf,
+  Preset,
+  rememberedStandardPreset,
+  rememberedTransferPreset,
+  standardDefaults,
+  transferDefaults,
+} from './transaction-defaults';
+import {
   AccountField,
   AmountField,
   CategoryField,
@@ -49,90 +58,12 @@ import {
   PayeeField,
 } from './transaction-fields';
 
-type Mode = 'expense' | 'income' | 'transfer';
-type Direction = Exclude<Mode, 'transfer'>;
-type Preset = Partial<StandardTransactionValues & TransferValues> & { mode?: Mode };
-
 type TransactionDialogProps = {
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
   preset?: Preset;
   transaction?: TransactionRow;
   trigger?: ReactNode;
-};
-
-const today = () => localIsoDate(new Date());
-
-const modeOf = (transaction?: TransactionRow, preset?: Preset): Mode => {
-  if (!transaction) return preset?.mode ?? 'expense';
-  if (transaction.kind === 'transfer') return 'transfer';
-
-  return transaction.amountMinor < 0 ? 'expense' : 'income';
-};
-
-const standardDefaults = (
-  direction: Direction,
-  transaction?: TransactionRow,
-  preset?: Partial<StandardTransactionValues>
-): StandardTransactionValues => {
-  if (!transaction) {
-    return {
-      accountId: '',
-      amount: '',
-      categoryId: '',
-      date: today(),
-      direction,
-      excluded: false,
-      memo: '',
-      payeeId: '',
-      status: 'cleared',
-      ...preset,
-    };
-  }
-
-  return {
-    accountId: transaction.accountId,
-    amount: minorToDecimalString(Math.abs(transaction.amountMinor), transaction.currency),
-    categoryId: transaction.categoryId ?? '',
-    date: transaction.date,
-    direction,
-    excluded: transaction.excluded,
-    memo: transaction.memo,
-    payeeId: transaction.payeeId ?? '',
-    status: transaction.status,
-  };
-};
-
-const transferDefaults = (
-  transaction?: TransactionRow,
-  preset?: Partial<TransferValues>
-): TransferValues => {
-  if (!transaction) {
-    return {
-      amountFrom: '',
-      amountTo: '',
-      date: today(),
-      fromAccountId: '',
-      memo: '',
-      status: 'cleared',
-      toAccountId: '',
-      ...preset,
-    };
-  }
-
-  const outLeg = transaction.amountMinor < 0;
-  const counterpart = transaction.counterpartAccountId ?? '';
-  const amount = minorToDecimalString(Math.abs(transaction.amountMinor), transaction.currency);
-
-  return {
-    amountFrom: outLeg ? amount : '',
-    amountTo: outLeg ? '' : amount,
-    date: transaction.date,
-    fromAccountId: outLeg ? transaction.accountId : counterpart,
-    memo: transaction.memo,
-    status: transaction.status,
-    toAccountId: outLeg ? counterpart : transaction.accountId,
-  };
 };
 
 function ModeSelect({
@@ -222,9 +153,14 @@ function StandardForm({
   transaction?: TransactionRow;
 }) {
   const { data: payees } = usePayees();
+  const { data: accounts } = useAccounts();
 
   const form = useForm<StandardTransactionValues>({
-    defaultValues: standardDefaults(direction, transaction, preset),
+    defaultValues: standardDefaults(
+      direction,
+      transaction,
+      transaction ? preset : { ...rememberedStandardPreset(accounts), ...preset }
+    ),
     resolver: zodResolver(standardTransactionSchema),
   });
 
@@ -237,6 +173,7 @@ function StandardForm({
     mutationFn: (values: StandardTransactionValues) =>
       transaction ? updateTransaction(transaction.id, values) : createTransaction(values),
     onSuccess: () => {
+      rememberValue(RememberedFields.standardAccount, form.getValues('accountId'));
       form.reset();
       onDone();
     },
@@ -300,7 +237,10 @@ function TransferForm({
   const { data: accounts } = useAccounts();
 
   const form = useForm<TransferValues>({
-    defaultValues: transferDefaults(transaction, preset),
+    defaultValues: transferDefaults(
+      transaction,
+      transaction ? preset : { ...rememberedTransferPreset(accounts), ...preset }
+    ),
     resolver: zodResolver(transferSchema),
   });
 
@@ -321,6 +261,8 @@ function TransferForm({
         ? updateTransfer(transaction.transferId, values)
         : createTransfer(values),
     onSuccess: () => {
+      rememberValue(RememberedFields.transferFrom, form.getValues('fromAccountId'));
+      rememberValue(RememberedFields.transferTo, form.getValues('toAccountId'));
       form.reset();
       onDone();
     },
