@@ -57,6 +57,42 @@ const categorySpending = async (
   }));
 };
 
+type CategorySpendingOverMonths = CategorySpending & { months: number };
+
+const categorySpendingBetween = async (
+  db: Db,
+  userId: string,
+  from: string,
+  to: string
+): Promise<CategorySpendingOverMonths[]> => {
+  const rows = await rowsOf<{
+    category_id: string;
+    currency: string;
+    months: string;
+    spent_minor: string;
+  }>(
+    db,
+    sql`
+    SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor,
+      COUNT(DISTINCT date_trunc('month', t.date)) AS months
+    FROM transactions t
+    JOIN accounts a ON a.id = t.account_id
+    JOIN categories c ON c.id = t.category_id
+    JOIN category_groups g ON g.id = c.group_id
+    WHERE t.user_id = ${userId} AND ${spendingWhere}
+      AND t.date >= ${from} AND t.date < ${to}
+      AND g.kind = 'expense' AND c.archived_at IS NULL
+    GROUP BY t.currency, t.category_id`
+  );
+
+  return rows.map(row => ({
+    categoryId: row.category_id,
+    currency: row.currency,
+    months: Number(row.months),
+    spentMinor: Number(row.spent_minor),
+  }));
+};
+
 export const createReportService = (db: Db) => {
   const fx = createFxService(db);
 
@@ -168,6 +204,9 @@ export const createReportService = (db: Db) => {
 
     categorySpending: (userId: string, month: string, currencies: string[]) =>
       categorySpending(db, userId, month, currencies),
+
+    categorySpendingBetween: (userId: string, from: string, to: string) =>
+      categorySpendingBetween(db, userId, from, to),
 
     async convertedTotals(
       userId: string,

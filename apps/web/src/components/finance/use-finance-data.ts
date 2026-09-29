@@ -7,7 +7,7 @@ import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
 import { localIsoMonth } from '@coinkeeper/shared/lib/date-helpers';
 import type { AccountSummary } from '@coinkeeper/shared/schema/accounts';
 import type { Session, User } from '@coinkeeper/shared/schema/auth';
-import type { BudgetRow } from '@coinkeeper/shared/schema/budgets';
+import type { BudgetRow, BudgetSuggestion } from '@coinkeeper/shared/schema/budgets';
 import type { CategoryTree } from '@coinkeeper/shared/schema/categories';
 import type { PageResponse } from '@coinkeeper/shared/schema/common';
 import type { Currency } from '@coinkeeper/shared/schema/currencies';
@@ -36,6 +36,7 @@ type TransactionParams = Record<string, string | undefined>;
 export const QueryKeys = {
   accounts: ['accounts'] as const,
   budgets: (month: string) => ['budgets', month] as const,
+  budgetSuggestions: (month: string) => ['budgets', 'suggestions', month] as const,
   categories: ['categories'] as const,
   currencies: ['currencies'] as const,
   deleted: (resource: string) => ['deleted', resource] as const,
@@ -82,6 +83,13 @@ export function useSettings() {
   return useQuery({
     queryFn: () => apiGet<UserSettings>('/settings'),
     queryKey: QueryKeys.settings,
+  });
+}
+
+export function useBudgetSuggestions(month: string) {
+  return useQuery({
+    queryFn: () => apiList<BudgetSuggestion>('/budgets/suggestions', { month }),
+    queryKey: QueryKeys.budgetSuggestions(month),
   });
 }
 

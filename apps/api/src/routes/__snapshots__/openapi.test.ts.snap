@@ -1357,6 +1357,75 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
         ],
       },
     },
+    "/api/v1/budgets/suggestions": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "categoryId": {
+                            "type": "string",
+                          },
+                          "currency": {
+                            "type": "string",
+                          },
+                          "months": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                        },
+                        "required": [
+                          "amountMinor",
+                          "categoryId",
+                          "currency",
+                          "months",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "items",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "budgets",
+        ],
+      },
+    },
     "/api/v1/budgets/{id}": {
       "delete": {
         "parameters": [

@@ -17,12 +17,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Text,
 } from '@/components/ui';
-import { minorToDecimalString } from '@coinkeeper/shared/lib/money';
+import { formatMoney, minorToDecimalString } from '@coinkeeper/shared/lib/money';
 
 import { CategoryPicker } from '../category-picker';
 import { useEntityMutation } from '../use-entity-mutation';
-import { BudgetRow, monthLabel } from '../use-finance-data';
+import { BudgetRow, monthLabel, useBudgetSuggestions } from '../use-finance-data';
 
 const FallbackCurrency = 'EUR';
 
@@ -55,6 +56,30 @@ function CurrencySelect({
   );
 }
 
+function SuggestionHint({
+  amountMinor,
+  currency,
+  months,
+  onUse,
+}: {
+  amountMinor: number;
+  currency: string;
+  months: number;
+  onUse: () => void;
+}) {
+  return (
+    <Field as="div">
+      <Text size="small" tone="muted">
+        You spent about {formatMoney(amountMinor, currency)} a month over the last {months} month
+        {months === 1 ? '' : 's'}.
+      </Text>
+      <Button type="button" variant="outline" size="sm" onClick={onUse}>
+        Use {formatMoney(amountMinor, currency)}
+      </Button>
+    </Field>
+  );
+}
+
 export function BudgetDialog({
   budget,
   currencies,
@@ -75,6 +100,12 @@ export function BudgetDialog({
     budget.amountMinor
       ? minorToDecimalString(budget.amountMinor, budget.currency ?? FallbackCurrency)
       : ''
+  );
+
+  const suggestions = useBudgetSuggestions(month);
+
+  const suggestion = suggestions.data?.find(
+    item => item.categoryId === categoryId && item.currency === currency
   );
 
   const save = useEntityMutation({
@@ -129,6 +160,14 @@ export function BudgetDialog({
               required
             />
           </Field>
+          {suggestion && (
+            <SuggestionHint
+              amountMinor={suggestion.amountMinor}
+              currency={currency}
+              months={suggestion.months}
+              onUse={() => setAmount(minorToDecimalString(suggestion.amountMinor, currency))}
+            />
+          )}
           <Button type="submit" disabled={save.isPending || !categoryId || !amount.trim()}>
             Save budget
           </Button>

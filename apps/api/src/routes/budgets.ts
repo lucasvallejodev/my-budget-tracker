@@ -7,6 +7,8 @@ import {
   budgetKeyParamsSchema,
   budgetListQuerySchema,
   budgetRowSchema,
+  budgetSuggestionQuerySchema,
+  budgetSuggestionSchema,
   copyBudgetsResultSchema,
   copyBudgetsSchema,
 } from '@coinkeeper/shared/schema/budgets';
@@ -32,6 +34,20 @@ export const budgetsRoutes: FastifyPluginAsyncZod = async app => {
 
       return { items: await app.services.budgets.list(userIdOf(request), month, { deleted }) };
     }
+  );
+
+  app.get(
+    '/budgets/suggestions',
+    {
+      schema: {
+        querystring: budgetSuggestionQuerySchema,
+        response: withErrors({ [HttpStatus.ok]: listOf(budgetSuggestionSchema) }),
+        tags: Tags,
+      },
+    },
+    async request => ({
+      items: await app.services.budgets.suggestions(userIdOf(request), request.query.month),
+    })
   );
 
   app.put(
