@@ -35,7 +35,7 @@ A rate stays in force until a newer one exists for the same pair. Inverse pairs 
 ### Turn on converted totals
 
 1. Toggle **Show converted totals**.
-2. The dashboard gains a panel "≈ Converted totals · EUR" with net worth, income and spending converted using the rate in force today, and a caption listing the rates and their dates.
+2. The dashboard gains a panel "≈ Converted totals · EUR" with net worth, income and spending converted using the rate in force today, and a caption listing the rates and their dates. Rates are shown to at most six significant digits, so a rate derived from the inverse of EUR→USD 1.13 reads `1 USD = 0.884956 EUR`; conversions still use the full value.
 3. Currencies without a rate are named in a warning and left out of the total. They are never converted at 1:1.
 
 ## Automating rates later

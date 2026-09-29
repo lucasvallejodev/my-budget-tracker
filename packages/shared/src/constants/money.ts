@@ -1,3 +1,5 @@
+export const COMPACT_MONEY_SIGNIFICANT_DIGITS = 3;
 export const DECIMAL_RADIX = 10;
 export const DEFAULT_MINOR_UNIT_DIGITS = 2;
 export const PERCENT_SCALE = 100;
+export const EXCHANGE_RATE_SIGNIFICANT_DIGITS = 6;

@@ -1,4 +1,9 @@
-import { DECIMAL_RADIX, DEFAULT_MINOR_UNIT_DIGITS } from '../constants/money';
+import {
+  COMPACT_MONEY_SIGNIFICANT_DIGITS,
+  DECIMAL_RADIX,
+  DEFAULT_MINOR_UNIT_DIGITS,
+  EXCHANGE_RATE_SIGNIFICANT_DIGITS,
+} from '../constants/money';
 import { isDigitsOnly, Patterns } from './patterns';
 
 const exponentCache = new Map<string, number>();
@@ -204,6 +209,77 @@ export const formatMoney = (
       })
   ).format(minorToDecimalString(amountMinor, code) as Intl.StringNumericLiteral);
 };
+
+/**
+ * Formats minor units as a short currency label (`€3K`, `€1.5K`), for chart axes and tight spaces.
+ *
+ * @remarks
+ * Uses the locale's compact notation with at most three significant digits, so thousands and
+ * millions become `K` and `M` (`€2.25K`, not `€2.3K`, for an axis line at 2,250) and small
+ * amounts drop trailing zeros. The result is rounded and not meant for amounts a person reads as
+ * exact; use {@link formatMoney} for those. Without a `locale`, the runtime default is used.
+ *
+ * @param amountMinor - Signed amount in minor units.
+ * @param currency - ISO 4217 code the amount is expressed in.
+ * @param options - `locale` is a BCP 47 tag such as `'en-US'`.
+ * @returns The compact localised string, e.g. `'€3K'` or `'-¥1.5M'`.
+ *
+ * @example
+ * ```ts
+ * formatCompactMoney(300000, 'EUR', { locale: 'en-US' }); // '€3K'
+ * formatCompactMoney(225000, 'EUR', { locale: 'en-US' }); // '€2.25K'
+ * formatCompactMoney(75000, 'EUR', { locale: 'en-US' }); // '€750'
+ * formatCompactMoney(-1500000, 'JPY', { locale: 'en-US' }); // '-¥1.5M'
+ * ```
+ */
+export const formatCompactMoney = (
+  amountMinor: number,
+  currency: string,
+  options: { locale?: string } = {}
+): string => {
+  const code = currency.toUpperCase();
+
+  return cachedFormatter(
+    `compact|${options.locale ?? ''}|${code}`,
+    () =>
+      new Intl.NumberFormat(options.locale ?? undefined, {
+        currency: code,
+        maximumSignificantDigits: COMPACT_MONEY_SIGNIFICANT_DIGITS,
+        notation: 'compact',
+        style: 'currency',
+      })
+  ).format(minorToDecimalString(amountMinor, code) as Intl.StringNumericLiteral);
+};
+
+/**
+ * Formats an exchange rate for display, rounded to at most six significant digits.
+ *
+ * @remarks
+ * Rates derived from the inverse of a manual rate carry floating-point noise
+ * (`1 / 1.13 = 0.8849557522123894`); this trims them without padding short rates with zeros.
+ * The stored rate keeps its full precision; only the text is rounded. Without a `locale`, the
+ * runtime default is used.
+ *
+ * @param rate - Units of the quote currency per one unit of the base currency.
+ * @param options - `locale` is a BCP 47 tag such as `'en-US'`.
+ * @returns The rate as localised text, e.g. `'0.884956'` or `'1.13'`.
+ *
+ * @example
+ * ```ts
+ * formatExchangeRate(0.8849557522123894, { locale: 'en-US' }); // '0.884956'
+ * formatExchangeRate(1.13, { locale: 'en-US' }); // '1.13'
+ * formatExchangeRate(0.0000123456789, { locale: 'en-US' }); // '0.0000123457'
+ * formatExchangeRate(1234567.891, { locale: 'en-US' }); // '1,234,570'
+ * ```
+ */
+export const formatExchangeRate = (rate: number, options: { locale?: string } = {}): string =>
+  cachedFormatter(
+    `rate|${options.locale ?? ''}`,
+    () =>
+      new Intl.NumberFormat(options.locale ?? undefined, {
+        maximumSignificantDigits: EXCHANGE_RATE_SIGNIFICANT_DIGITS,
+      })
+  ).format(rate);
 
 /**
  * Converts an amount from one currency to another at a given exchange rate.
