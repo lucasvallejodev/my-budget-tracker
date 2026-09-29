@@ -257,6 +257,8 @@ npm run docs
 
 This serves the `docs/` folder with Docsify at http://localhost:3010. The site is static: any HTTP server pointed at `docs/` works, and GitHub Pages can serve it directly (the `.nojekyll` file is already there).
 
+Links inside a page are relative to that page, as on GitHub, and Docsify resolves them the same way (`relativePath: true` in `docs/index.html`). The sidebar in `docs/_sidebar.md` is shared by every page, so its links start with `/` (`/features/budgets.md`).
+
 ## Troubleshooting
 
 | Symptom                                                                                  | Cause and fix                                                                                                                                                                                                                                                                                                                                              |

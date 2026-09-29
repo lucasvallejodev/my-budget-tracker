@@ -59,6 +59,7 @@ Agent-written text drifts into patterns readers notice. Remove:
 
 - Link text says where it goes: a link to `docs/architecture/api.md` reads "see API service › Errors", never "click here" or a bare path as text.
 - Relative repository paths for everything inside the repository; the `›` character separates a page from a section, as existing pages do.
+- Page links are relative to the page that holds them (`../reference/rest-api.md` from `docs/features/`), so they work on GitHub and in Docsify (`relativePath: true`). Only `docs/_sidebar.md` uses root paths with a leading `/` (`/features/budgets.md`), because Docsify shows it on every page.
 - Bare URLs only for local addresses the reader types (`http://localhost:3000`).
 - Never link to `temp/` or to files outside the repository that the reader cannot open.
 
