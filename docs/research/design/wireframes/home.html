@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Home wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script>
+      window.charts = {
+        cashflow: element =>
+          ck.bars(element, {
+            format: value => (value ? `€${value / 1000}k` : '€0'),
+            height: 190,
+            highlight: 5,
+            labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+            max: 3000,
+            series: [
+              { color: '#079455', values: [3000, 3000, 3000, 3000, 3000, 3000] },
+              { color: '#7b8494', values: [2334.54, 2181.67, 2620.66, 2247.3, 2281.18, 2154.39] },
+            ],
+            ticks: [0, 1500, 3000],
+          }),
+        eur: element =>
+          ck.line(element, {
+            color: '#6941c6',
+            dot: true,
+            height: 34,
+            values: [11650, 12120, 12610, 12890, 13540, 14210, 14996],
+          }),
+        usd: element =>
+          ck.line(element, {
+            color: '#6941c6',
+            dot: true,
+            height: 34,
+            values: [2210, 2402, 2560, 2749, 2951, 3180, 3317],
+          }),
+      };
+    </script>
+    <script src="wireframes.js"></script>
+  </head>
+  <body data-page="home" data-sidebar-note="8" data-sidebar-note-pos="420,96">
+    <div id="content">
+      <div class="page-head">
+        <div>
+          <h1>Home</h1>
+          <p>Tuesday 29 September · 2 days left this month</p>
+        </div>
+        <div class="page-head__tools">
+          <div class="seg" data-note="1" data-note-pos="-12,-12">
+            <span class="seg--on">EUR</span><span>USD</span><span>≈ All in EUR</span>
+          </div>
+          <div class="month">
+            <button><i data-lucide="chevron-left"></i></button><span>September 2026</span
+            ><button><i data-lucide="chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid--main">
+        <section class="card" data-note="2">
+          <div class="card__head">
+            <div class="eyebrow">Left to spend in September</div>
+            <a class="link" href="budgets.html">Budgets<i data-lucide="arrow-right"></i></a>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 10px">
+            <div class="hero num">€92.87</div>
+            <div class="muted">of €850.00 budgeted</div>
+            <span class="tag tag--good" style="margin-left: auto"
+              ><i data-lucide="check"></i>€18.20 under plan</span
+            >
+          </div>
+          <div class="bar bar--lg" style="margin-top: 34px">
+            <div class="bar__fill" style="width: 89%"></div>
+            <div class="bar__pace" style="left: 93.3%"></div>
+            <div class="bar__pace-label" style="left: 93.3%">Today</div>
+          </div>
+          <div class="legend" style="margin-top: 10px; justify-content: space-between">
+            <span
+              ><span class="swatch" style="--dot: var(--brand)"></span>Spent €757.13 · 89% · 93% of
+              the month gone</span
+            >
+            <span><strong style="color: var(--ink)">€46.43 a day</strong> for the last 2 days</span>
+          </div>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat__label">
+                <span class="avatar avatar--sm avatar--tint" style="--dot: #067647"
+                  ><i data-lucide="arrow-down-left"></i></span
+                >Income
+              </div>
+              <div class="stat__value num">€3,000.00</div>
+              <div class="stat__meta">Same as August</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">
+                <span class="avatar avatar--sm avatar--tint" style="--dot: #344054"
+                  ><i data-lucide="arrow-up-right"></i></span
+                >Spending
+              </div>
+              <div class="stat__value num">€2,154.39</div>
+              <div class="stat__meta">
+                <span class="delta delta--good"><i data-lucide="arrow-down"></i>5.6%</span> vs
+                August
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">
+                <span class="avatar avatar--sm avatar--tint" style="--dot: #6941c6"
+                  ><i data-lucide="piggy-bank"></i></span
+                >Kept
+              </div>
+              <div class="stat__value num">€845.61</div>
+              <div class="stat__meta">28% of income</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" data-note="3">
+          <div class="card__head">
+            <div class="eyebrow">Net worth</div>
+            <a class="link" href="accounts.html">Accounts<i data-lucide="arrow-right"></i></a>
+          </div>
+          <div
+            style="display: grid; grid-template-columns: 1fr 120px; align-items: center; gap: 12px"
+          >
+            <div>
+              <div class="hero hero--md num">€14,996.93</div>
+              <div class="small">
+                <span class="delta delta--good"><i data-lucide="arrow-up"></i>€786.93</span>
+                <span class="muted">in 30 days · 4 accounts</span>
+              </div>
+            </div>
+            <div data-chart="eur"></div>
+          </div>
+          <div class="divider"></div>
+          <div
+            style="display: grid; grid-template-columns: 1fr 120px; align-items: center; gap: 12px"
+          >
+            <div>
+              <div class="hero hero--md num" style="font-size: 22px">$3,317.28</div>
+              <div class="small">
+                <span class="delta delta--good"><i data-lucide="arrow-up"></i>$137.28</span>
+                <span class="muted">in 30 days · 1 account</span>
+              </div>
+            </div>
+            <div data-chart="usd"></div>
+          </div>
+          <div class="divider"></div>
+          <div class="legend" style="justify-content: space-between">
+            <span>Assets <strong class="amt" style="color: var(--ink)">€15,359.51</strong></span>
+            <span>Owed <strong class="amt" style="color: var(--ink)">€362.58</strong></span>
+            <span title="Approximate, using your manual rate">≈ €17,932.58 all in EUR</span>
+          </div>
+        </section>
+      </div>
+
+      <div class="attention" style="margin-top: 16px" data-note="4">
+        <a href="review.html"
+          ><span class="icon" style="--bg: var(--brand-soft); --fg: var(--brand)"
+            ><i data-lucide="inbox"></i></span
+          >2 transactions need a category<i class="chev" data-lucide="chevron-right"></i
+        ></a>
+        <a href="budgets.html"
+          ><span class="icon" style="--bg: var(--negative-soft); --fg: var(--negative)"
+            ><i data-lucide="circle-alert"></i></span
+          >Groceries is €6.14 over budget<i class="chev" data-lucide="chevron-right"></i
+        ></a>
+        <a href="budgets.html"
+          ><span class="icon" style="--bg: var(--warning-soft); --fg: var(--warning)"
+            ><i data-lucide="gauge"></i></span
+          >2 budgets are spending too fast<i class="chev" data-lucide="chevron-right"></i
+        ></a>
+      </div>
+
+      <div class="grid grid--main">
+        <section class="card" data-note="5">
+          <div class="card__head">
+            <div>
+              <div class="card__title">Where your money went</div>
+              <div class="card__sub">Spending by group · September · EUR</div>
+            </div>
+            <a class="link" href="analytics-spending.html"
+              >Analytics<i data-lucide="arrow-right"></i
+            ></a>
+          </div>
+          <div class="list" id="groups"></div>
+        </section>
+
+        <section class="card card--flush" data-note="6">
+          <div class="card__head">
+            <div>
+              <div class="card__title">Budgets to watch</div>
+              <div class="card__sub">3 of 8 need attention</div>
+            </div>
+            <a class="link" href="budgets.html">All budgets<i data-lucide="arrow-right"></i></a>
+          </div>
+          <div class="list" id="watch"></div>
+          <div class="row" style="grid-template-columns: auto 1fr; min-height: 64px">
+            <span class="tag tag--good" style="min-width: 28px; justify-content: center">5</span>
+            <div class="muted small">
+              On track: Restaurants &amp; bars, Electricity &amp; gas, Taxi &amp; rideshare,
+              Streaming, Clothing
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="grid grid--main" style="margin-top: 16px">
+        <section class="card card--flush" data-note="7">
+          <div class="card__head" style="padding-bottom: 6px">
+            <div class="card__title">Recent activity</div>
+            <a class="link" href="transactions.html"
+              >All transactions<i data-lucide="arrow-right"></i
+            ></a>
+          </div>
+          <div class="list" id="recent"></div>
+        </section>
+        <section class="card">
+          <div class="card__head">
+            <div>
+              <div class="card__title">Cash flow</div>
+              <div class="card__sub">Last 6 months · EUR</div>
+            </div>
+          </div>
+          <div data-chart="cashflow"></div>
+          <div class="legend" style="margin-top: 8px">
+            <span><span class="swatch" style="--dot: #079455"></span>Income</span>
+            <span><span class="swatch" style="--dot: #7b8494"></span>Spending</span>
+            <span style="margin-left: auto"
+              >Kept on average <strong style="color: var(--ink)">€697</strong> a month</span
+            >
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const groups = [
+        ['Housing', '#7c3aed', 1200, 55.7, 0],
+        ['Food & Dining', '#dc2626', 563.15, 26.1, -5.6],
+        ['Bills & Utilities', '#0891b2', 168.69, 7.8, 23.4],
+        ['Transportation', '#ea580c', 54.67, 2.5, -8.2],
+        ['Health & Wellness', '#059669', 53.0, 2.5, -65.1],
+        ['Other groups (3)', '#94a3b8', 114.88, 5.4, null],
+      ];
+      document.getElementById('groups').innerHTML = groups
+        .map(([name, color, amount, share, delta]) => {
+          const change =
+            delta === null
+              ? '<span class="muted small">Entertainment, Shopping, Uncategorized</span>'
+              : delta === 0
+                ? '<span class="muted small">Same as August</span>'
+                : `<span class="delta ${delta > 0 ? 'delta--bad' : 'delta--good'}"><i data-lucide="${
+                    delta > 0 ? 'arrow-up' : 'arrow-down'
+                  }"></i>${Math.abs(delta)}%</span> <span class="muted small">vs August</span>`;
+          return `<div style="display:grid;grid-template-columns:170px 1fr 92px;gap:14px;align-items:center;padding:7px 0">
+            <div style="display:flex;align-items:center;gap:8px;font-weight:500"><span class="swatch" style="--dot:${color}"></span>${name}</div>
+            <div><div class="bar"><div class="bar__fill" style="width:${share}%;--fill:${color}"></div></div><div style="margin-top:4px">${change}</div></div>
+            <div style="text-align:right"><div class="amt">€${amount.toLocaleString('en', { minimumFractionDigits: 2 })}</div><div class="muted small">${share}%</div></div>
+          </div>`;
+        })
+        .join('');
+
+      const watch = [
+        ['Groceries', 'shopping-cart', '#dc2626', 356.14, 350, 'bad', '€6.14 over'],
+        ['Coffee', 'coffee', '#dc2626', 14.48, 15, 'warn', '€0.52 left'],
+        ['Takeout & delivery', 'pizza', '#dc2626', 56.96, 60, 'warn', '€3.04 left'],
+      ];
+      document.getElementById('watch').innerHTML = watch
+        .map(([name, icon, color, spent, budget, state, left]) => {
+          const percent = Math.min((spent / budget) * 100, 100);
+          return `<div class="row" style="grid-template-columns:auto 1fr;min-height:64px">
+            <span class="avatar avatar--sm avatar--tint" style="--dot:${color}"><i data-lucide="${icon}"></i></span>
+            <div>
+              <div style="display:flex;justify-content:space-between;gap:8px"><span class="row__title">${name}</span><span class="amt ${state === 'bad' ? 'amt--over' : ''}" style="font-size:13px">${left}</span></div>
+              <div class="bar" style="margin:7px 0 4px"><div class="bar__fill fill--${state}" style="width:${percent}%"></div><div class="bar__pace" style="left:93.3%"></div></div>
+              <div class="muted small num">€${spent.toFixed(2)} of €${budget.toFixed(2)}</div>
+            </div>
+          </div>`;
+        })
+        .join('');
+
+      const recent = [
+        [
+          'Greenleaf Market',
+          'GM',
+          '#dcfae6',
+          '#067647',
+          'Groceries',
+          '#dc2626',
+          'shopping-cart',
+          'Everyday account',
+          '−€42.58',
+          'Today',
+        ],
+        [
+          'MKTPLACE*7731 ONLINE',
+          'MK',
+          '#f2f4f7',
+          '#475467',
+          null,
+          null,
+          null,
+          'Credit card',
+          '−€23.99',
+          'Yesterday',
+        ],
+        [
+          'SQ *FARMERS STALL',
+          'SF',
+          '#f2f4f7',
+          '#475467',
+          null,
+          null,
+          null,
+          'Everyday account',
+          '−€12.50',
+          'Sun 27',
+        ],
+        [
+          'Starlight Cinema',
+          'SC',
+          '#fdf2fa',
+          '#c11574',
+          'Movies & events',
+          '#9333ea',
+          'clapperboard',
+          'Credit card',
+          '−€15.78',
+          'Sun 27',
+          'Pending',
+        ],
+        [
+          'Luigi’s Trattoria',
+          'LT',
+          '#fef6ee',
+          '#b93815',
+          'Restaurants & bars',
+          '#dc2626',
+          'utensils',
+          'Credit card',
+          '−€35.55',
+          'Sat 26',
+        ],
+        [
+          'Everyday account → Savings',
+          null,
+          null,
+          null,
+          'Transfer',
+          '#667085',
+          'arrow-left-right',
+          'Everyday account',
+          '€450.00',
+          'Sat 26',
+          null,
+          true,
+        ],
+      ];
+      document.getElementById('recent').innerHTML = recent
+        .map(
+          ([
+            name,
+            initials,
+            bg,
+            fg,
+            category,
+            color,
+            icon,
+            account,
+            amount,
+            date,
+            status,
+            transfer,
+          ]) => {
+            const avatar = transfer
+              ? '<span class="avatar" style="--bg:#f2f4f7;--fg:#475467"><i data-lucide="arrow-left-right"></i></span>'
+              : `<span class="avatar" style="--bg:${bg};--fg:${fg}">${initials}</span>`;
+            const chip = category
+              ? `<span class="dot" style="--dot:${color}"></span> ${category}`
+              : '<span style="color:var(--brand);font-weight:600">Needs a category</span>';
+            const pending = status
+              ? ` <span class="tag tag--neutral" style="height:18px;font-size:11px">${status}</span>`
+              : '';
+            return `<div class="row">
+            ${avatar}
+            <div><div class="row__title">${name}${pending}</div><div class="row__meta">${chip} · ${account}</div></div>
+            <div class="row__end"><div class="amt ${transfer ? 'amt--transfer' : ''}">${amount}</div><div class="muted small">${date}</div></div>
+          </div>`;
+          }
+        )
+        .join('');
+    </script>
+  </body>
+</html>

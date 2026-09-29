@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analytics cash flow wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script>
+      window.charts = {
+        flow: element =>
+          ck.bars(element, {
+            format: value => (value ? `€${value / 1000}k` : '€0'),
+            height: 240,
+            highlight: 6,
+            labels: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+            max: 3000,
+            series: [
+              { color: '#079455', values: [3000, 3000, 3000, 3000, 3000, 3000, 3000] },
+              {
+                color: '#7b8494',
+                values: [2018.33, 2334.54, 2181.67, 2620.66, 2247.3, 2281.18, 2154.39],
+              },
+              { color: '#6941c6', values: [981.67, 665.46, 818.33, 379.34, 752.7, 718.82, 845.61] },
+            ],
+            ticks: [0, 1000, 2000, 3000],
+          }),
+      };
+    </script>
+    <script src="wireframes.js"></script>
+  </head>
+  <body data-page="analytics">
+    <div id="content">
+      <div class="page-head" style="margin-bottom: 12px">
+        <div>
+          <h1>Analytics</h1>
+          <p>How your money moved, compared with the month before.</p>
+        </div>
+        <div class="page-head__tools">
+          <div class="seg">
+            <span class="seg--on">EUR</span><span>USD</span><span>≈ All in EUR</span>
+          </div>
+          <button class="btn">
+            <i data-lucide="calendar"></i>Last 7 months<i data-lucide="chevron-down"></i>
+          </button>
+        </div>
+      </div>
+      <nav class="tabs">
+        <a href="analytics-overview.html">Overview</a>
+        <a href="analytics-spending.html">Spending</a>
+        <a class="tabs--on" href="analytics-cash-flow.html">Cash flow</a>
+        <a href="analytics-payees.html">Payees &amp; accounts</a>
+      </nav>
+
+      <section class="card" data-note="1">
+        <div class="card__head">
+          <div>
+            <div class="card__title">Where each €100 of September income went</div>
+            <div class="card__sub">€3,000.00 earned · €2,154.39 spent · €845.61 kept</div>
+          </div>
+        </div>
+        <div style="display: flex; height: 44px; gap: 3px; border-radius: 10px; overflow: hidden">
+          <div style="flex: 40; background: #7c3aed; color: #fff; padding: 12px; font-weight: 600">
+            Housing €40
+          </div>
+          <div
+            style="flex: 18.8; background: #dc2626; color: #fff; padding: 12px; font-weight: 600"
+          >
+            Food €19
+          </div>
+          <div style="flex: 5.6; background: #0891b2"></div>
+          <div style="flex: 7.4; background: #7b8494"></div>
+          <div
+            style="
+              flex: 28.2;
+              background: var(--positive-soft);
+              color: var(--positive);
+              padding: 12px;
+              font-weight: 700;
+              border: 1.5px dashed var(--positive-bar);
+              border-radius: 0 10px 10px 0;
+            "
+          >
+            Kept €28
+          </div>
+        </div>
+        <div class="legend" style="margin-top: 10px">
+          <span><span class="swatch" style="--dot: #7c3aed"></span>Housing €1,200.00</span>
+          <span><span class="swatch" style="--dot: #dc2626"></span>Food &amp; Dining €563.15</span>
+          <span
+            ><span class="swatch" style="--dot: #0891b2"></span>Bills &amp; Utilities €168.69</span
+          >
+          <span><span class="swatch" style="--dot: #7b8494"></span>5 other groups €222.55</span>
+          <span><span class="swatch" style="--dot: var(--positive-bar)"></span>Kept €845.61</span>
+        </div>
+      </section>
+
+      <div class="grid grid--main" style="margin-top: 16px">
+        <section class="card" data-note="2">
+          <div class="card__head">
+            <div>
+              <div class="card__title">Income, spending and what you kept</div>
+              <div class="card__sub">Kept on average €697 a month</div>
+            </div>
+          </div>
+          <div data-chart="flow"></div>
+          <div class="legend" style="margin-top: 8px">
+            <span><span class="swatch" style="--dot: #079455"></span>Income</span>
+            <span><span class="swatch" style="--dot: #7b8494"></span>Spending</span>
+            <span><span class="swatch" style="--dot: #6941c6"></span>Kept</span>
+          </div>
+        </section>
+        <section class="card card--flush" data-note="3">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="right">Income</th>
+                <th class="right">Spending</th>
+                <th class="right">Kept</th>
+              </tr>
+            </thead>
+            <tbody id="months"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+    <script>
+      const months = [
+        ['September', 3000, 2154.39, 845.61, 28],
+        ['August', 3000, 2281.18, 718.82, 24],
+        ['July', 3000, 2247.3, 752.7, 25],
+        ['June', 3000, 2620.66, 379.34, 13],
+        ['May', 3000, 2181.67, 818.33, 27],
+        ['April', 3000, 2334.54, 665.46, 22],
+        ['March', 3000, 2018.33, 981.67, 33],
+      ];
+      const money = value =>
+        `€${value.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('months').innerHTML = months
+        .map(
+          (
+            [month, income, spending, kept, rate],
+            index
+          ) => `<tr${index === 0 ? ' style="background:var(--brand-soft)"' : ''}>
+            <td style="font-weight:600">${month}</td>
+            <td class="right amt amt--in">${money(income)}</td>
+            <td class="right amt">${money(spending)}</td>
+            <td class="right"><div class="amt">${money(kept)}</div><div class="muted small">${rate}%</div></td>
+          </tr>`
+        )
+        .join('');
+    </script>
+  </body>
+</html>

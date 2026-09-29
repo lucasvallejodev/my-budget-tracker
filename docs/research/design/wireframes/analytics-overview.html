@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analytics overview wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script>
+      window.charts = {
+        flow: element =>
+          ck.bars(element, {
+            format: value => (value ? `€${value / 1000}k` : '€0'),
+            height: 230,
+            highlight: 6,
+            labels: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+            max: 3000,
+            series: [
+              { color: '#079455', values: [3000, 3000, 3000, 3000, 3000, 3000, 3000] },
+              {
+                color: '#7b8494',
+                values: [2018.33, 2334.54, 2181.67, 2620.66, 2247.3, 2281.18, 2154.39],
+              },
+            ],
+            ticks: [0, 1000, 2000, 3000],
+          }),
+      };
+    </script>
+    <script src="wireframes.js"></script>
+  </head>
+  <body data-page="analytics">
+    <div id="content">
+      <div class="page-head" style="margin-bottom: 12px">
+        <div>
+          <h1>Analytics</h1>
+          <p>How your money moved, compared with the month before.</p>
+        </div>
+        <div class="page-head__tools" data-note="1" data-note-pos="-12,-12">
+          <div class="seg">
+            <span class="seg--on">EUR</span><span>USD</span><span>≈ All in EUR</span>
+          </div>
+          <button class="btn">
+            <i data-lucide="calendar"></i>September 2026<i data-lucide="chevron-down"></i>
+          </button>
+          <button class="btn"><i data-lucide="git-compare-arrows"></i>vs August</button>
+        </div>
+      </div>
+      <nav class="tabs" data-note="2" data-note-pos="0,-30">
+        <a class="tabs--on" href="analytics-overview.html">Overview</a>
+        <a href="analytics-spending.html">Spending</a>
+        <a href="analytics-cash-flow.html">Cash flow</a>
+        <a href="analytics-payees.html">Payees &amp; accounts</a>
+      </nav>
+
+      <div class="grid grid--4" data-note="3">
+        <section class="card">
+          <div class="stat__label">
+            <span class="avatar avatar--sm avatar--tint" style="--dot: #067647"
+              ><i data-lucide="arrow-down-left"></i></span
+            >Income
+          </div>
+          <div class="hero hero--md num" style="margin-top: 10px">€3,000.00</div>
+          <div class="stat__meta">Same as August</div>
+        </section>
+        <section class="card">
+          <div class="stat__label">
+            <span class="avatar avatar--sm avatar--tint" style="--dot: #344054"
+              ><i data-lucide="arrow-up-right"></i></span
+            >Spending
+          </div>
+          <div class="hero hero--md num" style="margin-top: 10px">€2,154.39</div>
+          <div class="stat__meta">
+            <span class="delta delta--good"><i data-lucide="arrow-down"></i>€126.79 (5.6%)</span> vs
+            August
+          </div>
+        </section>
+        <section class="card">
+          <div class="stat__label">
+            <span class="avatar avatar--sm avatar--tint" style="--dot: #6941c6"
+              ><i data-lucide="piggy-bank"></i></span
+            >Kept
+          </div>
+          <div class="hero hero--md num" style="margin-top: 10px">€845.61</div>
+          <div class="stat__meta">
+            <span class="delta delta--good"><i data-lucide="arrow-up"></i>€126.79</span> vs August
+          </div>
+        </section>
+        <section class="card">
+          <div class="stat__label">
+            <span class="avatar avatar--sm avatar--tint" style="--dot: #107569"
+              ><i data-lucide="percent"></i></span
+            >Savings rate
+          </div>
+          <div class="hero hero--md num" style="margin-top: 10px">28%</div>
+          <div class="stat__meta">24% in August · 6-month average 25%</div>
+        </section>
+      </div>
+
+      <div class="grid grid--main" style="margin-top: 16px">
+        <section class="card" data-note="4">
+          <div class="card__head">
+            <div>
+              <div class="card__title">Income and spending</div>
+              <div class="card__sub">Last 7 months · click a month to open it</div>
+            </div>
+            <a class="link" href="analytics-cash-flow.html"
+              >Cash flow<i data-lucide="arrow-right"></i
+            ></a>
+          </div>
+          <div data-chart="flow"></div>
+          <div class="legend" style="margin-top: 8px">
+            <span><span class="swatch" style="--dot: #079455"></span>Income</span>
+            <span><span class="swatch" style="--dot: #7b8494"></span>Spending</span>
+          </div>
+        </section>
+        <section class="card card--flush" data-note="5">
+          <div class="card__head" style="padding-bottom: 8px">
+            <div>
+              <div class="card__title">Biggest changes</div>
+              <div class="card__sub">Spending by group, September vs August</div>
+            </div>
+          </div>
+          <div id="changes"></div>
+        </section>
+      </div>
+
+      <div class="grid grid--2" style="margin-top: 16px">
+        <section class="card">
+          <div class="card__head">
+            <div class="card__title">Top categories</div>
+            <a class="link" href="analytics-spending.html"
+              >All spending<i data-lucide="arrow-right"></i
+            ></a>
+          </div>
+          <div id="categories"></div>
+        </section>
+        <section class="card">
+          <div class="card__head">
+            <div class="card__title">Top payees</div>
+            <a class="link" href="analytics-payees.html"
+              >All payees<i data-lucide="arrow-right"></i
+            ></a>
+          </div>
+          <div id="payees"></div>
+        </section>
+      </div>
+    </div>
+    <script>
+      const changes = [
+        ['Health & Wellness', '#059669', 'heart-pulse', 151.72, 53.0],
+        ['Shopping', '#db2777', 'shopping-bag', 111.3, 37.63],
+        ['Bills & Utilities', '#0891b2', 'zap', 136.73, 168.69],
+        ['Food & Dining', '#dc2626', 'utensils', 596.88, 563.15],
+        ['Entertainment', '#9333ea', 'clapperboard', 24.98, 40.76],
+      ];
+      document.getElementById('changes').innerHTML = changes
+        .map(([name, color, icon, before, now]) => {
+          const diff = now - before;
+          const up = diff > 0;
+          return `<div class="row" style="grid-template-columns:auto 1fr auto;min-height:58px">
+            <span class="avatar avatar--sm avatar--tint" style="--dot:${color}"><i data-lucide="${icon}"></i></span>
+            <div><div class="row__title">${name}</div><div class="row__meta num">€${before.toFixed(2)} → €${now.toFixed(2)}</div></div>
+            <div style="text-align:right"><div class="amt ${up ? 'amt--over' : 'amt--in'}">${up ? '+' : '−'}€${Math.abs(diff).toFixed(2)}</div>
+            <div class="delta ${up ? 'delta--bad' : 'delta--good'}"><i data-lucide="${up ? 'arrow-up' : 'arrow-down'}"></i>${Math.round(Math.abs(diff / before) * 100)}%</div></div>
+          </div>`;
+        })
+        .join('');
+
+      const ranking = (items, max) =>
+        items
+          .map(
+            ([
+              avatar,
+              name,
+              meta,
+              amount,
+            ]) => `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:8px 0">
+              ${avatar}
+              <div><div style="display:flex;justify-content:space-between"><span style="font-weight:600">${name}</span></div>
+                <div class="bar" style="margin:6px 0 3px"><div class="bar__fill" style="width:${(amount / max) * 100}%;--fill:var(--brand)"></div></div>
+                <div class="muted small">${meta}</div></div>
+              <div class="amt" style="align-self:start">€${amount.toLocaleString('en', { minimumFractionDigits: 2 })}</div>
+            </div>`
+          )
+          .join('');
+      const tint = (icon, color) =>
+        `<span class="avatar avatar--sm avatar--tint" style="--dot:${color}"><i data-lucide="${icon}"></i></span>`;
+      const mono = (text, bg, fg) =>
+        `<span class="avatar avatar--sm" style="--bg:${bg};--fg:${fg}">${text}</span>`;
+      document.getElementById('categories').innerHTML = ranking(
+        [
+          [tint('house', '#7c3aed'), 'Rent / Mortgage', 'Housing · 1 transaction', 1200],
+          [
+            tint('shopping-cart', '#dc2626'),
+            'Groceries',
+            'Food & Dining · 11 transactions',
+            356.14,
+          ],
+          [
+            tint('utensils', '#dc2626'),
+            'Restaurants & bars',
+            'Food & Dining · 3 transactions',
+            135.57,
+          ],
+          [
+            tint('zap', '#0891b2'),
+            'Electricity & gas',
+            'Bills & Utilities · 2 transactions',
+            128.69,
+          ],
+          [tint('pizza', '#dc2626'), 'Takeout & delivery', 'Food & Dining · 2 transactions', 56.96],
+        ],
+        1200
+      );
+      document.getElementById('payees').innerHTML = ranking(
+        [
+          [
+            mono('OL', '#f4f3ff', '#5925dc'),
+            'Oakwood Lettings',
+            '1 transaction · Rent / Mortgage',
+            1200,
+          ],
+          [
+            mono('GM', '#dcfae6', '#067647'),
+            'Greenleaf Market',
+            '8 transactions · €43.30 on average',
+            346.41,
+          ],
+          [
+            mono('BT', '#fffaeb', '#b54708'),
+            'The Brass Tap',
+            '2 transactions · €50.01 on average',
+            100.02,
+          ],
+          [
+            mono('BE', '#eff8ff', '#175cd3'),
+            'BrightSpark Energy',
+            '1 transaction · Electricity & gas',
+            68.51,
+          ],
+          [
+            mono('HG', '#fef3f2', '#b42318'),
+            'Hearth Gas',
+            '1 transaction · Electricity & gas',
+            60.18,
+          ],
+        ],
+        1200
+      );
+    </script>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analytics spending wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script>
+      window.charts = {
+        stacked: element =>
+          ck.stacked(element, {
+            format: value => (value ? `€${value / 1000}k` : '€0'),
+            height: 240,
+            labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+            max: 3000,
+            stacks: [
+              { color: '#7c3aed', values: [1200, 1200, 1200, 1200, 1200, 1200] },
+              { color: '#dc2626', values: [610, 575, 640, 590, 596.88, 563.15] },
+              { color: '#0891b2', values: [150, 140, 145, 155, 136.73, 168.69] },
+              { color: '#ea580c', values: [70, 60, 180, 65, 59.57, 54.67] },
+              { color: '#059669', values: [60, 55, 70, 50, 151.72, 53] },
+              { color: '#9333ea', values: [45, 30, 60, 35, 24.98, 40.76] },
+              { color: '#db2777', values: [140, 80, 180, 95, 111.3, 37.63] },
+              { color: '#94a3b8', values: [59.54, 41.67, 145.66, 57.3, 0, 36.49] },
+            ],
+            ticks: [0, 1000, 2000, 3000],
+          }),
+      };
+    </script>
+    <script src="wireframes.js"></script>
+    <style>
+      .spend-table td {
+        height: 48px;
+      }
+
+      .spend-table .child td:first-child {
+        padding-left: 56px;
+      }
+
+      .spend-table .child td {
+        background: var(--surface-soft);
+      }
+    </style>
+  </head>
+  <body data-page="analytics">
+    <div id="content">
+      <div class="page-head" style="margin-bottom: 12px">
+        <div>
+          <h1>Analytics</h1>
+          <p>How your money moved, compared with the month before.</p>
+        </div>
+        <div class="page-head__tools">
+          <div class="seg">
+            <span class="seg--on">EUR</span><span>USD</span><span>≈ All in EUR</span>
+          </div>
+          <button class="btn">
+            <i data-lucide="calendar"></i>September 2026<i data-lucide="chevron-down"></i>
+          </button>
+          <button class="btn"><i data-lucide="git-compare-arrows"></i>vs August</button>
+        </div>
+      </div>
+      <nav class="tabs">
+        <a href="analytics-overview.html">Overview</a>
+        <a class="tabs--on" href="analytics-spending.html">Spending</a>
+        <a href="analytics-cash-flow.html">Cash flow</a>
+        <a href="analytics-payees.html">Payees &amp; accounts</a>
+      </nav>
+
+      <section class="card" data-note="1">
+        <div class="card__head">
+          <div>
+            <div class="card__title">Spending by group</div>
+            <div class="card__sub">Last 6 months · €2,154.39 in September</div>
+          </div>
+          <div class="seg"><span class="seg--on">Groups</span><span>Categories</span></div>
+        </div>
+        <div
+          style="display: grid; grid-template-columns: 1fr 250px; gap: 28px; align-items: center"
+        >
+          <div data-chart="stacked"></div>
+          <div class="grid" style="gap: 8px" id="legend"></div>
+        </div>
+      </section>
+
+      <section class="card card--flush" style="margin-top: 16px" data-note="2">
+        <div class="card__head" style="padding-bottom: 10px">
+          <div>
+            <div class="card__title">Breakdown</div>
+            <div class="card__sub">
+              Click a group to see its categories, and any amount to open its transactions
+            </div>
+          </div>
+          <button class="btn btn--sm"><i data-lucide="download"></i>Export</button>
+        </div>
+        <table class="table spend-table">
+          <thead>
+            <tr>
+              <th style="width: 30%">Group</th>
+              <th style="width: 24%">Share of spending</th>
+              <th class="right">September</th>
+              <th class="right">August</th>
+              <th class="right">Change</th>
+              <th class="right">6-month average</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </section>
+    </div>
+    <script>
+      const groups = [
+        ['Housing', '#7c3aed', 'house', 1200, 1200, 1200, 55.7],
+        [
+          'Food & Dining',
+          '#dc2626',
+          'utensils',
+          563.15,
+          596.88,
+          595.84,
+          26.1,
+          [
+            ['Groceries', 'shopping-cart', 356.14],
+            ['Restaurants & bars', 'utensils', 135.57],
+            ['Takeout & delivery', 'pizza', 56.96],
+            ['Coffee', 'coffee', 14.48],
+          ],
+        ],
+        ['Bills & Utilities', '#0891b2', 'zap', 168.69, 136.73, 149.24, 7.8],
+        ['Transportation', '#ea580c', 'bus-front', 54.67, 59.57, 81.54, 2.5],
+        ['Health & Wellness', '#059669', 'heart-pulse', 53.0, 151.72, 73.29, 2.5],
+        ['Entertainment', '#9333ea', 'clapperboard', 40.76, 24.98, 39.29, 1.9],
+        ['Shopping', '#db2777', 'shopping-bag', 37.63, 111.3, 107.32, 1.7],
+        ['Uncategorized', '#94a3b8', 'circle-help', 36.49, 0, null, 1.7],
+      ];
+      const money = value =>
+        `€${value.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('legend').innerHTML = groups
+        .map(
+          ([name, color, , now, , , share]) =>
+            `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:13px"><span class="swatch" style="--dot:${color}"></span><span>${name}</span><span class="amt">${share}%</span></div>`
+        )
+        .join('');
+      document.getElementById('rows').innerHTML = groups
+        .map(([name, color, icon, now, before, average, share, children]) => {
+          const diff = now - before;
+          const change =
+            Math.abs(diff) < 0.005
+              ? '<span class="muted">—</span>'
+              : `<span class="delta ${diff > 0 ? 'delta--bad' : 'delta--good'}"><i data-lucide="${diff > 0 ? 'arrow-up' : 'arrow-down'}"></i>${money(Math.abs(diff))}</span>`;
+          const row = `<tr>
+            <td><div class="cell">${children ? '<i data-lucide="chevron-down" style="color:var(--muted);width:16px;height:16px"></i>' : '<span style="width:16px"></span>'}<span class="avatar avatar--sm avatar--tint" style="--dot:${color}"><i data-lucide="${icon}"></i></span><strong style="font-weight:600">${name}</strong></div></td>
+            <td><div style="display:flex;align-items:center;gap:10px"><div class="bar" style="flex:1"><div class="bar__fill" style="width:${share}%;--fill:${color}"></div></div><span class="muted small num" style="width:40px;text-align:right">${share}%</span></div></td>
+            <td class="right"><a class="amt" style="text-decoration:underline;text-decoration-color:var(--border-strong);text-underline-offset:3px">${money(now)}</a></td>
+            <td class="right amt" style="color:var(--muted);font-weight:500">${before ? money(before) : '—'}</td>
+            <td class="right">${change}</td>
+            <td class="right amt" style="color:var(--muted);font-weight:500">${average ? money(average) : '—'}</td>
+          </tr>`;
+          const childRows = (children || [])
+            .map(
+              ([childName, childIcon, amount]) => `<tr class="child">
+                <td><div class="cell"><i data-lucide="${childIcon}" style="width:15px;height:15px;color:${color}"></i>${childName}</div></td>
+                <td><div class="bar" style="margin-right:50px"><div class="bar__fill" style="width:${(amount / 2154.39) * 100}%;--fill:${color};opacity:.6"></div></div></td>
+                <td class="right amt">${money(amount)}</td><td></td><td></td><td></td></tr>`
+            )
+            .join('');
+          return row + childRows;
+        })
+        .join('');
+    </script>
+  </body>
+</html>

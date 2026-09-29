@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Accounts wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script>
+      window.charts = {
+        networth: element =>
+          ck.line(element, {
+            area: true,
+            color: '#6941c6',
+            dot: true,
+            height: 150,
+            max: 15600,
+            min: 11200,
+            stroke: 2.4,
+            values: [
+              11650, 11820, 12120, 11980, 12420, 12610, 12500, 12780, 12890, 12700, 13210, 13540,
+              13390, 13880, 14210, 14080, 14620, 14996,
+            ],
+          }),
+        everyday: element =>
+          ck.line(element, {
+            color: '#175cd3',
+            height: 30,
+            values: [2140, 1820, 1510, 1190, 980, 3980, 3640, 3380, 3059],
+          }),
+        cash: element =>
+          ck.line(element, {
+            color: '#067647',
+            height: 30,
+            values: [540, 522, 516, 616, 610, 603, 598, 606, 599],
+          }),
+        usd: element =>
+          ck.line(element, {
+            color: '#175cd3',
+            height: 30,
+            values: [2951, 2951, 3050, 3050, 3186, 3186, 3317, 3352, 3317],
+          }),
+        savings: element =>
+          ck.line(element, {
+            color: '#107569',
+            height: 30,
+            values: [10800, 10800, 11250, 11250, 11250, 11250, 11250, 11700, 11700],
+          }),
+        card: element =>
+          ck.line(element, {
+            color: '#c4320a',
+            height: 30,
+            values: [452, 0, 35, 110, 180, 230, 290, 330, 362],
+          }),
+      };
+    </script>
+    <script src="wireframes.js"></script>
+    <style>
+      .group-head {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .account {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) 120px 170px;
+        align-items: center;
+        gap: 16px;
+        min-height: 64px;
+        padding: 10px 20px;
+        border-top: 1px solid var(--border);
+      }
+
+      .account:first-of-type {
+        border-top: 0;
+      }
+
+      .stacked {
+        display: flex;
+        gap: 2px;
+        height: 10px;
+        margin: 10px 0 12px;
+        overflow: hidden;
+        border-radius: 999px;
+      }
+
+      .legend-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 0;
+      }
+    </style>
+  </head>
+  <body data-page="accounts">
+    <div id="content">
+      <div class="page-head">
+        <div>
+          <h1>Accounts</h1>
+          <p>5 accounts in 2 currencies. Balances come from your ledger.</p>
+        </div>
+        <div class="page-head__tools">
+          <button class="btn btn--ghost"><i data-lucide="archive"></i>Show archived</button>
+          <button class="btn"><i data-lucide="plus"></i>Add account</button>
+        </div>
+      </div>
+
+      <div class="grid grid--main" style="align-items: start">
+        <div class="stack">
+          <section class="card" data-note="1">
+            <div class="card__head">
+              <div class="seg"><span class="seg--on">EUR</span><span>USD</span></div>
+              <div class="seg">
+                <span>1M</span><span>3M</span><span class="seg--on">6M</span><span>1Y</span>
+              </div>
+            </div>
+            <div class="eyebrow">Net worth in EUR</div>
+            <div style="display: flex; align-items: baseline; gap: 12px; margin-top: 4px">
+              <div class="hero num">€14,996.93</div>
+              <span class="delta delta--good" style="font-size: 14px"
+                ><i data-lucide="arrow-up"></i>€3,346.93 (28.7%)</span
+              ><span class="muted">in 6 months</span>
+            </div>
+            <div data-chart="networth" style="margin-top: 14px"></div>
+            <div
+              class="muted small"
+              style="display: flex; justify-content: space-between; margin-top: 6px; padding: 0 2px"
+            >
+              <span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span
+              ><span>Sep</span>
+            </div>
+          </section>
+
+          <section class="card card--flush" data-note="2">
+            <div class="group-head">
+              <i data-lucide="chevron-down" style="color: var(--muted)"></i>
+              <div>
+                <div class="card__title">Cash &amp; checking</div>
+                <div class="card__sub">
+                  3 accounts · <span class="delta delta--good">+€1,241.80</span> this month
+                </div>
+              </div>
+              <div style="text-align: right">
+                <div class="amt" style="font-size: 16px">€3,659.51</div>
+                <div class="muted small">+ $3,317.28</div>
+              </div>
+            </div>
+            <div class="account">
+              <span
+                class="avatar avatar--square avatar--tint"
+                style="--dot: #175cd3"
+                data-note="3"
+                data-note-pos="-10,-14"
+                ><i data-lucide="landmark"></i
+              ></span>
+              <div>
+                <div class="row__title">Everyday account</div>
+                <div class="row__meta">Checking · Northbank · EUR · •••• 4821</div>
+              </div>
+              <div data-chart="everyday"></div>
+              <div style="text-align: right">
+                <div class="amt">€3,059.82</div>
+                <div class="muted small">Last activity today</div>
+              </div>
+            </div>
+            <div class="account">
+              <span class="avatar avatar--square avatar--tint" style="--dot: #067647"
+                ><i data-lucide="banknote"></i
+              ></span>
+              <div>
+                <div class="row__title">Cash</div>
+                <div class="row__meta">Cash · EUR · wallet</div>
+              </div>
+              <div data-chart="cash"></div>
+              <div style="text-align: right">
+                <div class="amt">€599.69</div>
+                <div class="muted small">Last activity 25 Sep</div>
+              </div>
+            </div>
+            <div class="account">
+              <span class="avatar avatar--square avatar--tint" style="--dot: #175cd3"
+                ><i data-lucide="landmark"></i
+              ></span>
+              <div>
+                <div class="row__title">
+                  USD account
+                  <span class="tag tag--neutral" style="height: 18px; font-size: 11px">USD</span>
+                </div>
+                <div class="row__meta">Checking · Global Wallet</div>
+              </div>
+              <div data-chart="usd"></div>
+              <div style="text-align: right">
+                <div class="amt">$3,317.28</div>
+                <div class="muted small">Last activity 22 Sep</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card card--flush">
+            <div class="group-head">
+              <i data-lucide="chevron-down" style="color: var(--muted)"></i>
+              <div>
+                <div class="card__title">Savings &amp; investments</div>
+                <div class="card__sub">
+                  1 account · <span class="delta delta--good">+€450.00</span> this month
+                </div>
+              </div>
+              <div class="amt" style="font-size: 16px">€11,700.00</div>
+            </div>
+            <div class="account">
+              <span class="avatar avatar--square avatar--tint" style="--dot: #107569"
+                ><i data-lucide="piggy-bank"></i
+              ></span>
+              <div>
+                <div class="row__title">Savings</div>
+                <div class="row__meta">Savings · Northbank · EUR</div>
+              </div>
+              <div data-chart="savings"></div>
+              <div style="text-align: right">
+                <div class="amt">€11,700.00</div>
+                <div class="muted small">Last activity 26 Sep</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card card--flush" data-note="4">
+            <div class="group-head">
+              <i data-lucide="chevron-down" style="color: var(--muted)"></i>
+              <div>
+                <div class="card__title">Credit cards</div>
+                <div class="card__sub">1 card · money you owe</div>
+              </div>
+              <div style="text-align: right">
+                <div class="amt" style="font-size: 16px">€362.58</div>
+                <div class="muted small">owed</div>
+              </div>
+            </div>
+            <div
+              class="account"
+              style="grid-template-columns: auto minmax(0, 1fr) 120px 170px auto"
+            >
+              <span class="avatar avatar--square avatar--tint" style="--dot: #c4320a"
+                ><i data-lucide="credit-card"></i
+              ></span>
+              <div>
+                <div class="row__title">Credit card</div>
+                <div class="row__meta">Credit card · Northbank · EUR · •••• 0917</div>
+              </div>
+              <div data-chart="card"></div>
+              <div style="text-align: right">
+                <div class="amt">
+                  €362.58 <span class="muted" style="font-weight: 500">owed</span>
+                </div>
+                <div class="muted small">Last paid €452.55 on 4 Sep</div>
+              </div>
+              <button class="btn btn--sm">Pay card</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="stack">
+          <section class="card" data-note="5">
+            <div class="card__head">
+              <div class="card__title">Summary · EUR</div>
+              <div class="seg"><span class="seg--on">Totals</span><span>Percent</span></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-weight: 600">
+              <span>Assets</span><span class="amt">€15,359.51</span>
+            </div>
+            <div class="stacked">
+              <span style="flex: 11700; background: #107569"></span>
+              <span style="flex: 3059.82; background: #175cd3"></span>
+              <span style="flex: 599.69; background: #067647"></span>
+            </div>
+            <div class="legend-row">
+              <span class="swatch" style="--dot: #107569"></span><span>Savings</span
+              ><span class="amt">€11,700.00</span>
+            </div>
+            <div class="legend-row">
+              <span class="swatch" style="--dot: #175cd3"></span><span>Checking</span
+              ><span class="amt">€3,059.82</span>
+            </div>
+            <div class="legend-row">
+              <span class="swatch" style="--dot: #067647"></span><span>Cash</span
+              ><span class="amt">€599.69</span>
+            </div>
+            <div class="divider"></div>
+            <div style="display: flex; justify-content: space-between; font-weight: 600">
+              <span>Liabilities</span><span class="amt">€362.58</span>
+            </div>
+            <div class="stacked"><span style="flex: 1; background: #c4320a"></span></div>
+            <div class="legend-row">
+              <span class="swatch" style="--dot: #c4320a"></span><span>Credit cards</span
+              ><span class="amt">€362.58</span>
+            </div>
+          </section>
+
+          <section class="card" data-note="6">
+            <div class="card__title" style="margin-bottom: 12px">By currency</div>
+            <div class="legend-row" style="grid-template-columns: auto 1fr auto">
+              <span class="tag tag--neutral">EUR</span><span class="muted">4 accounts</span
+              ><span class="amt">€14,996.93</span>
+            </div>
+            <div class="legend-row" style="grid-template-columns: auto 1fr auto">
+              <span class="tag tag--neutral">USD</span><span class="muted">1 account</span
+              ><span class="amt">$3,317.28</span>
+            </div>
+            <div class="divider"></div>
+            <div class="legend-row" style="grid-template-columns: 1fr auto">
+              <span class="muted">≈ All in EUR, at 1 USD = 0.885 EUR</span
+              ><span class="amt">€17,932.58</span>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
