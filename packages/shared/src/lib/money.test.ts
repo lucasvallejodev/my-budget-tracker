@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   convertMinor,
+  formatCompactMoney,
+  formatExchangeRate,
   formatMajorAmount,
   formatMoney,
   minorToDecimalString,
@@ -65,6 +67,37 @@ describe('money', () => {
   });
   it('rejects amounts beyond the safe integer range', () => {
     expect(() => parseAmountInput('99999999999999999', 'EUR')).toThrow(/too large/);
+  });
+});
+
+describe('formatCompactMoney', () => {
+  it('shortens minor units into compact currency labels', () => {
+    expect(formatCompactMoney(300000, 'EUR', { locale: 'en-US' })).toBe('€3K');
+    expect(formatCompactMoney(225000, 'EUR', { locale: 'en-US' })).toBe('€2.25K');
+    expect(formatCompactMoney(75000, 'EUR', { locale: 'en-US' })).toBe('€750');
+    expect(formatCompactMoney(-1500000, 'JPY', { locale: 'en-US' })).toBe('-¥1.5M');
+  });
+
+  it('keeps at most three significant digits', () => {
+    expect(formatCompactMoney(150000, 'EUR', { locale: 'en-US' })).toBe('€1.5K');
+    expect(formatCompactMoney(1234567, 'EUR', { locale: 'en-US' })).toBe('€12.3K');
+  });
+
+  it('shows zero without decimals', () => {
+    expect(formatCompactMoney(0, 'usd', { locale: 'en-US' })).toBe('$0');
+  });
+});
+
+describe('formatExchangeRate', () => {
+  it('rounds rates to at most six significant digits', () => {
+    expect(formatExchangeRate(0.8849557522123894, { locale: 'en-US' })).toBe('0.884956');
+    expect(formatExchangeRate(0.0000123456789, { locale: 'en-US' })).toBe('0.0000123457');
+    expect(formatExchangeRate(1234567.891, { locale: 'en-US' })).toBe('1,234,570');
+  });
+
+  it('keeps short rates as they are', () => {
+    expect(formatExchangeRate(1.13, { locale: 'en-US' })).toBe('1.13');
+    expect(formatExchangeRate(160, { locale: 'en-US' })).toBe('160');
   });
 });
 

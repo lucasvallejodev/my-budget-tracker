@@ -16,7 +16,7 @@ import {
   Stack,
 } from '@/components/ui';
 import { getPercentage } from '@/lib/math';
-import { formatMoney } from '@coinkeeper/shared/lib/money';
+import { formatCompactMoney, formatExchangeRate, formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { CashFlowChart } from '../cash-flow-chart';
 import { DistributionChart } from '../distribution-chart';
@@ -38,7 +38,10 @@ const describeConversion = (converted: NonNullable<Summary['converted']>): strin
   if (!converted.rates.length) return base;
 
   const rates = converted.rates
-    .map(rate => `1 ${rate.currency} = ${rate.rate} ${converted.currency} from ${rate.date}`)
+    .map(
+      rate =>
+        `1 ${rate.currency} = ${formatExchangeRate(rate.rate)} ${converted.currency} from ${rate.date}`
+    )
     .join(', ');
 
   return `${base} (${rates})`;
@@ -231,6 +234,7 @@ export function Overview({ analytics = false }: { analytics?: boolean }) {
               key={currency}
               description={`Income vs spending · ${currency}`}
               format={value => formatMoney(value, currency)}
+              formatTick={value => formatCompactMoney(value, currency)}
               data={cashFlowPoints(data, months, currency)}
             />
           ))}

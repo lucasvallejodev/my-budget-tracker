@@ -6,15 +6,15 @@
 
 For the selected month (month picker in the header) and for each currency you use:
 
-| Block                            | What it shows                                                          | Source                             |
-| -------------------------------- | ---------------------------------------------------------------------- | ---------------------------------- |
-| Income · Spending · Savings rate | totals for the month                                                   | `reports.monthlyTotals`            |
-| Cash flow chart                  | income and spending for the last 8 months                              | `reports.cashFlow`                 |
-| Recent transactions              | the six latest rows across all accounts                                | `GET /api/v1/transactions?limit=6` |
-| Net worth card                   | assets, amounts owed and net per currency, with the number of accounts | `reports.netWorth`                 |
-| Spending by group                | donut coloured with group colours, plus an "Uncategorized" slice       | `reports.breakdownByGroup`         |
-| Review notice                    | count of rows needing a category, linking to the inbox                 | `ledger.needsReviewCount`          |
-| Converted totals (optional)      | approximate totals in the primary currency with the rates used         | `reports.convertedTotals`          |
+| Block                            | What it shows                                                                                                | Source                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| Income · Spending · Savings rate | totals for the month                                                                                         | `reports.monthlyTotals`            |
+| Cash flow chart                  | income and spending for the last 8 months; the axis shows compact amounts (`€3K`), the tooltip exact ones    | `reports.cashFlow`                 |
+| Recent transactions              | the six latest rows across all accounts                                                                      | `GET /api/v1/transactions?limit=6` |
+| Net worth card                   | assets, amounts owed and net per currency, with the number of accounts                                       | `reports.netWorth`                 |
+| Spending by group                | donut coloured with group colours, plus an "Uncategorized" slice                                             | `reports.breakdownByGroup`         |
+| Review notice                    | count of rows needing a category, linking to the inbox                                                       | `ledger.needsReviewCount`          |
+| Converted totals (optional)      | approximate totals in the primary currency with the rates used, each shown to at most six significant digits | `reports.convertedTotals`          |
 
 <!-- screenshot: full dashboard for one currency with all blocks visible (docs/assets/screenshots/dashboard-full.png) -->
 

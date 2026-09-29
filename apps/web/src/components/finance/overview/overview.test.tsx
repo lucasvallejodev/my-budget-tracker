@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { cloneElement, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { formatMoney } from '@coinkeeper/shared/lib/money';
+import { formatCompactMoney, formatExchangeRate, formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { currentMonth, monthLabel, QueryKeys, shiftMonth, type Summary } from '../use-finance-data';
 import { Overview } from './overview';
@@ -21,8 +21,16 @@ vi.mock('@/api/mutations', () => ({
 
 vi.mock('recharts', async importOriginal => ({
   ...(await importOriginal<typeof import('recharts')>()),
-  ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ResponsiveContainer: ({
+    children,
+  }: {
+    children: ReactElement<{ height: number; width: number }>;
+  }) => cloneElement(children, { height: ChartHeight, width: ChartWidth }),
 }));
+
+const ChartWidth = 600;
+const ChartHeight = 300;
+const InverseManualRate = 1 / 1.13;
 
 const month = currentMonth();
 const previous = shiftMonth(month, -1);
@@ -68,10 +76,10 @@ const summary = (forMonth: string, spending: number): Summary => ({
 
 afterEach(cleanup);
 
-function renderOverview(analytics = false) {
+function renderOverview(analytics = false, converted: Summary['converted'] = null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-  client.setQueryData(QueryKeys.summary(month), summary(month, 120000));
+  client.setQueryData(QueryKeys.summary(month), { ...summary(month, 120000), converted });
   client.setQueryData(QueryKeys.summary(previous), summary(previous, 45000));
   client.setQueryData(QueryKeys.transactions({ limit: '6' }), []);
   client.setQueryData([...QueryKeys.accounts, false], []);
@@ -116,5 +124,37 @@ describe('Overview', () => {
     renderOverview(true);
     expect(screen.getByRole('heading', { name: 'Analytics' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Recent Transactions' })).toBeNull();
+  });
+
+  it('labels the cash flow axis in compact currency instead of minor units', () => {
+    renderOverview();
+    expect(screen.getAllByText(formatCompactMoney(300000, 'EUR')).length).toBeGreaterThan(0);
+    expect(screen.queryByText('300000')).toBeNull();
+  });
+
+  it('rounds exchange rates derived from an inverse manual rate', () => {
+    renderOverview(false, {
+      asOf: month,
+      currency: 'EUR',
+      incomeMinor: 300000,
+      missing: [],
+      netWorthMinor: 480000,
+      rates: [
+        {
+          currency: 'USD',
+          date: '2026-09-01',
+          rate: InverseManualRate,
+          source: 'manual',
+        },
+      ],
+      spendingMinor: 120000,
+    });
+
+    const pageText = document.body.textContent;
+
+    expect(pageText).toContain(
+      `1 USD = ${formatExchangeRate(InverseManualRate)} EUR from 2026-09-01`
+    );
+    expect(pageText).not.toContain(String(InverseManualRate));
   });
 });

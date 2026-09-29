@@ -33,11 +33,13 @@ export function CashFlowChart({
   data,
   description = 'Income vs Expenses',
   format = formatMajorAmount,
+  formatTick = format,
 }: {
   action?: ReactNode;
   data: CashPoint[];
   description?: string;
   format?: (value: number) => string;
+  formatTick?: (value: number) => string;
 }) {
   const id = useId().replace(Patterns.reactIdColon, '');
 
@@ -54,7 +56,13 @@ export function CashFlowChart({
             </defs>
             <CartesianGrid vertical={false} stroke={ChartStyle.grid} />
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
-            <YAxis width={AxisWidth} axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
+            <YAxis
+              width={AxisWidth}
+              axisLine={false}
+              tickLine={false}
+              tick={ChartStyle.axisTick}
+              tickFormatter={value => formatTick(Number(value))}
+            />
             <Tooltip formatter={value => format(Number(value))} contentStyle={ChartStyle.tooltip} />
             <Area
               type="monotone"
