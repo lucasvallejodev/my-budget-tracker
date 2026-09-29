@@ -1,6 +1,6 @@
 # Transactions
 
-> Summary: recording, editing, deleting (soft, with Undo and restore) and finding expenses and income; what the fields mean; statuses.
+> Summary: recording, editing, duplicating, deleting (soft, with Undo and restore) and finding expenses and income; remembered accounts; links that open the page filtered; what the fields mean; statuses.
 
 A transaction is one movement of money in one account. Expenses are negative, income positive; the form hides the sign behind an Expense/Income choice.
 
@@ -10,7 +10,7 @@ A transaction is one movement of money in one account. Expenses are negative, in
 
 1. Click **New transaction** on the dashboard, the Transactions page or an account page.
 2. Leave **Type** on Expense or switch to Income.
-3. Pick the **account**. The amount is in that account's currency.
+3. Pick the **account**. The amount is in that account's currency. The dialog starts on the account you used last in this browser (and, for transfers, the last pair of accounts), unless that account has been archived or deleted.
 4. Type the **amount** as you would say it: `12.50`, `12,50` or `1.234,56` all work.
 5. Optionally pick a **payee**. If the payee has a usual category, it is filled in for you.
 6. Optionally pick a **category**. Leaving it empty is allowed; the transaction is flagged for review.
@@ -23,6 +23,12 @@ A transaction is one movement of money in one account. Expenses are negative, in
 1. On the Transactions page (or an account page) open the row's **⋯** menu and choose **Edit**.
 2. Change any field and click **Save**. Reconciled rows keep their amount, date and account locked.
 
+### Duplicate a transaction
+
+1. Open the row's **⋯** menu and choose **Duplicate** (not offered for opening balances).
+2. A **New transaction** dialog opens with the same type, account, amount, payee, category and memo (or, for a transfer, the same accounts and amounts), dated today and cleared.
+3. Change what differs and click **Create**. The original row is untouched.
+
 ### Delete a transaction
 
 1. Open the row menu and choose **Delete**, then confirm. The dialog reminds you that the row can be restored.
@@ -33,7 +39,9 @@ A transaction is one movement of money in one account. Expenses are negative, in
 
 ### Find transactions
 
-The Transactions page shows one month at a time with a month picker; **All months** loads everything (up to 2,000 rows). Filters run on the loaded rows: search (payee, memo, category, account), date range, category, type (income, expense, transfer, opening balance) and status. **Export CSV** downloads the filtered rows (Settings › Data Management exports every transaction, fetching all pages). Amounts are written as plain numbers (`-12.50`), and any text cell that a spreadsheet would run as a formula (starting with `=`, `+`, `-`, `@`) is prefixed with `'` so it opens as text; **Print / PDF** uses the browser's print dialog.
+The Transactions page shows one month at a time with a month picker; **All months** loads everything (up to 2,000 rows). Filters run on the loaded rows: search (payee, memo, category, category group, account), date range, category, type (income, expense, transfer, opening balance) and status. **Export CSV** downloads the filtered rows (Settings › Data Management exports every transaction, fetching all pages). Amounts are written as plain numbers (`-12.50`), and any text cell that a spreadsheet would run as a formula (starting with `=`, `+`, `-`, `@`) is prefixed with `'` so it opens as text; **Print / PDF** uses the browser's print dialog.
+
+Links from other screens open the page already filtered: `?q=` fills the search box and `?month=YYYY-MM` picks the month (budget cards, the spending donut and the Analytics rankings use them). Without `month`, a link with a search shows every month.
 
 <!-- screenshot: Transactions page with the month picker, filters and a few rows including a transfer and a "Needs review" badge (docs/assets/screenshots/transactions-list.png) -->
 
