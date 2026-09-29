@@ -7,7 +7,7 @@ import path from 'node:path';
 const ApiWorkspace = path.resolve('apps', 'api');
 const EnvironmentFile = path.resolve('.env');
 const SeedDemoAccountScript = path.join('src', 'cli', 'seed-demo.ts');
-const TsxCli = createRequire(import.meta.url).resolve('tsx/cli');
+const TsxCli = createRequire(path.resolve('package.json')).resolve('tsx/cli');
 
 const globalSetup = () => {
   if (existsSync(EnvironmentFile)) process.loadEnvFile(EnvironmentFile);
