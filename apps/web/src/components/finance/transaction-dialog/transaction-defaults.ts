@@ -12,7 +12,7 @@ export type Mode = 'expense' | 'income' | 'transfer';
 export type Direction = Exclude<Mode, 'transfer'>;
 export type Preset = Partial<StandardTransactionValues & TransferValues> & { mode?: Mode };
 
-export const today = () => localIsoDate(new Date());
+const today = () => localIsoDate(new Date());
 
 export const modeOf = (transaction?: TransactionRow, preset?: Preset): Mode => {
   if (!transaction) return preset?.mode ?? 'expense';

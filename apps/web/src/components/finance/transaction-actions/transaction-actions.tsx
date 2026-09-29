@@ -52,11 +52,15 @@ const restoreWithToast = async (transaction: TransactionRow, refresh: () => Prom
   }
 };
 
-export function TransactionActions({ transaction }: { transaction: TransactionRow }) {
-  const [details, setDetails] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [duplicating, setDuplicating] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+function DeleteTransactionDialog({
+  onOpenChange,
+  open,
+  transaction,
+}: {
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  transaction: TransactionRow;
+}) {
   const refresh = useRefreshFinance();
   const isTransfer = transaction.kind === 'transfer';
 
@@ -69,9 +73,38 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
         description: 'You can also restore it later from Settings › Deleted items.',
       });
       await refresh();
-      setDeleting(false);
+      onOpenChange(false);
     },
   });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogTitle>Delete this {isTransfer ? 'transfer' : 'transaction'}?</DialogTitle>
+        <p>
+          {isTransfer
+            ? 'Both legs of the transfer leave both account balances and reports.'
+            : 'It leaves the account balance and reports immediately.'}{' '}
+          You can restore it from Settings › Deleted items.
+        </p>
+        <Cluster>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" disabled={remove.isPending} onClick={() => remove.mutate()}>
+            Delete
+          </Button>
+        </Cluster>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function TransactionActions({ transaction }: { transaction: TransactionRow }) {
+  const [details, setDetails] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <>
@@ -112,29 +145,11 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
           preset={duplicatePreset(transaction)}
         />
       )}
-      <Dialog open={deleting} onOpenChange={setDeleting}>
-        <DialogContent>
-          <DialogTitle>Delete this {isTransfer ? 'transfer' : 'transaction'}?</DialogTitle>
-          <p>
-            {isTransfer
-              ? 'Both legs of the transfer leave both account balances and reports.'
-              : 'It leaves the account balance and reports immediately.'}{' '}
-            You can restore it from Settings › Deleted items.
-          </p>
-          <Cluster>
-            <Button variant="outline" onClick={() => setDeleting(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={remove.isPending}
-              onClick={() => remove.mutate()}
-            >
-              Delete
-            </Button>
-          </Cluster>
-        </DialogContent>
-      </Dialog>
+      <DeleteTransactionDialog
+        open={deleting}
+        onOpenChange={setDeleting}
+        transaction={transaction}
+      />
     </>
   );
 }
