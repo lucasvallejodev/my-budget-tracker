@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visual directions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@500;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="wireframes.js"></script>
+    <style>
+      body {
+        background: #eceef2;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        padding: 28px;
+      }
+
+      .dir {
+        overflow: hidden;
+        border-radius: 16px;
+        background: var(--canvas);
+        box-shadow: 0 1px 3px #1018281a;
+      }
+
+      .dir__label {
+        padding: 18px 20px 14px;
+        background: #fff;
+        border-bottom: 1px solid #e6e8ec;
+        font-family: 'Inter', sans-serif;
+      }
+
+      .dir__label h2 {
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .dir__label p {
+        margin-top: 4px;
+        color: #667085;
+        font-size: 13px;
+      }
+
+      .palette {
+        display: flex;
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      .palette span {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        box-shadow: inset 0 0 0 1px #0000001a;
+      }
+
+      .dir__body {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .pick {
+        display: inline-flex;
+        margin-left: 8px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #ecfdf3;
+        color: #067647;
+        font-size: 11px;
+        font-weight: 700;
+        vertical-align: middle;
+      }
+
+      /* A: private bank */
+      .dir--a {
+        --canvas: #f7f6f3;
+        --surface: #ffffff;
+        --border: #e4e1da;
+        --ink: #14213d;
+        --ink-2: #33415c;
+        --muted: #6b7280;
+        --brand: #14213d;
+        --brand-soft: #eef0f5;
+        --track: #ebe8e1;
+        --radius-card: 6px;
+        --shadow: none;
+      }
+
+      .dir--a .hero,
+      .dir--a .card__title {
+        font-family: 'Source Serif 4', serif;
+        letter-spacing: 0;
+      }
+
+      .dir--a .hero {
+        font-weight: 600;
+      }
+
+      .dir--a .avatar {
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--ink-2);
+      }
+
+      .dir--a .bar__fill {
+        --fill: #14213d;
+      }
+
+      /* C: expressive */
+      .dir--c {
+        --canvas: #f7f3ff;
+        --surface: #ffffff;
+        --border: #efe7ff;
+        --radius-card: 20px;
+        --shadow: 0 6px 18px #7c3aed14;
+        font-family: 'Nunito', sans-serif;
+      }
+
+      .dir--c .hero,
+      .dir--c .card__title,
+      .dir--c .row__title {
+        font-weight: 800;
+      }
+
+      .dir--c .hero-card {
+        background: linear-gradient(135deg, #7c3aed, #db2777);
+        color: #fff;
+        border: 0;
+      }
+
+      .dir--c .hero-card .muted,
+      .dir--c .hero-card .eyebrow {
+        color: #f3e8ff;
+      }
+
+      .dir--c .hero-card .bar {
+        background: #ffffff40;
+      }
+
+      .dir--c .hero-card .bar__fill {
+        --fill: #fff;
+      }
+
+      .dir--c .hero-card .bar__pace {
+        background: #fde047;
+      }
+
+      .dir--c .emoji {
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 14px;
+        font-size: 19px;
+      }
+    </style>
+  </head>
+  <body data-frame="none">
+    <div class="board">
+      <section class="dir dir--a">
+        <div class="dir__label">
+          <h2>A · Private bank</h2>
+          <p>
+            Formal and quiet. Navy ink, serif figures, hairlines, almost no color. Trustworthy, but
+            slower to scan.
+          </p>
+          <div class="palette">
+            <span style="background: #14213d"></span><span style="background: #33415c"></span
+            ><span style="background: #b08d57"></span><span style="background: #f7f6f3"></span
+            ><span style="background: #7f1d1d"></span><span style="background: #14532d"></span>
+          </div>
+        </div>
+        <div class="dir__body" id="a"></div>
+      </section>
+
+      <section class="dir">
+        <div class="dir__label">
+          <h2>B · Modern bank <span class="pick">Recommended</span></h2>
+          <p>
+            Calm neutrals, one violet for actions, color only where it means something, real
+            merchant logos.
+          </p>
+          <div class="palette">
+            <span style="background: #6941c6"></span><span style="background: #101828"></span
+            ><span style="background: #667085"></span><span style="background: #f6f7f9"></span
+            ><span style="background: #079455"></span><span style="background: #dc6803"></span
+            ><span style="background: #d92d20"></span>
+          </div>
+        </div>
+        <div class="dir__body" id="b"></div>
+      </section>
+
+      <section class="dir dir--c">
+        <div class="dir__label">
+          <h2>C · Expressive</h2>
+          <p>
+            Gradients, emoji categories, rounded shapes and bright color. Friendly and fast to
+            recognize, but noisy.
+          </p>
+          <div class="palette">
+            <span style="background: linear-gradient(135deg, #7c3aed, #db2777)"></span
+            ><span style="background: #fde047"></span><span style="background: #22c55e"></span
+            ><span style="background: #38bdf8"></span><span style="background: #fb923c"></span
+            ><span style="background: #f7f3ff"></span>
+          </div>
+        </div>
+        <div class="dir__body" id="c"></div>
+      </section>
+    </div>
+    <script>
+      const rowsFor = variant => {
+        const items = [
+          ['Netflix', 'Streaming', '−€12.99', 'netflix', '#e50914', '📺'],
+          ['Greenleaf Market', 'Groceries', '−€42.58', null, '#067647', '🛒'],
+          ['Northwind Labs', 'Salary', '+€3,000.00', null, '#175cd3', '💼'],
+          ['Luigi’s Trattoria', 'Restaurants & bars', '−€35.55', null, '#b93815', '🍝'],
+        ];
+        return items
+          .map(([name, category, amount, slug, color, emoji]) => {
+            const initials = name
+              .split(' ')
+              .map(word => word[0])
+              .join('')
+              .slice(0, 2);
+            let avatar;
+            if (variant === 'c') {
+              avatar = `<span class="emoji" style="background:${color}1f">${emoji}</span>`;
+            } else if (variant === 'a') {
+              avatar = `<span class="avatar avatar--sm">${initials}</span>`;
+            } else {
+              avatar = slug
+                ? `<span class="avatar" style="--bg:${color}"><img alt="" src="https://cdn.simpleicons.org/${slug}/ffffff" /></span>`
+                : `<span class="avatar" style="--bg:${color}14;--fg:${color}">${initials}</span>`;
+            }
+            const income = amount.startsWith('+');
+            const amountStyle =
+              variant === 'c'
+                ? `color:${income ? '#16a34a' : '#db2777'};font-weight:800`
+                : income
+                  ? 'color:var(--positive)'
+                  : '';
+            return `<div class="row" style="padding:8px 16px">${avatar}
+              <div><div class="row__title">${name}</div><div class="row__meta">${category}</div></div>
+              <span class="amt" style="${amountStyle}">${amount}</span></div>`;
+          })
+          .join('');
+      };
+      const heroFor = variant => `<section class="card hero-card">
+          <div class="eyebrow">Left to spend in September</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px"><div class="hero num">€92.87</div><div class="muted">of €850.00</div></div>
+          <div class="bar bar--lg" style="margin-top:22px"><div class="bar__fill" style="width:89%"></div><div class="bar__pace" style="left:93.3%"></div></div>
+          <div class="small ${variant === 'c' ? '' : 'muted'}" style="margin-top:10px">${
+            variant === 'c'
+              ? '🎯 €46.43 a day for 2 more days. You’ve got this!'
+              : '€46.43 a day for the last 2 days · on pace'
+          }</div>
+        </section>`;
+      const budgetFor = variant => {
+        const fill =
+          variant === 'a' ? '#7f1d1d' : variant === 'c' ? '#f43f5e' : 'var(--negative-bar)';
+        const icon =
+          variant === 'c'
+            ? '<span class="emoji" style="background:#fee2e2">🛒</span>'
+            : variant === 'a'
+              ? '<span class="avatar avatar--sm"><i data-lucide="shopping-cart"></i></span>'
+              : '<span class="avatar avatar--sm avatar--tint" style="--dot:#dc2626"><i data-lucide="shopping-cart"></i></span>';
+        const over = variant === 'c' ? '😬 €6.14 over' : '€6.14 over';
+        return `<section class="card"><div style="display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center">${icon}
+          <div><div class="row__title">Groceries</div><div class="bar" style="margin-top:8px"><div class="bar__fill" style="width:100%;--fill:${fill}"></div><div class="bar__pace" style="left:93.3%"></div></div></div>
+          <span class="amt" style="color:${variant === 'a' ? '#7f1d1d' : 'var(--negative)'}">${over}</span></div></section>`;
+      };
+      ['a', 'b', 'c'].forEach(variant => {
+        document.getElementById(variant).innerHTML =
+          heroFor(variant) +
+          `<section class="card card--flush"><div class="card__head"><div class="card__title">Recent activity</div></div><div class="list" style="padding-bottom:6px">${rowsFor(variant)}</div></section>` +
+          budgetFor(variant);
+      });
+    </script>
+  </body>
+</html>

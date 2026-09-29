@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Budgets wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="wireframes.js"></script>
+    <style>
+      .budget {
+        display: grid;
+        grid-template-columns: auto 190px minmax(0, 1fr) 150px auto;
+        align-items: center;
+        gap: 16px;
+        min-height: 68px;
+        padding: 10px 20px;
+        border-top: 1px solid var(--border);
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-top: 1px solid var(--border);
+        background: var(--surface-soft);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .figure {
+        display: grid;
+        gap: 2px;
+      }
+
+      .figure__label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .figure__value {
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: -0.3px;
+      }
+
+      .figure__meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body data-page="budgets">
+    <div id="content">
+      <div class="page-head">
+        <div>
+          <h1>Budgets</h1>
+          <p>Monthly limits per category, measured against what you actually spent.</p>
+        </div>
+        <div class="page-head__tools">
+          <div class="seg"><span class="seg--on">EUR</span><span>USD</span></div>
+          <div class="month">
+            <button><i data-lucide="chevron-left"></i></button><span>September 2026</span
+            ><button><i data-lucide="chevron-right"></i></button>
+          </div>
+          <button class="btn"><i data-lucide="copy"></i>Copy last month</button>
+          <button class="btn"><i data-lucide="plus"></i>Add budget</button>
+        </div>
+      </div>
+
+      <section class="card" style="display: grid; grid-template-columns: 1fr 260px; gap: 32px">
+        <div data-note="1" data-note-pos="-30,-30">
+          <div class="eyebrow">Left to spend in September</div>
+          <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 6px">
+            <div class="hero num">€92.87</div>
+            <div class="muted">of €850.00</div>
+            <span class="tag tag--good" style="margin-left: 8px"
+              ><i data-lucide="check"></i>On pace</span
+            >
+          </div>
+          <div class="bar bar--lg" style="margin-top: 36px" data-note="2" data-note-pos="-34,-34">
+            <div class="bar__fill" style="width: 89%"></div>
+            <div class="bar__pace" style="left: 93.3%"></div>
+            <div class="bar__pace-label" style="left: 93.3%">Today · 28 of 30 days</div>
+          </div>
+          <div
+            class="stats stats--4"
+            style="margin-top: 22px"
+            data-note="3"
+            data-note-pos="-12,-30"
+          >
+            <div class="figure stat">
+              <div class="figure__label">
+                <i data-lucide="target" style="width: 15px; height: 15px"></i>Budgeted
+              </div>
+              <div class="figure__value num">€850.00</div>
+              <div class="figure__meta">8 categories</div>
+            </div>
+            <div class="figure stat">
+              <div class="figure__label">
+                <span class="swatch" style="--dot: var(--brand)"></span>Spent
+              </div>
+              <div class="figure__value num">€757.13</div>
+              <div class="figure__meta">89% of the budget</div>
+            </div>
+            <div class="figure stat">
+              <div class="figure__label">
+                <span class="swatch" style="--dot: #d0d5dd"></span>Left
+              </div>
+              <div class="figure__value num">€92.87</div>
+              <div class="figure__meta">€46.43 a day for 2 days</div>
+            </div>
+            <div class="figure stat">
+              <div class="figure__label">
+                <i data-lucide="trending-up" style="width: 15px; height: 15px"></i>By 30 Sep
+              </div>
+              <div class="figure__value num" style="color: var(--ink-2)">≈ €811</div>
+              <div class="figure__meta">about €39 under budget</div>
+            </div>
+          </div>
+        </div>
+        <div
+          style="border-left: 1px solid var(--border); padding-left: 28px"
+          data-note="4"
+          data-note-pos="-12,-14"
+        >
+          <div class="eyebrow">Status</div>
+          <div style="display: flex; gap: 3px; margin: 14px 0 16px">
+            <span
+              style="flex: 1; height: 8px; border-radius: 4px; background: var(--negative-bar)"
+            ></span>
+            <span
+              style="flex: 2; height: 8px; border-radius: 4px; background: var(--warning-bar)"
+            ></span>
+            <span style="flex: 5; height: 8px; border-radius: 4px; background: var(--brand)"></span>
+          </div>
+          <div class="grid" style="gap: 12px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span class="tag tag--bad" style="min-width: 28px; justify-content: center">1</span
+              >Over budget
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span class="tag tag--warn" style="min-width: 28px; justify-content: center">2</span
+              >Spending too fast
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span class="tag tag--good" style="min-width: 28px; justify-content: center">5</span
+              >On track
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="muted small">
+            Status compares each budget with the share of the month that has passed, so 90% used on
+            the 28th is fine.
+          </div>
+        </div>
+      </section>
+
+      <div class="grid grid--main" style="margin-top: 16px; align-items: start">
+        <section class="card card--flush" data-note="5" data-note-pos="-12,-12">
+          <div class="card__head" style="padding-bottom: 12px">
+            <div class="card__title">Category budgets</div>
+            <div class="seg">
+              <span class="seg--on">By status</span><span>By group</span><span>A–Z</span>
+            </div>
+          </div>
+          <div id="budgets"></div>
+        </section>
+
+        <section class="card card--flush" data-note="6" data-note-pos="-12,-12">
+          <div class="card__head" style="padding-bottom: 6px">
+            <div>
+              <div class="card__title">Spending without a budget</div>
+              <div class="card__sub">€1,397.26 · 65% of September spending</div>
+            </div>
+          </div>
+          <div id="unbudgeted"></div>
+          <div style="padding: 12px 20px; border-top: 1px solid var(--border)">
+            <a class="link" href="#">Show 3 more</a>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const sections = [
+        [
+          'Over budget',
+          'bad',
+          'circle-alert',
+          [
+            [
+              'Groceries',
+              'Food & Dining',
+              'shopping-cart',
+              '#dc2626',
+              356.14,
+              350,
+              '€6.14 over',
+              'Nothing left this month',
+            ],
+          ],
+        ],
+        [
+          'Spending too fast',
+          'warn',
+          'gauge',
+          [
+            [
+              'Coffee',
+              'Food & Dining',
+              'coffee',
+              '#dc2626',
+              14.48,
+              15,
+              '€0.52 left',
+              '€0.26 a day',
+            ],
+            [
+              'Takeout & delivery',
+              'Food & Dining',
+              'pizza',
+              '#dc2626',
+              56.96,
+              60,
+              '€3.04 left',
+              '€1.52 a day',
+            ],
+          ],
+        ],
+        [
+          'On track',
+          'good',
+          'check',
+          [
+            [
+              'Restaurants & bars',
+              'Food & Dining',
+              'utensils',
+              '#dc2626',
+              135.57,
+              150,
+              '€14.43 left',
+              '€7.21 a day',
+            ],
+            [
+              'Electricity & gas',
+              'Bills & Utilities',
+              'zap',
+              '#0891b2',
+              128.69,
+              150,
+              '€21.31 left',
+              '€10.65 a day',
+            ],
+            [
+              'Taxi & rideshare',
+              'Transportation',
+              'car-taxi-front',
+              '#ea580c',
+              14.67,
+              20,
+              '€5.33 left',
+              '€2.66 a day',
+            ],
+            [
+              'Streaming',
+              'Entertainment',
+              'tv',
+              '#9333ea',
+              12.99,
+              25,
+              '€12.01 left',
+              '€6.00 a day',
+            ],
+            ['Clothing', 'Shopping', 'shirt', '#db2777', 37.63, 80, '€42.37 left', '€21.18 a day'],
+          ],
+        ],
+      ];
+      document.getElementById('budgets').innerHTML = sections
+        .map(
+          ([title, state, icon, rows]) =>
+            `<div class="section-head"><span class="tag tag--${state}" style="height:20px"><i data-lucide="${icon}"></i>${rows.length}</span>${title}</div>` +
+            rows
+              .map(([name, group, catIcon, color, spent, budget, left, perDay]) => {
+                const percent = Math.min((spent / budget) * 100, 100);
+                return `<div class="budget">
+                  <span class="avatar avatar--tint" style="--dot:${color}"><i data-lucide="${catIcon}"></i></span>
+                  <div style="min-width:0"><div class="row__title">${name}</div><div class="row__meta">${group}</div></div>
+                  <div><div class="bar"><div class="bar__fill fill--${state}" style="width:${percent}%"></div><div class="bar__pace" style="left:93.3%"></div></div>
+                    <div class="muted small num" style="margin-top:6px">€${spent.toFixed(2)} of €${budget.toFixed(2)} · ${Math.round((spent / budget) * 100)}%</div></div>
+                  <div style="text-align:right"><div class="amt ${state === 'bad' ? 'amt--over' : ''}">${left}</div><div class="muted small">${perDay}</div></div>
+                  <button class="btn btn--sm btn--icon btn--ghost"><i data-lucide="ellipsis"></i></button>
+                </div>`;
+              })
+              .join('')
+        )
+        .join('');
+
+      const unbudgeted = [
+        ['Rent / Mortgage', 'house', '#7c3aed', '€1,200.00', 'Add €1,200'],
+        ['Public transit', 'bus-front', '#ea580c', '€40.00', 'Add €40'],
+        ['Uncategorized', 'circle-help', '#94a3b8', '€36.49', 'Review'],
+        ['Fitness', 'dumbbell', '#059669', '€35.00', 'Add €35'],
+        ['Internet & TV', 'wifi', '#0891b2', '€25.00', 'Add €25'],
+        ['Personal care', 'scissors', '#059669', '€18.00', 'Add €18'],
+      ];
+      document.getElementById('unbudgeted').innerHTML = unbudgeted
+        .map(
+          ([
+            name,
+            icon,
+            color,
+            amount,
+            action,
+          ]) => `<div class="row" style="grid-template-columns:auto 1fr auto auto;min-height:52px">
+            <span class="avatar avatar--sm avatar--tint" style="--dot:${color}"><i data-lucide="${icon}"></i></span>
+            <span style="font-weight:500">${name}</span>
+            <span class="amt">${amount}</span>
+            <a class="link" href="#" style="min-width:74px;justify-content:flex-end">${action}</a>
+          </div>`
+        )
+        .join('');
+    </script>
+  </body>
+</html>

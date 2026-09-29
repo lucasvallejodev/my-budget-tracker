@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Review wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="wireframes.js"></script>
+    <style>
+      .review-row {
+        display: grid;
+        grid-template-columns: 20px auto minmax(0, 1fr) 280px 100px auto;
+        align-items: center;
+        gap: 14px;
+        min-height: 64px;
+        padding: 10px 20px;
+        border-top: 1px solid var(--border);
+      }
+
+      .check {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--border-strong);
+        border-radius: 4px;
+      }
+
+      .combo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        padding: 0 10px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-control);
+        background: var(--surface);
+        color: var(--muted);
+      }
+
+      .combo--open {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 4px #6941c61f;
+      }
+
+      .combo--suggested {
+        border-style: dashed;
+        border-color: #b692f6;
+        background: var(--brand-soft);
+        color: var(--ink);
+      }
+
+      .combo .chev {
+        margin-left: auto;
+        color: var(--faint);
+      }
+
+      .option .avatar {
+        width: 24px;
+        height: 24px;
+      }
+
+      .option .avatar svg.lucide {
+        width: 14px;
+        height: 14px;
+      }
+
+      .group-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px 4px;
+        color: var(--ink-2);
+        font-size: 12px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body data-page="review">
+    <div id="content">
+      <div class="page-head">
+        <div>
+          <h1>Review</h1>
+          <p>
+            New and imported transactions that still need a category. Confirm each one to clear it.
+          </p>
+        </div>
+        <div class="page-head__tools">
+          <button class="btn"><i data-lucide="sparkles"></i>Accept 1 suggestion</button>
+        </div>
+      </div>
+
+      <section class="card card--flush" style="position: relative; overflow: visible">
+        <div class="card__head" style="padding-bottom: 12px">
+          <div class="card__title">2 to review</div>
+          <div class="muted small">
+            <span class="kbd">↑</span> <span class="kbd">↓</span> move ·
+            <span class="kbd">C</span> category · <span class="kbd">Enter</span> done
+          </div>
+        </div>
+
+        <div
+          class="review-row"
+          data-note="1"
+          data-note-pos="-12,-12"
+          style="background: var(--surface-soft)"
+        >
+          <span class="check"></span>
+          <span class="avatar" style="--bg: #f2f4f7; --fg: #475467">MK</span>
+          <div style="min-width: 0">
+            <div class="row__title">MKTPLACE*7731 ONLINE</div>
+            <div class="row__meta">Credit card · Mon 28 Sep · Pending</div>
+          </div>
+          <div class="combo combo--open" data-note="2" data-note-pos="-12,-12">
+            <i data-lucide="search" style="color: var(--ink-2)"></i
+            ><span style="color: var(--faint)">Type to search 64 categories</span
+            ><i class="chev" data-lucide="chevron-up"></i>
+          </div>
+          <div class="amt" style="text-align: right">−€23.99</div>
+          <button class="btn btn--sm"><i data-lucide="check"></i>Done</button>
+        </div>
+
+        <div class="review-row" data-note="3" data-note-pos="-12,-12">
+          <span class="check"></span>
+          <span class="avatar" style="--bg: #f2f4f7; --fg: #475467">SF</span>
+          <div style="min-width: 0">
+            <div class="row__title">SQ *FARMERS STALL</div>
+            <div class="row__meta">Everyday account · Sun 27 Sep</div>
+          </div>
+          <div class="combo combo--suggested">
+            <span
+              class="avatar avatar--sm avatar--tint"
+              style="--dot: #dc2626; width: 22px; height: 22px"
+              ><i data-lucide="shopping-cart" style="width: 13px; height: 13px"></i></span
+            >Groceries
+            <span class="tag tag--info" style="height: 20px; margin-left: auto"
+              ><i data-lucide="sparkles"></i>Suggested</span
+            >
+          </div>
+          <div class="amt" style="text-align: right">−€12.50</div>
+          <button class="btn btn--sm btn--primary"><i data-lucide="check"></i>Accept</button>
+        </div>
+
+        <div class="popover" style="top: 132px; left: 606px" data-note="4" data-note-pos="10,306">
+          <div class="popover__search">
+            <i data-lucide="search" style="color: var(--muted)"></i
+            ><span style="color: var(--faint)">Search categories…</span>
+          </div>
+          <div class="popover__section">Suggested for this payee</div>
+          <div class="option option--active">
+            <span class="avatar avatar--tint" style="--dot: #db2777"
+              ><i data-lucide="package"></i></span
+            >Online shopping<span class="option__hint">Shopping</span>
+          </div>
+          <div class="popover__section">Recent</div>
+          <div class="option">
+            <span class="avatar avatar--tint" style="--dot: #dc2626"
+              ><i data-lucide="shopping-cart"></i></span
+            >Groceries<span class="option__hint">Food &amp; Dining</span>
+          </div>
+          <div class="option">
+            <span class="avatar avatar--tint" style="--dot: #dc2626"
+              ><i data-lucide="utensils"></i></span
+            >Restaurants &amp; bars<span class="option__hint">Food &amp; Dining</span>
+          </div>
+          <div class="option">
+            <span class="avatar avatar--tint" style="--dot: #9333ea"
+              ><i data-lucide="clapperboard"></i></span
+            >Movies &amp; events<span class="option__hint">Entertainment</span>
+          </div>
+          <div class="group-head"><span class="swatch" style="--dot: #7c3aed"></span>Housing</div>
+          <div class="option">
+            <span class="avatar avatar--tint" style="--dot: #7c3aed"
+              ><i data-lucide="house"></i></span
+            >Rent / Mortgage
+          </div>
+          <div class="option">
+            <span class="avatar avatar--tint" style="--dot: #7c3aed"
+              ><i data-lucide="hammer"></i></span
+            >Home maintenance
+          </div>
+          <div class="option" style="opacity: 0.55">
+            <span class="avatar avatar--tint" style="--dot: #7c3aed"
+              ><i data-lucide="sofa"></i></span
+            >Furniture &amp; decor
+          </div>
+          <div class="popover__foot">
+            <i data-lucide="plus"></i>Create a category
+            <span class="option__hint" style="font-weight: 500"
+              >No category: <span class="kbd">Esc</span></span
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="card card--flush" style="margin-top: 16px" data-note="5">
+        <div class="card__head" style="padding-bottom: 8px">
+          <div>
+            <div class="card__title">Reviewed today</div>
+            <div class="card__sub">
+              They stay here until tomorrow, in case you change your mind.
+            </div>
+          </div>
+        </div>
+        <div class="row" style="grid-template-columns: auto minmax(0, 1fr) auto auto auto">
+          <span class="avatar" style="--bg: #dcfae6; --fg: #067647">GM</span>
+          <div>
+            <div class="row__title">Greenleaf Market</div>
+            <div class="row__meta">Everyday account · Today · a rule set the category</div>
+          </div>
+          <span class="chip" style="--dot: #dc2626"
+            ><i data-lucide="shopping-cart"></i>Groceries</span
+          >
+          <span class="amt">−€42.58</span>
+          <button class="btn btn--sm btn--ghost">Undo</button>
+        </div>
+        <div class="row" style="grid-template-columns: auto minmax(0, 1fr) auto auto auto">
+          <span class="avatar" style="--bg: #fffaeb; --fg: #b54708">CC</span>
+          <div>
+            <div class="row__title">Corner Café</div>
+            <div class="row__meta">Cash · Fri 25 Sep · you chose the category</div>
+          </div>
+          <span class="chip" style="--dot: #dc2626"><i data-lucide="coffee"></i>Coffee</span>
+          <span class="amt">−€4.31</span>
+          <button class="btn btn--sm btn--ghost">Undo</button>
+        </div>
+        <div class="row" style="grid-template-columns: auto minmax(0, 1fr) auto auto auto">
+          <span class="avatar" style="--bg: #fef6ee; --fg: #b93815">VB</span>
+          <div>
+            <div class="row__title">Village Bakery</div>
+            <div class="row__meta">Cash · Sun 20 Sep · you chose the category</div>
+          </div>
+          <span class="chip" style="--dot: #dc2626"
+            ><i data-lucide="shopping-cart"></i>Groceries</span
+          >
+          <span class="amt">−€4.97</span>
+          <button class="btn btn--sm btn--ghost">Undo</button>
+        </div>
+      </section>
+      <div style="height: 140px"></div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Home mobile wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="wireframes.js"></script>
+    <style>
+      .appbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .appbar h1 {
+        font-size: 18px;
+        font-weight: 650;
+      }
+
+      .mobile-page {
+        display: grid;
+        gap: 12px;
+        padding: 14px 16px 96px;
+      }
+
+      .mobile-page .card {
+        padding: 16px;
+      }
+
+      .tabbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        width: 390px;
+        padding: 8px 8px 20px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+      }
+
+      .tabbar a {
+        display: grid;
+        justify-items: center;
+        gap: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .tabbar .on {
+        color: var(--brand);
+      }
+
+      .fab {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        margin-top: -18px;
+        border-radius: 50%;
+        background: var(--brand);
+        box-shadow: 0 8px 20px #6941c64d;
+        color: #fff;
+      }
+
+      .mobile-page .row {
+        padding: 8px 0;
+      }
+    </style>
+  </head>
+  <body data-frame="none">
+    <div class="phone">
+      <header class="appbar">
+        <span class="logo__mark"><i data-lucide="chart-pie"></i></span>
+        <h1>Home</h1>
+        <span style="margin-left: auto" class="btn btn--sm btn--icon btn--ghost"
+          ><i data-lucide="search"></i
+        ></span>
+        <span class="user__avatar">JD</span>
+      </header>
+      <div class="mobile-page">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center"
+          data-note="1"
+          data-note-pos="-8,-8"
+        >
+          <div class="seg"><span class="seg--on">EUR</span><span>USD</span><span>≈ All</span></div>
+          <span class="muted small" style="font-weight: 600">September · 2 days left</span>
+        </div>
+
+        <section class="card" data-note="2" data-note-pos="-8,-8">
+          <div class="eyebrow">Left to spend</div>
+          <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px">
+            <div class="hero num" style="font-size: 32px">€92.87</div>
+            <div class="muted small">of €850.00</div>
+          </div>
+          <div class="bar bar--lg" style="margin-top: 26px">
+            <div class="bar__fill" style="width: 89%"></div>
+            <div class="bar__pace" style="left: 93.3%"></div>
+            <div class="bar__pace-label" style="left: 88%">Today</div>
+          </div>
+          <div class="small" style="margin-top: 10px">
+            <strong>€46.43 a day</strong> <span class="muted">for the last 2 days · on pace</span>
+          </div>
+          <div class="stats" style="margin-top: 14px; padding-top: 12px">
+            <div class="stat">
+              <div class="stat__label small">Income</div>
+              <div class="stat__value num" style="font-size: 16px">€3,000</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label small">Spending</div>
+              <div class="stat__value num" style="font-size: 16px">€2,154</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label small">Kept</div>
+              <div class="stat__value num" style="font-size: 16px">€846</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card--flush" data-note="3" data-note-pos="-8,-8">
+          <div class="row" style="padding: 12px 16px">
+            <span class="avatar avatar--sm" style="--bg: var(--brand-soft); --fg: var(--brand)"
+              ><i data-lucide="inbox"></i
+            ></span>
+            <span style="font-weight: 500">2 transactions need a category</span>
+            <i data-lucide="chevron-right" style="color: var(--faint)"></i>
+          </div>
+          <div class="row" style="padding: 12px 16px">
+            <span
+              class="avatar avatar--sm"
+              style="--bg: var(--negative-soft); --fg: var(--negative)"
+              ><i data-lucide="circle-alert"></i
+            ></span>
+            <span style="font-weight: 500">Groceries is €6.14 over budget</span>
+            <i data-lucide="chevron-right" style="color: var(--faint)"></i>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head" style="margin-bottom: 8px">
+            <div class="eyebrow">Net worth</div>
+            <a class="link" href="#">Accounts<i data-lucide="arrow-right"></i></a>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline">
+            <div class="hero hero--md num" style="font-size: 24px">€14,996.93</div>
+            <span class="delta delta--good"><i data-lucide="arrow-up"></i>€786.93</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 6px" class="small">
+            <span class="amt">$3,317.28</span><span class="muted">≈ €17,932.58 all in EUR</span>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head" style="margin-bottom: 4px">
+            <div class="card__title">Recent activity</div>
+            <a class="link" href="#">All</a>
+          </div>
+          <div class="list">
+            <div class="row" style="grid-template-columns: auto 1fr auto">
+              <span class="avatar" style="--bg: #dcfae6; --fg: #067647">GM</span>
+              <div>
+                <div class="row__title">Greenleaf Market</div>
+                <div class="row__meta">Groceries · Today</div>
+              </div>
+              <span class="amt">−€42.58</span>
+            </div>
+            <div class="row" style="grid-template-columns: auto 1fr auto">
+              <span class="avatar" style="--bg: #f2f4f7; --fg: #475467">MK</span>
+              <div>
+                <div class="row__title">MKTPLACE*7731 ONLINE</div>
+                <div class="row__meta" style="color: var(--brand); font-weight: 600">
+                  Needs a category
+                </div>
+              </div>
+              <span class="amt">−€23.99</span>
+            </div>
+            <div class="row" style="grid-template-columns: auto 1fr auto">
+              <span class="avatar" style="--bg: #fdf2fa; --fg: #c11574">SC</span>
+              <div>
+                <div class="row__title">Starlight Cinema</div>
+                <div class="row__meta">Movies &amp; events · Pending</div>
+              </div>
+              <span class="amt">−€15.78</span>
+            </div>
+          </div>
+        </section>
+      </div>
+      <nav class="tabbar" data-note="4" data-note-pos="-10,6">
+        <a class="on" href="#"><i data-lucide="house"></i>Home</a>
+        <a href="#"><i data-lucide="receipt-text"></i>Activity</a>
+        <a href="#"
+          ><span class="fab"><i data-lucide="plus"></i></span
+        ></a>
+        <a href="#"><i data-lucide="target"></i>Budgets</a>
+        <a href="#"><i data-lucide="menu"></i>More</a>
+      </nav>
+    </div>
+  </body>
+</html>

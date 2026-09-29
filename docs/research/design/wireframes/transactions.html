@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Transactions wireframe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="wireframes.css" />
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="wireframes.js"></script>
+  </head>
+  <body data-page="transactions">
+    <div id="content">
+      <div class="page-head">
+        <div>
+          <h1>Transactions</h1>
+          <p>Every entry in your ledger. Click a row to edit it.</p>
+        </div>
+        <div class="page-head__tools">
+          <div class="month">
+            <button><i data-lucide="chevron-left"></i></button><span>September 2026</span
+            ><button><i data-lucide="chevron-right"></i></button>
+          </div>
+          <button class="btn"><i data-lucide="download"></i>Export</button>
+          <button class="btn btn--icon"><i data-lucide="ellipsis"></i></button>
+        </div>
+      </div>
+
+      <section class="card card--flush">
+        <div class="filters" data-note="1" data-note-pos="-12,-12">
+          <div class="input" style="width: 300px">
+            <i data-lucide="search"></i>Search payee, memo or amount
+          </div>
+          <span class="filter filter--on"
+            ><i data-lucide="credit-card"></i>Account: Credit card<i data-lucide="x"></i
+          ></span>
+          <span class="filter"
+            ><i data-lucide="tag"></i>Category<i data-lucide="chevron-down"></i
+          ></span>
+          <span class="filter"
+            ><i data-lucide="arrow-left-right"></i>Type<i data-lucide="chevron-down"></i
+          ></span>
+          <span class="filter"
+            ><i data-lucide="circle-dot"></i>Status<i data-lucide="chevron-down"></i
+          ></span>
+          <span class="filter"
+            ><i data-lucide="calendar"></i>Dates<i data-lucide="chevron-down"></i
+          ></span>
+          <a class="link" style="margin-left: auto" href="#">Clear filters</a>
+        </div>
+        <div
+          style="
+            display: flex;
+            gap: 24px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+          "
+          class="small"
+          data-note="2"
+          data-note-pos="-12,-12"
+        >
+          <span class="muted">14 transactions</span>
+          <span>Spent <strong class="amt">€362.58</strong></span>
+          <span>Paid in <strong class="amt amt--in">+€452.55</strong></span>
+          <span class="muted" style="margin-left: auto"
+            >Credit card · Northbank · €362.58 owed</span
+          >
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 38%">Payee</th>
+              <th>Category</th>
+              <th>Account</th>
+              <th class="right">Amount</th>
+              <th style="width: 44px"></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <script>
+      const monogram = (initials, bg, fg) =>
+        `<span class="avatar" style="--bg:${bg};--fg:${fg}">${initials}</span>`;
+      const logo = (slug, color) =>
+        `<span class="avatar" style="--bg:${color}"><img alt="" src="https://cdn.simpleicons.org/${slug}/ffffff" /></span>`;
+      const category = (name, icon, color) =>
+        name
+          ? `<span class="chip" style="--dot:${color}"><i data-lucide="${icon}"></i>${name}</span>`
+          : '<span class="chip chip--empty"><i data-lucide="plus"></i>Choose category</span>';
+      const days = [
+        [
+          'Mon 28 Sep',
+          '−€23.99',
+          [
+            [
+              monogram('MK', '#f2f4f7', '#475467'),
+              'MKTPLACE*7731 ONLINE',
+              'Bank text kept as imported',
+              null,
+              null,
+              null,
+              '−€23.99',
+              'Pending',
+              3,
+            ],
+          ],
+        ],
+        [
+          'Sun 27 Sep',
+          '−€15.78',
+          [
+            [
+              monogram('SC', '#fdf2fa', '#c11574'),
+              'Starlight Cinema',
+              '',
+              'Movies & events',
+              'clapperboard',
+              '#9333ea',
+              '−€15.78',
+              'Pending',
+            ],
+          ],
+        ],
+        [
+          'Sat 26 Sep',
+          '−€35.55',
+          [
+            [
+              monogram('LT', '#fef6ee', '#b93815'),
+              'Luigi’s Trattoria',
+              'Dinner with Ana',
+              'Restaurants & bars',
+              'utensils',
+              '#dc2626',
+              '−€35.55',
+              null,
+              null,
+              true,
+            ],
+          ],
+        ],
+        [
+          'Thu 24 Sep',
+          '−€29.65',
+          [
+            [
+              monogram('QD', '#fff4ed', '#c4320a'),
+              'QuickBite Delivery',
+              '',
+              'Takeout & delivery',
+              'pizza',
+              '#dc2626',
+              '−€29.65',
+            ],
+          ],
+        ],
+        [
+          'Tue 22 Sep',
+          '−€18.00',
+          [
+            [
+              monogram('FB', '#f0f9ff', '#026aa2'),
+              'Fade & Co Barbers',
+              '',
+              'Personal care',
+              'scissors',
+              '#059669',
+              '−€18.00',
+            ],
+          ],
+        ],
+        [
+          'Sat 19 Sep',
+          '−€14.67',
+          [
+            [
+              monogram('RN', '#eff8ff', '#175cd3'),
+              'RideNow',
+              '',
+              'Taxi & rideshare',
+              'car-taxi-front',
+              '#ea580c',
+              '−€14.67',
+            ],
+          ],
+        ],
+        [
+          'Wed 16 Sep',
+          '−€54.83',
+          [
+            [
+              monogram('BT', '#fffaeb', '#b54708'),
+              'The Brass Tap',
+              '',
+              'Restaurants & bars',
+              'utensils',
+              '#dc2626',
+              '−€54.83',
+            ],
+          ],
+        ],
+        [
+          'Sun 13 Sep',
+          '−€37.63',
+          [
+            [
+              monogram('UT', '#fdf2fa', '#c11574'),
+              'Urban Threads',
+              '',
+              'Clothing',
+              'shirt',
+              '#db2777',
+              '−€37.63',
+            ],
+          ],
+        ],
+        [
+          'Sat 12 Sep',
+          '−€27.31',
+          [
+            [
+              monogram('QD', '#fff4ed', '#c4320a'),
+              'QuickBite Delivery',
+              '',
+              'Takeout & delivery',
+              'pizza',
+              '#dc2626',
+              '−€27.31',
+            ],
+          ],
+        ],
+        [
+          'Wed 9 Sep',
+          '−€11.99',
+          [
+            [
+              logo('spotify', '#1db954'),
+              'Spotify',
+              'Monthly · next on 9 Oct',
+              'Music',
+              'music',
+              '#9333ea',
+              '−€11.99',
+              null,
+              4,
+            ],
+          ],
+        ],
+        [
+          'Mon 7 Sep',
+          '−€45.19',
+          [
+            [
+              monogram('BT', '#fffaeb', '#b54708'),
+              'The Brass Tap',
+              '',
+              'Restaurants & bars',
+              'utensils',
+              '#dc2626',
+              '−€45.19',
+            ],
+          ],
+        ],
+        [
+          'Sat 5 Sep',
+          '−€12.99',
+          [
+            [
+              logo('netflix', '#e50914'),
+              'Netflix',
+              'Monthly · next on 5 Oct',
+              'Streaming',
+              'tv',
+              '#9333ea',
+              '−€12.99',
+            ],
+          ],
+        ],
+        [
+          'Fri 4 Sep',
+          '+€452.55',
+          [
+            [
+              '<span class="avatar" style="--bg:#f2f4f7;--fg:#475467"><i data-lucide="arrow-left-right"></i></span>',
+              'Payment from Everyday account',
+              'Transfer · not counted as spending',
+              'Transfer',
+              'arrow-left-right',
+              '#667085',
+              '+€452.55',
+              null,
+              5,
+              false,
+              true,
+            ],
+          ],
+        ],
+        [
+          'Thu 3 Sep',
+          '−€35.00',
+          [
+            [
+              monogram('PG', '#ecfdf3', '#067647'),
+              'PulseFit Gym',
+              '',
+              'Fitness',
+              'dumbbell',
+              '#059669',
+              '−€35.00',
+            ],
+          ],
+        ],
+      ];
+      document.getElementById('rows').innerHTML = days
+        .map(([day, total, rows]) =>
+          [
+            `<tr class="table__day"><td colspan="3">${day}</td><td class="right num">${total}</td><td></td></tr>`,
+            ...rows.map(
+              ([avatar, name, memo, cat, icon, color, amount, status, note, hover, transfer]) => {
+                const tag = status
+                  ? ` <span class="tag tag--neutral" style="height:18px;font-size:11px;margin-left:6px">${status}</span>`
+                  : '';
+                const noteMark = note ? ` data-note="${note}" data-note-pos="-2,-26"` : '';
+                const amountClass = transfer
+                  ? 'amt--transfer'
+                  : amount.startsWith('+')
+                    ? 'amt--in'
+                    : '';
+                const actions = hover
+                  ? '<span style="display:inline-flex;gap:4px"><button class="btn btn--sm btn--icon" title="Duplicate"><i data-lucide="copy"></i></button><button class="btn btn--sm btn--icon"><i data-lucide="ellipsis"></i></button></span>'
+                  : '';
+                return `<tr${hover ? ' style="background:var(--surface-soft)"' : ''}>
+                <td><div class="cell"${noteMark}>${avatar}<div style="min-width:0"><div class="row__title">${name}${tag}</div>${memo ? `<div class="row__meta">${memo}</div>` : ''}</div></div></td>
+                <td>${transfer ? '<span class="muted">Transfer</span>' : category(cat, icon, color)}</td>
+                <td class="muted">Credit card</td>
+                <td class="right"><span class="amt ${amountClass}">${amount}</span></td>
+                <td class="right">${actions}</td>
+              </tr>`;
+              }
+            ),
+          ].join('')
+        )
+        .join('');
+    </script>
+  </body>
+</html>

@@ -2,7 +2,7 @@
 
 > Summary: index of the competitor research: why and how 20 budgeting and spending-tracker apps were studied, one line per app study describing what it covers and what CoinKeeper could borrow, the plain-language feature guide, the synthesis page, and how to keep the research current.
 
-This section studies the budgeting and spending-tracker apps people use most, to decide which features make CoinKeeper more useful. Each app has its own study with its strongest feature, how its main features work, how they could be built in CoinKeeper, and the sources to read more. Start with the [Feature guide](feature-guide.md), which explains every proposed feature in plain language with examples and diagrams and shows how it fits CoinKeeper; then use [Feature opportunities](feature-opportunities.md) for the full ranked tables, formulas and roadmap.
+This section studies the budgeting and spending-tracker apps people use most, to decide which features make CoinKeeper more useful. Each app has its own study with its strongest feature, how its main features work, how they could be built in CoinKeeper, and the sources to read more. Start with the [Feature guide](feature-guide.md), which explains every proposed feature in plain language with examples and diagrams and shows how it fits CoinKeeper; then use [Feature opportunities](feature-opportunities.md) for the full ranked tables, formulas and roadmap. How the interface should look is a separate study: [Design research](design/README.md) reviews the current screens, compares the design of 14 finance apps and proposes a redesign with wireframes.
 
 ## The user we evaluated against
 
@@ -70,6 +70,10 @@ The model proposals in each study are that study's view. [Feature opportunities]
 | [Revolut](apps/revolut.md)         | Analytics by category, merchant and currency, spending limits, bill Pockets, Vaults, Trips, Group Bills; borrow the daily allowance, analytics pivots and trips                    |
 | [Qapital](apps/qapital.md)         | Goal-based saving rules (Round-Up, Guilty Pleasure, 52 Week, Spend Less, Payday, Set & Forget); borrow goals with funding plans as suggested contributions                         |
 | [Firefly III](apps/firefly-iii.md) | Open-source piggy banks, subscriptions, recurring transactions, rules engine, auto-budgets, tags, splits, Data Importer, with code paths; borrow goals, rollover and subscriptions |
+
+## Design research
+
+The [Design research](design/README.md) section covers the interface rather than the features: a [review of the current UI](design/current-ui-review.md), the recommended [visual direction](design/visual-direction.md), the [UI proposal](design/ui-proposal.md) with a wireframe for every main screen, [Finance UI patterns](design/ui-patterns.md), a [design comparison](design/comparison.md) across the apps, and a design study per app in `design/apps/`.
 
 ## Apps considered and left out
 

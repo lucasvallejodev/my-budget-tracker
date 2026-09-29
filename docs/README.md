@@ -21,7 +21,7 @@ CoinKeeper is a personal budget and spending tracker: a Next.js client and a Fas
 | [Architecture](architecture/overview.md)    | understand how the pieces fit: layers, data model, money handling, API, domain services and frontend conventions, testing |
 | [Features](features/accounts.md)            | learn how each feature works, step by step, and what happens underneath                                                   |
 | [Reference](reference/rest-api.md)          | look up an endpoint, a migration or the default categories                                                                |
-| [Research](research/README.md)              | see what other budgeting apps do well, how it could fit CoinKeeper, and which features we plan to consider next           |
+| [Research](research/README.md)              | see what other budgeting apps do well, which features we plan next, and the proposed interface redesign with wireframes   |
 | [Legacy](legacy/README.md)                  | read the original redesign proposal, research reports and migration notes                                                 |
 
 Documentation for AI agents lives outside this site in the repository's `agents/` folder; see the root `README.md` and `CLAUDE.md`.
