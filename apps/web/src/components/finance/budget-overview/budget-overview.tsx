@@ -23,7 +23,11 @@ import {
 } from '@/components/ui';
 import { getPercentage } from '@/lib/math';
 import { Colors } from '@/styles/theme';
+import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
+import { budgetPace } from '@coinkeeper/shared/lib/budget-pace';
+import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
+import { calendarPeriod } from '@coinkeeper/shared/lib/periods';
 
 import { BudgetCard } from '../budget-card';
 import { BudgetInsights } from '../budget-insights';
@@ -47,7 +51,15 @@ const CopyIconSize = 16;
 const sumOf = (rows: BudgetRow[], pick: (row: BudgetRow) => number) =>
   rows.reduce((total, row) => total + pick(row), 0);
 
-const budgetInsights = (list: BudgetRow[], format: (value: number) => string) => [
+const paceOf = (budget: BudgetRow, today: string) =>
+  budgetPace({
+    limitMinor: budget.amountMinor,
+    period: calendarPeriod(budget.month.slice(0, ISO_MONTH_LENGTH)),
+    spentMinor: budget.spentMinor,
+    today,
+  });
+
+const budgetInsights = (list: BudgetRow[], format: (value: number) => string, today: string) => [
   `${list.filter(budget => budget.spentMinor <= budget.amountMinor).length} of ${list.length} categories are within limits`,
   ...list
     .filter(budget => budget.spentMinor > budget.amountMinor)
@@ -55,22 +67,39 @@ const budgetInsights = (list: BudgetRow[], format: (value: number) => string) =>
       budget =>
         `${budget.categoryName} exceeded its budget by ${format(budget.spentMinor - budget.amountMinor)}`
     ),
+  ...list
+    .filter(budget => paceOf(budget, today).tooFast)
+    .map(
+      budget =>
+        `${budget.categoryName} is spending too fast: ${format(paceOf(budget, today).projectedMinor)} projected against ${format(budget.amountMinor)}`
+    ),
 ];
 
 function CurrencyBudgets({
   currency,
   list,
+  month,
   onDelete,
   onEdit,
+  today,
 }: {
   currency: string;
   list: BudgetRow[];
+  month: string;
   onDelete: (budget: BudgetRow) => void;
   onEdit: (budget: BudgetRow) => void;
+  today: string;
 }) {
   const limit = sumOf(list, budget => budget.amountMinor);
   const spent = sumOf(list, budget => budget.spentMinor);
   const format = (value: number) => formatMoney(value, currency);
+
+  const pace = budgetPace({
+    limitMinor: limit,
+    period: calendarPeriod(month),
+    spentMinor: spent,
+    today,
+  });
 
   return (
     <Stack>
@@ -82,6 +111,13 @@ function CurrencyBudgets({
           label="Budget status"
           value={limit ? `${getPercentage(spent, limit)}% used` : '—'}
         />
+        {pace.isCurrent && (
+          <MetricCard
+            label="Left per day"
+            value={format(pace.perDayLeftMinor)}
+            detail={`for the ${pace.daysLeft} day${pace.daysLeft === 1 ? '' : 's'} left this month`}
+          />
+        )}
       </Grid>
       <Columns>
         <Panel title={`Category budgets · ${currency}`}>
@@ -91,6 +127,7 @@ function CurrencyBudgets({
                 key={budget.id}
                 budget={budget}
                 format={format}
+                today={today}
                 onEdit={() => onEdit(budget)}
                 onDelete={() => onDelete(budget)}
               />
@@ -114,7 +151,7 @@ function CurrencyBudgets({
               },
             ]}
           />
-          <BudgetInsights insights={budgetInsights(list, format)} />
+          <BudgetInsights insights={budgetInsights(list, format, today)} />
         </Stack>
       </Columns>
     </Stack>
@@ -201,6 +238,8 @@ export function BudgetOverview() {
               key={currency}
               currency={currency}
               list={list}
+              month={month}
+              today={localIsoDate(new Date())}
               onEdit={setEditing}
               onDelete={setDeleting}
             />
