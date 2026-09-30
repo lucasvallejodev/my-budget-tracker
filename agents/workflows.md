@@ -66,7 +66,7 @@ Search for `<!-- screenshot:` in `docs/`, run `npm run dev`, sign up a local acc
 
 ## Documentation-only change
 
-Use the `docs-writing` skill. Edit the page, keep the `> Summary:` line accurate, update `docs/_sidebar.md` if pages were added or renamed, and `agents/docs-map.md` if the mapping changed.
+Use the `docs-writing` skill. Edit the page, keep the `> Summary:` line accurate, update `docs/_sidebar.md` if pages were added or renamed (sidebar links start with `/`, page links stay relative to their page), and `agents/docs-map.md` if the mapping changed.
 
 ## Project skills by task
 
