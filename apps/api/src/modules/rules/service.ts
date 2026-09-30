@@ -2,7 +2,9 @@ import { and, asc, eq, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 
 import { categories, rules, transactions } from '@/db/schema';
 import { chunk } from '@coinkeeper/shared/lib/arrays';
+import type { CategoryKind } from '@coinkeeper/shared/schema/enums';
 import type { RuleRow } from '@coinkeeper/shared/schema/rules';
+import type { ReviewSuggestion } from '@coinkeeper/shared/schema/transaction';
 
 import {
   assertAllFound,
@@ -28,6 +30,83 @@ const haystackOf = (texts: (string | null | undefined)[]): string =>
 
 const firstMatch = (list: RuleRow[], haystack: string): RuleRow | null =>
   list.find(rule => haystack.includes(rule.pattern.toLowerCase())) ?? null;
+
+type ReviewCandidate = {
+  amount_minor: string;
+  default_category_id: null | string;
+  id: string;
+  memo: string;
+  original_payee: null | string;
+  payee_name: null | string;
+};
+
+type RuleMatcher = (texts: (string | null | undefined)[]) => RuleRow | null;
+
+const reviewCandidates = (db: DbOrTx, userId: string) =>
+  rowsOf<ReviewCandidate>(
+    db,
+    sql`
+    SELECT t.id, t.amount_minor, t.memo, t.original_payee, p.name AS payee_name, p.default_category_id
+    FROM transactions t
+    LEFT JOIN payees p ON p.id = t.payee_id AND p.user_id = t.user_id AND p.archived_at IS NULL
+    WHERE t.user_id = ${userId} AND t.needs_review AND t.deleted_at IS NULL
+      AND t.kind = 'standard' AND t.category_id IS NULL
+    ORDER BY t.date DESC, t.id`
+  );
+
+const activeCategoryKinds = async (
+  db: DbOrTx,
+  userId: string
+): Promise<Map<string, CategoryKind>> => {
+  const rows = await rowsOf<{ id: string; kind: CategoryKind }>(
+    db,
+    sql`
+    SELECT c.id, g.kind
+    FROM categories c
+    JOIN category_groups g ON g.id = c.group_id
+    WHERE c.user_id = ${userId} AND c.archived_at IS NULL AND g.archived_at IS NULL`
+  );
+
+  return new Map(rows.map(row => [row.id, row.kind]));
+};
+
+const kindOfAmount = (amountMinor: number): CategoryKind =>
+  amountMinor < 0 ? 'expense' : 'income';
+
+const suggestionFor = (
+  candidate: ReviewCandidate,
+  matchRule: RuleMatcher,
+  kinds: Map<string, CategoryKind>
+): null | ReviewSuggestion => {
+  const kind = kindOfAmount(Number(candidate.amount_minor));
+
+  const fits = (categoryId: null | string | undefined): categoryId is string =>
+    !!categoryId && kinds.get(categoryId) === kind;
+
+  const ruleCategoryId = matchRule([
+    candidate.payee_name,
+    candidate.original_payee,
+    candidate.memo,
+  ])?.categoryId;
+
+  if (fits(ruleCategoryId)) {
+    return {
+      categoryId: ruleCategoryId,
+      source: 'rule',
+      transactionId: candidate.id,
+    };
+  }
+
+  if (fits(candidate.default_category_id)) {
+    return {
+      categoryId: candidate.default_category_id,
+      source: 'payee',
+      transactionId: candidate.id,
+    };
+  }
+
+  return null;
+};
 
 const prioritize = (tx: DbOrTx, userId: string, orderedIds: string[]) =>
   rowsOf<{ id: string }>(
@@ -95,6 +174,16 @@ export const createRuleService = (db: Db) => {
     const [row] = (await list(userId)).filter(rule => rule.id === id);
 
     return row ?? notFound('Rule');
+  };
+
+  const matcher = async (userId: string): Promise<RuleMatcher> => {
+    const active = await list(userId);
+
+    return texts => {
+      const haystack = haystackOf(texts);
+
+      return haystack ? firstMatch(active, haystack) : null;
+    };
   };
 
   return {
@@ -165,15 +254,7 @@ export const createRuleService = (db: Db) => {
 
       return haystack ? firstMatch(await list(userId), haystack) : null;
     },
-    matcher: async (userId: string) => {
-      const active = await list(userId);
-
-      return (texts: (string | null | undefined)[]) => {
-        const haystack = haystackOf(texts);
-
-        return haystack ? firstMatch(active, haystack) : null;
-      };
-    },
+    matcher,
     async remove(userId: string, id: string): Promise<void> {
       await owned(userId, id);
       await db.update(rules).set({ deletedAt: new Date() }).where(eq(rules.id, id));
@@ -189,6 +270,16 @@ export const createRuleService = (db: Db) => {
       await db.update(rules).set({ deletedAt: null }).where(eq(rules.id, id));
 
       return get(userId, id);
+    },
+    async reviewSuggestions(userId: string): Promise<ReviewSuggestion[]> {
+      const candidates = await reviewCandidates(db, userId);
+
+      if (!candidates.length) return [];
+
+      const kinds = await activeCategoryKinds(db, userId);
+      const matchRule = await matcher(userId);
+
+      return candidates.flatMap(candidate => suggestionFor(candidate, matchRule, kinds) ?? []);
     },
     async update(userId: string, id: string, data: Partial<RuleInput>): Promise<RuleRow> {
       await owned(userId, id);

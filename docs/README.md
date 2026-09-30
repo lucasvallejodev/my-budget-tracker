@@ -38,4 +38,4 @@ npm run dev
 
 Then open http://localhost:3000 and create an account. Sign-up seeds the default categories and settings. See [Account and security](features/account-and-security.md).
 
-<!-- screenshot: dashboard after the first sign-up with the empty state and "New transaction" button (docs/assets/screenshots/home-dashboard.png) -->
+<!-- screenshot: Home after the first sign-up with the empty state and "New transaction" button (docs/assets/screenshots/home-dashboard.png) -->

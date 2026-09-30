@@ -16,7 +16,7 @@ vi.mock('@/api/mutations', () => ({ deleteTransaction: vi.fn() }));
 afterEach(cleanup);
 
 describe('ComponentGallery', () => {
-  it('renders the sample dashboard and opens a preview dialog', () => {
+  it('renders the sample dashboard and switches previews', () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
         <ComponentGallery />
@@ -24,8 +24,8 @@ describe('ComponentGallery', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Component Gallery' })).toBeTruthy();
-    expect(screen.getByText('$124,580.45')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Send ↗' }));
-    expect(screen.getByRole('dialog', { name: 'Send — component preview' })).toBeTruthy();
+    expect(screen.getByText('Monthly Income')).toBeTruthy();
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Budgets' }), { button: 0 });
+    expect(screen.getByRole('heading', { name: 'Category budget (sample)' })).toBeTruthy();
   });
 });

@@ -2,7 +2,7 @@
 
 # Bundle size
 
-The heavy dependencies are `recharts` (the `cash-flow-chart` and `distribution-chart` components), `react-day-picker`, `cmdk` and the import wizard. Everything else is small. Measure before and after: do not claim a size win you did not see.
+The heavy dependencies are `recharts` (the `cash-flow-chart` component, `analytics/analytics-charts.tsx` and `accounts-overview/net-worth-trend.tsx`), `react-day-picker`, `cmdk` and the import wizard. Everything else is small. Measure before and after: do not claim a size win you did not see.
 
 ## bundle-dynamic-imports
 
@@ -103,8 +103,7 @@ Prefer:
 ```ts
 const ChartLoaders = {
   cashFlow: () => import('../cash-flow-chart').then(chartModule => chartModule.CashFlowChart),
-  distribution: () =>
-    import('../distribution-chart').then(chartModule => chartModule.DistributionChart),
+  analytics: () => import('../analytics').then(chartModule => chartModule.Analytics),
 };
 
 const Chart = await ChartLoaders[chartName]();

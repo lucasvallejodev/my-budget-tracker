@@ -1,1 +1,1 @@
-export { initialsOf, UserMenu } from './user-menu';
+export { userInitials, UserMenu } from './user-menu';

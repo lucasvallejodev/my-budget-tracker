@@ -15,10 +15,10 @@ type ListOptions = {
 
 type AccountInput = {
   accountNumber?: string;
-  color?: string;
+  color?: string | null;
   countsInSpending?: boolean;
   currency: string;
-  icon?: string;
+  icon?: string | null;
   institution?: string;
   name: string;
   notes?: string;

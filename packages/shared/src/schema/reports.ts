@@ -72,27 +72,55 @@ export const summarySchema = z.object({
 
 export type Summary = z.infer<typeof summarySchema>;
 
-const MAX_CASH_FLOW_MONTHS = 24;
+const MAX_REPORT_MONTHS = 24;
 
 export const BreakdownDimensionValues = ['group', 'category', 'payee', 'account'] as const;
 
-const cashFlowMonthsSchema = z.coerce.number().int().min(1).max(MAX_CASH_FLOW_MONTHS);
+export const BreakdownSplitValues = ['month'] as const;
+
+const SplittableDimensions: readonly (typeof BreakdownDimensionValues)[number][] = [
+  'group',
+  'category',
+];
+
+const reportMonthsSchema = z.coerce.number().int().min(1).max(MAX_REPORT_MONTHS);
 
 export const summaryQuerySchema = z.object({
-  cashFlowMonths: cashFlowMonthsSchema.optional(),
+  cashFlowMonths: reportMonthsSchema.optional(),
   month: isoMonthSchema.optional(),
 });
 
 export const monthQuerySchema = z.object({ month: isoMonthSchema });
 
-export const breakdownQuerySchema = monthQuerySchema.extend({
-  by: z.enum(BreakdownDimensionValues).default('group'),
-  currency: z.string().length(FieldLengths.currencyCode).optional(),
-});
+export const breakdownQuerySchema = monthQuerySchema
+  .extend({
+    by: z.enum(BreakdownDimensionValues).default('group'),
+    currency: z.string().length(FieldLengths.currencyCode).optional(),
+    months: reportMonthsSchema.optional(),
+    split: z.enum(BreakdownSplitValues).optional(),
+  })
+  .refine(query => !query.split || SplittableDimensions.includes(query.by), {
+    message: 'Split by month only works with by=group or by=category',
+    path: ['split'],
+  });
 
 export const cashFlowQuerySchema = monthQuerySchema.extend({
-  months: cashFlowMonthsSchema.optional(),
+  months: reportMonthsSchema.optional(),
 });
+
+export const balancesQuerySchema = z.object({
+  month: isoMonthSchema.optional(),
+  months: reportMonthsSchema.optional(),
+});
+
+export const balancePointSchema = z.object({
+  accountId: z.string(),
+  balanceMinor: z.number().int(),
+  currency: z.string(),
+  month: z.string(),
+});
+
+export type BalancePoint = z.infer<typeof balancePointSchema>;
 
 export const categorySliceSchema = z.object({
   categoryId: z.string().nullable(),
@@ -105,6 +133,14 @@ export const categorySliceSchema = z.object({
 });
 
 export type CategorySlice = z.infer<typeof categorySliceSchema>;
+
+export const groupMonthSliceSchema = groupSliceSchema.extend({ month: z.string() });
+
+export type GroupMonthSlice = z.infer<typeof groupMonthSliceSchema>;
+
+export const categoryMonthSliceSchema = categorySliceSchema.extend({ month: z.string() });
+
+export type CategoryMonthSlice = z.infer<typeof categoryMonthSliceSchema>;
 
 export const rankingSliceSchema = z.object({
   currency: z.string(),

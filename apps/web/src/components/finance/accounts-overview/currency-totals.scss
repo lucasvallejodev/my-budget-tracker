@@ -1,0 +1,43 @@
+@use 'abstracts' as *;
+
+.currency-totals {
+  @include reset-list;
+  @include flex-column(space(2));
+
+  &__row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: space(2);
+    margin: 0;
+
+    &--converted {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+  }
+
+  &__count {
+    @include muted-text;
+  }
+
+  &__amount {
+    @include tabular-figures;
+
+    color: var(--color-text);
+    font-weight: font-weight(semibold);
+  }
+
+  &__converted {
+    @include flex-column(space(1));
+
+    margin-top: space(3);
+    padding-top: space(3);
+    border-top: border(divider);
+  }
+
+  &__note {
+    @include muted-text(font-size(caption));
+
+    margin: 0;
+  }
+}

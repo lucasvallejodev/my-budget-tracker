@@ -8,19 +8,19 @@
     border: 0;
     border-radius: radius(pill);
     padding: 3px;
-    background: var(--border);
+    background: var(--color-border);
 
     &[data-state='checked'] {
-      background: var(--accent);
+      background: var(--color-brand);
     }
 
     &__thumb {
       @include icon-size(18px);
 
       display: block;
-      background: var(--on-accent);
+      background: var(--color-on-brand);
       border-radius: radius(round);
-      transition: transform 0.15s;
+      transition: transform duration(fast) easing(standard);
 
       &[data-state='checked'] {
         transform: translateX(16px);

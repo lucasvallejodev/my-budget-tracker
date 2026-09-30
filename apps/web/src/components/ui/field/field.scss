@@ -4,13 +4,13 @@
   .field {
     @include flex-column(space(2));
 
-    font-size: 13px;
+    font-size: font-size(meta);
 
     &--filter {
-      @include muted-text(12px);
+      @include muted-text(font-size(caption));
 
       flex: 1;
-      gap: 5px;
+      gap: space(1);
       min-width: 130px;
     }
   }

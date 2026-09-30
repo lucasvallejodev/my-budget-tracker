@@ -1,58 +1,76 @@
 import {
   ChartNoAxesColumn,
-  ChartPie,
   House,
   Inbox,
   Landmark,
   ReceiptText,
   Settings,
+  Target,
   Upload,
 } from 'lucide-react';
 
-import { RouteItem } from '@/types/route-item';
+import { RouteItem, RouteSection } from '@/types/route-item';
 
-export const MainRouteItems: RouteItem[] = [
+const HomeRoute: RouteItem = {
+  icon: House,
+  id: 1,
+  name: 'Home',
+  path: '/',
+};
+
+export const NavigationSections: RouteSection[] = [
+  { items: [HomeRoute] },
   {
-    icon: House,
-    id: 1,
-    name: 'Dashboard',
-    path: '/',
+    // keep order
+    items: [
+      {
+        icon: ReceiptText,
+        id: 2,
+        name: 'Transactions',
+        path: '/transactions',
+      },
+      {
+        countsReview: true,
+        icon: Inbox,
+        id: 3,
+        name: 'Review',
+        path: '/review',
+      },
+      {
+        icon: Landmark,
+        id: 6,
+        name: 'Accounts',
+        path: '/accounts',
+      },
+    ],
+    label: 'Money',
   },
   {
-    icon: ReceiptText,
-    id: 2,
-    name: 'Transactions',
-    path: '/transactions',
+    // keep order
+    items: [
+      {
+        icon: Target,
+        id: 5,
+        name: 'Budgets',
+        path: '/budgets',
+      },
+      {
+        icon: ChartNoAxesColumn,
+        id: 4,
+        name: 'Analytics',
+        path: '/analytics',
+      },
+    ],
+    label: 'Plan',
   },
-  {
-    icon: Inbox,
-    id: 3,
-    name: 'Review',
-    path: '/review',
-  },
+];
+
+export const SetupRouteItems: RouteItem[] = [
   {
     icon: Upload,
     id: 8,
     name: 'Import',
     path: '/import',
-  },
-  {
-    icon: ChartNoAxesColumn,
-    id: 4,
-    name: 'Analytics',
-    path: '/analytics',
-  },
-  {
-    icon: ChartPie,
-    id: 5,
-    name: 'Budgets',
-    path: '/budgets',
-  },
-  {
-    icon: Landmark,
-    id: 6,
-    name: 'Accounts',
-    path: '/accounts',
   },
   {
     icon: Settings,

@@ -1,0 +1,67 @@
+@use 'abstracts' as *;
+
+.tab-bar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: z-index(tab-bar);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  min-height: size(tab-bar-height);
+  padding: space(1) space(2) calc(#{space(1)} + env(safe-area-inset-bottom));
+  border-top: border(divider);
+  background: var(--color-surface);
+
+  @include media-up(laptop) {
+    display: none;
+  }
+
+  @media print {
+    display: none;
+  }
+
+  &__item {
+    @include reset-button;
+    @include flex-column(space(1) * 0.5);
+
+    align-items: center;
+    min-height: size(control-height-large);
+    justify-content: center;
+    color: var(--color-text-muted);
+    font-size: font-size(micro);
+    font-weight: font-weight(semibold);
+
+    svg {
+      @include icon-size(size(icon));
+    }
+
+    &[aria-current='page'],
+    &--current {
+      color: var(--color-brand);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  &__add {
+    @include reset-button;
+    @include grid-center;
+    @include icon-size(size(control-height-large) + space(1));
+
+    justify-self: center;
+    border-radius: radius(round);
+    background: var(--color-brand);
+    color: var(--color-on-brand);
+    box-shadow: shadow(raised);
+
+    svg {
+      @include icon-size(size(icon) + space(1));
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+}

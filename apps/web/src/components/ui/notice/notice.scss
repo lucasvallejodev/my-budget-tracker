@@ -2,10 +2,19 @@
 
 @layer ui {
   .notice {
-    @include accent-highlight;
+    @include flex-row(space(2));
 
-    padding: 14px 18px;
-    border-radius: radius(lg);
-    font-size: 13px;
+    padding: space(3) space(4);
+    border: border(card);
+    border-radius: radius(control);
+    background: var(--color-surface);
+    color: var(--color-text-body);
+    font-size: font-size(meta);
+
+    svg {
+      @include icon-size(size(icon-small));
+
+      color: var(--color-brand);
+    }
   }
 }

@@ -15,16 +15,16 @@
   &__name {
     @include truncate;
 
-    color: var(--ink);
-    font-weight: 500;
+    color: var(--color-text);
+    font-weight: font-weight(medium);
   }
 
   &__amount {
-    color: var(--ink);
-    font-weight: 500;
+    color: var(--color-text);
+    font-weight: font-weight(medium);
   }
 
   &__count {
-    @include muted-text(12px);
+    @include muted-text(font-size(caption));
   }
 }

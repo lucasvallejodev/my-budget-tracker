@@ -30,6 +30,8 @@ const SampleBase: Omit<
   kind: 'standard',
   memo: '',
   originalPayee: null,
+  payeeColor: null,
+  payeeIcon: null,
   payeeId: 'demo-payee',
   transferId: null,
 };
@@ -140,26 +142,34 @@ export const SampleCashFlow = [
   },
 ];
 
-export const SampleExpenses = [
-  { name: 'Rent', value: 750 },
-  { name: 'Food', value: 980 },
-  { name: 'Bills', value: 557 },
-  { name: 'Transportation', value: 264 },
-  { name: 'Entertainment', value: 154 },
-];
-
-export const SampleCards = [
+export const SampleSpending = [
   {
-    expires: '12/28',
-    id: 'sample-1',
-    lastFour: '2588',
-    name: 'Alex Morgan',
+    color: Colors.group.violet,
+    name: 'Rent',
+    previousMinor: 75000,
+    spentMinor: 75000,
   },
   {
-    expires: '04/29',
-    id: 'sample-2',
-    lastFour: '9412',
-    name: 'Alex Morgan',
-    network: 'Mastercard',
+    color: Colors.group.red,
+    name: 'Food',
+    previousMinor: 104000,
+    spentMinor: 98000,
+  },
+  {
+    color: Colors.group.cyan,
+    name: 'Bills',
+    previousMinor: 49000,
+    spentMinor: 55700,
+  },
+  {
+    color: Colors.group.orange,
+    name: 'Transportation',
+    previousMinor: 28000,
+    spentMinor: 26400,
+  },
+  {
+    color: Colors.group.purple,
+    name: 'Entertainment',
+    spentMinor: 15400,
   },
 ];

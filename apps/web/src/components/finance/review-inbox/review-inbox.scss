@@ -1,0 +1,112 @@
+@use 'abstracts' as *;
+
+.review-inbox {
+  &__keys {
+    display: none;
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+
+    @include media-up(tablet-landscape) {
+      display: block;
+    }
+  }
+
+  &__key {
+    padding: 0 space(1);
+    border: border(card);
+    border-radius: radius(small);
+    background: var(--color-surface-soft);
+    font-family: var(--font-sans);
+    font-size: font-size(micro);
+  }
+
+  &__list {
+    @include reset-list;
+
+    margin: 0 (-(size(card-padding)));
+  }
+
+  &__row,
+  &__done {
+    display: grid;
+    grid-template-columns: size(avatar) minmax(0, 1fr) auto;
+    grid-template-areas: 'avatar text amount' 'category category action';
+    align-items: center;
+    column-gap: space(3);
+    row-gap: space(2);
+    min-height: space(12) + space(4);
+    padding: space(2) size(card-padding);
+    border-top: border(divider);
+
+    @include media-up(tablet-landscape) {
+      grid-template-columns: size(avatar) minmax(0, 1fr) minmax(220px, 300px) 110px auto;
+      grid-template-areas: 'avatar text category amount action';
+    }
+
+    > :first-child {
+      grid-area: avatar;
+    }
+  }
+
+  &__action {
+    grid-area: action;
+    justify-self: end;
+  }
+
+  &__row {
+    outline: 0;
+
+    &:focus-visible,
+    &:focus-within {
+      background: var(--color-surface-soft);
+    }
+
+    &:focus-visible {
+      outline: var(--border-width-focus) solid var(--color-brand);
+      outline-offset: calc(-1 * var(--border-width-focus));
+    }
+  }
+
+  &__text {
+    grid-area: text;
+
+    @include flex-column(0);
+
+    min-width: 0;
+  }
+
+  &__title {
+    @include truncate;
+
+    color: var(--color-text);
+    font-weight: font-weight(semibold);
+  }
+
+  &__meta {
+    @include truncate;
+
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+  }
+
+  &__category {
+    @include flex-row(space(2));
+
+    grid-area: category;
+    min-width: 0;
+  }
+
+  &__chip {
+    @include flex-row(space(2));
+
+    grid-area: category;
+    color: var(--color-text-body);
+    font-size: font-size(meta);
+  }
+
+  &__amount {
+    grid-area: amount;
+    font-weight: font-weight(semibold);
+    text-align: right;
+  }
+}

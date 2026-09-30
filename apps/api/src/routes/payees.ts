@@ -41,8 +41,8 @@ export const payeesRoutes: FastifyPluginAsyncZod = async app => {
     },
     async (request, reply) => {
       const created = await app.services.payees.create(userIdOf(request), {
+        ...request.body,
         defaultCategoryId: toReference(request.body.defaultCategoryId),
-        name: request.body.name,
       });
 
       return reply.status(HttpStatus.created).send(created);
@@ -61,8 +61,8 @@ export const payeesRoutes: FastifyPluginAsyncZod = async app => {
     },
     async request =>
       app.services.payees.update(userIdOf(request), request.params.id, {
+        ...request.body,
         defaultCategoryId: toReference(request.body.defaultCategoryId),
-        name: request.body.name,
       })
   );
 

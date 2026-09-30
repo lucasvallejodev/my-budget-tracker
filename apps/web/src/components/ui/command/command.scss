@@ -2,7 +2,7 @@
 
 @layer ui {
   .command {
-    @include flex-column(5px);
+    @include flex-column(space(1));
 
     &__input {
       @include text-field;
@@ -17,13 +17,13 @@
       @include option-item("[data-selected='true']");
 
       padding: space(2) + 2px;
-      border-radius: radius(sm);
+      border-radius: radius(control);
     }
 
     &__empty {
       padding: space(5);
       text-align: center;
-      color: var(--muted);
+      color: var(--color-text-muted);
     }
   }
 }

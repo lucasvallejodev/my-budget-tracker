@@ -24,12 +24,13 @@
   - [Transactions](/features/transactions.md)
   - [Transfers and credit cards](/features/transfers-and-credit-cards.md)
   - [Categories](/features/categories.md)
-  - [Review inbox](/features/review-inbox.md)
+  - [Review](/features/review-inbox.md)
   - [Multi-currency](/features/multi-currency.md)
   - [Import](/features/import.md)
   - [Rules](/features/rules.md)
   - [Budgets](/features/budgets.md)
-  - [Dashboard and analytics](/features/dashboard.md)
+  - [Home page](/features/dashboard.md)
+  - [Analytics](/features/analytics.md)
   - [Deleted items](/features/deleted-items.md)
 
 - Reference

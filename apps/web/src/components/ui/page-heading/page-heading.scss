@@ -2,13 +2,15 @@
 
 @layer ui {
   .page-heading {
-    @include flex-column(space(4));
+    @include flex-column(space(3));
+
+    margin-bottom: space(1);
 
     @include media-up(tablet-landscape) {
       flex-direction: row;
       align-items: flex-end;
       justify-content: space-between;
-      gap: space(6);
+      gap: space(4);
     }
 
     &__text {
@@ -16,22 +18,16 @@
     }
 
     &__description {
-      margin-top: space(1);
-      color: var(--muted);
+      margin-top: space(1) * 0.5;
+      color: var(--color-text-muted);
     }
 
     &__actions {
-      > * {
-        flex: 1 1 auto;
-      }
+      gap: space(2);
 
       @include media-up(tablet-landscape) {
         flex-shrink: 0;
         justify-content: flex-end;
-
-        > * {
-          flex: 0 0 auto;
-        }
       }
     }
   }

@@ -1,0 +1,61 @@
+@use 'abstracts' as *;
+
+.balance-summary {
+  @include flex-column(space(5));
+
+  &__side {
+    @include flex-column(space(3));
+  }
+
+  &__head {
+    @include flex-between(space(3));
+
+    margin: 0;
+    color: var(--color-text);
+    font-weight: font-weight(semibold);
+  }
+
+  &__total {
+    @include tabular-figures;
+  }
+
+  &__bar {
+    display: flex;
+    gap: space(1) * 0.5;
+    height: space(2) + space(1) * 0.5;
+    overflow: hidden;
+    border-radius: radius(pill);
+    background: var(--color-border);
+  }
+
+  &__segment {
+    flex-basis: 0;
+    min-width: space(1);
+  }
+
+  &__legend {
+    @include reset-list;
+    @include flex-column(space(2));
+  }
+
+  &__item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: space(2);
+    font-size: font-size(meta);
+  }
+
+  &__label {
+    @include truncate;
+
+    color: var(--color-text);
+  }
+
+  &__value {
+    @include tabular-figures;
+
+    color: var(--color-text);
+    font-weight: font-weight(medium);
+  }
+}

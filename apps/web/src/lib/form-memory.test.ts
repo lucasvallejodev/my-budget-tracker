@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { RememberedFields, rememberedValue, rememberValue } from './form-memory';
+import {
+  RememberedFields,
+  rememberedList,
+  rememberedValue,
+  rememberInList,
+  rememberValue,
+} from './form-memory';
 
 afterEach(() => {
   localStorage.clear();
@@ -33,5 +39,15 @@ describe('form memory', () => {
 
     expect(() => rememberValue(RememberedFields.standardAccount, 'acc-1')).not.toThrow();
     expect(rememberedValue(RememberedFields.standardAccount)).toBe('');
+  });
+
+  it('keeps a most-recent-first list without duplicates', () => {
+    rememberInList(RememberedFields.recentCategories, 'food', 2);
+    rememberInList(RememberedFields.recentCategories, 'rent', 2);
+
+    expect(rememberInList(RememberedFields.recentCategories, 'rent', 2)).toEqual(['rent', 'food']);
+    expect(rememberInList(RememberedFields.recentCategories, 'fuel', 2)).toEqual(['fuel', 'rent']);
+    expect(rememberedList(RememberedFields.recentCategories)).toEqual(['fuel', 'rent']);
+    expect(rememberedList(RememberedFields.currencyView)).toEqual([]);
   });
 });

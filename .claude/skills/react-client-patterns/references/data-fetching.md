@@ -146,7 +146,8 @@ Test it like any screen: seed `client.setQueryData(QueryKeys.payees, …)`, mock
 Avoid:
 
 ```ts
-export const storedTheme = (): string => localStorage.getItem(ThemeStorageKey) || DefaultTheme;
+export const rememberedValue = (field: RememberedField): string =>
+  localStorage.getItem(`${StoragePrefix}${field}`) || '';
 ```
 
 Prefer:
@@ -170,10 +171,11 @@ const writeStoredValue = (key: string, value: string): boolean => {
   }
 };
 
-export const storedTheme = (): string => readStoredValue(ThemeStorageKey) ?? DefaultTheme;
+export const rememberedValue = (field: RememberedField): string =>
+  readStoredValue(`${StoragePrefix}${field}`) ?? '';
 ```
 
-`ThemeStorageKey` lives in `apps/web/src/lib/appearance.ts`. Renaming the key resets every user's theme, so only add a version suffix together with a migration that reads the old key once.
+`StoragePrefix`, `RememberedFields`, `rememberedValue` and `rememberValue` live in `apps/web/src/lib/form-memory.ts`, which already guards every access. Renaming the prefix or a field forgets every user's remembered accounts and categories, so only add a version suffix together with a migration that reads the old key once.
 
 ## client-event-listeners
 

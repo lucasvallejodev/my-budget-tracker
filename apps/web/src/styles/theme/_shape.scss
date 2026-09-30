@@ -1,0 +1,20 @@
+@use 'theme/colors' as *;
+
+$border-width: 1px !default;
+$border-width-focus: 2px !default;
+
+$radii: (
+  'small': 6px,
+  'control': 8px,
+  'card': 12px,
+  'dialog': 16px,
+  'pill': 999px,
+  'round': 50%,
+) !default;
+
+$borders: (
+  'card': $border-width solid $color-border,
+  'control': $border-width solid $color-border-strong,
+  'divider': $border-width solid $color-border,
+  'dashed': $border-width dashed $color-border-strong,
+) !default;

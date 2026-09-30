@@ -10,7 +10,7 @@
 
 ## Sign up through the UI or the API
 
-- Through the UI (`signUpThroughForm` in `e2e/fixtures.ts`: `/sign-up`, fields "Name", "Email", "Password" (`exact: true`), "Repeat the password", button "Create account", then the "Dashboard Overview" heading) when the sign-up form is part of the journey.
+- Through the UI (`signUpThroughForm` in `e2e/fixtures.ts`: `/sign-up`, fields "Name", "Email", "Password" (`exact: true`), "Repeat the password", button "Create account", then the "Home" heading) when the sign-up form is part of the journey.
 - Through the API otherwise (the `signedInPage` fixture): `POST /api/v1/auth/sign-up` with `{ email, name, password }` answers `201` and sets the session cookie. Called with `page.request`, the cookie lands in the page's browser context, so the next `page.goto` is signed in. It skips a page load and an argon2 hash on the UI path.
 
 ## Seeding data
@@ -21,7 +21,7 @@
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `test`, `expect`                         | `base.extend` with the `signedInPage` fixture: a page whose context signed up a fresh user through `POST /auth/sign-up` |
 | `apiPost(page, path, body)`              | `page.request.post('/api/v1' + path)` with `Origin: AppOrigin`; fails the test with the response body when not ok       |
-| `signUpThroughForm(page, email)`         | the UI sign-up, ending on the "Dashboard Overview" heading                                                              |
+| `signUpThroughForm(page, email)`         | the UI sign-up, ending on the "Home" heading                                                                            |
 | `seedAccountWithExpense(page, memo)`     | a EUR checking account and one 12.50 expense dated today                                                                |
 | `uniqueEmail()`, `Password`, `AppOrigin` | the generated address, the shared test password, the web origin                                                         |
 

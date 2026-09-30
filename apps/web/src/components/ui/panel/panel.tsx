@@ -22,7 +22,7 @@ export function Panel({
       {title && (
         <div className="panel__head">
           <div>
-            <h2>{title}</h2>
+            <h2 className="panel__title">{title}</h2>
             {description && <p className="panel__description">{description}</p>}
           </div>
           {action}

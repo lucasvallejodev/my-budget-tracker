@@ -24,6 +24,7 @@ const DEFAULT_SESSION_MAX_AGE_DAYS = 90;
 type ServiceOptions = { sessionDays?: number; sessionMaxAgeDays?: number };
 
 const toSettings = (row: typeof userSettings.$inferSelect): UserSettings => ({
+  allowEmoji: row.allowEmoji,
   locale: row.locale,
   primaryCurrency: row.primaryCurrency,
   showConvertedTotals: row.showConvertedTotals,
@@ -77,6 +78,7 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
     async updateSettings(
       userId: string,
       data: {
+        allowEmoji?: boolean;
         locale?: string;
         primaryCurrency?: string;
         showConvertedTotals?: boolean;

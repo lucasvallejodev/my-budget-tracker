@@ -4,4 +4,13 @@
   width: 100%;
   height: 260px;
   min-width: 0;
+  margin: 0;
+
+  &__plot {
+    height: 100%;
+  }
+
+  &__data {
+    @include visually-hidden;
+  }
 }

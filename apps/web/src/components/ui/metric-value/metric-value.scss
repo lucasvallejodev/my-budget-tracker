@@ -2,13 +2,19 @@
 
 @layer ui {
   .metric-value {
-    font-size: 32px;
-    font-weight: 550;
-    letter-spacing: -1px;
-    line-height: 1.3;
+    @include tabular-figures;
+
+    font-size: font-size(card-hero);
+    font-weight: font-weight(bold);
+    letter-spacing: letter-spacing(tight);
+    line-height: line-height(number);
 
     &--fluid {
-      font-size: clamp(26px, 2.7vw, 38px);
+      font-size: font-size(hero);
+    }
+
+    &--small {
+      font-size: font-size(stat);
     }
   }
 }

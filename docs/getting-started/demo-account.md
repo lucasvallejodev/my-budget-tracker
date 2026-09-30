@@ -2,7 +2,7 @@
 
 > Summary: the seeded demo user Jhon Doe: how to create or refresh it with `npm run db:seed:demo`, where its credentials come from (`DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD`), what its seven months of accounts, transactions, budgets and rules contain, how the dates follow the day you run it, why it never reaches production, and how the end-to-end suite uses it.
 
-The demo account is a local user with about half a year of realistic history, so you can see every screen with data in it instead of an empty dashboard. It is generated, not stored: each run rebuilds it up to the day you run it, so the current month is always partly filled.
+The demo account is a local user with about half a year of realistic history, so you can see every screen with data in it instead of an empty Home page. It is generated, not stored: each run rebuilds it up to the day you run it, so the current month is always partly filled.
 
 ## Create or refresh it
 
@@ -34,7 +34,7 @@ The demo account is a local user with about half a year of realistic history, so
 
 Run the command again whenever you want fresh data. It deletes the previous demo user with everything it owns and creates it again, so any change you made while testing is lost.
 
-<!-- screenshot: dashboard of the demo account with income, spending, cash flow and the review notice (docs/assets/screenshots/demo-account-dashboard.png) -->
+<!-- screenshot: Home of the demo account with income, spending, cash flow and the review notice (docs/assets/screenshots/demo-account-dashboard.png) -->
 
 ## Who Jhon Doe is
 
@@ -67,14 +67,14 @@ Jhon earns 3,000 EUR a month, rents a flat, pays his bills from one current acco
 
 ### Events along the way
 
-| When             | What                                                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Five months ago  | Noise-cancelling headphones, 219.00 EUR                                                                           |
-| Four months ago  | A returned jacket, +35.00 EUR refund in Clothing                                                                  |
-| Three months ago | A weekend in Lisbon: flights, hotel and a tour (Travel)                                                           |
-| Two months ago   | A birthday present, 60.00 EUR                                                                                     |
-| Last month       | A dental check-up, 85.00 EUR                                                                                      |
-| This month       | Two card purchases without a category wait in the review inbox; card purchases from the last two days are pending |
+| When             | What                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Five months ago  | Noise-cancelling headphones, 219.00 EUR                                                                          |
+| Four months ago  | A returned jacket, +35.00 EUR refund in Clothing                                                                 |
+| Three months ago | A weekend in Lisbon: flights, hotel and a tour (Travel)                                                          |
+| Two months ago   | A birthday present, 60.00 EUR                                                                                    |
+| Last month       | A dental check-up, 85.00 EUR                                                                                     |
+| This month       | Two card purchases without a category wait on the Review page; card purchases from the last two days are pending |
 
 ### Budgets, rules and settings
 
@@ -109,4 +109,4 @@ The two data files are exempt from the magic-number lint rule, like test files, 
 
 ## In end-to-end tests
 
-`npm run test:e2e` seeds the demo account before the suite starts (`e2e/global-setup.ts`). The setup reads `.env` when it exists; when `DEMO_USER_PASSWORD` is still empty, as in CI, it generates a random password for the run and the spec reads the same value. Locally, running the suite therefore reseeds your demo account, keeping your own password. `e2e/demo-account.spec.ts` signs in as Jhon and checks the dashboard. Other specs keep signing up their own throwaway users. See [Testing](../architecture/testing.md) › End to end.
+`npm run test:e2e` seeds the demo account before the suite starts (`e2e/global-setup.ts`). The setup reads `.env` when it exists; when `DEMO_USER_PASSWORD` is still empty, as in CI, it generates a random password for the run and the spec reads the same value. Locally, running the suite therefore reseeds your demo account, keeping your own password. `e2e/demo-account.spec.ts` signs in as Jhon and checks Home. Other specs keep signing up their own throwaway users. See [Testing](../architecture/testing.md) › End to end.

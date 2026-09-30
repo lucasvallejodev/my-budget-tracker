@@ -19,14 +19,13 @@ import {
   SelectValue,
   Text,
 } from '@/components/ui';
+import { FALLBACK_CURRENCY } from '@coinkeeper/shared/constants/money';
 import { formatMoney, minorToDecimalString } from '@coinkeeper/shared/lib/money';
 import type { BudgetSuggestion } from '@coinkeeper/shared/schema/budgets';
 
 import { CategoryPicker } from '../category-picker';
 import { useEntityMutation } from '../use-entity-mutation';
 import { BudgetRow, monthLabel, useBudgetSuggestions } from '../use-finance-data';
-
-const FallbackCurrency = 'EUR';
 
 function CurrencySelect({
   disabled,
@@ -130,11 +129,11 @@ export function BudgetDialog({
   onSaved: () => void;
 }) {
   const [categoryId, setCategoryId] = useState<string | undefined>(budget.categoryId);
-  const [currency, setCurrency] = useState(budget.currency ?? currencies[0] ?? FallbackCurrency);
+  const [currency, setCurrency] = useState(budget.currency ?? currencies[0] ?? FALLBACK_CURRENCY);
 
   const [amount, setAmount] = useState(
     budget.amountMinor
-      ? minorToDecimalString(budget.amountMinor, budget.currency ?? FallbackCurrency)
+      ? minorToDecimalString(budget.amountMinor, budget.currency ?? FALLBACK_CURRENCY)
       : ''
   );
 

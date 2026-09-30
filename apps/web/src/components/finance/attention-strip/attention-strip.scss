@@ -1,0 +1,69 @@
+@use 'abstracts' as *;
+
+.attention-strip {
+  &__list {
+    @include reset-list;
+
+    display: grid;
+    gap: space(2);
+
+    @include media-up(tablet-landscape) {
+      grid-auto-columns: minmax(0, 1fr);
+      grid-auto-flow: column;
+      gap: space(3);
+    }
+  }
+
+  &__link {
+    @include flex-row(space(3));
+
+    min-height: size(control-height-large) + space(1);
+    padding: space(2) space(3);
+    border: border(card);
+    border-radius: radius(control);
+    background: var(--color-surface);
+    font-weight: font-weight(medium);
+
+    &:hover {
+      border-color: var(--color-border-strong);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  &__icon {
+    @include grid-center;
+    @include icon-size(size(avatar-small));
+    @include tinted(var(--color-brand));
+
+    flex: none;
+    border-radius: radius(control);
+
+    svg {
+      @include icon-size(size(icon-small));
+    }
+
+    &--danger {
+      background: var(--color-negative-soft);
+      color: var(--color-negative);
+    }
+
+    &--warning {
+      background: var(--color-warning-soft);
+      color: var(--color-warning);
+    }
+  }
+
+  &__label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__chevron {
+    @include icon-size(size(icon-small));
+
+    color: var(--color-text-faint);
+  }
+}

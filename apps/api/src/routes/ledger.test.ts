@@ -78,6 +78,27 @@ describe('accounts', () => {
     expect(unarchived.json().archivedAt).toBeNull();
   });
 
+  it('stores an icon and a colour, clears them and refuses invalid ones', async () => {
+    const account = await createAccount(ada, { color: '#1f7a5c', icon: 'Landmark' });
+
+    expect((await ada.request('GET', `/accounts/${account.id}`)).json()).toMatchObject({
+      color: '#1f7a5c',
+      icon: 'Landmark',
+    });
+    expect(
+      (await ada.request('PATCH', `/accounts/${account.id}`, { icon: '🏦' })).json().icon
+    ).toBe('🏦');
+    expect(
+      (await ada.request('PATCH', `/accounts/${account.id}`, { color: null, icon: null })).json()
+    ).toMatchObject({ color: null, icon: null });
+    expect(
+      (await ada.request('PATCH', `/accounts/${account.id}`, { icon: 'bank' })).statusCode
+    ).toBe(400);
+    expect(
+      (await ada.request('PATCH', `/accounts/${account.id}`, { color: '#fff' })).statusCode
+    ).toBe(400);
+  });
+
   it('dates the opening balance on the day the client sends, not the server clock', async () => {
     const account = await createAccount(ada, { openingDate: '2026-10-01' });
 
@@ -173,6 +194,116 @@ describe('transactions', () => {
     expect(restored.statusCode).toBe(200);
     expect(restored.json()).toMatchObject({ deletedAt: null, id });
     expect((await ada.request('POST', `/transactions/${id}/restore`)).statusCode).toBe(404);
+  });
+
+  it('filters the list by currency', async () => {
+    const euros = await createAccount(ada);
+    const dollars = await createAccount(ada, { currency: 'USD', name: 'Dollars' });
+
+    await ada.request('POST', '/transactions', spend(euros.id, '10'));
+    await ada.request('POST', '/transactions', spend(dollars.id, '20'));
+
+    const listed = (await ada.request('GET', '/transactions?currency=USD')).json().items as {
+      accountId: string;
+      currency: string;
+    }[];
+
+    expect(listed.length).toBeGreaterThan(0);
+    expect(listed.every(row => row.currency === 'USD' && row.accountId === dollars.id)).toBe(true);
+    expect((await ada.request('GET', '/transactions?currency=US')).statusCode).toBe(400);
+  });
+
+  it('returns the payee icon and colour on every row', async () => {
+    const account = await createAccount(ada);
+
+    const payee = (
+      await ada.request('POST', '/payees', {
+        color: '#1f7a5c',
+        icon: '🥖',
+        name: 'Bakery',
+      })
+    ).json<{ id: string }>();
+
+    const created = (
+      await ada.request(
+        'POST',
+        '/transactions',
+        spend(account.id, '3', undefined, { payeeId: payee.id })
+      )
+    ).json<{ id: string }>();
+
+    const unnamed = (await ada.request('POST', '/transactions', spend(account.id, '1'))).json<{
+      id: string;
+    }>();
+
+    expect((await ada.request('GET', `/transactions/${created.id}`)).json()).toMatchObject({
+      payeeColor: '#1f7a5c',
+      payeeIcon: '🥖',
+    });
+
+    const rows = (await ada.request('GET', '/transactions')).json().items as {
+      id: string;
+      payeeColor: string | null;
+      payeeIcon: string | null;
+    }[];
+
+    expect(rows.find(row => row.id === created.id)).toMatchObject({
+      payeeColor: '#1f7a5c',
+      payeeIcon: '🥖',
+    });
+    expect(rows.find(row => row.id === unnamed.id)).toMatchObject({
+      payeeColor: null,
+      payeeIcon: null,
+    });
+  });
+
+  it('suggests categories for rows that need review from rules and payee defaults', async () => {
+    const account = await createAccount(ada);
+    const categoryId = await firstCategoryId(ada);
+
+    await ada.request('POST', '/rules', { categoryId, pattern: 'bakery' });
+
+    const payee = (
+      await ada.request('POST', '/payees', { defaultCategoryId: categoryId, name: 'Corner shop' })
+    ).json<{ id: string }>();
+
+    const byRule = (
+      await ada.request(
+        'POST',
+        '/transactions',
+        spend(account.id, '4', undefined, { memo: 'Bakery' })
+      )
+    ).json<{ id: string }>();
+
+    const byPayee = (
+      await ada.request(
+        'POST',
+        '/transactions',
+        spend(account.id, '9', undefined, { payeeId: payee.id })
+      )
+    ).json<{ id: string }>();
+
+    await ada.request('POST', '/transactions', spend(account.id, '1'));
+
+    const response = await ada.request('GET', '/transactions/review-suggestions');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().items).toEqual(
+      expect.arrayContaining([
+        {
+          categoryId,
+          source: 'rule',
+          transactionId: byRule.id,
+        },
+        {
+          categoryId,
+          source: 'payee',
+          transactionId: byPayee.id,
+        },
+      ])
+    );
+    expect(response.json().items).toHaveLength(2);
+    expect((await bob.request('GET', '/transactions/review-suggestions')).json().items).toEqual([]);
   });
 
   it('leaves deleted rows out of balances and reports until they are restored', async () => {

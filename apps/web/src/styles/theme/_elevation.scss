@@ -1,0 +1,25 @@
+@use 'sass:color';
+@use 'theme/colors' as *;
+
+$shadows: (
+  'card': 0 1px 2px color.change($color-text, $alpha: 0.05),
+  'raised': 0 4px 12px color.change($color-text, $alpha: 0.08),
+  'pop': (
+    0 12px 32px color.change($color-text, $alpha: 0.14),
+    0 2px 6px color.change($color-text, $alpha: 0.06),
+  ),
+  'focus': 0 0 0 4px color.change($color-brand, $alpha: 0.12),
+  'selected': (
+    0 1px 2px color.change($color-text, $alpha: 0.05),
+    0 0 0 1px $color-border,
+  ),
+) !default;
+
+$z-indexes: (
+  'raised': 1,
+  'header': 30,
+  'sidebar': 40,
+  'tab-bar': 40,
+  'popover': 90,
+  'skip-link': 100,
+) !default;

@@ -1,8 +1,8 @@
-> Summary: rendering rules for prerendered client components: explicit conditionals with integer money (`rendering-conditional-render`), theme without a flash (`rendering-hydration-no-flicker`), client-only values through `useHydrated()` (`rendering-hydration-suppress-warning`), `content-visibility` for long tables, `<Activity>` for toggled panels, and hoisting static JSX.
+> Summary: rendering rules for prerendered client components: explicit conditionals with integer money (`rendering-conditional-render`), stored look preferences without a flash (`rendering-hydration-no-flicker`), client-only values through `useHydrated()` (`rendering-hydration-suppress-warning`), `content-visibility` for long tables, `<Activity>` for toggled panels, and hoisting static JSX.
 
 # Rendering
 
-Pages under `apps/web/src/app/` are Server Components that render one client screen, and Next prerenders that screen to HTML. Client components therefore run twice: once to produce HTML without `window` or `localStorage`, once in the browser to hydrate. Anything that differs between the two (stored theme, current date, locale) needs one of the rules below.
+Pages under `apps/web/src/app/` are Server Components that render one client screen, and Next prerenders that screen to HTML. Client components therefore run twice: once to produce HTML without `window` or `localStorage`, once in the browser to hydrate. Anything that differs between the two (a stored preference, the current date, the locale) needs one of the rules below.
 
 ## rendering-conditional-render
 
@@ -36,43 +36,41 @@ Prefer:
 
 ## rendering-hydration-no-flicker
 
-A preference stored in the browser must be applied before the first paint, or the prerendered default shows first and then flips. Check how the theme reaches `<html>`: if `apps/web/src/lib/appearance.ts` (`applyTheme`) is the only thing that sets `document.documentElement.dataset.theme`, it runs after hydration and a dark-mode user sees the light theme flash.
+The app has one light theme and stores no look preference today. If you add one (a density, a theme), it must be applied before the first paint, or the prerendered default shows first and then flips. A `useEffect` that sets a `data-*` attribute on `<html>` runs after hydration, so the user sees the default flash.
 
-Avoid (the prerendered HTML has no theme; the effect fixes it after paint):
+Avoid (the prerendered HTML has the default; the effect fixes it after paint):
 
 ```tsx
 useEffect(() => {
-  applyTheme(storedTheme());
+  document.documentElement.dataset.density = storedDensity();
 }, []);
 ```
 
-Prefer: a tiny synchronous script in `apps/web/src/app/layout.tsx` that sets `data-theme` on `<html>` before the body renders, built from the same constants, plus `suppressHydrationWarning` on `<html>` because the attribute legitimately differs from the server HTML.
+Prefer: a tiny synchronous script in `apps/web/src/app/layout.tsx` that sets the attribute on `<html>` before the body renders, built from the same constants as the helper that reads the preference, plus `suppressHydrationWarning` on `<html>` because the attribute legitimately differs from the server HTML.
 
 ```tsx
-const ThemeBootScript = `(() => {
+const DensityBootScript = `(() => {
   try {
-    const theme = localStorage.getItem('${ThemeStorageKey}') ?? 'light';
-    const prefersDark = window.matchMedia('${DarkSchemeQuery}').matches;
-    const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
-    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+    document.documentElement.dataset.density =
+      localStorage.getItem('${DensityStorageKey}') ?? '${DefaultDensity}';
   } catch {
-    document.documentElement.dataset.theme = 'light';
+    document.documentElement.dataset.density = '${DefaultDensity}';
   }
 })();`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: ThemeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: DensityBootScript }} />
       </head>
-      <body className={dmSans.variable}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
 ```
 
-- The script repeats `resolveTheme` in `lib/appearance.ts`; keep both in step and cover them with the same test cases.
+- The script repeats the helper that resolves the preference in `apps/web/src/lib/`; keep both in step and cover them with the same test cases.
 - The script is one more inline script for the page Content-Security-Policy. The static policy in `next.config.ts` (report-only, `script-src 'self' 'unsafe-inline'`) already allows it; the policy is owned by the api-security-review skill (`csp-headers.md`). Do not add a `sha256-…` hash to `script-src`: a hash makes browsers ignore `'unsafe-inline'` and blocks the Next.js inline scripts. Run `e2e/content-security-policy.spec.ts` after adding the script.
 
 ## rendering-hydration-suppress-warning

@@ -1,25 +1,5 @@
 @use 'sass:map';
-
-$spaces: (
-  1: 4px,
-  2: 8px,
-  3: 12px,
-  4: 16px,
-  5: 20px,
-  6: 24px,
-  7: 28px,
-  8: 32px,
-);
-
-$radii: (
-  sm: 8px,
-  md: 10px,
-  lg: 12px,
-  xl: 16px,
-  panel: 18px,
-  pill: 999px,
-  round: 50%,
-);
+@use 'theme' as *;
 
 @function lookup($scale, $key, $label) {
   @if not map.has-key($scale, $key) {
@@ -29,10 +9,60 @@ $radii: (
   @return map.get($scale, $key);
 }
 
+@function token($prefix, $scale, $key, $label) {
+  $checked: lookup($scale, $key, $label);
+
+  @return var(--#{$prefix}-#{$key});
+}
+
 @function space($step) {
   @return lookup($spaces, $step, 'space step');
 }
 
 @function radius($size) {
-  @return lookup($radii, $size, 'radius');
+  @return token('radius', $radii, $size, 'radius');
+}
+
+@function font-size($size) {
+  @return token('font-size', $font-sizes, $size, 'font size');
+}
+
+@function font-weight($weight) {
+  @return token('font-weight', $font-weights, $weight, 'font weight');
+}
+
+@function line-height($name) {
+  @return token('line-height', $line-heights, $name, 'line height');
+}
+
+@function letter-spacing($name) {
+  @return token('letter-spacing', $letter-spacings, $name, 'letter spacing');
+}
+
+@function shadow($name) {
+  @return token('shadow', $shadows, $name, 'shadow');
+}
+
+@function z-index($name) {
+  @return token('z-index', $z-indexes, $name, 'z-index');
+}
+
+@function border($name) {
+  @return token('border', $borders, $name, 'border');
+}
+
+@function size($name) {
+  @return lookup($layout-sizes, $name, 'layout size');
+}
+
+@function duration($name) {
+  @return token('duration', $durations, $name, 'duration');
+}
+
+@function easing($name) {
+  @return token('easing', $easings, $name, 'easing');
+}
+
+@function color($name) {
+  @return token('color', $colors, $name, 'colour');
 }

@@ -1,6 +1,8 @@
 'use client';
 
-import { Download } from 'lucide-react';
+import './transaction-explorer.scss';
+
+import { Download, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -16,13 +18,15 @@ import {
   PillSelect,
   PillSelectOption,
 } from '@/components/ui';
+import { cn } from '@/lib/styles';
+import { formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { exportTransactions } from '../export-transactions';
 import { categoryLabel, describeTransaction } from '../transaction-labels';
 import { TransactionTable } from '../transaction-table';
 import { TransactionRow } from '../use-finance-data';
 
-const PageSize = 10;
+const PageSize = 50;
 const Statuses = ['Needs review', 'pending', 'cleared', 'reconciled'];
 
 const typeOf = (transaction: TransactionRow) => {
@@ -35,7 +39,76 @@ const typeOf = (transaction: TransactionRow) => {
 const statusOf = (transaction: TransactionRow) =>
   transaction.needsReview ? 'Needs review' : transaction.status;
 
+const sumsByCurrency = (rows: TransactionRow[], sign: 1 | -1) => {
+  const sums = new Map<string, number>();
+
+  for (const row of rows) {
+    if (row.kind !== 'standard' || Math.sign(row.amountMinor) !== sign) continue;
+
+    sums.set(row.currency, (sums.get(row.currency) ?? 0) + Math.abs(row.amountMinor));
+  }
+
+  return [...sums.entries()].map(([currency, total]) => formatMoney(total, currency)).join(' · ');
+};
+
+function FilteredSummary({ rows }: { rows: TransactionRow[] }) {
+  const spent = sumsByCurrency(rows, -1);
+  const paidIn = sumsByCurrency(rows, 1);
+
+  return (
+    <p className="transaction-explorer__summary" role="status">
+      <span>
+        {rows.length} transaction{rows.length === 1 ? '' : 's'}
+      </span>
+      {spent && (
+        <span>
+          Spent <strong className="transaction-explorer__figure">{spent}</strong>
+        </span>
+      )}
+      {paidIn && (
+        <span>
+          Paid in{' '}
+          <strong className="transaction-explorer__figure transaction-explorer__figure--positive">
+            {paidIn}
+          </strong>
+        </span>
+      )}
+    </p>
+  );
+}
+
 const capitalize = (label: string) => label[0].toUpperCase() + label.slice(1);
+
+const optionsOf = (labels: string[], allLabel: string): PillSelectOption[] => [
+  { label: allLabel, value: '' },
+  ...[...new Set(labels)]
+    .sort((left, right) => left.localeCompare(right))
+    .map(label => ({ label, value: label })),
+];
+
+type ExplorerFilters = {
+  account: string;
+  category: string;
+  from: string;
+  search: string;
+  status: string;
+  to: string;
+  type: string;
+};
+
+const searchText = (transaction: TransactionRow) =>
+  `${transaction.id} ${describeTransaction(transaction)} ${transaction.memo} ${categoryLabel(transaction)} ${transaction.groupName ?? ''} ${transaction.accountName}`.toLowerCase();
+
+const matchesFilters = (transaction: TransactionRow, filters: ExplorerFilters) =>
+  searchText(transaction).includes(filters.search.toLowerCase()) &&
+  [
+    [filters.account, transaction.accountName],
+    [filters.category, categoryLabel(transaction)],
+    [filters.type, typeOf(transaction)],
+    [filters.status, statusOf(transaction)],
+  ].every(([wanted, actual]) => !wanted || wanted === actual) &&
+  (!filters.from || transaction.date >= filters.from) &&
+  (!filters.to || transaction.date <= filters.to);
 
 const TypeOptions: PillSelectOption[] = [
   { label: 'All types', value: '' },
@@ -44,6 +117,122 @@ const TypeOptions: PillSelectOption[] = [
   { label: 'Transfer', value: 'TRANSFER' },
   { label: 'Opening balance', value: 'OPENING' },
 ];
+
+type SetFilter = (key: keyof ExplorerFilters, value: string) => void;
+
+const NoFilters: ExplorerFilters = {
+  account: '',
+  category: '',
+  from: '',
+  search: '',
+  status: '',
+  to: '',
+  type: '',
+};
+
+const StatusOptions: PillSelectOption[] = [
+  { label: 'All statuses', value: '' },
+  ...Statuses.map(label => ({ label: capitalize(label), value: label })),
+];
+
+function FilterFields({
+  filters,
+  onChange,
+  showAccount,
+  transactions,
+}: {
+  filters: ExplorerFilters;
+  onChange: SetFilter;
+  showAccount: boolean;
+  transactions: TransactionRow[];
+}) {
+  return (
+    <FilterBar>
+      <DatePicker label="From" value={filters.from} onChange={value => onChange('from', value)} />
+      <DatePicker
+        label="To"
+        value={filters.to}
+        min={filters.from}
+        onChange={value => onChange('to', value)}
+      />
+      {showAccount && (
+        <Field variant="filter">
+          Account
+          <PillSelect
+            value={filters.account}
+            onValueChange={value => onChange('account', value)}
+            options={optionsOf(
+              transactions.map(transaction => transaction.accountName),
+              'All accounts'
+            )}
+          />
+        </Field>
+      )}
+      <Field variant="filter">
+        Category
+        <PillSelect
+          value={filters.category}
+          onValueChange={value => onChange('category', value)}
+          options={optionsOf(transactions.map(categoryLabel), 'All categories')}
+        />
+      </Field>
+      <Field variant="filter">
+        Type
+        <PillSelect
+          value={filters.type}
+          onValueChange={value => onChange('type', value)}
+          options={TypeOptions}
+        />
+      </Field>
+      <Field variant="filter">
+        Status
+        <PillSelect
+          value={filters.status}
+          onValueChange={value => onChange('status', value)}
+          options={StatusOptions}
+        />
+      </Field>
+    </FilterBar>
+  );
+}
+
+function SearchRow({
+  filters,
+  filtersOpen,
+  onChange,
+  onToggleFilters,
+}: {
+  filters: ExplorerFilters;
+  filtersOpen: boolean;
+  onChange: SetFilter;
+  onToggleFilters: () => void;
+}) {
+  const { search, ...others } = filters;
+  const active = Object.values(others).filter(Boolean).length;
+
+  return (
+    <FilterBar>
+      <Field variant="filter">
+        Search
+        <PillInput
+          placeholder="Search by payee, memo, category…"
+          value={search}
+          onChange={event => onChange('search', event.target.value)}
+        />
+      </Field>
+      <Button
+        className="transaction-explorer__filters-toggle"
+        variant="outline"
+        size="sm"
+        aria-expanded={filtersOpen}
+        onClick={onToggleFilters}
+      >
+        <SlidersHorizontal aria-hidden />
+        Filters{active ? ` (${active})` : ''}
+      </Button>
+    </FilterBar>
+  );
+}
 
 export function TransactionExplorer({
   initialSearch = '',
@@ -54,31 +243,15 @@ export function TransactionExplorer({
   showAccount?: boolean;
   transactions: TransactionRow[];
 }) {
-  const [search, setSearch] = useState(initialSearch);
-  const [category, setCategory] = useState('');
-  const [type, setType] = useState('');
-  const [status, setStatus] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [filters, setFilters] = useState({ ...NoFilters, search: initialSearch });
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
-
-  const filtered = transactions.filter(
-    transaction =>
-      `${transaction.id} ${describeTransaction(transaction)} ${transaction.memo} ${categoryLabel(transaction)} ${transaction.groupName ?? ''} ${transaction.accountName}`
-        .toLowerCase()
-        .includes(search.toLowerCase()) &&
-      (!category || categoryLabel(transaction) === category) &&
-      (!type || typeOf(transaction) === type) &&
-      (!status || statusOf(transaction) === status) &&
-      (!from || transaction.date >= from) &&
-      (!to || transaction.date <= to)
-  );
-
+  const filtered = transactions.filter(transaction => matchesFilters(transaction, filters));
   const pages = Math.max(1, Math.ceil(filtered.length / PageSize));
   const current = Math.min(page, pages);
 
-  const update = (setter: (value: string) => void, value: string) => {
-    setter(value);
+  const setFilter: SetFilter = (key, value) => {
+    setFilters(previous => ({ ...previous, [key]: value }));
     setPage(1);
   };
 
@@ -97,50 +270,25 @@ export function TransactionExplorer({
         </Cluster>
       }
     >
-      <FilterBar>
-        <Field variant="filter">
-          Search
-          <PillInput
-            placeholder="Search by payee, memo, category…"
-            value={search}
-            onChange={event => update(setSearch, event.target.value)}
-          />
-        </Field>
-        <DatePicker label="From" value={from} onChange={value => update(setFrom, value)} />
-        <DatePicker label="To" value={to} min={from} onChange={value => update(setTo, value)} />
-        <Field variant="filter">
-          Category
-          <PillSelect
-            value={category}
-            onValueChange={value => update(setCategory, value)}
-            options={[
-              { label: 'All categories', value: '' },
-              ...[...new Set(transactions.map(categoryLabel))]
-                .sort((left, right) => left.localeCompare(right))
-                .map(label => ({ label, value: label })),
-            ]}
-          />
-        </Field>
-        <Field variant="filter">
-          Type
-          <PillSelect
-            value={type}
-            onValueChange={value => update(setType, value)}
-            options={TypeOptions}
-          />
-        </Field>
-        <Field variant="filter">
-          Status
-          <PillSelect
-            value={status}
-            onValueChange={value => update(setStatus, value)}
-            options={[
-              { label: 'All statuses', value: '' },
-              ...Statuses.map(label => ({ label: capitalize(label), value: label })),
-            ]}
-          />
-        </Field>
-      </FilterBar>
+      <SearchRow
+        filters={filters}
+        filtersOpen={filtersOpen}
+        onChange={setFilter}
+        onToggleFilters={() => setFiltersOpen(open => !open)}
+      />
+      <div
+        className={cn('transaction-explorer__filters', {
+          'transaction-explorer__filters--open': filtersOpen,
+        })}
+      >
+        <FilterFields
+          filters={filters}
+          onChange={setFilter}
+          showAccount={showAccount}
+          transactions={transactions}
+        />
+      </div>
+      <FilteredSummary rows={filtered} />
       {filtered.length ? (
         <TransactionTable
           transactions={filtered.slice((current - 1) * PageSize, current * PageSize)}

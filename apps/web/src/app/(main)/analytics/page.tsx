@@ -1,5 +1,6 @@
-import { Overview } from '@/components/finance';
+import { Analytics } from '@/components/finance';
+import type { AnalyticsParams } from '@/lib/analytics-filters';
 
-export default function Page() {
-  return <Overview analytics />;
+export default async function Page({ searchParams }: { searchParams: Promise<AnalyticsParams> }) {
+  return <Analytics view="overview" params={await searchParams} />;
 }

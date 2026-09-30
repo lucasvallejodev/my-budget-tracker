@@ -1,0 +1,28 @@
+@use 'abstracts' as *;
+
+.analytics {
+  &__tabs {
+    @include flex-row(space(6));
+
+    overflow: auto hidden;
+    border-bottom: border(divider);
+  }
+
+  &__tab {
+    margin-bottom: calc(-1 * var(--border-width));
+    padding: space(3) 0;
+    border-bottom: var(--border-width-focus) solid transparent;
+    color: var(--color-text-muted);
+    font-weight: font-weight(semibold);
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--color-text);
+    }
+
+    &[aria-current='page'] {
+      border-bottom-color: var(--color-brand);
+      color: var(--color-text);
+    }
+  }
+}

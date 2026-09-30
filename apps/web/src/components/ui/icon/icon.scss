@@ -1,0 +1,8 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .icon {
+    display: inline-block;
+    line-height: 1;
+  }
+}

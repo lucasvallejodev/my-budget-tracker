@@ -1,49 +1,73 @@
 @use 'abstracts' as *;
 
 .navigation {
-  &__links {
-    @include flex-column(space(2) + 2px);
+  @include flex-column(space(1));
+
+  flex: 1;
+
+  &__section {
+    @include flex-column(space(1));
+
+    &--setup {
+      margin-top: auto;
+      padding-top: space(4);
+    }
+  }
+
+  &__label {
+    padding: space(3) space(3) space(1);
+    color: var(--color-text-muted);
+    font-size: font-size(micro);
+    font-weight: font-weight(semibold);
+    letter-spacing: letter-spacing(eyebrow);
+    text-transform: uppercase;
   }
 
   &__link {
     @include flex-row(space(3));
 
-    border-radius: radius(sm);
-    padding: 11px 14px;
-    color: var(--muted);
-    font-size: 14px;
+    min-height: size(control-height);
+    padding: 0 space(3);
+    border-radius: radius(control);
+    color: var(--color-text-body);
+    font-weight: font-weight(medium);
 
-    &:hover,
+    &:hover {
+      background: var(--color-surface-soft);
+    }
+
     &[aria-current='page'] {
-      @include accent-highlight;
+      background: var(--color-brand-soft);
+      color: var(--color-brand-text);
     }
 
     svg {
-      @include icon-size(18px);
+      @include icon-size(size(icon));
+
+      color: var(--color-text-muted);
+    }
+
+    &[aria-current='page'] svg {
+      color: var(--color-brand);
     }
   }
 
-  &__section-label {
-    @include muted-text(11px);
+  &__badge {
+    @include tabular-figures;
 
-    text-transform: uppercase;
-    letter-spacing: 0.9px;
-    padding: 0 14px;
-    margin: space(5) 0 space(2);
-  }
-
-  &__section-total {
-    @include muted-text(11px);
-
-    display: block;
-    font-weight: 400;
-    margin-top: 2px;
-  }
-
-  &__link-amount {
-    @include muted-text(12px);
-
+    min-width: space(5);
     margin-left: auto;
-    white-space: nowrap;
+    padding: 0 space(2);
+    border-radius: radius(pill);
+    background: var(--color-brand);
+    color: var(--color-on-brand);
+    font-size: font-size(micro);
+    font-weight: font-weight(semibold);
+    line-height: line-height(body);
+    text-align: center;
+  }
+
+  &__badge-label {
+    @include visually-hidden;
   }
 }

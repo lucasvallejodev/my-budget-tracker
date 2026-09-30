@@ -4,37 +4,21 @@ import './settings-view.scss';
 
 import * as Tabs from '@radix-ui/react-tabs';
 import Link from 'next/link';
-import { toast } from 'sonner';
 
-import { Badge, Button, Cluster, Notice, Page, PageHeading, Panel, Text } from '@/components/ui';
+import { Button, Cluster, Notice, Page, PageHeading, Panel, Text } from '@/components/ui';
 import { useHydrated } from '@/lib/hydration';
 
-import { LinkedAccount } from '../linked-account';
-import { PaymentCardList } from '../payment-card-list';
-import { SampleCards } from '../sample-data';
 import { useCurrentUser } from '../use-finance-data';
-import {
-  AppPreferences,
-  DataSettings,
-  NotificationSettings,
-  ProfileSettings,
-  SecuritySettings,
-  SupportLinks,
-} from './settings-panels';
+import { EmojiPreference, ProfileSettings, SecuritySettings } from './settings-panels';
 
 const Sections = [
   // keep order
-  'Profile',
-  'Categories',
-  'Currencies',
-  'Rules & Import',
-  'Cards & Accounts',
-  'Security',
-  'Deleted items',
-  'Notifications',
-  'Data Management',
-  'App Preferences',
-  'Legal and support',
+  { label: 'Profile', value: 'profile' },
+  { label: 'Categories', value: 'categories' },
+  { label: 'Currencies', value: 'currencies' },
+  { label: 'Rules', value: 'rules' },
+  { label: 'Security', value: 'security' },
+  { label: 'Deleted items', value: 'deleted' },
 ];
 
 function LinkPanel({
@@ -60,32 +44,33 @@ const LinkSections = [
       'Manage the groups and categories used to classify your spending. Groups own the colour; categories own the icon.',
     links: [{ href: '/settings/categories', label: 'Open the category manager' }],
     title: 'Categories',
+    value: 'categories',
   },
   {
     description:
       'Set your primary currency, toggle converted totals and maintain exchange rates by hand.',
     links: [{ href: '/settings/currencies', label: 'Open currency settings' }],
     title: 'Currencies',
+    value: 'currencies',
   },
   {
-    description: 'Import bank CSV exports and keep rules that categorise entries automatically.',
-    links: [
-      { href: '/import', label: 'Import transactions' },
-      { href: '/settings/rules', label: 'Manage rules' },
-    ],
-    title: 'Rules & Import',
+    description: 'Keep rules that categorise imported and new entries automatically.',
+    links: [{ href: '/settings/rules', label: 'Manage rules' }],
+    title: 'Rules',
+    value: 'rules',
   },
   {
     description:
       'Deleted transactions, transfers, accounts, rules and exchange rates are kept. Review them and bring any of them back.',
     links: [{ href: '/settings/deleted', label: 'Open deleted items' }],
     title: 'Deleted items',
+    value: 'deleted',
   },
 ];
 
-function LinkSection({ section }: { section: (typeof LinkSections)[number] }) {
+function LinkSection({ demo, section }: { demo: boolean; section: (typeof LinkSections)[number] }) {
   return (
-    <Tabs.Content value={section.title}>
+    <Tabs.Content value={section.value}>
       <LinkPanel title={section.title} description={section.description}>
         <Cluster>
           {section.links.map(link => (
@@ -94,43 +79,9 @@ function LinkSection({ section }: { section: (typeof LinkSections)[number] }) {
             </Button>
           ))}
         </Cluster>
+        {section.title === 'Categories' && !demo && <EmojiPreference />}
       </LinkPanel>
     </Tabs.Content>
-  );
-}
-
-function CardsAndAccounts({ demo }: { demo: boolean }) {
-  if (!demo) {
-    return (
-      <LinkPanel
-        title="Cards & Accounts"
-        description="Manage your tracked accounts. Payment card storage is not connected."
-      >
-        <Button asChild variant="outline">
-          <Link href="/accounts">View accounts</Link>
-        </Button>
-      </LinkPanel>
-    );
-  }
-
-  return (
-    <Panel title="Cards & Accounts">
-      <PaymentCardList initialCards={SampleCards} />
-      <LinkedAccount
-        name="Bank Account"
-        detail="Example Bank •••• 5847"
-        actions={<Badge>Connected</Badge>}
-      />
-      <LinkedAccount
-        name="Digital Wallet"
-        detail="Example wallet account"
-        actions={
-          <Button variant="outline" onClick={() => toast.info('Example linked account.')}>
-            Manage
-          </Button>
-        }
-      />
-    </Panel>
   );
 }
 
@@ -142,42 +93,27 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
     <Page>
       <PageHeading
         title="Settings"
-        description="Manage your account, preferences, and security settings."
+        description="Your profile, categories, currencies, rules and security."
       />
       {demo && <Notice>Component preview — sample account information.</Notice>}
-      <Tabs.Root defaultValue="Profile" className="settings-view" orientation="vertical">
+      <Tabs.Root defaultValue="profile" className="settings-view" orientation="vertical">
         <Tabs.List className="settings-view__nav" aria-label="Settings Sections">
           {Sections.map(section => (
-            <Tabs.Trigger className="settings-view__tab" key={section} value={section}>
-              {section}
+            <Tabs.Trigger className="settings-view__tab" key={section.value} value={section.value}>
+              {section.label}
             </Tabs.Trigger>
           ))}
         </Tabs.List>
         <div>
-          <Tabs.Content value="Profile">
+          <Tabs.Content value="profile">
             <ProfileSettings demo={demo} user={user} />
             {!demo && user && <Text tone="muted">Signed in as {user.name || user.email}</Text>}
           </Tabs.Content>
           {LinkSections.map(section => (
-            <LinkSection key={section.title} section={section} />
+            <LinkSection key={section.title} demo={demo} section={section} />
           ))}
-          <Tabs.Content value="Cards & Accounts">
-            <CardsAndAccounts demo={demo} />
-          </Tabs.Content>
-          <Tabs.Content value="Security">
+          <Tabs.Content value="security">
             <SecuritySettings demo={demo} />
-          </Tabs.Content>
-          <Tabs.Content value="Notifications">
-            <NotificationSettings />
-          </Tabs.Content>
-          <Tabs.Content value="Data Management">
-            <DataSettings demo={demo} />
-          </Tabs.Content>
-          <Tabs.Content value="App Preferences">
-            <AppPreferences />
-          </Tabs.Content>
-          <Tabs.Content value="Legal and support">
-            <SupportLinks />
           </Tabs.Content>
         </div>
       </Tabs.Root>

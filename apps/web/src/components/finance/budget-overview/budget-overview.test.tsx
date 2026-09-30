@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 
-import { type BudgetRow, currentMonth, QueryKeys } from '../use-finance-data';
+import { type BudgetRow, type CategorySlice, currentMonth, QueryKeys } from '../use-finance-data';
 import { BudgetOverview } from './budget-overview';
 
 vi.hoisted(() => {
@@ -60,13 +60,14 @@ const rows: BudgetRow[] = [
 
 afterEach(cleanup);
 
-function renderBudgets(data: BudgetRow[] = rows) {
+function renderBudgets(data: BudgetRow[] = rows, breakdown: CategorySlice[] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   client.setQueryData(['budgets', month], data);
   client.setQueryData([...QueryKeys.accounts, false], []);
   client.setQueryData(QueryKeys.settings, { primaryCurrency: 'EUR', showConvertedTotals: false });
   client.setQueryData([...QueryKeys.categories, false], []);
+  client.setQueryData(QueryKeys.categoryBreakdown(month, 'EUR'), breakdown);
   client.setQueryData(QueryKeys.budgetSuggestions(month), [
     {
       amountMinor: 4100,
@@ -83,31 +84,42 @@ function renderBudgets(data: BudgetRow[] = rows) {
   );
 }
 
+const openMenu = (name: string) =>
+  fireEvent.pointerDown(screen.getByRole('button', { name: `Actions for the ${name} budget` }), {
+    button: 0,
+    ctrlKey: false,
+  });
+
 describe('BudgetOverview', () => {
-  it('renders one budget per category with totals and status badges', () => {
+  it('leads with the month summary and groups budgets by status', () => {
     renderBudgets();
     expect(screen.getByRole('heading', { name: 'Budgets' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Groceries' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Coffee' })).toBeTruthy();
-    expect(screen.getByText('Total budget · EUR')).toBeTruthy();
-    expect(screen.getByText(formatMoney(45000, 'EUR'))).toBeTruthy();
-    expect(screen.getByText('On track')).toBeTruthy();
-    expect(screen.getByText('Exceeded')).toBeTruthy();
-    expect(screen.getByText('1 of 2 categories are within limits')).toBeTruthy();
-    expect(
-      screen.getByText(`Coffee exceeded its budget by ${formatMoney(1500, 'EUR')}`)
-    ).toBeTruthy();
+    expect(screen.getByText(/Left to spend in/)).toBeTruthy();
+    expect(screen.getAllByText(formatMoney(45000, 'EUR')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('region', { name: 'Over budget' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'On track' })).toBeTruthy();
+    expect(screen.getByText(`${formatMoney(1500, 'EUR')} over`)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Groceries' })).toBeTruthy();
   });
 
   it('shows the daily allowance for the current month', () => {
     renderBudgets();
-    expect(screen.getByText('Left per day')).toBeTruthy();
-    expect(screen.getByText('for the 6 days left this month')).toBeTruthy();
+    expect(screen.getByText(/a day for 6 days/)).toBeTruthy();
+  });
+
+  it('reorders budgets alphabetically', () => {
+    renderBudgets();
+    fireEvent.click(screen.getByRole('radio', { name: 'A–Z' }));
+
+    const links = screen.getAllByRole('link').map(link => link.textContent);
+
+    expect(links.indexOf('Coffee')).toBeLessThan(links.indexOf('Groceries'));
   });
 
   it('offers the average of recent months as the limit', () => {
     renderBudgets();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
+    openMenu('Groceries');
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit budget' }));
     expect(
       screen.getByText(
         `You spent about ${formatMoney(4100, 'EUR')} a month over the last 3 months.`
@@ -117,16 +129,37 @@ describe('BudgetOverview', () => {
     expect(screen.getByDisplayValue('41.00')).toBeTruthy();
   });
 
+  it('lists spending without a budget with a suggested limit', () => {
+    renderBudgets(rows, [
+      {
+        categoryId: 'c-rent',
+        categoryName: 'Rent',
+        color: '#7C3AED',
+        groupId: 'g-home',
+        groupName: 'Housing',
+        icon: 'House',
+        spentMinor: 120000,
+      },
+    ]);
+    expect(screen.getByRole('heading', { name: 'Spending without a budget' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', {
+        name: `Add a ${formatMoney(120000, 'EUR')} budget for Rent`,
+      })
+    ).toBeTruthy();
+  });
+
   it('shows an empty state when the month has no budgets', () => {
     renderBudgets([]);
-    expect(screen.getByRole('heading', { name: /No budgets for/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /No EUR budgets for/ })).toBeTruthy();
   });
 
   it('confirms before deleting a budget and calls the action', async () => {
     const actions = await import('@/api/mutations');
 
     renderBudgets();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+    openMenu('Groceries');
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete budget' }));
     expect(screen.getByRole('dialog', { name: 'Delete the Groceries budget?' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Delete budget' }));
     await vi.waitFor(() =>

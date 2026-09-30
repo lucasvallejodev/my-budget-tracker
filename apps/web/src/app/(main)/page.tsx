@@ -1,5 +1,5 @@
-import { Overview } from '@/components/finance';
+import { Home } from '@/components/finance';
 
 export default function Page() {
-  return <Overview />;
+  return <Home />;
 }

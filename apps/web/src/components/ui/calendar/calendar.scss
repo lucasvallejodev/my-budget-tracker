@@ -5,14 +5,14 @@
 
   width: 32px;
   height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--ink);
+  border: border(divider);
+  border-radius: radius(small);
+  background: var(--color-surface);
+  color: var(--color-text);
   cursor: pointer;
 
   &:hover {
-    background: var(--accent-soft);
+    background: var(--color-brand-soft);
   }
 
   &:focus-visible {
@@ -30,7 +30,7 @@
     padding: space(3);
     position: relative;
     width: fit-content;
-    color: var(--ink);
+    color: var(--color-text);
 
     &__months {
       position: relative;
@@ -40,7 +40,7 @@
       @include flex-row;
 
       height: 42px;
-      font-weight: 600;
+      font-weight: font-weight(semibold);
     }
 
     &__nav {
@@ -57,7 +57,7 @@
     }
 
     &__chevron {
-      fill: var(--accent);
+      fill: var(--color-brand);
       width: 16px;
     }
 
@@ -67,9 +67,9 @@
     }
 
     &__weekday {
-      @include muted-text(12px);
+      @include muted-text(font-size(caption));
 
-      font-weight: 400;
+      font-weight: font-weight(regular);
     }
 
     &__day-button {
@@ -77,29 +77,29 @@
 
       width: 36px;
       height: 36px;
-      border-radius: radius(sm);
-      color: var(--ink);
+      border-radius: radius(control);
+      color: var(--color-text);
       cursor: pointer;
       font: inherit;
-      font-size: 13px;
-      transition: background 120ms ease;
+      font-size: font-size(meta);
+      transition: background duration(fast) easing(standard);
 
       &:focus-visible {
         @include focus-ring;
       }
 
       &:hover {
-        background: var(--accent-soft);
+        background: var(--color-brand-soft);
       }
     }
 
     &__day--selected &__day-button {
-      background: var(--accent);
-      color: var(--on-accent);
+      background: var(--color-brand);
+      color: var(--color-on-brand);
     }
 
     &__day--today &__day-button {
-      border: 1px solid var(--accent);
+      border: var(--border-width) solid var(--color-brand);
     }
 
     &__day--outside {

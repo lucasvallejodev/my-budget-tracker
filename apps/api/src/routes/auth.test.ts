@@ -59,6 +59,7 @@ describe('sign-up and sign-in', () => {
 
     expect((await client.request('GET', '/me')).json()).toMatchObject({ email: 'ada@example.com' });
     expect((await client.request('GET', '/settings')).json()).toEqual({
+      allowEmoji: false,
       locale: 'en-US',
       primaryCurrency: 'EUR',
       showConvertedTotals: false,

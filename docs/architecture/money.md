@@ -37,9 +37,9 @@ The `Amount` component (`apps/web/src/components/ui/amount/`) wraps `formatMoney
 
 1. **Accounts own currencies.** An account is created in one currency (defaulting to the user's primary currency) and cannot change it once it has transactions.
 2. **Transactions copy the currency** from their account at write time, so reports can group by currency without a join.
-3. **Nothing is summed across currencies.** Dashboard cards, net worth, monthly totals, breakdowns and budgets are computed and rendered per currency.
+3. **Nothing is summed across currencies.** Home cards, net worth, monthly totals, breakdowns and budgets are computed and rendered per currency.
 4. **Cross-currency transfers carry two amounts**, one per leg in each account's currency. No rate is stored; the ratio of the legs is the realised rate including fees.
-5. **Conversion is display-only** and optional. When "Show converted totals" is on, the dashboard adds an approximate total in the primary currency using the user's manual exchange rates, labelled with the rate dates. Currencies without a rate are listed as missing and left out, never assumed to be 1:1.
+5. **Conversion is display-only** and optional. When "Show converted totals" is on, Home adds an approximate total in the primary currency using the user's manual exchange rates, labelled with the rate dates. Currencies without a rate are listed as missing and left out, never assumed to be 1:1.
 
 ## Exchange rates
 

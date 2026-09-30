@@ -19,10 +19,45 @@ describe('IconPicker', () => {
     );
   });
 
+  it('reads icon names as words and moves focus with the arrow keys', () => {
+    render(<IconPicker value="ShoppingCart" onChange={vi.fn()} />);
+
+    const current = screen.getByRole('option', { name: 'Shopping cart' });
+    const options = screen.getAllByRole('option');
+    const index = options.indexOf(current);
+
+    expect(current.getAttribute('tabindex')).toBe('0');
+    expect(options.filter(option => option.getAttribute('tabindex') === '0')).toHaveLength(1);
+
+    fireEvent.keyDown(current, { key: 'ArrowRight' });
+
+    expect(document.activeElement).toBe(options[index + 1]);
+  });
+
   it('says when nothing matches', () => {
     render(<IconPicker value="" onChange={vi.fn()} />);
     fireEvent.change(screen.getByLabelText('Search icons'), { target: { value: 'zzzz' } });
 
     expect(screen.getByText('No icons match.')).toBeTruthy();
+  });
+
+  it('accepts a single emoji when emoji are allowed', () => {
+    const onChange = vi.fn();
+
+    render(<IconPicker allowEmoji value="Wallet" onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText('Emoji'), { target: { value: 'abc' } });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Emoji').getAttribute('aria-invalid')).toBe('true');
+
+    fireEvent.change(screen.getByLabelText('Emoji'), { target: { value: '🛒' } });
+
+    expect(onChange).toHaveBeenCalledWith('🛒');
+  });
+
+  it('hides the emoji field by default', () => {
+    render(<IconPicker value="" onChange={vi.fn()} />);
+
+    expect(screen.queryByLabelText('Emoji')).toBeNull();
   });
 });

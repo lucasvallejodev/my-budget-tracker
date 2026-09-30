@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { safeNextPath, transactionsHref } from './navigation';
+import { isCurrentPath, safeNextPath, transactionsHref } from './navigation';
 
 describe('safeNextPath', () => {
   it('keeps same-origin paths with their query and hash', () => {
@@ -37,5 +37,18 @@ describe('transactionsHref', () => {
       '/transactions?month=2026-09&q=Groceries'
     );
     expect(transactionsHref('Food & Dining')).toBe('/transactions?q=Food+%26+Dining');
+  });
+});
+
+describe('isCurrentPath', () => {
+  it('matches Home only on the root path', () => {
+    expect(isCurrentPath('/', '/')).toBe(true);
+    expect(isCurrentPath('/accounts', '/')).toBe(false);
+  });
+
+  it('matches an entry and its sub-pages', () => {
+    expect(isCurrentPath('/accounts', '/accounts')).toBe(true);
+    expect(isCurrentPath('/accounts/abc', '/accounts')).toBe(true);
+    expect(isCurrentPath('/account-types', '/accounts')).toBe(false);
   });
 });

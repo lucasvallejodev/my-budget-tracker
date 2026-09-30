@@ -1,0 +1,63 @@
+@use 'abstracts' as *;
+
+.home-hero {
+  @include surface;
+  @include flex-column(space(4));
+
+  &__head {
+    @include flex-between(space(3));
+
+    margin: -(space(1)) 0;
+  }
+
+  &__eyebrow {
+    @include eyebrow;
+  }
+
+  &__amount {
+    @include flex-row(space(3));
+
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+
+  &__value {
+    @include tabular-figures;
+
+    font-size: font-size(hero);
+    font-weight: font-weight(bold);
+    letter-spacing: letter-spacing(tight);
+    line-height: line-height(number);
+  }
+
+  &__total {
+    color: var(--color-text-muted);
+  }
+
+  &__legend {
+    @include flex-between(space(3));
+
+    flex-wrap: wrap;
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+  }
+
+  &__allowance {
+    color: var(--color-text);
+  }
+
+  &__prompt {
+    color: var(--color-text-muted);
+  }
+
+  &__figures {
+    display: grid;
+    gap: space(3);
+    padding-top: space(4);
+    border-top: border(divider);
+
+    @include media-up(phone-landscape) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+}

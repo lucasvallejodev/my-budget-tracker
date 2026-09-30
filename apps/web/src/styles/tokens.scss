@@ -1,51 +1,36 @@
+@use 'sass:list';
+@use 'sass:map';
+@use 'theme' as *;
+
+@mixin emit($prefix, $scale) {
+  @each $name, $value in $scale {
+    --#{$prefix}-#{$name}: #{$value};
+  }
+}
+
 :root {
   color-scheme: light;
-  --canvas: #f3f4f6;
-  --surface: #ffffff;
-  --surface-soft: #f9fafb;
-  --ink: #111827;
-  --muted: #667085;
-  --border: #e5e7eb;
-  --accent: #7c3aed;
-  --accent-hover: #6d28d9;
-  --accent-soft: #f5f1ff;
-  --success: #047857;
-  --success-soft: #ecfdf5;
-  --danger: #be123c;
-  --danger-soft: #fff1f2;
-  --warning: #92400e;
-  --warning-soft: #fffbeb;
-  --shadow: 0 16px 48px #10182818;
-  /* Values that stay the same in both themes. */
-  --primary: #7c3aed;
-  --primary-hover: #6d28d9;
-  --on-accent: #ffffff;
-  --on-accent-muted: #c4bbd8;
-  --selection: #ddd6fe;
-  --selection-ink: #241144;
-  --overlay: #080c1c85;
-  --card-shadow: 0 8px 20px #00000012;
-  --gradient-balance: linear-gradient(120deg, #a78bfa, #8728ef);
-  --gradient-card: linear-gradient(110deg, #242a21, #53554b);
-  --gradient-promotion: linear-gradient(140deg, #151827, #38116d);
-  --print-canvas: #ffffff;
-  --print-ink: #000000;
-}
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --canvas: #101828;
-  --surface: #050a14;
-  --surface-soft: #151b29;
-  --ink: #f3f4f6;
-  --muted: #a4adbd;
-  --border: #28303e;
-  --accent: #a78bfa;
-  --accent-hover: #c4b5fd;
-  --accent-soft: #201535;
-  --success: #34d399;
-  --success-soft: #06261e;
-  --danger: #fb7185;
-  --danger-soft: #2c0d19;
-  --warning: #fbbf24;
-  --warning-soft: #302311;
+
+  @include emit('color', $colors);
+  @include emit('font', $font-families);
+  @include emit('font-size', $font-sizes);
+  @include emit('font-weight', $font-weights);
+  @include emit('line-height', $line-heights);
+  @include emit('letter-spacing', $letter-spacings);
+  @include emit('radius', $radii);
+  @include emit('border', $borders);
+  @include emit('shadow', $shadows);
+  @include emit('z-index', $z-indexes);
+  @include emit('space', $spaces);
+  @include emit('size', $layout-sizes);
+  @include emit('duration', $durations);
+  @include emit('easing', $easings);
+
+  --border-width: #{$border-width};
+  --border-width-focus: #{$border-width-focus};
+  --color-tint-amount: #{$color-tint-amount};
+
+  @for $index from 1 through list.length($color-avatar-tints) {
+    --color-avatar-#{$index}: #{list.nth($color-avatar-tints, $index)};
+  }
 }

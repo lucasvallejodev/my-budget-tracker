@@ -1,0 +1,69 @@
+@use 'abstracts' as *;
+
+.spending-bars {
+  @include reset-list;
+  @include flex-column(space(3));
+
+  &__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'name amount' 'bar bar';
+    align-items: center;
+    gap: space(1) space(3);
+
+    @include media-up(tablet) {
+      grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) 92px;
+      grid-template-areas: 'name bar amount';
+      gap: space(4);
+    }
+  }
+
+  &__name {
+    @include flex-row(space(2));
+
+    grid-area: name;
+    min-width: 0;
+    font-weight: font-weight(medium);
+  }
+
+  &__bar {
+    @include flex-column(space(1));
+
+    grid-area: bar;
+    min-width: 0;
+  }
+
+  &__amount {
+    @include flex-column(0);
+    @include tabular-figures;
+
+    grid-area: amount;
+    align-items: flex-end;
+    font-weight: font-weight(semibold);
+  }
+
+  &__note {
+    @include truncate;
+
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+    font-weight: font-weight(regular);
+  }
+
+  &__change {
+    @include tabular-figures;
+
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-positive);
+    font-weight: font-weight(semibold);
+
+    svg {
+      @include icon-size(12px);
+    }
+
+    &--up {
+      color: var(--color-negative);
+    }
+  }
+}

@@ -7,16 +7,16 @@
 
   width: 100%;
   max-width: 420px;
-  box-shadow: var(--shadow);
+  box-shadow: shadow(pop);
 
   &__title {
-    font-size: 22px;
-    font-weight: 650;
-    color: var(--ink);
+    font-size: font-size(title);
+    font-weight: font-weight(bold);
+    color: var(--color-text);
   }
 
   &__link {
-    font-weight: 600;
-    color: var(--accent);
+    font-weight: font-weight(semibold);
+    color: var(--color-brand);
   }
 }

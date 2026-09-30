@@ -49,25 +49,26 @@ Seeded by migration with 27 currencies. Not scoped by user.
 
 One row per user, created at sign-up in the same transaction as the user.
 
-| Column                  | Type                 | Notes                                                                         |
-| ----------------------- | -------------------- | ----------------------------------------------------------------------------- |
-| `user_id`               | text PK → users      | the owner                                                                     |
-| `primary_currency`      | char(3) → currencies | default for new accounts and for converted totals                             |
-| `locale`                | text                 | reserved for number and date formatting                                       |
-| `seeded_version`        | int, nullable        | version of the default taxonomy that was seeded; null until seeding completes |
-| `show_converted_totals` | bool                 | dashboard toggle                                                              |
+| Column                  | Type                 | Notes                                                                                                            |
+| ----------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `user_id`               | text PK → users      | the owner                                                                                                        |
+| `primary_currency`      | char(3) → currencies | default for new accounts and for converted totals                                                                |
+| `locale`                | text                 | reserved for number and date formatting                                                                          |
+| `seeded_version`        | int, nullable        | version of the default taxonomy that was seeded; null until seeding completes                                    |
+| `show_converted_totals` | bool                 | Home toggle                                                                                                      |
+| `allow_emoji`           | bool, default false  | lets the web app offer emoji next to the curated icons in icon pickers; a UI preference the API does not enforce |
 
 ### `accounts`
 
-| Column                                                            | Type                                                                 | Notes                                                               |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `type`                                                            | enum `checking, savings, cash, credit_card, loan, investment, other` | drives labels, icons and sidebar grouping                           |
-| `classification`                                                  | enum `asset, liability`                                              | derived from `type` in the service: cards and loans are liabilities |
-| `currency`                                                        | char(3) → currencies                                                 | fixed once the account has transactions                             |
-| `name`, `institution`, `account_number`, `color`, `icon`, `notes` | text                                                                 | descriptive                                                         |
-| `counts_in_spending`                                              | bool, default true                                                   | false for investment accounts, whose movements are not spending     |
-| `archived_at`                                                     | timestamptz, nullable                                                | archived accounts keep history but leave pickers                    |
-| `deleted_at`                                                      | timestamptz, nullable                                                | soft delete; only allowed with no transactions                      |
+| Column                                                            | Type                                                                 | Notes                                                                                 |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `type`                                                            | enum `checking, savings, cash, credit_card, loan, investment, other` | drives labels, icons and sidebar grouping                                             |
+| `classification`                                                  | enum `asset, liability`                                              | derived from `type` in the service: cards and loans are liabilities                   |
+| `currency`                                                        | char(3) → currencies                                                 | fixed once the account has transactions                                               |
+| `name`, `institution`, `account_number`, `color`, `icon`, `notes` | text                                                                 | descriptive; `icon` is a curated icon name or a single emoji, `color` a six-digit hex |
+| `counts_in_spending`                                              | bool, default true                                                   | false for investment accounts, whose movements are not spending                       |
+| `archived_at`                                                     | timestamptz, nullable                                                | archived accounts keep history but leave pickers                                      |
+| `deleted_at`                                                      | timestamptz, nullable                                                | soft delete; only allowed with no transactions                                        |
 
 There is no balance column. Balance is `SUM(amount_minor)` over the account's live transactions; an opening balance is a transaction of kind `opening`.
 
@@ -82,21 +83,23 @@ There is no balance column. Balance is `SUM(amount_minor)` over the account's li
 | `is_system`       | bool                   | the Income group; cannot be archived or change kind           |
 | `archived_at`     | timestamptz, nullable  |                                                               |
 
-| `categories`  | Type                  | Notes                                                                     |
-| ------------- | --------------------- | ------------------------------------------------------------------------- |
-| `group_id`    | → category_groups     |                                                                           |
-| `name`        | text                  |                                                                           |
-| `icon`        | text                  | a key of the curated icon registry, validated by Zod                      |
-| `sort_order`  | int                   | manual ordering inside the group                                          |
-| `archived_at` | timestamptz, nullable | archived categories are hidden from pickers but still resolve for history |
+| `categories`  | Type                  | Notes                                                                                 |
+| ------------- | --------------------- | ------------------------------------------------------------------------------------- |
+| `group_id`    | → category_groups     |                                                                                       |
+| `name`        | text                  |                                                                                       |
+| `icon`        | text                  | a key of the curated icon registry or a single emoji, validated by Zod (`iconSchema`) |
+| `sort_order`  | int                   | manual ordering inside the group                                                      |
+| `archived_at` | timestamptz, nullable | archived categories are hidden from pickers but still resolve for history             |
 
 ### `payees`
 
-| Column                | Type                   | Notes                                                                                                     |
-| --------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| `name`                | text                   | unique per user, case-sensitive (`payees_user_name_key`); the CSV import matches names case-insensitively |
-| `default_category_id` | → categories, nullable | pre-filled on new transactions; learned from usage                                                        |
-| `archived_at`         | timestamptz, nullable  |                                                                                                           |
+| Column                | Type                   | Notes                                                                                                               |
+| --------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `name`                | text                   | unique per user, case-sensitive (`payees_user_name_key`); the CSV import matches names case-insensitively           |
+| `default_category_id` | → categories, nullable | pre-filled on new transactions; learned from usage                                                                  |
+| `icon`                | text, nullable         | a curated icon name or a single emoji, drawn next to the payee in lists (transaction rows return it as `payeeIcon`) |
+| `color`               | text, nullable         | six-digit hex (`payeeColor` on transaction rows)                                                                    |
+| `archived_at`         | timestamptz, nullable  |                                                                                                                     |
 
 ### `transactions` (the ledger)
 

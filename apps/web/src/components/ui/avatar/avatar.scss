@@ -1,0 +1,38 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .avatar {
+    @include grid-center;
+    @include icon-size(size(avatar));
+    @include tinted(var(--avatar-color, var(--color-text-muted)));
+
+    flex-shrink: 0;
+    border-radius: radius(round);
+    font-size: font-size(meta);
+    font-weight: font-weight(bold);
+    line-height: 1;
+
+    svg {
+      @include icon-size(size(icon));
+    }
+
+    &--filled {
+      background: var(--avatar-background);
+      color: var(--avatar-foreground);
+    }
+
+    &--square {
+      border-radius: radius(control) + 2px;
+    }
+
+    &--small {
+      @include icon-size(size(avatar-small));
+
+      font-size: font-size(micro);
+
+      svg {
+        @include icon-size(size(icon-small) - 1px);
+      }
+    }
+  }
+}

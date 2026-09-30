@@ -30,19 +30,35 @@ function renderExplorer() {
 }
 
 describe('Finance controls', () => {
-  it('filters transactions and resets pagination', () => {
+  it('filters transactions and summarizes the rows that remain', () => {
     renderExplorer();
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('Page 2 of 2')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Salary' } });
+    expect(screen.getByRole('status').textContent).toMatch(/^3 transactions/);
     expect(screen.getByText('Page 1 of 1')).toBeTruthy();
     expect(screen.getAllByText('Salary Payment')).toHaveLength(3);
-    expect(screen.queryAllByRole('row').some(row => row.textContent?.includes('Groceries'))).toBe(
-      false
-    );
+    expect(
+      screen.queryAllByRole('listitem').some(row => row.textContent?.includes('Groceries'))
+    ).toBe(false);
     chooseOption('Type', 'Expense');
     expect(screen.getByText('No transactions found')).toBeTruthy();
   });
+  it('filters by account and counts the filters in use for the phone toggle', () => {
+    renderExplorer();
+
+    const total = screen.getByRole('status').textContent;
+    const toggle = screen.getByRole('button', { name: 'Filters' });
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.click(toggle);
+    chooseOption('Account', 'Demo checking');
+
+    expect(screen.getByRole('button', { name: 'Filters (1)' }).getAttribute('aria-expanded')).toBe(
+      'true'
+    );
+    expect(screen.getByRole('status').textContent).toBe(total);
+  });
+
   it('finds transactions by their category group', () => {
     renderExplorer();
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Food & Dining' } });
@@ -57,11 +73,11 @@ describe('Finance controls', () => {
     fireEvent.click(screen.getByLabelText('From'));
     fireEvent.click(screen.getByRole('button', { name: /Sunday, September 27th, 2026/ }));
     chooseOption('Status', 'Cleared');
-    expect(screen.queryAllByRole('row').some(row => row.textContent?.includes('Groceries'))).toBe(
-      true
-    );
+    expect(
+      screen.queryAllByRole('listitem').some(row => row.textContent?.includes('Groceries'))
+    ).toBe(true);
     expect(screen.queryByText('Salary Payment')).toBeNull();
-    expect(screen.getByText('-$39.00')).toBeTruthy();
+    expect(screen.getAllByText('-$39.00').length).toBeGreaterThan(0);
   });
   it('retains Radix dialog Escape dismissal and accessible naming', () => {
     render(

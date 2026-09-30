@@ -12,6 +12,7 @@ import {
   unarchiveCategory,
 } from '@/api/mutations';
 import { Button, Cluster, EmptyState, Stack } from '@/components/ui';
+import { useDialogState } from '@/lib/dialog-state';
 
 import { useCategories, useRefreshFinance } from '../use-finance-data';
 import { ArchiveDialog, CategoryDialog, GroupDialog } from './category-dialogs';
@@ -32,14 +33,9 @@ const swapped = (ids: string[], index: number, delta: number): string[] | null =
 export function CategoryManager() {
   const tree = useCategories(true);
   const refresh = useRefreshFinance();
-  const [groupDialog, setGroupDialog] = useState<{ group?: Group } | null>(null);
-
-  const [categoryDialog, setCategoryDialog] = useState<{
-    category?: Category;
-    groupId: string;
-  } | null>(null);
-
-  const [archiving, setArchiving] = useState<{ category: Category; group: Group } | null>(null);
+  const groupDialog = useDialogState<{ group?: Group }>();
+  const categoryDialog = useDialogState<{ category?: Category; groupId: string }>();
+  const archiving = useDialogState<{ category: Category; group: Group }>();
   const [showArchived, setShowArchived] = useState(false);
   const groups = (tree.data ?? []).filter(group => !group.archivedAt);
 
@@ -80,7 +76,7 @@ export function CategoryManager() {
   return (
     <Stack>
       <Cluster>
-        <Button onClick={() => setGroupDialog({})}>
+        <Button onClick={() => groupDialog.open({})}>
           <Plus /> New group
         </Button>
         <Button variant="outline" onClick={() => setShowArchived(visible => !visible)}>
@@ -96,10 +92,10 @@ export function CategoryManager() {
           showArchived={showArchived}
           onMoveGroup={delta => moveGroup(groupIndex, delta)}
           onMoveCategory={(index, delta) => moveCategory(group, index, delta)}
-          onEditGroup={() => setGroupDialog({ group })}
-          onAddCategory={() => setCategoryDialog({ groupId: group.id })}
-          onEditCategory={category => setCategoryDialog({ category, groupId: group.id })}
-          onArchiveCategory={category => setArchiving({ category, group })}
+          onEditGroup={() => groupDialog.open({ group })}
+          onAddCategory={() => categoryDialog.open({ groupId: group.id })}
+          onEditCategory={category => categoryDialog.open({ category, groupId: group.id })}
+          onArchiveCategory={category => archiving.open({ category, group })}
           onArchiveGroup={() =>
             run.mutate({
               done: `Archived ${group.name}`,
@@ -114,31 +110,31 @@ export function CategoryManager() {
           }
         />
       ))}
-      {groupDialog && (
+      {groupDialog.value && (
         <GroupDialog
-          group={groupDialog.group}
-          onClose={() => setGroupDialog(null)}
-          onSaved={() => setGroupDialog(null)}
+          group={groupDialog.value.group}
+          onClose={groupDialog.close}
+          onSaved={groupDialog.close}
         />
       )}
-      {categoryDialog && (
+      {categoryDialog.value && (
         <CategoryDialog
           groups={groups}
-          groupId={categoryDialog.groupId}
-          category={categoryDialog.category}
-          onClose={() => setCategoryDialog(null)}
-          onSaved={() => setCategoryDialog(null)}
+          groupId={categoryDialog.value.groupId}
+          category={categoryDialog.value.category}
+          onClose={categoryDialog.close}
+          onSaved={categoryDialog.close}
         />
       )}
-      {archiving && (
+      {archiving.value && (
         <ArchiveDialog
-          category={archiving.category}
-          group={archiving.group}
+          category={archiving.value.category}
+          group={archiving.value.group}
           groups={groups}
-          onClose={() => setArchiving(null)}
+          onClose={archiving.close}
           onDone={async () => {
             await refresh();
-            setArchiving(null);
+            archiving.close();
           }}
         />
       )}

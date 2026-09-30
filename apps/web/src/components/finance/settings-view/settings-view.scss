@@ -3,24 +3,19 @@
 .settings-view {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: space(6);
+  gap: space(4);
 
   @include media-up(tablet-landscape) {
-    grid-template-columns: 190px minmax(0, 1fr);
-  }
-
-  @include media-up(laptop) {
-    grid-template-columns: 230px minmax(0, 1fr);
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: space(6);
   }
 
   &__nav {
-    @include flex-row(5px);
+    @include flex-row(space(1));
+    @include surface(space(2));
 
     align-self: start;
     overflow-x: auto;
-    padding: space(3);
-    border-radius: radius(panel);
-    background: var(--surface);
 
     @include media-up(tablet-landscape) {
       flex-direction: column;
@@ -32,18 +27,21 @@
   &__tab {
     @include reset-button;
 
-    color: var(--muted);
-    padding: space(3);
+    min-height: size(control-height);
+    padding: 0 space(3);
+    border-radius: radius(control);
+    color: var(--color-text-body);
+    font-weight: font-weight(medium);
     text-align: left;
-    border-radius: 9px;
     white-space: nowrap;
 
-    @include media-up(tablet-landscape) {
-      white-space: normal;
+    &:hover {
+      background: var(--color-surface-soft);
     }
 
     &[data-state='active'] {
-      @include accent-highlight;
+      background: var(--color-brand-soft);
+      color: var(--color-brand-text);
     }
   }
 }

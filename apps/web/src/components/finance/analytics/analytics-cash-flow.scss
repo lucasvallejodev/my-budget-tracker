@@ -1,0 +1,55 @@
+@use 'abstracts' as *;
+
+.analytics-cash-flow {
+  &__split {
+    @include flex-row(space(1) * 0.5);
+
+    height: space(6);
+    margin-bottom: space(4);
+    border-radius: radius(control);
+    overflow: hidden;
+  }
+
+  &__segment {
+    flex-basis: 0;
+    height: 100%;
+  }
+
+  &__legend {
+    @include reset-list;
+
+    display: grid;
+    gap: space(2) space(6);
+
+    @include media-up(tablet) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  &__item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: space(2);
+  }
+
+  &__figure {
+    @include tabular-figures;
+
+    font-size: font-size(card-title);
+  }
+
+  &__amount {
+    @include tabular-figures;
+
+    min-width: 90px;
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+    text-align: right;
+  }
+
+  &__selected {
+    font-weight: font-weight(semibold);
+    background: var(--color-brand-soft);
+  }
+}

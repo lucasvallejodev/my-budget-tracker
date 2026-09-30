@@ -1,5 +1,7 @@
 export { Amount } from './amount';
 export type { BadgeTone } from './badge';
+export type { AvatarFill, AvatarShape, AvatarSize } from './avatar';
+export { Avatar } from './avatar';
 export { Badge } from './badge';
 export type { ButtonProps } from './button';
 export { Button } from './button';
@@ -9,6 +11,8 @@ export { Cluster } from './cluster';
 export { ColorPicker } from './color-picker';
 export { ColorSwatch } from './color-swatch';
 export { Columns } from './columns';
+export type { ComboboxOption, ComboboxSection, ComboboxVariant } from './combobox';
+export { Combobox, matchesSearch } from './combobox';
 export { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from './command';
 export { CreateNewButton } from './create-new-button';
 export { DatePicker } from './date-picker';
@@ -28,6 +32,7 @@ export type { EntityPickerProps } from './entity-picker';
 export { EntityPicker } from './entity-picker';
 export type { FieldProps } from './field';
 export { Field } from './field';
+export { FileDrop } from './file-drop';
 export { FilterBar } from './filter-bar';
 export {
   Form,
@@ -43,7 +48,7 @@ export { AmountField, DateField, TextField } from './form-fields';
 export { Grid } from './grid';
 export { Icon } from './icon';
 export { IconPicker } from './icon-picker';
-export { IconTile } from './icon-tile';
+
 export { Input } from './input';
 export { ListRow } from './list-row';
 export { Menu, MenuContent, MenuItem, MenuTrigger } from './menu';
@@ -56,8 +61,8 @@ export { Panel } from './panel';
 export type { PillSelectOption, PillSelectProps } from './pill-input';
 export { PillInput, PillSelect } from './pill-input';
 export { Popover, PopoverContent, PopoverTrigger } from './popover';
+export type { ProgressSize, ProgressTone } from './progress-bar';
 export { ProgressBar } from './progress-bar';
-export { PromotionPanel } from './promotion-panel';
 export { QueryContent } from './query-content';
 export {
   Select,
@@ -77,3 +82,10 @@ export { Table, TableCell, TableHeaderCell, TableRow } from './table';
 export { TabList, TabPanel, TabRoot, TabTrigger } from './tabs';
 export type { TextProps } from './text';
 export { Text } from './text';
+export type { SkeletonShape } from './skeleton';
+export { Skeleton, SkeletonText } from './skeleton';
+export type { SegmentedOption } from './segmented-control';
+export { SegmentedControl } from './segmented-control';
+export { Sparkline, sparklinePath } from './sparkline';
+export type { StatDelta, StatSize } from './stat';
+export { Stat } from './stat';

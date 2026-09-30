@@ -5,76 +5,63 @@ import './navigation.scss';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { MainRouteItems } from '@/app/(main)/routes';
-import { AccountSummary, useAccounts } from '@/components/finance';
-import { AccountGroups } from '@/constants/account';
-import { formatMoney } from '@coinkeeper/shared/lib/money';
+import { NavigationSections, SetupRouteItems } from '@/app/(main)/routes';
+import { useNeedsReviewCount } from '@/components/finance';
+import { isCurrentPath } from '@/lib/navigation';
+import { RouteItem } from '@/types/route-item';
 
-const displayBalance = (account: AccountSummary) =>
-  account.classification === 'liability' ? -account.balanceMinor : account.balanceMinor;
-
-const totalsByCurrency = (members: AccountSummary[]) => {
-  const totals = new Map<string, number>();
-
-  for (const account of members) {
-    totals.set(account.currency, (totals.get(account.currency) ?? 0) + displayBalance(account));
-  }
-
-  return [...totals.entries()].map(([currency, total]) => formatMoney(total, currency)).join(' · ');
+type NavigationLinkProps = {
+  count?: number;
+  item: RouteItem;
+  onNavigate?: () => void;
+  path: string;
 };
+
+function NavigationLink({ count, item, onNavigate, path }: NavigationLinkProps) {
+  return (
+    <Link
+      className="navigation__link"
+      href={item.path}
+      aria-current={isCurrentPath(path, item.path) ? 'page' : undefined}
+      onClick={onNavigate}
+    >
+      <item.icon aria-hidden />
+      {item.name}
+      {!!count && (
+        <span className="navigation__badge">
+          <span aria-hidden="true">{count}</span>
+          <span className="navigation__badge-label">{`, ${count} to review`}</span>
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
-  const { data: accounts = [] } = useAccounts();
+  const { data: reviewCount } = useNeedsReviewCount();
 
   return (
     <nav aria-label="Main navigation" className="navigation">
-      <div className="navigation__links">
-        {MainRouteItems.map(item => (
-          <Link
-            key={item.path}
-            className="navigation__link"
-            href={item.path}
-            aria-current={path === item.path ? 'page' : undefined}
-            onClick={onNavigate}
-          >
-            <item.icon />
-            {item.name}
-          </Link>
+      {NavigationSections.map(section => (
+        <div key={section.label ?? 'start'} className="navigation__section">
+          {section.label && <p className="navigation__label">{section.label}</p>}
+          {section.items.map(item => (
+            <NavigationLink
+              key={item.path}
+              count={item.countsReview ? reviewCount : undefined}
+              item={item}
+              onNavigate={onNavigate}
+              path={path}
+            />
+          ))}
+        </div>
+      ))}
+      <div className="navigation__section navigation__section--setup">
+        {SetupRouteItems.map(item => (
+          <NavigationLink key={item.path} item={item} onNavigate={onNavigate} path={path} />
         ))}
       </div>
-      {AccountGroups.map(group => {
-        const members = accounts.filter(account =>
-          (group.types as string[]).includes(account.type)
-        );
-
-        if (!members.length) return null;
-
-        return (
-          <div key={group.label}>
-            <h2 className="navigation__section-label">
-              {group.label}
-              <span className="navigation__section-total">{totalsByCurrency(members)}</span>
-            </h2>
-            <div className="navigation__links">
-              {members.map(account => (
-                <Link
-                  key={account.id}
-                  className="navigation__link"
-                  href={`/accounts/${account.id}`}
-                  aria-current={path === `/accounts/${account.id}` ? 'page' : undefined}
-                  onClick={onNavigate}
-                >
-                  <span>{account.name}</span>
-                  <span className="navigation__link-amount">
-                    {formatMoney(displayBalance(account), account.currency)}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        );
-      })}
     </nav>
   );
 }

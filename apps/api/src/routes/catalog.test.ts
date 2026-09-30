@@ -144,6 +144,28 @@ describe('categories', () => {
       422
     );
   });
+
+  it('accepts a single emoji as a category icon and refuses several', async () => {
+    const [, expenses] = await groups(ada);
+
+    const created = await ada.request('POST', '/categories', {
+      groupId: expenses.id,
+      icon: '🐶',
+      name: 'Dog walker',
+    });
+
+    expect(created.statusCode).toBe(201);
+    expect(created.json().icon).toBe('🐶');
+
+    const id = created.json().id as string;
+
+    expect((await ada.request('PATCH', `/categories/${id}`, { icon: '👩🏽‍💻' })).json().icon).toBe(
+      '👩🏽‍💻'
+    );
+    expect((await ada.request('PATCH', `/categories/${id}`, { icon: '🐶🐱' })).statusCode).toBe(
+      400
+    );
+  });
 });
 
 describe('payees', () => {
@@ -163,6 +185,35 @@ describe('payees', () => {
     expect((await ada.request('GET', '/payees')).json().items).toEqual([]);
     expect((await ada.request('GET', '/payees?includeArchived=true')).json().items).toHaveLength(1);
     expect((await ada.request('POST', `/payees/${id}/unarchive`)).json().archivedAt).toBeNull();
+  });
+
+  it('stores an icon and a colour, clears them with null and validates both', async () => {
+    const created = await ada.request('POST', '/payees', {
+      color: '#1f7a5c',
+      icon: 'ShoppingCart',
+      name: 'Mercadona',
+    });
+
+    expect(created.json()).toMatchObject({ color: '#1f7a5c', icon: 'ShoppingCart' });
+
+    const id = created.json().id as string;
+
+    expect((await ada.request('PATCH', `/payees/${id}`, { icon: '🛒' })).json()).toMatchObject({
+      color: '#1f7a5c',
+      icon: '🛒',
+    });
+    expect(
+      (await ada.request('PATCH', `/payees/${id}`, { color: null, icon: null })).json()
+    ).toMatchObject({ color: null, icon: null });
+    expect((await ada.request('POST', '/payees', { name: 'Plain' })).json()).toMatchObject({
+      color: null,
+      icon: null,
+    });
+    expect((await ada.request('PATCH', `/payees/${id}`, { icon: 'NotAnIcon' })).statusCode).toBe(
+      400
+    );
+    expect((await ada.request('PATCH', `/payees/${id}`, { color: 'green' })).statusCode).toBe(400);
+    expect((await bob.request('PATCH', `/payees/${id}`, { icon: '🛒' })).statusCode).toBe(404);
   });
 });
 
@@ -404,6 +455,104 @@ describe('reports and settings', () => {
     ).toBe(400);
   });
 
+  it('aggregates a breakdown over several months and splits groups and categories by month', async () => {
+    const account = await createAccount(ada);
+    const groceries = await categoryId(ada, 'Groceries');
+
+    for (const [amount, date] of [
+      ['10', '2026-08-04'],
+      ['30', '2026-09-04'],
+    ]) {
+      await ada.request('POST', '/transactions', {
+        accountId: account.id,
+        amount,
+        categoryId: groceries,
+        date,
+        direction: 'expense',
+      });
+    }
+
+    const breakdown = async (query: string) =>
+      ada.request('GET', `/reports/breakdown?month=2026-09&${query}`);
+
+    expect((await breakdown('by=group')).json().items).toEqual([
+      expect.objectContaining({ currency: 'EUR', spentMinor: 3000 }),
+    ]);
+    expect((await breakdown('by=group')).json().items[0]).not.toHaveProperty('month');
+    expect((await breakdown('by=group&months=2')).json().items).toEqual([
+      expect.objectContaining({ spentMinor: 4000 }),
+    ]);
+    expect((await breakdown('by=payee&months=2')).json().items).toEqual([
+      expect.objectContaining({ spentMinor: 4000, transactions: 2 }),
+    ]);
+    expect(
+      (await breakdown('by=group&months=2&split=month'))
+        .json()
+        .items.map((item: { month: string; spentMinor: number }) => [item.month, item.spentMinor])
+    ).toEqual([
+      ['2026-08', 1000],
+      ['2026-09', 3000],
+    ]);
+    expect((await breakdown('by=category&months=2&split=month')).json().items).toEqual([
+      expect.objectContaining({
+        categoryName: 'Groceries',
+        month: '2026-08',
+        spentMinor: 1000,
+      }),
+      expect.objectContaining({
+        categoryName: 'Groceries',
+        month: '2026-09',
+        spentMinor: 3000,
+      }),
+    ]);
+    expect((await breakdown('by=payee&split=month')).statusCode).toBe(400);
+    expect((await breakdown('by=group&months=25')).statusCode).toBe(400);
+    expect((await breakdown('by=group&split=week')).statusCode).toBe(400);
+  });
+
+  it('answers month-end balances per account and validates the range', async () => {
+    const account = (
+      await ada.request('POST', '/accounts', {
+        currency: 'EUR',
+        name: 'Checking',
+        openingBalance: '100',
+        openingDate: '2026-08-01',
+        type: 'checking',
+      })
+    ).json<{ id: string }>();
+
+    await ada.request('POST', '/transactions', {
+      accountId: account.id,
+      amount: '25',
+      date: '2026-09-04',
+      direction: 'expense',
+    });
+
+    expect(
+      (await ada.request('GET', '/reports/balances?month=2026-09&months=3')).json().items
+    ).toEqual([
+      {
+        accountId: account.id,
+        balanceMinor: 10000,
+        currency: 'EUR',
+        month: '2026-08',
+      },
+      {
+        accountId: account.id,
+        balanceMinor: 7500,
+        currency: 'EUR',
+        month: '2026-09',
+      },
+    ]);
+    expect((await ada.request('GET', '/reports/balances?month=2026-12')).json().items).toHaveLength(
+      5
+    );
+    expect((await bob.request('GET', '/reports/balances?month=2026-09')).json().items).toEqual([]);
+    expect((await ada.request('GET', '/reports/balances?months=0')).statusCode).toBe(400);
+    expect((await ada.request('GET', '/reports/balances?months=25')).statusCode).toBe(400);
+    expect((await ada.request('GET', '/reports/balances?month=2026-9')).statusCode).toBe(400);
+  });
+
   it('updates settings and rejects unknown currencies', async () => {
     const updated = await ada.request('PATCH', '/settings', { primaryCurrency: 'usd' });
 
@@ -412,6 +561,16 @@ describe('reports and settings', () => {
       422
     );
     expect((await ada.request('GET', '/currencies')).json().items.length).toBeGreaterThan(10);
+  });
+
+  it('turns emoji icons on and off, off by default', async () => {
+    expect((await ada.request('GET', '/settings')).json().allowEmoji).toBe(false);
+    expect((await ada.request('PATCH', '/settings', { allowEmoji: true })).json().allowEmoji).toBe(
+      true
+    );
+    expect((await ada.request('GET', '/settings')).json().allowEmoji).toBe(true);
+    expect((await bob.request('GET', '/settings')).json().allowEmoji).toBe(false);
+    expect((await ada.request('PATCH', '/settings', { allowEmoji: 'yes' })).statusCode).toBe(400);
   });
 
   it('reports liveness without a session or the database', async () => {

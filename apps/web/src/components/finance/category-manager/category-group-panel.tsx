@@ -3,12 +3,12 @@
 import { Archive, ArrowDown, ArrowUp, Pencil, Plus, RotateCcw } from 'lucide-react';
 
 import {
+  Avatar,
   Badge,
   Button,
   Cluster,
   ColorSwatch,
   Icon,
-  IconTile,
   ListRow,
   Panel,
   Text,
@@ -81,7 +81,7 @@ function GroupActions({
 }) {
   return (
     <Cluster>
-      <ColorSwatch color={group.color} aria-label={`Colour ${group.color}`} />
+      <ColorSwatch color={group.color} aria-hidden />
       <MoveButtons
         name={group.name}
         variant="outline"
@@ -89,10 +89,15 @@ function GroupActions({
         isLast={isLast}
         onMove={onMove}
       />
-      <Button variant="outline" size="sm" onClick={onEdit}>
+      <Button variant="outline" size="sm" aria-label={`Edit group ${group.name}`} onClick={onEdit}>
         <Pencil size={ActionIconSize} /> Edit
       </Button>
-      <Button variant="outline" size="sm" onClick={onAddCategory}>
+      <Button
+        variant="outline"
+        size="sm"
+        aria-label={`Add a category to ${group.name}`}
+        onClick={onAddCategory}
+      >
         <Plus size={ActionIconSize} /> Category
       </Button>
       {!group.isSystem && (
@@ -131,9 +136,9 @@ function CategoryRow({
       title={category.name}
       description={transactionCountLabel(category.transactionCount)}
       leading={
-        <IconTile color={color}>
+        <Avatar color={color}>
           <Icon icon={category.icon} />
-        </IconTile>
+        </Avatar>
       }
     >
       <MoveButtons
@@ -174,9 +179,9 @@ function ArchivedCategoryRow({
         </>
       }
       leading={
-        <IconTile>
+        <Avatar>
           <Icon icon={category.icon} />
-        </IconTile>
+        </Avatar>
       }
     >
       <Button variant="outline" size="sm" onClick={onRestore}>

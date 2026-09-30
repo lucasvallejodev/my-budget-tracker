@@ -67,7 +67,7 @@ Avoid:
 const notifyChange = useEffectEvent(onChange);
 
 useEffect(() => {
-  const media = window.matchMedia(DarkSchemeQuery);
+  const media = window.matchMedia(ReducedMotionQuery);
 
   media.addEventListener('change', notifyChange);
 
@@ -81,7 +81,7 @@ Prefer:
 const notifyChange = useEffectEvent(onChange);
 
 useEffect(() => {
-  const media = window.matchMedia(DarkSchemeQuery);
+  const media = window.matchMedia(ReducedMotionQuery);
 
   media.addEventListener('change', notifyChange);
 
@@ -91,14 +91,14 @@ useEffect(() => {
 
 ## advanced-init-once
 
-Components remount (navigation, `key` changes) and Strict Mode runs effects twice in development, so `useEffect(() => …, [])` is not "once per app load". App-wide setup (reading stored preferences, registering a global listener) needs a module-level guard or a top-level call in the module that owns it.
+Components remount (navigation, `key` changes) and Strict Mode runs effects twice in development, so `useEffect(() => …, [])` is not "once per app load". App-wide setup (migrating stored form memory, registering a global listener) needs a module-level guard or a top-level call in the module that owns it.
 
 Avoid:
 
 ```tsx
-export function ThemeToggle() {
+export function ApplicationShell({ children }: { children: ReactNode }) {
   useEffect(() => {
-    applyTheme(storedTheme());
+    migrateRememberedFields();
   }, []);
 }
 ```
@@ -106,18 +106,18 @@ export function ThemeToggle() {
 Prefer:
 
 ```tsx
-let themeInitialized = false;
+let rememberedFieldsMigrated = false;
 
-const initializeThemeOnce = (): void => {
-  if (themeInitialized) return;
+const migrateRememberedFieldsOnce = (): void => {
+  if (rememberedFieldsMigrated) return;
 
-  themeInitialized = true;
-  applyTheme(storedTheme());
+  rememberedFieldsMigrated = true;
+  migrateRememberedFields();
 };
 
-export function ThemeToggle() {
-  useEffect(initializeThemeOnce, []);
+export function ApplicationShell({ children }: { children: ReactNode }) {
+  useEffect(migrateRememberedFieldsOnce, []);
 }
 ```
 
-For the theme itself the better fix is the pre-paint script in `rendering-hydration-no-flicker` ([rendering.md](rendering.md)).
+A stored preference that changes how the page looks needs the pre-paint script in `rendering-hydration-no-flicker` ([rendering.md](rendering.md)) instead.

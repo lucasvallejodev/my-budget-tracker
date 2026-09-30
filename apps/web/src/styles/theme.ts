@@ -1,39 +1,39 @@
 import { GroupPalette, UNCATEGORIZED_COLOR } from '@coinkeeper/shared/constants/palette';
 
-const Violet = {
-  200: '#ddd6fe',
-  300: '#c4b5fd',
-  400: '#a78bfa',
-  500: '#8b5cf6',
-} as const;
-
-const Gray = {
-  200: '#e5e7eb',
-  400: '#9ca3af',
-} as const;
+const cssVariable = (name: string): string => `var(--${name})`;
 
 export const Colors = {
-  accent: Violet[500],
+  brand: cssVariable('color-brand'),
   chart: {
-    expense: Gray[400],
-    income: Violet[500],
-    remaining: Violet[200],
-    series: [Violet[500], Violet[400], Violet[300], Violet[200], Gray[200]],
-    used: Violet[500],
+    axis: cssVariable('color-chart-axis'),
+    expense: cssVariable('color-chart-expense'),
+    grid: cssVariable('color-chart-grid'),
+    income: cssVariable('color-chart-income'),
+    muted: cssVariable('color-chart-muted'),
+    negative: cssVariable('color-negative-mark'),
+    positive: cssVariable('color-positive-mark'),
+    warning: cssVariable('color-warning-mark'),
   },
   group: GroupPalette,
+  surface: cssVariable('color-surface'),
+  text: cssVariable('color-text'),
+  textMuted: cssVariable('color-text-muted'),
   uncategorizedFallback: UNCATEGORIZED_COLOR,
 } as const;
 
 export const GroupColors: readonly string[] = Object.values(Colors.group);
 
+export const DefaultPickerColor = GroupPalette.blue;
+
 export const ChartStyle = {
-  axisTick: { fill: 'var(--muted)', fontSize: 11 },
-  grid: 'var(--border)',
+  axisTick: { fill: Colors.chart.axis, fontSize: cssVariable('font-size-micro') },
+  grid: Colors.chart.grid,
   tooltip: {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: 10,
-    color: 'var(--ink)',
+    background: Colors.surface,
+    border: cssVariable('border-card'),
+    borderRadius: cssVariable('radius-control'),
+    boxShadow: cssVariable('shadow-raised'),
+    color: Colors.text,
+    fontSize: cssVariable('font-size-meta'),
   },
 } as const;

@@ -3,66 +3,76 @@
 @layer ui.base {
   .button {
     @include flex-row(space(2));
+    @include transition(background, border-color, color);
 
     display: inline-flex;
     justify-content: center;
-    min-height: 42px;
-    padding: 10px 17px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    background: var(--primary);
-    color: var(--on-accent);
-    font-weight: 550;
-    transition: background 0.15s;
+    min-height: size(control-height);
+    padding: 0 space(4);
+    border: var(--border-width) solid var(--color-brand);
+    border-radius: radius(control);
+    background: var(--color-brand);
+    color: var(--color-on-brand);
+    font-weight: font-weight(semibold);
     white-space: nowrap;
 
     svg {
-      @include icon-size(18px);
+      @include icon-size(size(icon-small));
     }
 
     &:hover {
-      background: var(--primary-hover);
+      border-color: var(--color-brand-hover);
+      background: var(--color-brand-hover);
     }
 
     &--outline,
     &--secondary {
-      background: var(--surface);
-      color: var(--ink);
-      border-color: var(--border);
+      border-color: var(--color-border-strong);
+      background: var(--color-surface);
+      color: var(--color-text-body);
 
       &:hover {
-        background: var(--surface-soft);
+        border-color: var(--color-border-strong);
+        background: var(--color-surface-soft);
       }
     }
 
     &--ghost {
+      border-color: transparent;
       background: transparent;
-      color: var(--muted);
+      color: var(--color-text-body);
 
       &:hover {
-        @include accent-highlight;
+        border-color: transparent;
+        background: var(--color-surface-sunken);
       }
     }
 
     &--destructive {
-      background: var(--danger-soft);
-      color: var(--danger);
+      border-color: var(--color-border-strong);
+      background: var(--color-surface);
+      color: var(--color-negative);
 
       &:hover {
-        background: var(--danger);
-        color: var(--on-accent);
+        border-color: var(--color-negative);
+        background: var(--color-negative-soft);
       }
     }
 
     &--icon {
-      padding: 10px;
-      width: 42px;
+      width: size(control-height);
+      padding: 0;
     }
 
     &--sm {
-      min-height: 32px;
-      padding: 5px space(2) + 2px;
-      font-size: 12px;
+      min-height: size(control-height-small);
+      padding: 0 space(3);
+      font-size: font-size(meta);
+    }
+
+    &--icon.button--sm {
+      width: size(control-height-small);
+      padding: 0;
     }
   }
 }

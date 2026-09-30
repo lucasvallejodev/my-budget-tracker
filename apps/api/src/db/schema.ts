@@ -100,6 +100,7 @@ export const userSettings = pgTable('user_settings', {
   primaryCurrency: char('primary_currency', { length: 3 })
     .notNull()
     .references(() => currencies.code),
+  allowEmoji: boolean('allow_emoji').notNull().default(false),
   locale: text('locale').notNull().default('en-US'),
   seededVersion: integer('seeded_version'),
   showConvertedTotals: boolean('show_converted_totals').notNull().default(false),
@@ -177,6 +178,8 @@ export const payees = pgTable(
     userId: userId(),
     name: text('name').notNull(),
     defaultCategoryId: text('default_category_id').references(() => categories.id),
+    icon: text('icon'),
+    color: text('color'),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

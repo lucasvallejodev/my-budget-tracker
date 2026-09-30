@@ -1,0 +1,54 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .file-drop {
+    @include flex-column(space(1));
+
+    align-items: center;
+    justify-content: center;
+    min-height: space(12) * 3;
+    padding: space(6) space(4);
+    border: border(dashed);
+    border-radius: radius(card);
+    background: var(--color-surface-soft);
+    text-align: center;
+    cursor: pointer;
+
+    &:hover,
+    &--dragging {
+      border-color: var(--color-brand);
+      background: var(--color-brand-soft);
+    }
+
+    &:focus-within {
+      @include focus-ring;
+    }
+
+    &__input {
+      @include visually-hidden;
+    }
+
+    &__icon {
+      @include grid-center;
+      @include icon-size(size(avatar) + space(1));
+      @include tinted(var(--color-brand));
+
+      margin-bottom: space(2);
+      border-radius: radius(round);
+
+      svg {
+        @include icon-size(size(icon));
+      }
+    }
+
+    &__title {
+      color: var(--color-text);
+      font-weight: font-weight(semibold);
+    }
+
+    &__hint {
+      color: var(--color-text-muted);
+      font-size: font-size(caption);
+    }
+  }
+}

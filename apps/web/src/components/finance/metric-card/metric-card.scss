@@ -2,18 +2,20 @@
 
 .metric-card {
   &__label {
-    @include flex-row(space(3));
+    @include flex-row(space(2));
 
-    color: var(--muted);
-    margin-bottom: space(4);
+    margin-bottom: space(2);
+    color: var(--color-text-muted);
+    font-size: font-size(meta);
+    font-weight: font-weight(medium);
   }
 
   &__trend {
-    @include flex-row(7px);
+    @include flex-row(space(2));
 
     flex-wrap: wrap;
-    margin-top: 7px;
-    font-size: 12px;
-    color: var(--muted);
+    margin-top: space(1);
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
   }
 }

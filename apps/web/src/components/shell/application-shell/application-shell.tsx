@@ -2,16 +2,19 @@
 
 import './application-shell.scss';
 
-import { ReactNode } from 'react';
-
-import { PromotionPanel } from '@/components/ui';
+import { ReactNode, useRef, useState } from 'react';
 
 import { Logo } from '../logo';
 import { UserMenu } from '../user-menu';
 import { ApplicationHeader } from './application-header';
 import { Navigation } from './navigation';
+import { NavigationDrawer } from './navigation-drawer';
+import { TabBar } from './tab-bar';
 
 export function ApplicationShell({ children }: { children: ReactNode }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const moreRef = useRef<HTMLButtonElement>(null);
+
   return (
     <div className="application-shell">
       <a className="application-shell__skip-link" href="#main-content">
@@ -20,22 +23,20 @@ export function ApplicationShell({ children }: { children: ReactNode }) {
       <aside className="application-shell__sidebar">
         <Logo />
         <Navigation />
-        <div className="application-shell__sidebar-footer">
-          <PromotionPanel
-            title="Your money, in focus"
-            description="Explore your spending and build a clearer picture of your finances."
-            href="/analytics"
-            actionLabel="View analytics"
-          />
-          <div className="application-shell__profile">
-            <UserMenu showName />
-          </div>
+        <div className="application-shell__profile">
+          <UserMenu showName />
         </div>
       </aside>
       <div className="application-shell__main">
         <ApplicationHeader />
         <main id="main-content">{children}</main>
       </div>
+      <TabBar moreOpen={drawerOpen} moreRef={moreRef} onMore={() => setDrawerOpen(true)} />
+      <NavigationDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        onClosed={() => moreRef.current?.focus()}
+      />
     </div>
   );
 }

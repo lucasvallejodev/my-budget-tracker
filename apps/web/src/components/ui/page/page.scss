@@ -2,15 +2,15 @@
 
 @layer ui {
   .page {
-    @include flex-column(18px);
+    @include flex-column(space(4));
 
-    padding: space(5) space(4);
-    max-width: 1680px;
-    margin: auto;
+    width: 100%;
+    max-width: size(content-max) + size(page-padding-wide) * 2;
+    margin: 0 auto;
+    padding: space(5) size(page-padding) space(10);
 
     @include media-up(tablet-landscape) {
-      padding: space(7) space(6);
-      gap: space(6);
+      padding: space(7) size(page-padding-wide) space(12);
     }
   }
 }

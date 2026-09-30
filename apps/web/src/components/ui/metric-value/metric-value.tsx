@@ -4,16 +4,20 @@ import { ReactNode } from 'react';
 
 import { cn } from '@/lib/styles';
 
+export type MetricValueSize = 'default' | 'fluid' | 'small';
+
+const SizeClassNames: Record<MetricValueSize, string> = {
+  default: '',
+  fluid: 'metric-value--fluid',
+  small: 'metric-value--small',
+};
+
 export function MetricValue({
   children,
   size = 'default',
 }: {
   children: ReactNode;
-  size?: 'default' | 'fluid';
+  size?: MetricValueSize;
 }) {
-  return (
-    <div className={cn('metric-value', { 'metric-value--fluid': size === 'fluid' })}>
-      {children}
-    </div>
-  );
+  return <div className={cn('metric-value', SizeClassNames[size])}>{children}</div>;
 }

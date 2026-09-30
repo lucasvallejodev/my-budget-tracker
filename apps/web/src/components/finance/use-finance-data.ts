@@ -13,17 +13,33 @@ import type { PageResponse } from '@coinkeeper/shared/schema/common';
 import type { Currency } from '@coinkeeper/shared/schema/currencies';
 import type { ExchangeRateRow } from '@coinkeeper/shared/schema/exchange-rates';
 import type { PayeeRow } from '@coinkeeper/shared/schema/payees';
-import type { RankingSlice, Summary } from '@coinkeeper/shared/schema/reports';
+import type {
+  BalancePoint,
+  CashPoint,
+  CategoryMonthSlice,
+  CategorySlice,
+  GroupMonthSlice,
+  GroupSlice,
+  RankingSlice,
+  Summary,
+} from '@coinkeeper/shared/schema/reports';
 import type { RuleRow } from '@coinkeeper/shared/schema/rules';
 import type { UserSettings } from '@coinkeeper/shared/schema/settings';
-import type { TransactionRow } from '@coinkeeper/shared/schema/transaction';
+import type { ReviewSuggestion, TransactionRow } from '@coinkeeper/shared/schema/transaction';
 
 export type {
   AccountSummary,
+  BalancePoint,
   BudgetRow,
+  CashPoint,
+  CategoryMonthSlice,
+  CategorySlice,
   CategoryTree,
   ExchangeRateRow,
+  GroupMonthSlice,
+  GroupSlice,
   PayeeRow,
+  ReviewSuggestion,
   RuleRow,
   Session,
   Summary,
@@ -33,23 +49,50 @@ export type {
 
 type TransactionParams = Record<string, string | undefined>;
 
-type RankingDimension = 'account' | 'payee';
+export type BreakdownParams = {
+  currency?: string;
+  month: string;
+  months: number;
+};
+
+export type BreakdownItems = {
+  account: RankingSlice;
+  category: CategorySlice;
+  categoryByMonth: CategoryMonthSlice;
+  group: GroupSlice;
+  groupByMonth: GroupMonthSlice;
+  payee: RankingSlice;
+};
+
+const BreakdownQueries: Record<keyof BreakdownItems, { by: string; split?: string }> = {
+  account: { by: 'account' },
+  category: { by: 'category' },
+  categoryByMonth: { by: 'category', split: 'month' },
+  group: { by: 'group' },
+  groupByMonth: { by: 'group', split: 'month' },
+  payee: { by: 'payee' },
+};
 
 export const QueryKeys = {
   accounts: ['accounts'] as const,
+  balances: (months: number, month?: string) => ['summary', 'balances', months, month] as const,
+  breakdown: (kind: string, params: BreakdownParams) =>
+    ['summary', 'breakdown', kind, params] as const,
   budgets: (month: string) => ['budgets', month] as const,
   budgetSuggestions: (month: string) => ['budgets', 'suggestions', month] as const,
+  cashFlow: (month: string, months: number) => ['summary', 'cash-flow', month, months] as const,
   categories: ['categories'] as const,
+  categoryBreakdown: (month: string, currency: string) =>
+    ['summary', 'breakdown', 'category', month, currency] as const,
   currencies: ['currencies'] as const,
   deleted: (resource: string) => ['deleted', resource] as const,
   exchangeRates: ['exchange-rates'] as const,
   me: ['me'] as const,
   payees: ['payees'] as const,
+  reviewSuggestions: ['transactions', 'review-suggestions'] as const,
   rules: ['rules'] as const,
   sessions: ['sessions'] as const,
   settings: ['settings'] as const,
-  spendingRanking: (month: string, by: RankingDimension) =>
-    ['summary', 'ranking', by, month] as const,
   summary: (month?: string) => ['summary', month ?? 'current'] as const,
   transactions: (params: TransactionParams = {}) => ['transactions', params] as const,
 };
@@ -126,10 +169,45 @@ export function useTransactions(params: TransactionParams = {}) {
   });
 }
 
-export function useSpendingRanking(month: string, by: RankingDimension) {
+export function useBreakdown<Kind extends keyof BreakdownItems>(
+  kind: Kind,
+  params: BreakdownParams
+) {
   return useQuery({
-    queryFn: () => apiList<RankingSlice>('/reports/breakdown', { by, month }),
-    queryKey: QueryKeys.spendingRanking(month, by),
+    queryFn: () =>
+      apiList<BreakdownItems[Kind]>('/reports/breakdown', {
+        ...BreakdownQueries[kind],
+        currency: params.currency,
+        month: params.month,
+        months: String(params.months),
+      }),
+    queryKey: QueryKeys.breakdown(kind, params),
+  });
+}
+
+export function useCashFlow(month: string, months: number) {
+  return useQuery({
+    queryFn: () => apiList<CashPoint>('/reports/cash-flow', { month, months: String(months) }),
+    queryKey: QueryKeys.cashFlow(month, months),
+  });
+}
+
+export function useCategoryBreakdown(month: string, currency: string) {
+  return useQuery({
+    queryFn: () =>
+      apiList<CategorySlice>('/reports/breakdown', {
+        by: 'category',
+        currency,
+        month,
+      }),
+    queryKey: QueryKeys.categoryBreakdown(month, currency),
+  });
+}
+
+export function useBalances(months: number, month?: string) {
+  return useQuery({
+    queryFn: () => apiList<BalancePoint>('/reports/balances', { month, months: String(months) }),
+    queryKey: QueryKeys.balances(months, month),
   });
 }
 
@@ -137,6 +215,31 @@ export function useSummary(month?: string) {
   return useQuery({
     queryFn: () => apiGet<Summary>('/reports/summary', { month }),
     queryKey: QueryKeys.summary(month),
+  });
+}
+
+export function useAllowEmoji() {
+  return (
+    useQuery({
+      queryFn: () => apiGet<UserSettings>('/settings'),
+      queryKey: QueryKeys.settings,
+      select: settings => settings.allowEmoji,
+    }).data === true
+  );
+}
+
+export function useReviewSuggestions() {
+  return useQuery({
+    queryFn: () => apiList<ReviewSuggestion>('/transactions/review-suggestions'),
+    queryKey: QueryKeys.reviewSuggestions,
+  });
+}
+
+export function useNeedsReviewCount() {
+  return useQuery({
+    queryFn: () => apiGet<Summary>('/reports/summary', {}),
+    queryKey: QueryKeys.summary(),
+    select: summary => summary.needsReviewCount,
   });
 }
 

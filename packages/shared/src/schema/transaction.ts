@@ -68,6 +68,8 @@ export const transactionRowSchema = z.object({
   memo: z.string(),
   needsReview: z.boolean(),
   originalPayee: z.string().nullable(),
+  payeeColor: z.string().nullable(),
+  payeeIcon: z.string().nullable(),
   payeeId: z.string().nullable(),
   payeeName: z.string().nullable(),
   status: z.enum(TransactionStatusValues),
@@ -88,6 +90,7 @@ export type TransactionPatchValues = z.infer<typeof transactionPatchSchema>;
 export const transactionListQuerySchema = deletedQuerySchema.extend({
   accountId: z.uuid().optional(),
   categoryId: z.uuid().optional(),
+  currency: z.string().length(FieldLengths.currencyCode).optional(),
   cursor: z.string().max(CURSOR_MAX_LENGTH).optional(),
   from: isoDateSchema.optional(),
   kind: z.enum(TransactionKindValues).optional(),
@@ -122,3 +125,13 @@ export const transferResponseSchema = z.object({
 });
 
 export type Transfer = z.infer<typeof transferResponseSchema>;
+
+export const ReviewSuggestionSourceValues = ['rule', 'payee'] as const;
+
+export const reviewSuggestionSchema = z.object({
+  categoryId: z.string(),
+  source: z.enum(ReviewSuggestionSourceValues),
+  transactionId: z.string(),
+});
+
+export type ReviewSuggestion = z.infer<typeof reviewSuggestionSchema>;

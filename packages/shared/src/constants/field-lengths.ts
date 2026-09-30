@@ -3,6 +3,7 @@ export const FieldLengths = {
   amountInput: 30,
   currencyCode: 3,
   email: 254,
+  icon: 64,
   importCsv: 2_000_000,
   institution: 50,
   localeMax: 20,

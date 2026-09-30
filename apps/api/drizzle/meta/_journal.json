@@ -15,6 +15,13 @@
       "when": 1790608524063,
       "tag": "0001_transactions_needs_review_index",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790754806755,
+      "tag": "0002_payee_appearance_and_emoji_setting",
+      "breakpoints": true
     }
   ]
 }

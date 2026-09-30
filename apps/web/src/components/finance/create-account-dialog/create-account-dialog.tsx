@@ -16,6 +16,7 @@ import {
   FormStack,
   saveLabel,
 } from '@/components/ui';
+import { FALLBACK_CURRENCY } from '@coinkeeper/shared/constants/money';
 import { accountFormSchema, AccountFormValues } from '@coinkeeper/shared/schema/accounts';
 
 import { useEntityMutation } from '../use-entity-mutation';
@@ -51,7 +52,7 @@ export function CreateAccountDialog({
   const { data: settings } = useSettings();
 
   const form = useForm<AccountFormValues>({
-    defaultValues: accountDefaults(account, settings?.primaryCurrency ?? 'EUR'),
+    defaultValues: accountDefaults(account, settings?.primaryCurrency ?? FALLBACK_CURRENCY),
     resolver: zodResolver(accountFormSchema),
     values: account && accountDefaults(account, account.currency),
   });
