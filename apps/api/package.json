@@ -17,7 +17,7 @@
     "user:reset-password": "tsx src/cli/reset-password.ts"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.4.3",
+    "@electric-sql/pglite": "^0.5.8",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.11",
     "tsup": "^8.5.1",
