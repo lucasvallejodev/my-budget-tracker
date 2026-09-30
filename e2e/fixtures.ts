@@ -35,7 +35,7 @@ export const signUpThroughForm = async (page: Page, email: string) => {
   await page.getByLabel('Password', { exact: true }).fill(Password);
   await page.getByLabel('Repeat the password').fill(Password);
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('heading', { name: 'Dashboard Overview' })).toBeVisible();
+  await expect(page.getByRole('heading', { exact: true, name: 'Home' })).toBeVisible();
 };
 
 export const seedAccountWithExpense = async (page: Page, memo: string) => {

@@ -6,9 +6,14 @@ import { Badge } from './badge';
 afterEach(cleanup);
 
 describe('Badge', () => {
-  it('renders its label after a decorative dot', () => {
-    render(<Badge tone="warning">Needs review</Badge>);
+  it('renders its label with an optional icon', () => {
+    render(
+      <Badge tone="warning" icon={<svg data-testid="icon" />}>
+        Needs review
+      </Badge>
+    );
 
-    expect(screen.getByText('Needs review').textContent).toBe('•Needs review');
+    expect(screen.getByText('Needs review').textContent).toBe('Needs review');
+    expect(screen.getByTestId('icon')).toBeTruthy();
   });
 });

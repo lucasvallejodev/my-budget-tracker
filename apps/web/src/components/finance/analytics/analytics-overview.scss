@@ -1,0 +1,64 @@
+@use 'abstracts' as *;
+
+.analytics-overview {
+  &__figures {
+    @include surface;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: space(4);
+
+    @include media-up(laptop) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  &__row {
+    display: grid;
+    align-items: stretch;
+    gap: space(4);
+
+    @include media-up(laptop) {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    }
+  }
+
+  &__changes {
+    @include reset-list;
+    @include flex-column(0);
+  }
+
+  &__change {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: space(1) space(2);
+    padding: space(2) 0;
+    border-top: border(divider);
+
+    &:first-child {
+      border-top: 0;
+    }
+  }
+
+  &__before {
+    @include tabular-figures;
+
+    grid-column: 2;
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+  }
+
+  &__delta {
+    @include tabular-figures;
+
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    color: var(--color-positive);
+    font-weight: font-weight(semibold);
+
+    &--up {
+      color: var(--color-negative);
+    }
+  }
+}

@@ -2,20 +2,20 @@
 
 @layer ui {
   .form {
-    @include flex-column(18px);
+    @include flex-column(space(5));
 
     &__item {
-      @include flex-column(7px);
+      @include flex-column(space(2));
     }
 
     &__label {
-      font-weight: 550;
-      font-size: 13px;
+      font-weight: font-weight(semibold);
+      font-size: font-size(meta);
     }
 
     &__error {
-      color: var(--danger);
-      font-size: 12px;
+      color: var(--color-negative);
+      font-size: font-size(caption);
     }
 
     &__description {

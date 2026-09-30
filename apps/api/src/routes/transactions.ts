@@ -9,6 +9,7 @@ import {
 } from '@coinkeeper/shared/schema/imports';
 import {
   linkTransferSchema,
+  reviewSuggestionSchema,
   standardTransactionSchema,
   transactionListQuerySchema,
   transactionPatchSchema,
@@ -49,6 +50,17 @@ export const transactionsRoutes: FastifyPluginAsyncZod = async app => {
 
       return app.services.ledger.page(userIdOf(request), { ...filters, search });
     }
+  );
+
+  app.get(
+    '/transactions/review-suggestions',
+    {
+      schema: {
+        response: withErrors({ [HttpStatus.ok]: listOf(reviewSuggestionSchema) }),
+        tags: TransactionTags,
+      },
+    },
+    async request => ({ items: await app.services.rules.reviewSuggestions(userIdOf(request)) })
   );
 
   app.get(

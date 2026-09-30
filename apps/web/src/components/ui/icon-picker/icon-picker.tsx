@@ -4,7 +4,8 @@ import './icon-picker.scss';
 
 import { useState } from 'react';
 
-import { IconName, IconNames } from '@coinkeeper/shared/constants/icon-names';
+import { IconNames } from '@coinkeeper/shared/constants/icon-names';
+import { isEmoji } from '@coinkeeper/shared/lib/patterns';
 
 import { Button } from '../button';
 import { Icon } from '../icon';
@@ -13,13 +14,34 @@ import { Text } from '../text';
 
 const PickerIconSize = 18;
 
+function EmojiField({ onChange, value }: { onChange: (emoji: string) => void; value: string }) {
+  const [draft, setDraft] = useState(isEmoji(value) ? value : '');
+
+  return (
+    <Input
+      aria-label="Emoji"
+      placeholder="Or type an emoji"
+      value={draft}
+      aria-invalid={!!draft && !isEmoji(draft)}
+      onChange={event => {
+        const next = event.target.value.trim();
+
+        setDraft(next);
+        if (isEmoji(next)) onChange(next);
+      }}
+    />
+  );
+}
+
 export function IconPicker({
+  allowEmoji = false,
   color,
   onChange,
   value,
 }: {
+  allowEmoji?: boolean;
   color?: string;
-  onChange: (icon: IconName) => void;
+  onChange: (icon: string) => void;
   value: string;
 }) {
   const [search, setSearch] = useState('');
@@ -28,6 +50,7 @@ export function IconPicker({
 
   return (
     <div className="icon-picker">
+      {allowEmoji && <EmojiField value={value} onChange={onChange} />}
       <Input
         aria-label="Search icons"
         placeholder="Search icons…"

@@ -2,29 +2,40 @@
 
 @layer ui {
   .badge {
-    @include flex-row(5px);
+    @include flex-row(space(1));
 
     display: inline-flex;
-    white-space: nowrap;
-    padding: 3px 9px;
+    height: space(5) + 2px;
+    padding: 0 space(2);
     border-radius: radius(pill);
-    font-size: 12px;
-    color: var(--success);
-    background: var(--success-soft);
+    background: var(--color-positive-soft);
+    color: var(--color-positive);
+    font-size: font-size(caption);
+    font-weight: font-weight(semibold);
+    white-space: nowrap;
+
+    svg {
+      @include icon-size(13px);
+    }
 
     &--warning {
-      color: var(--warning);
-      background: var(--warning-soft);
+      background: var(--color-warning-soft);
+      color: var(--color-warning);
     }
 
     &--danger {
-      color: var(--danger);
-      background: var(--danger-soft);
+      background: var(--color-negative-soft);
+      color: var(--color-negative);
+    }
+
+    &--info {
+      background: var(--color-info-soft);
+      color: var(--color-info);
     }
 
     &--neutral {
-      color: var(--muted);
-      background: var(--surface-soft);
+      background: var(--color-surface-sunken);
+      color: var(--color-text-body);
     }
   }
 }

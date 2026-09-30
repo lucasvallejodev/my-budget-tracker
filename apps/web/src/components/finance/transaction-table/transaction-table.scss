@@ -1,10 +1,177 @@
 @use 'abstracts' as *;
 
 .transaction-table {
-  &__description {
-    @include flex-row(space(3));
+  --transaction-table-columns: #{size(avatar)} minmax(0, 1fr) auto;
+  --transaction-table-areas: 'avatar payee amount' 'avatar category amount';
 
-    color: var(--ink);
-    font-weight: 500;
+  @include bordered;
+
+  overflow: hidden;
+  background: var(--color-surface);
+
+  @include media-up(tablet-landscape) {
+    --transaction-table-columns: #{size(avatar)} minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr)
+      minmax(120px, auto);
+    --transaction-table-areas: 'avatar payee category account amount';
+  }
+
+  &--actions {
+    --transaction-table-columns: #{size(avatar)} minmax(0, 1fr) auto #{size(control-height-small)};
+    --transaction-table-areas: 'avatar payee amount actions' 'avatar category amount actions';
+
+    @include media-up(tablet-landscape) {
+      --transaction-table-columns: #{size(avatar)} minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr)
+        minmax(120px, auto) #{size(control-height-small)};
+      --transaction-table-areas: 'avatar payee category account amount actions';
+    }
+  }
+
+  &--no-account {
+    @include media-up(tablet-landscape) {
+      --transaction-table-columns: #{size(avatar)} minmax(0, 1.6fr) minmax(0, 1fr)
+        minmax(120px, auto);
+      --transaction-table-areas: 'avatar payee category amount';
+    }
+  }
+
+  &--no-account.transaction-table--actions {
+    @include media-up(tablet-landscape) {
+      --transaction-table-columns: #{size(avatar)} minmax(0, 1.6fr) minmax(0, 1fr)
+        minmax(120px, auto) #{size(control-height-small)};
+      --transaction-table-areas: 'avatar payee category amount actions';
+    }
+  }
+
+  &__head {
+    display: none;
+
+    @include media-up(tablet-landscape) {
+      display: grid;
+      grid-template-columns: var(--transaction-table-columns);
+      gap: space(3);
+      padding: space(3) space(5);
+      color: var(--color-text-muted);
+      font-size: font-size(caption);
+      font-weight: font-weight(semibold);
+    }
+
+    > :first-child {
+      grid-column: span 2;
+    }
+  }
+
+  &__head-amount {
+    text-align: right;
+  }
+
+  &__day {
+    @include flex-between(space(3));
+
+    margin: 0;
+    padding: space(2) space(5);
+    border-top: border(divider);
+    background: var(--color-surface-soft);
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+    font-weight: font-weight(semibold);
+  }
+
+  &__day-total {
+    @include tabular-figures;
+  }
+
+  &__rows {
+    @include reset-list;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: var(--transaction-table-columns);
+    grid-template-areas: var(--transaction-table-areas);
+    align-items: center;
+    column-gap: space(3);
+    row-gap: space(1);
+    min-height: size(row-height);
+    padding: space(2) space(4);
+    border-top: border(divider);
+
+    &:hover {
+      background: var(--color-surface-soft);
+    }
+
+    @include media-up(tablet-landscape) {
+      padding: space(2) space(5);
+    }
+
+    > :first-child {
+      grid-area: avatar;
+    }
+  }
+
+  &__payee {
+    @include flex-column(0);
+
+    grid-area: payee;
+    min-width: 0;
+  }
+
+  &__title {
+    @include truncate;
+
+    color: var(--color-text);
+    font-weight: font-weight(semibold);
+  }
+
+  &__meta {
+    @include truncate;
+
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+  }
+
+  &__category {
+    grid-area: category;
+    min-width: 0;
+  }
+
+  &__chip {
+    @include flex-row(space(2));
+
+    display: inline-flex;
+    max-width: 100%;
+    color: var(--color-text-body);
+    font-size: font-size(meta);
+    font-weight: font-weight(medium);
+  }
+
+  &__account {
+    @include truncate;
+
+    display: none;
+    grid-area: account;
+    color: var(--color-text-muted);
+    font-size: font-size(meta);
+
+    @include media-up(tablet-landscape) {
+      display: block;
+    }
+  }
+
+  &__amount {
+    @include flex-column(space(1));
+
+    grid-area: amount;
+    align-items: flex-end;
+    font-weight: font-weight(semibold);
+    text-align: right;
+  }
+
+  &__transfer-amount {
+    color: var(--color-text-muted);
+    font-weight: font-weight(medium);
+  }
+
+  &__actions {
+    grid-area: actions;
   }
 }

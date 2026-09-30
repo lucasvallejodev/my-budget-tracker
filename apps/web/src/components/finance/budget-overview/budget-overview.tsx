@@ -1,5 +1,7 @@
 'use client';
 
+import './budget-overview.scss';
+
 import { useMutation } from '@tanstack/react-query';
 import { Copy, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -7,32 +9,32 @@ import { toast } from 'sonner';
 
 import { copyBudgets, deleteBudget } from '@/api/mutations';
 import {
+  Badge,
   Button,
   Cluster,
-  Columns,
   Dialog,
   DialogContent,
   DialogTitle,
   EmptyState,
-  Grid,
   Page,
   PageHeading,
   Panel,
   QueryContent,
-  Stack,
+  SegmentedControl,
 } from '@/components/ui';
-import { getPercentage } from '@/lib/math';
-import { Colors } from '@/styles/theme';
-import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
-import { budgetPace } from '@coinkeeper/shared/lib/budget-pace';
+import { FALLBACK_CURRENCY } from '@coinkeeper/shared/constants/money';
 import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
-import { calendarPeriod } from '@coinkeeper/shared/lib/periods';
 
-import { BudgetCard } from '../budget-card';
-import { BudgetInsights } from '../budget-insights';
-import { DistributionChart } from '../distribution-chart';
-import { MetricCard } from '../metric-card';
+import { BudgetLine } from '../budget-line';
+import {
+  type BudgetFigures,
+  budgetFigures,
+  BudgetStateOrder,
+  BudgetStates,
+} from '../budget-status';
+import { BudgetSummary } from '../budget-summary';
+import { CurrencySwitch, useCurrencyView } from '../currency-switch';
 import { MonthPicker } from '../month-picker';
 import {
   BudgetRow,
@@ -44,138 +46,102 @@ import {
   useSettings,
 } from '../use-finance-data';
 import { BudgetDialog } from './budget-dialog';
+import { UnbudgetedSpending } from './unbudgeted-spending';
 
-const FallbackCurrency = 'EUR';
-const CopyIconSize = 16;
+type SortMode = 'group' | 'name' | 'status';
 
-const sumOf = (rows: BudgetRow[], pick: (row: BudgetRow) => number) =>
-  rows.reduce((total, row) => total + pick(row), 0);
-
-const paceOf = (budget: BudgetRow, today: string) =>
-  budgetPace({
-    limitMinor: budget.amountMinor,
-    period: calendarPeriod(budget.month.slice(0, ISO_MONTH_LENGTH)),
-    spentMinor: budget.spentMinor,
-    today,
-  });
-
-const budgetInsights = (list: BudgetRow[], format: (value: number) => string, today: string) => [
-  `${list.filter(budget => budget.spentMinor <= budget.amountMinor).length} of ${list.length} categories are within limits`,
-  ...list
-    .filter(budget => budget.spentMinor > budget.amountMinor)
-    .map(
-      budget =>
-        `${budget.categoryName} exceeded its budget by ${format(budget.spentMinor - budget.amountMinor)}`
-    ),
-  ...list
-    .filter(budget => paceOf(budget, today).tooFast)
-    .map(
-      budget =>
-        `${budget.categoryName} is spending too fast: ${format(paceOf(budget, today).projectedMinor)} projected against ${format(budget.amountMinor)}`
-    ),
+const SortOptions: { label: string; value: SortMode }[] = [
+  // keep order
+  { label: 'By status', value: 'status' },
+  { label: 'By group', value: 'group' },
+  { label: 'A–Z', value: 'name' },
 ];
 
-function CurrencyBudgets({
-  currency,
-  list,
-  month,
+type BudgetSection = {
+  badge?: { count: number; tone: (typeof BudgetStates)[keyof typeof BudgetStates]['tone'] };
+  items: BudgetFigures[];
+  title: string;
+};
+
+const byName = (left: BudgetFigures, right: BudgetFigures) =>
+  left.budget.categoryName.localeCompare(right.budget.categoryName);
+
+const budgetSections = (figures: BudgetFigures[], mode: SortMode): BudgetSection[] => {
+  if (mode === 'name') return [{ items: [...figures].sort(byName), title: 'All budgets' }];
+
+  if (mode === 'group') {
+    return [...new Set(figures.map(item => item.budget.groupName))]
+      .sort((left, right) => left.localeCompare(right))
+      .map(group => ({
+        items: figures.filter(item => item.budget.groupName === group).sort(byName),
+        title: group,
+      }));
+  }
+
+  return BudgetStateOrder.map(state => {
+    const items = figures.filter(item => item.state === state).sort(byName);
+
+    return {
+      badge: { count: items.length, tone: BudgetStates[state].tone },
+      items,
+      title: BudgetStates[state].label,
+    };
+  }).filter(section => section.items.length);
+};
+
+function CategoryBudgets({
+  figures,
+  format,
   onDelete,
   onEdit,
-  today,
 }: {
-  currency: string;
-  list: BudgetRow[];
-  month: string;
+  figures: BudgetFigures[];
+  format: (value: number) => string;
   onDelete: (budget: BudgetRow) => void;
   onEdit: (budget: BudgetRow) => void;
-  today: string;
 }) {
-  const limit = sumOf(list, budget => budget.amountMinor);
-  const spent = sumOf(list, budget => budget.spentMinor);
-  const format = (value: number) => formatMoney(value, currency);
-
-  const pace = budgetPace({
-    limitMinor: limit,
-    period: calendarPeriod(month),
-    spentMinor: spent,
-    today,
-  });
+  const [mode, setMode] = useState<SortMode>('status');
 
   return (
-    <Stack>
-      <Grid>
-        <MetricCard label={`Total budget · ${currency}`} value={format(limit)} />
-        <MetricCard label="Spent so far" value={format(spent)} />
-        <MetricCard label="Remaining" value={format(limit - spent)} negative={spent > limit} />
-        <MetricCard
-          label="Budget status"
-          value={limit ? `${getPercentage(spent, limit)}% used` : '—'}
+    <Panel
+      title="Category budgets"
+      action={
+        <SegmentedControl
+          label="Order budgets"
+          options={SortOptions}
+          value={mode}
+          onChange={value => setMode(value as SortMode)}
         />
-        {pace.isCurrent && (
-          <MetricCard
-            label="Left per day"
-            value={format(pace.perDayLeftMinor)}
-            detail={`for the ${pace.daysLeft} day${pace.daysLeft === 1 ? '' : 's'} left this month`}
-          />
-        )}
-      </Grid>
-      <Columns>
-        <Panel title={`Category budgets · ${currency}`}>
-          <Stack>
-            {list.map(budget => (
-              <BudgetCard
-                key={budget.id}
-                budget={budget}
-                format={format}
-                today={today}
-                onEdit={() => onEdit(budget)}
-                onDelete={() => onDelete(budget)}
-              />
-            ))}
-          </Stack>
-        </Panel>
-        <Stack>
-          <DistributionChart
-            title={`Budget progress · ${currency}`}
-            format={format}
-            data={[
-              {
-                color: Colors.chart.used,
-                name: 'Spent',
-                value: Math.min(spent, limit),
-              },
-              {
-                color: Colors.chart.remaining,
-                name: 'Available',
-                value: Math.max(0, limit - spent),
-              },
-            ]}
-          />
-          <BudgetInsights insights={budgetInsights(list, format, today)} />
-        </Stack>
-      </Columns>
-    </Stack>
+      }
+    >
+      <div className="budget-overview__sections">
+        {budgetSections(figures, mode).map(section => (
+          <section key={section.title} aria-label={section.title}>
+            <h3 className="budget-overview__section">
+              {section.badge && <Badge tone={section.badge.tone}>{section.badge.count}</Badge>}
+              {section.title}
+            </h3>
+            <ul className="budget-overview__list">
+              {section.items.map(item => (
+                <BudgetLine
+                  key={item.budget.id}
+                  figures={item}
+                  format={format}
+                  onEdit={() => onEdit(item.budget)}
+                  onDelete={() => onDelete(item.budget)}
+                />
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </Panel>
   );
 }
 
-export function BudgetOverview() {
+function useBudgetActions(month: string) {
   const refresh = useRefreshFinance();
-  const [month, setMonth] = useState(currentMonth());
-  const budgets = useBudgets(month);
-  const accounts = useAccounts();
-  const settings = useSettings();
-  const [editing, setEditing] = useState<Partial<BudgetRow> | null>(null);
   const [deleting, setDeleting] = useState<BudgetRow | null>(null);
-
-  const currencies = useMemo(
-    () => [
-      ...new Set([
-        ...(accounts.data ?? []).map(account => account.currency),
-        settings.data?.primaryCurrency ?? FallbackCurrency,
-      ]),
-    ],
-    [accounts.data, settings.data]
-  );
 
   const remove = useMutation({
     mutationFn: deleteBudget,
@@ -196,55 +162,137 @@ export function BudgetOverview() {
     },
   });
 
-  const rows = budgets.data ?? [];
+  return {
+    copy,
+    deleting,
+    remove,
+    setDeleting,
+  };
+}
 
-  const byCurrency = currencies
-    .map(currency => ({ currency, rows: rows.filter(row => row.currency === currency) }))
-    .filter(bucket => bucket.rows.length);
+function DeleteBudgetDialog({
+  budget,
+  month,
+  onCancel,
+  onConfirm,
+  pending,
+}: {
+  budget: BudgetRow | null;
+  month: string;
+  onCancel: () => void;
+  onConfirm: (budget: BudgetRow) => void;
+  pending: boolean;
+}) {
+  return (
+    <Dialog open={!!budget} onOpenChange={open => !open && onCancel()}>
+      <DialogContent>
+        <DialogTitle>Delete the {budget?.categoryName} budget?</DialogTitle>
+        <p>Only the limit for {monthLabel(month)} is removed; transactions are untouched.</p>
+        <Cluster>
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={pending}
+            onClick={() => budget && onConfirm(budget)}
+          >
+            Delete budget
+          </Button>
+        </Cluster>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function useBudgetView(month: string) {
+  const budgets = useBudgets(month);
+  const accounts = useAccounts();
+  const settings = useSettings();
+  const primary = settings.data?.primaryCurrency ?? FALLBACK_CURRENCY;
+
+  const currencies = useMemo(
+    () => [...new Set([primary, ...(accounts.data ?? []).map(account => account.currency)])],
+    [accounts.data, primary]
+  );
+
+  const [currency, setCurrency] = useCurrencyView(currencies, primary);
+  const today = localIsoDate(new Date());
+  const rows = (budgets.data ?? []).filter(row => row.currency === currency);
+
+  return {
+    currencies,
+    currency,
+    figures: rows.map(row => budgetFigures(row, today)),
+    format: (value: number) => formatMoney(value, currency),
+    pending: budgets.isPending,
+    primary,
+    rows,
+    setCurrency,
+    today,
+  };
+}
+
+export function BudgetOverview() {
+  const [month, setMonth] = useState(currentMonth());
+  const [editing, setEditing] = useState<Partial<BudgetRow> | null>(null);
+  const { copy, deleting, remove, setDeleting } = useBudgetActions(month);
+
+  const { currencies, currency, figures, format, pending, primary, rows, setCurrency, today } =
+    useBudgetView(month);
 
   return (
     <Page>
       <PageHeading
         title="Budgets"
-        description="Monthly limits per category, compared with what the ledger says you spent. Budgets are per currency, like everything else."
+        description="Monthly limits per category, measured against what you actually spent."
         actions={
           <>
+            <CurrencySwitch {...{ currencies, primary }} value={currency} onChange={setCurrency} />
             <MonthPicker month={month} onChange={setMonth} />
             <Button variant="outline" onClick={() => copy.mutate()} disabled={copy.isPending}>
-              <Copy size={CopyIconSize} /> Copy last month
+              <Copy aria-hidden /> Copy last month
             </Button>
-            <Button onClick={() => setEditing({ currency: currencies[0] })}>
-              <Plus />
-              Add budget
+            <Button variant="outline" onClick={() => setEditing({ currency })}>
+              <Plus aria-hidden /> Add budget
             </Button>
           </>
         }
       />
       <QueryContent
-        pending={budgets.isPending}
+        pending={pending}
         loading="Loading budgets…"
         empty={
           !rows.length && (
             <EmptyState
-              title={`No budgets for ${monthLabel(month)}`}
+              title={`No ${currency} budgets for ${monthLabel(month)}`}
               description="Add a category limit, or copy last month's budgets."
             />
           )
         }
       >
-        {() =>
-          byCurrency.map(({ currency, rows: list }) => (
-            <CurrencyBudgets
-              key={currency}
-              currency={currency}
-              list={list}
-              month={month}
-              today={localIsoDate(new Date())}
-              onEdit={setEditing}
-              onDelete={setDeleting}
-            />
-          ))
-        }
+        {() => (
+          <>
+            <BudgetSummary figures={figures} format={format} month={month} today={today} />
+            <div className="budget-overview__columns">
+              <CategoryBudgets
+                figures={figures}
+                format={format}
+                onEdit={setEditing}
+                onDelete={setDeleting}
+              />
+              <UnbudgetedSpending
+                {...{
+                  currency,
+                  format,
+                  month,
+                }}
+                budgets={rows}
+                onAdd={setEditing}
+              />
+            </div>
+          </>
+        )}
       </QueryContent>
       {editing && (
         <BudgetDialog
@@ -255,24 +303,13 @@ export function BudgetOverview() {
           onSaved={() => setEditing(null)}
         />
       )}
-      <Dialog open={!!deleting} onOpenChange={open => !open && setDeleting(null)}>
-        <DialogContent>
-          <DialogTitle>Delete the {deleting?.categoryName} budget?</DialogTitle>
-          <p>Only the limit for {monthLabel(month)} is removed; transactions are untouched.</p>
-          <Cluster>
-            <Button variant="outline" onClick={() => setDeleting(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={remove.isPending}
-              onClick={() => deleting && remove.mutate(deleting.id)}
-            >
-              Delete budget
-            </Button>
-          </Cluster>
-        </DialogContent>
-      </Dialog>
+      <DeleteBudgetDialog
+        budget={deleting}
+        month={month}
+        pending={remove.isPending}
+        onCancel={() => setDeleting(null)}
+        onConfirm={budget => remove.mutate(budget.id)}
+      />
     </Page>
   );
 }

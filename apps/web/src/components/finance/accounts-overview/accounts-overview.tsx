@@ -1,71 +1,119 @@
 'use client';
 
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
+import { Archive, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import {
-  Amount,
-  Badge,
   Button,
-  Cluster,
+  Columns,
   EmptyState,
   Page,
   PageHeading,
-  Panel,
   QueryContent,
-  Text,
+  Stack,
 } from '@/components/ui';
-import { AccountGroups, accountTypeLabel } from '@/constants/account';
+import { FALLBACK_CURRENCY } from '@coinkeeper/shared/constants/money';
 
 import { CreateAccountDialog } from '../create-account-dialog';
-import { LinkedAccount } from '../linked-account';
-import { AccountSummary, useAccounts } from '../use-finance-data';
+import { CurrencySwitch, useCurrencyView } from '../currency-switch';
+import { netWorthByMonth } from '../net-worth';
+import {
+  type AccountSummary,
+  type BalancePoint,
+  currentMonth,
+  shiftMonth,
+  type Summary,
+  useAccounts,
+  useBalances,
+  useSettings,
+  useSummary,
+} from '../use-finance-data';
+import { AccountGroup } from './account-group';
+import {
+  accountsDescription,
+  balancesByAccount,
+  currenciesOf,
+  groupAccounts,
+  isActive,
+} from './accounts-figures';
+import { BalanceSummary } from './balance-summary';
+import { CurrencyTotals } from './currency-totals';
+import { NetWorthTrend } from './net-worth-trend';
 
-function AccountActions({ account }: { account: AccountSummary }) {
-  const isLiability = account.classification === 'liability';
+const BalanceHistoryMonths = 13;
+
+function AccountsContent({
+  accounts,
+  balances,
+  currency,
+  summary,
+}: {
+  accounts: AccountSummary[];
+  balances: BalancePoint[];
+  currency: string;
+  summary?: Summary;
+}) {
+  const active = accounts.filter(isActive);
+  const byAccount = balancesByAccount(balances);
+  const groups = groupAccounts(accounts, byAccount, shiftMonth(currentMonth(), -1));
+
+  const currentMinor = active
+    .filter(account => account.currency === currency)
+    .reduce((total, account) => total + account.balanceMinor, 0);
 
   return (
-    <Cluster>
-      {account.archivedAt && <Badge tone="neutral">Archived</Badge>}
-      <strong>
-        <Amount
-          amountMinor={account.balanceMinor}
-          currency={account.currency}
-          flipSign={isLiability}
+    <Columns>
+      <Stack>
+        <NetWorthTrend
+          currency={currency}
+          currentMinor={currentMinor}
+          series={netWorthByMonth(balances, currency)}
         />
-      </strong>
-      {isLiability && (
-        <Text as="span" tone="muted">
-          owed
-        </Text>
-      )}
-      <Button asChild variant="outline" size="sm">
-        <Link href={`/accounts/${account.id}`}>View</Link>
-      </Button>
-    </Cluster>
+        {groups.map(group => (
+          <AccountGroup key={group.label} accounts={accounts} balances={byAccount} group={group} />
+        ))}
+      </Stack>
+      <Stack>
+        <BalanceSummary accounts={active} currency={currency} />
+        <CurrencyTotals accounts={active} converted={summary?.converted} />
+      </Stack>
+    </Columns>
   );
 }
 
 export function AccountsOverview() {
   const [showArchived, setShowArchived] = useState(false);
   const accounts = useAccounts(showArchived);
-  const rows = (accounts.data ?? []).filter(account => showArchived || !account.archivedAt);
+  const summary = useSummary();
+  const balances = useBalances(BalanceHistoryMonths);
+  const settings = useSettings();
+  const rows = (accounts.data ?? []).filter(account => showArchived || isActive(account));
+  const active = rows.filter(isActive);
+  const currencies = currenciesOf(active);
+  const primary = settings.data?.primaryCurrency ?? FALLBACK_CURRENCY;
+  const [currency, setCurrency] = useCurrencyView(currencies, primary);
 
   return (
     <Page>
       <PageHeading
         title="Accounts"
-        description="Your accounts and current balances, grouped by type. Each account keeps its own currency."
+        description={accountsDescription(active)}
         actions={
           <>
+            <CurrencySwitch
+              currencies={currencies}
+              primary={primary}
+              value={currency}
+              onChange={setCurrency}
+            />
             <Button variant="outline" onClick={() => setShowArchived(visible => !visible)}>
+              <Archive aria-hidden />
               {showArchived ? 'Hide archived' : 'Show archived'}
             </Button>
             <CreateAccountDialog
               trigger={
                 <Button>
-                  <Plus />
+                  <Plus aria-hidden />
                   New account
                 </Button>
               }
@@ -88,28 +136,14 @@ export function AccountsOverview() {
           )
         }
       >
-        {() =>
-          AccountGroups.map(group => {
-            const members = rows.filter(account =>
-              (group.types as string[]).includes(account.type)
-            );
-
-            if (!members.length) return null;
-
-            return (
-              <Panel key={group.label} title={group.label}>
-                {members.map(account => (
-                  <LinkedAccount
-                    key={account.id}
-                    name={account.name}
-                    detail={`${account.institution || accountTypeLabel(account.type)} · ${account.currency}`}
-                    actions={<AccountActions account={account} />}
-                  />
-                ))}
-              </Panel>
-            );
-          })
-        }
+        {() => (
+          <AccountsContent
+            accounts={rows}
+            balances={balances.data ?? []}
+            currency={currency}
+            summary={summary.data}
+          />
+        )}
       </QueryContent>
     </Page>
   );

@@ -1,6 +1,8 @@
 const StoragePrefix = 'coinkeeper-remembered-';
 
 export const RememberedFields = {
+  currencyView: 'currency-view',
+  recentCategories: 'recent-categories',
   standardAccount: 'standard-account',
   transferFrom: 'transfer-from',
   transferTo: 'transfer-to',
@@ -49,4 +51,46 @@ export const rememberValue = (field: RememberedField, value: string): void => {
   } catch {
     return;
   }
+};
+
+const ListSeparator = ',';
+
+/**
+ * Reads a list of values remembered in this browser, most recent first.
+ *
+ * @remarks
+ * Stored as one comma-separated entry through {@link rememberedValue}, so ids must not contain
+ * commas. Missing storage gives an empty list.
+ *
+ * @param field - Which remembered list to read (see {@link RememberedFields}).
+ * @returns The stored values, most recent first.
+ *
+ * @example
+ * ```ts
+ * rememberInList(RememberedFields.recentCategories, 'food', 5);
+ * rememberedList(RememberedFields.recentCategories); // ['food']
+ * ```
+ */
+export const rememberedList = (field: RememberedField): string[] =>
+  rememberedValue(field).split(ListSeparator).filter(Boolean);
+
+/**
+ * Moves a value to the front of a remembered list, keeping at most `limit` distinct values.
+ *
+ * @param field - Which list to update (see {@link RememberedFields}).
+ * @param value - The value to put first, such as a category id.
+ * @param limit - How many values to keep.
+ * @returns The updated list, most recent first.
+ *
+ * @example
+ * ```ts
+ * rememberInList(RememberedFields.recentCategories, 'rent', 2); // ['rent', 'food']
+ * ```
+ */
+export const rememberInList = (field: RememberedField, value: string, limit: number): string[] => {
+  const list = [value, ...rememberedList(field).filter(item => item !== value)].slice(0, limit);
+
+  rememberValue(field, list.join(ListSeparator));
+
+  return list;
 };

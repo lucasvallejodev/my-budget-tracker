@@ -6,11 +6,15 @@ import { userIdOf } from '@/plugins/context';
 import { toIsoMonth } from '@coinkeeper/shared/lib/date-helpers';
 import { listOf } from '@coinkeeper/shared/schema/common';
 import {
+  balancePointSchema,
+  balancesQuerySchema,
   breakdownQuerySchema,
   cashFlowQuerySchema,
   cashPointSchema,
+  categoryMonthSliceSchema,
   categorySliceSchema,
   currencyTotalsSchema,
+  groupMonthSliceSchema,
   groupSliceSchema,
   monthQuerySchema,
   netWorthBucketSchema,
@@ -90,7 +94,13 @@ export const reportsRoutes: FastifyPluginAsyncZod = async app => {
         querystring: breakdownQuerySchema,
         response: withErrors({
           [HttpStatus.ok]: listOf(
-            z.union([groupSliceSchema, categorySliceSchema, rankingSliceSchema])
+            z.union([
+              groupMonthSliceSchema,
+              categoryMonthSliceSchema,
+              groupSliceSchema,
+              categorySliceSchema,
+              rankingSliceSchema,
+            ])
           ),
         }),
         tags: Tags,
@@ -98,15 +108,21 @@ export const reportsRoutes: FastifyPluginAsyncZod = async app => {
     },
     async request => {
       const userId = userIdOf(request);
-      const { by, currency, month } = request.query;
+      const { by, currency, month, months, split } = request.query;
+      const options = { months, split: split === 'month' };
 
-      if (by === 'group') return { items: await reports.breakdownByGroup(userId, month) };
-      if (by === 'payee') return { items: await reports.spendingByPayee(userId, month) };
-      if (by === 'account') return { items: await reports.spendingByAccount(userId, month) };
+      if (by === 'group') return { items: await reports.breakdownByGroup(userId, month, options) };
+      if (by === 'payee') return { items: await reports.spendingByPayee(userId, month, months) };
+
+      if (by === 'account') {
+        return { items: await reports.spendingByAccount(userId, month, months) };
+      }
 
       const target = currency ?? (await app.services.getSettings(userId)).primaryCurrency;
 
-      return { items: await reports.breakdownByCategory(userId, month, target.toUpperCase()) };
+      return {
+        items: await reports.breakdownByCategory(userId, month, target.toUpperCase(), options),
+      };
     }
   );
 
@@ -119,6 +135,24 @@ export const reportsRoutes: FastifyPluginAsyncZod = async app => {
       },
     },
     async request => ({ items: await reports.netWorth(userIdOf(request)) })
+  );
+
+  app.get(
+    '/reports/balances',
+    {
+      schema: {
+        querystring: balancesQuerySchema,
+        response: withErrors({ [HttpStatus.ok]: listOf(balancePointSchema) }),
+        tags: Tags,
+      },
+    },
+    async request => ({
+      items: await reports.monthEndBalances(
+        userIdOf(request),
+        request.query.month ?? toIsoMonth(new Date()),
+        request.query.months
+      ),
+    })
   );
 
   app.get(

@@ -1,0 +1,31 @@
+@use 'abstracts' as *;
+
+.unbudgeted-spending {
+  &__list {
+    @include reset-list;
+
+    margin: 0 (-(size(card-padding))) space(2);
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: size(avatar-small) minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: space(3);
+    min-height: size(row-height);
+    padding: space(1) size(card-padding);
+    border-top: border(divider);
+  }
+
+  &__name {
+    @include truncate;
+
+    font-weight: font-weight(medium);
+  }
+
+  &__amount {
+    @include tabular-figures;
+
+    font-weight: font-weight(semibold);
+  }
+}

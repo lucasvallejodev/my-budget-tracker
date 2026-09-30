@@ -31,9 +31,9 @@ import {
   Text,
 } from '@/components/ui';
 import { Colors } from '@/styles/theme';
-import { IconName } from '@coinkeeper/shared/constants/icon-names';
 
 import { useEntityMutation } from '../use-entity-mutation';
+import { useAllowEmoji } from '../use-finance-data';
 import type { Category, Group, GroupKind } from './category-types';
 
 const NameMaxLength = 50;
@@ -155,6 +155,7 @@ export function CategoryDialog({
 }) {
   const [name, setName] = useState(category?.name ?? '');
   const [icon, setIcon] = useState<string>(category?.icon ?? DefaultCategoryIcon);
+  const allowEmoji = useAllowEmoji();
   const [group, setGroup] = useState(groupId);
   const color = groups.find(candidate => candidate.id === group)?.color;
 
@@ -162,7 +163,7 @@ export function CategoryDialog({
     mutationFn: () => {
       const values = {
         groupId: group,
-        icon: icon as IconName,
+        icon,
         name,
       };
 
@@ -202,7 +203,7 @@ export function CategoryDialog({
           </Field>
           <Field as="div">
             Icon
-            <IconPicker value={icon} onChange={setIcon} color={color} />
+            <IconPicker allowEmoji={allowEmoji} value={icon} onChange={setIcon} color={color} />
           </Field>
           <Button type="submit" disabled={save.isPending || !name.trim()}>
             {category ? 'Save' : 'Create category'}

@@ -33,3 +33,40 @@ describe('ProgressBar', () => {
     ).toBe('100%');
   });
 });
+
+describe('ProgressBar tones', () => {
+  it('colours the fill by tone and labels the marker', () => {
+    const { container } = render(
+      <ProgressBar
+        label="Month"
+        max={100}
+        value={90}
+        tone="danger"
+        size="large"
+        marker={93}
+        markerLabel="Today"
+      />
+    );
+
+    expect(container.firstElementChild?.className).toBe(
+      'progress-bar progress-bar--danger progress-bar--large progress-bar--labelled'
+    );
+    expect(screen.getByText('Today').style.insetInlineStart).toBe('93%');
+  });
+
+  it('accepts a custom fill colour such as a category group colour', () => {
+    const { container } = render(<ProgressBar label="Food" max={100} value={10} color="#DC2626" />);
+
+    expect(
+      (container.firstElementChild as HTMLElement).style.getPropertyValue('--progress-bar-fill')
+    ).toBe('#DC2626');
+  });
+
+  it('keeps a marker label near the end inside the bar', () => {
+    render(<ProgressBar label="Month" max={100} value={90} marker={100} markerLabel="Today" />);
+
+    expect(screen.getByText('Today').className).toBe(
+      'progress-bar__marker-label progress-bar__marker-label--end'
+    );
+  });
+});

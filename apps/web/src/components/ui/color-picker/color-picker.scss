@@ -10,11 +10,11 @@
       @include icon-size(26px);
 
       border-radius: radius(round);
-      border: 2px solid var(--surface);
+      border: var(--border-width-focus) solid var(--color-surface);
       cursor: pointer;
 
       &--selected {
-        outline: 3px solid var(--ink);
+        outline: 3px solid var(--color-text);
       }
     }
   }

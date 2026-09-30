@@ -4,8 +4,8 @@ import type { RankingSlice } from '@coinkeeper/shared/schema/reports';
 
 import { rowsOf } from '../batch';
 import { Db } from '../db';
-import { monthRange } from '../ledger/service';
 import { spendingWhere } from './predicate';
+import { monthsEndingAt, type MonthSpan } from './range';
 
 const NoPayeeLabel = 'No payee';
 
@@ -20,11 +20,9 @@ type RankingRow = {
 const ranking = async (
   db: Db,
   userId: string,
-  month: string,
+  { end, start }: MonthSpan,
   dimension: { id: SQL; name: SQL }
 ): Promise<RankingSlice[]> => {
-  const { end, start } = monthRange(month);
-
   const rows = await rowsOf<RankingRow>(
     db,
     sql`
@@ -52,11 +50,11 @@ const ranking = async (
   }));
 };
 
-export const spendingByPayee = (db: Db, userId: string, month: string) =>
-  ranking(db, userId, month, {
+export const spendingByPayee = (db: Db, userId: string, month: string, months?: number) =>
+  ranking(db, userId, monthsEndingAt(month, months), {
     id: sql`p.id`,
     name: sql`COALESCE(p.name, t.original_payee, ${NoPayeeLabel})`,
   });
 
-export const spendingByAccount = (db: Db, userId: string, month: string) =>
-  ranking(db, userId, month, { id: sql`a.id`, name: sql`a.name` });
+export const spendingByAccount = (db: Db, userId: string, month: string, months?: number) =>
+  ranking(db, userId, monthsEndingAt(month, months), { id: sql`a.id`, name: sql`a.name` });

@@ -94,12 +94,10 @@ export function CategoryField({
             <CategoryPicker
               value={field.value || undefined}
               kind={kind}
+              placeholder="Choose category (optional)"
               onChange={categoryId => field.onChange(categoryId ?? '')}
             />
           </FormControl>
-          <FormDescription>
-            Optional. Uncategorized entries wait in the review inbox.
-          </FormDescription>
         </FormItem>
       )}
     />

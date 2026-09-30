@@ -1,0 +1,19 @@
+@use 'abstracts' as *;
+
+.budgets-to-watch {
+  &__list {
+    @include reset-list;
+
+    margin: 0 (-(size(card-padding)));
+  }
+
+  &__fine {
+    @include flex-row(space(3));
+
+    margin: 0 (-(size(card-padding))) (-(size(card-padding)));
+    padding: space(4) size(card-padding);
+    border-top: border(divider);
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+  }
+}

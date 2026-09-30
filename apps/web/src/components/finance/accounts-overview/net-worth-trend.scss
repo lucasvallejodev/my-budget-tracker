@@ -1,0 +1,15 @@
+@use 'abstracts' as *;
+
+.net-worth-trend {
+  @include flex-column(space(4));
+
+  &__chart {
+    width: 100%;
+    height: 180px;
+    min-width: 0;
+
+    @include media-up(tablet-landscape) {
+      height: 220px;
+    }
+  }
+}

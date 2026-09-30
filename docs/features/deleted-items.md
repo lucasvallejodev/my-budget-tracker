@@ -39,7 +39,7 @@ Deleted budgets have no tab. Set a limit again for the same category, month and 
 ## Rules when restoring
 
 - **The account must be live.** A transaction or transfer whose account (either account, for a transfer) is deleted cannot be restored; restore the account first.
-- **An archived category is not brought back.** If the transaction's category was archived after the deletion, the transaction comes back uncategorised and waits in the [review inbox](review-inbox.md).
+- **An archived category is not brought back.** If the transaction's category was archived after the deletion, the transaction comes back uncategorised and waits on the [Review](review-inbox.md) page.
 - **A re-imported bank row wins.** If you deleted an imported row and then imported the same bank file again, the new copy is the live one; the deleted copy can no longer be restored.
 - **Budgets and exchange rates revive by key.** Saving a budget for the same category, month and currency, or a rate for the same pair and date, restores the deleted row with the new value.
 

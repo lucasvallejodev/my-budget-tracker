@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { QueryKeys } from '@/components/finance';
 
-import { initialsOf, UserMenu } from './user-menu';
+import { userInitials, UserMenu } from './user-menu';
 
 const replace = vi.fn();
 
@@ -43,7 +43,7 @@ describe('UserMenu', () => {
     renderMenu();
     expect(screen.getByText('AL')).toBeTruthy();
     openMenu();
-    expect(screen.getByText('ada@example.com')).toBeTruthy();
+    expect(within(screen.getByRole('menu')).getByText('ada@example.com')).toBeTruthy();
     expect(screen.getByRole('menuitem', { name: 'Settings' }).getAttribute('href')).toBe(
       '/settings'
     );
@@ -64,8 +64,8 @@ describe('UserMenu', () => {
   });
 
   it('builds initials from the name or the email', () => {
-    expect(initialsOf({ email: 'ada@example.com', name: 'Ada Lovelace' })).toBe('AL');
-    expect(initialsOf({ email: 'grace@example.com', name: null })).toBe('GR');
-    expect(initialsOf(undefined)).toBe('?');
+    expect(userInitials({ email: 'ada@example.com', name: 'Ada Lovelace' })).toBe('AL');
+    expect(userInitials({ email: 'grace@example.com', name: null })).toBe('GR');
+    expect(userInitials(undefined)).toBe('?');
   });
 });

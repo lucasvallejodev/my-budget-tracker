@@ -45,4 +45,24 @@ describe('CreatePayeeDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Create new payee' })).toBeTruthy();
     expect(screen.getByLabelText('Name')).toBeTruthy();
   });
+
+  it('saves a chosen colour and icon, and emoji only when allowed', async () => {
+    const actions = await import('@/api/mutations');
+    const client = new QueryClient();
+
+    client.setQueryData(['settings'], { allowEmoji: true, primaryCurrency: 'EUR' });
+    renderWith(client, <CreatePayeeDialog />);
+    fireEvent.click(screen.getByRole('button', { name: 'Create new' }));
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Corner Café' } });
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.change(screen.getByLabelText('Emoji'), { target: { value: '☕' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    await vi.waitFor(() =>
+      expect(actions.createPayee).toHaveBeenCalledWith(
+        expect.objectContaining({ icon: '☕', name: 'Corner Café' })
+      )
+    );
+    expect(vi.mocked(actions.createPayee).mock.calls[0][0].color).toMatch(/^#[0-9A-F]{6}$/i);
+  });
 });

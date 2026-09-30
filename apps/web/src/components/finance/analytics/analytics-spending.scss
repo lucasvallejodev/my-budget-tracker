@@ -1,0 +1,39 @@
+@use 'abstracts' as *;
+
+.analytics-spending {
+  &__toggle {
+    @include reset-button;
+    @include flex-row(space(2));
+
+    color: var(--color-text);
+    font-weight: font-weight(semibold);
+
+    svg {
+      @include icon-size(size(icon-small));
+
+      color: var(--color-text-muted);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  &__category {
+    padding-left: space(12);
+  }
+
+  &__number {
+    @include tabular-figures;
+
+    text-align: right;
+  }
+
+  &__change {
+    color: var(--color-positive);
+
+    &--up {
+      color: var(--color-negative);
+    }
+  }
+}

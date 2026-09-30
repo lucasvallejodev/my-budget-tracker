@@ -148,6 +148,8 @@ const listRows = async (
       memo: transactions.memo,
       needsReview: transactions.needsReview,
       originalPayee: transactions.originalPayee,
+      payeeColor: payees.color,
+      payeeIcon: payees.icon,
       payeeId: transactions.payeeId,
       payeeName: payees.name,
       status: transactions.status,

@@ -5,25 +5,53 @@
     @include flex-row(space(2));
 
     min-width: 0;
+
+    &--full {
+      width: 100%;
+      min-height: size(control-height-large);
+      padding: space(2);
+      text-align: left;
+    }
   }
 
   &__avatar {
     @include grid-center;
-    @include accent-highlight;
 
     flex: none;
-    width: 32px;
-    height: 32px;
+    width: size(avatar-small) + space(1);
+    height: size(avatar-small) + space(1);
     border-radius: radius(round);
-    font-size: 12px;
-    font-weight: 700;
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+    font-size: font-size(caption);
+    font-weight: font-weight(bold);
+  }
+
+  &__text {
+    @include flex-column(0);
+
+    flex: 1;
+    min-width: 0;
   }
 
   &__name {
     @include truncate;
 
-    font-weight: 600;
-    color: var(--ink);
+    color: var(--color-text);
+    font-size: font-size(meta);
+    font-weight: font-weight(semibold);
+  }
+
+  &__detail {
+    @include truncate;
+
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+    font-weight: font-weight(regular);
+  }
+
+  &__chevron {
+    color: var(--color-text-faint);
   }
 
   &__identity {
@@ -31,7 +59,7 @@
 
     padding: space(2) space(3) space(3);
     margin-bottom: space(1);
-    border-bottom: 1px solid var(--border);
+    border-bottom: border(divider);
     min-width: 0;
   }
 

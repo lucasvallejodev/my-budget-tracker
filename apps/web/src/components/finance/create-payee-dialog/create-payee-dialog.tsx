@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ComponentProps, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { createPayee, updatePayee } from '@/api/mutations';
 import {
@@ -27,6 +27,7 @@ import { payeeFormSchema, PayeeFormValues } from '@coinkeeper/shared/schema/paye
 import { CategoryPicker } from '../category-picker';
 import { useEntityMutation } from '../use-entity-mutation';
 import { PayeeRow } from '../use-finance-data';
+import { PayeeAppearance } from './payee-appearance';
 
 type CreatePayeeDialogProps = {
   onCloseAutoFocus?: ComponentProps<typeof DialogContent>['onCloseAutoFocus'];
@@ -35,6 +36,42 @@ type CreatePayeeDialogProps = {
   open?: boolean;
   payee?: PayeeRow;
 };
+
+const payeeDefaults = (payee?: PayeeRow): PayeeFormValues => ({
+  color: payee?.color ?? null,
+  defaultCategoryId: payee?.defaultCategoryId ?? '',
+  icon: payee?.icon ?? null,
+  name: payee?.name ?? '',
+});
+
+function usePayeeForm(payee: PayeeRow | undefined, onSaved: (payee: PayeeRow) => void) {
+  const form = useForm<PayeeFormValues>({
+    defaultValues: payeeDefaults(payee),
+    resolver: zodResolver(payeeFormSchema),
+  });
+
+  const { isPending, mutate } = useEntityMutation({
+    errorMessage: 'Error saving payee',
+    mutationFn: (values: PayeeFormValues) =>
+      payee ? updatePayee(payee.id, values) : createPayee(values),
+    onSuccess: data => {
+      form.reset();
+      onSaved(data);
+    },
+    successMessage: data => `Payee ${data.name} saved`,
+  });
+
+  const [name, icon, color] = useWatch({ control: form.control, name: ['name', 'icon', 'color'] });
+
+  return {
+    color,
+    form,
+    icon,
+    isPending,
+    name,
+    submit: form.handleSubmit(values => mutate(values)),
+  };
+}
 
 export function CreatePayeeDialog({
   onCloseAutoFocus,
@@ -51,24 +88,11 @@ export function CreatePayeeDialog({
     onOpenChange?.(value);
   };
 
-  const form = useForm<PayeeFormValues>({
-    defaultValues: { defaultCategoryId: payee?.defaultCategoryId ?? '', name: payee?.name ?? '' },
-    resolver: zodResolver(payeeFormSchema),
+  const { color, form, icon, isPending, name, submit } = usePayeeForm(payee, data => {
+    onSuccessCallback?.(data);
+    setOpen(false);
   });
 
-  const { isPending, mutate } = useEntityMutation({
-    errorMessage: 'Error saving payee',
-    mutationFn: (values: PayeeFormValues) =>
-      payee ? updatePayee(payee.id, values) : createPayee(values),
-    onSuccess: data => {
-      form.reset();
-      onSuccessCallback?.(data);
-      setOpen(false);
-    },
-    successMessage: data => `Payee ${data.name} saved`,
-  });
-
-  const submit = form.handleSubmit(values => mutate(values));
   const showTrigger = controlledOpen === undefined && !payee;
 
   return (
@@ -103,6 +127,15 @@ export function CreatePayeeDialog({
                   <FormDescription>Pre-filled on new transactions for this payee.</FormDescription>
                 </FormItem>
               )}
+            />
+            <PayeeAppearance
+              name={name}
+              icon={icon}
+              color={color}
+              onChange={({ color, icon }) => {
+                form.setValue('color', color, { shouldDirty: true });
+                form.setValue('icon', icon, { shouldDirty: true });
+              }}
             />
           </FormStack>
         </Form>

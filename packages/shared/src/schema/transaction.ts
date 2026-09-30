@@ -68,6 +68,8 @@ export const transactionRowSchema = z.object({
   memo: z.string(),
   needsReview: z.boolean(),
   originalPayee: z.string().nullable(),
+  payeeColor: z.string().nullable(),
+  payeeIcon: z.string().nullable(),
   payeeId: z.string().nullable(),
   payeeName: z.string().nullable(),
   status: z.enum(TransactionStatusValues),
@@ -122,3 +124,13 @@ export const transferResponseSchema = z.object({
 });
 
 export type Transfer = z.infer<typeof transferResponseSchema>;
+
+export const ReviewSuggestionSourceValues = ['rule', 'payee'] as const;
+
+export const reviewSuggestionSchema = z.object({
+  categoryId: z.string(),
+  source: z.enum(ReviewSuggestionSourceValues),
+  transactionId: z.string(),
+});
+
+export type ReviewSuggestion = z.infer<typeof reviewSuggestionSchema>;

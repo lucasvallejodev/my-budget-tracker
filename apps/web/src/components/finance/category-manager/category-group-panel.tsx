@@ -3,12 +3,12 @@
 import { Archive, ArrowDown, ArrowUp, Pencil, Plus, RotateCcw } from 'lucide-react';
 
 import {
+  Avatar,
   Badge,
   Button,
   Cluster,
   ColorSwatch,
   Icon,
-  IconTile,
   ListRow,
   Panel,
   Text,
@@ -131,9 +131,9 @@ function CategoryRow({
       title={category.name}
       description={transactionCountLabel(category.transactionCount)}
       leading={
-        <IconTile color={color}>
+        <Avatar color={color}>
           <Icon icon={category.icon} />
-        </IconTile>
+        </Avatar>
       }
     >
       <MoveButtons
@@ -174,9 +174,9 @@ function ArchivedCategoryRow({
         </>
       }
       leading={
-        <IconTile>
+        <Avatar>
           <Icon icon={category.icon} />
-        </IconTile>
+        </Avatar>
       }
     >
       <Button variant="outline" size="sm" onClick={onRestore}>

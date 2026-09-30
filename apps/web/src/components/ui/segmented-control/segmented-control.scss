@@ -1,0 +1,33 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .segmented-control {
+    display: inline-flex;
+    flex-wrap: wrap;
+    padding: space(1) * 0.75;
+    border-radius: radius(control) + 1px;
+    background: var(--color-surface-sunken);
+
+    &__option {
+      @include reset-button;
+
+      min-height: size(control-height-small) - space(1);
+      padding: 0 space(3);
+      border-radius: radius(small) + 1px;
+      color: var(--color-text-muted);
+      font-size: font-size(meta);
+      font-weight: font-weight(semibold);
+      white-space: nowrap;
+
+      &:focus-visible {
+        @include focus-ring;
+      }
+
+      &[aria-checked='true'] {
+        background: var(--color-surface);
+        color: var(--color-text);
+        box-shadow: shadow(selected);
+      }
+    }
+  }
+}

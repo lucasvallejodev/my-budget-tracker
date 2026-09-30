@@ -55,7 +55,7 @@ Facts that change the usual advice:
 | `bundle-conditional`                   | Load a large module from the event that activates the feature.                              | [bundle.md](references/bundle.md)               |
 | `bundle-preload`                       | Start the dynamic import on hover or focus of the control that opens it.                    | [bundle.md](references/bundle.md)               |
 | `bundle-analyzable-paths`              | Dynamic imports go through an explicit map of `() => import('…')`.                          | [bundle.md](references/bundle.md)               |
-| `rendering-hydration-no-flicker`       | Apply stored preferences (theme) before paint, not in an effect.                            | [rendering.md](references/rendering.md)         |
+| `rendering-hydration-no-flicker`       | Apply stored look preferences before paint, not in an effect.                               | [rendering.md](references/rendering.md)         |
 | `rendering-hydration-suppress-warning` | Client-only values go through `useHydrated()`; suppress warnings only for real differences. | [rendering.md](references/rendering.md)         |
 | `rerender-use-deferred-value`          | Defer expensive filtering/charts behind typed input with `useDeferredValue`.                | [rerender.md](references/rerender.md)           |
 | `rerender-move-effect-to-event`        | Run a user action's side effects in its handler, not state + effect.                        | [rerender.md](references/rerender.md)           |
@@ -111,7 +111,7 @@ Facts that change the usual advice:
 | [waterfalls.md](references/waterfalls.md)       | Code awaits more than one request or awaits before closing a dialog.                       |
 | [bundle.md](references/bundle.md)               | Adding a heavy dependency, a chart, a wizard, or touching imports.                         |
 | [rerender.md](references/rerender.md)           | A screen re-renders too often, typing lags, or effects re-run.                             |
-| [rendering.md](references/rendering.md)         | Conditional JSX, hydration warnings, theme flash, long lists.                              |
+| [rendering.md](references/rendering.md)         | Conditional JSX, hydration warnings, preference flash, long lists.                         |
 | [javascript.md](references/javascript.md)       | Loops over transactions, formatting helpers, lookups, regexes.                             |
 | [advanced.md](references/advanced.md)           | Effects that subscribe to events or need the latest callback.                              |
 | [composition.md](references/composition.md)     | Designing props, variants, compound components or context.                                 |

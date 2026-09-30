@@ -1,16 +1,25 @@
 @use 'abstracts' as *;
 
 .logo {
-  @include flex-row(9px);
+  @include flex-row(space(2));
 
-  font-size: 29px;
-  font-weight: 650;
-  letter-spacing: -1.2px;
-  color: var(--ink);
+  padding: 0 space(3) space(4);
+  color: var(--color-text);
+  font-size: font-size(title);
+  font-weight: font-weight(bold);
+  letter-spacing: letter-spacing(tight);
 
-  svg {
-    @include icon-size(32px);
+  &__mark {
+    @include grid-center;
 
-    color: var(--accent);
+    width: size(avatar-small);
+    height: size(avatar-small);
+    border-radius: radius(control);
+    background: var(--color-brand);
+    color: var(--color-on-brand);
+
+    svg {
+      @include icon-size(size(icon-small));
+    }
   }
 }

@@ -8,5 +8,6 @@ export default defineProject({
     environment: 'jsdom',
     exclude: ['node_modules/**', '.next/**'],
     name: 'web',
+    setupFiles: ['./vitest.setup.ts'],
   },
 });

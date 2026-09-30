@@ -1,14 +1,14 @@
 import './globals.scss';
 
 import type { Metadata } from 'next';
-import { DM_Sans } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { Toaster } from 'sonner';
 
 import RootProvider from '@/providers/root-provider';
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${dmSans.variable}`}>
+    <html lang="en" className={inter.variable}>
+      <body>
         <RootProvider>
           <Toaster richColors position="bottom-right" />
           {children}

@@ -84,7 +84,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
                 preset={{ accountId: account.id }}
                 trigger={
                   <Button>
-                    <Plus /> New transaction
+                    <Plus /> Add transaction
                   </Button>
                 }
               />
@@ -104,6 +104,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
       />
       <Grid>
         <MetricCard
+          kind="netWorth"
           label={isLiability ? 'Amount owed' : 'Balance'}
           value={formatMoney(isLiability ? owed : account.balanceMinor, account.currency)}
           detail={`${account.transactionCount} transaction${account.transactionCount === 1 ? '' : 's'}`}

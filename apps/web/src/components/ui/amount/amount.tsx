@@ -1,12 +1,12 @@
+import './amount.scss';
+
+import { cn } from '@/lib/styles';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { Text } from '../text';
 
-const amountTone = (value: number, signed: boolean) => {
-  if (!signed || value === 0) return 'default';
-
-  return value > 0 ? 'positive' : 'negative';
-};
+const amountTone = (value: number, signed: boolean) =>
+  signed && value > 0 ? 'positive' : 'default';
 
 export function Amount({
   amountMinor,
@@ -24,7 +24,7 @@ export function Amount({
   const value = flipSign ? -amountMinor : amountMinor;
 
   return (
-    <Text as="span" tone={amountTone(value, signed)} className={className}>
+    <Text as="span" tone={amountTone(value, signed)} className={cn('amount', className)}>
       {formatMoney(value, currency, { signDisplay: signed ? 'exceptZero' : 'auto' })}
     </Text>
   );

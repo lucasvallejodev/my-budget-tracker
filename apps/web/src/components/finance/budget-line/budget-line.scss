@@ -1,0 +1,93 @@
+@use 'abstracts' as *;
+
+.budget-line {
+  display: grid;
+  grid-template-columns: size(avatar) minmax(0, 1fr) auto size(control-height);
+  grid-template-areas: 'avatar name left menu' 'avatar progress progress menu';
+  align-items: center;
+  column-gap: space(3);
+  row-gap: space(2);
+  min-height: space(12) + space(5);
+  padding: space(3) size(card-padding);
+  border-top: border(divider);
+
+  @include media-up(tablet-landscape) {
+    grid-template-columns:
+      size(avatar) minmax(140px, 190px) minmax(0, 1fr) minmax(120px, 150px)
+      size(control-height);
+    grid-template-areas: 'avatar name progress left menu';
+    column-gap: space(4);
+  }
+
+  > :first-child {
+    grid-area: avatar;
+  }
+
+  &--compact {
+    grid-template-columns: size(avatar-small) minmax(0, 1fr) auto;
+    grid-template-areas: 'avatar name left' 'avatar progress progress';
+    min-height: space(12) + space(4);
+
+    @include media-up(tablet-landscape) {
+      grid-template-columns: size(avatar-small) minmax(0, 1fr) auto;
+      grid-template-areas: 'avatar name left' 'avatar progress progress';
+    }
+  }
+
+  &__name {
+    @include flex-column(0);
+
+    grid-area: name;
+    min-width: 0;
+  }
+
+  &__title {
+    @include truncate;
+
+    color: var(--color-text);
+    font-weight: font-weight(semibold);
+
+    &:hover {
+      color: var(--color-brand);
+    }
+  }
+
+  &__meta {
+    @include truncate;
+    @include tabular-figures;
+
+    color: var(--color-text-muted);
+    font-size: font-size(caption);
+  }
+
+  &__progress {
+    @include flex-column(space(1) + 2px);
+
+    grid-area: progress;
+    min-width: 0;
+  }
+
+  &__left {
+    @include flex-column(0);
+
+    grid-area: left;
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  &__amount {
+    @include tabular-figures;
+
+    color: var(--color-text);
+    font-weight: font-weight(semibold);
+    white-space: nowrap;
+
+    &--over {
+      color: var(--color-negative);
+    }
+  }
+
+  &__menu {
+    grid-area: menu;
+  }
+}

@@ -13,9 +13,23 @@ const MAJORITY_OF_SAMPLE = 2;
 
 type PayeeRecord = typeof payees.$inferSelect;
 
+type PayeeAppearance = {
+  color?: string | null;
+  icon?: string | null;
+};
+
+type PayeeInput = PayeeAppearance & {
+  defaultCategoryId?: string | null;
+  name: string;
+};
+
+type PayeePatch = Partial<PayeeInput>;
+
 const toPayee = (row: PayeeRecord): PayeeRow => ({
   archivedAt: toIsoTimestamp(row.archivedAt),
+  color: row.color,
   defaultCategoryId: row.defaultCategoryId,
+  icon: row.icon,
   id: row.id,
   name: row.name,
 });
@@ -150,16 +164,14 @@ export const createPayeeService = (db: Db) => {
 
   return {
     archive: (userId: string, id: string) => setArchived(userId, id, true),
-    async create(
-      userId: string,
-      data: { defaultCategoryId?: string | null; name: string }
-    ): Promise<PayeeRow> {
+    async create(userId: string, data: PayeeInput): Promise<PayeeRow> {
       if (data.defaultCategoryId) await assertCategory(userId, data.defaultCategoryId);
 
       try {
         const [payee] = await db
           .insert(payees)
           .values({
+            ...data,
             defaultCategoryId: data.defaultCategoryId || null,
             name: data.name.trim(),
             userId,
@@ -187,11 +199,7 @@ export const createPayeeService = (db: Db) => {
     },
     owned,
     unarchive: (userId: string, id: string) => setArchived(userId, id, false),
-    async update(
-      userId: string,
-      id: string,
-      data: { defaultCategoryId?: string | null; name?: string }
-    ): Promise<PayeeRow> {
+    async update(userId: string, id: string, data: PayeePatch): Promise<PayeeRow> {
       await owned(userId, id);
       if (data.defaultCategoryId) await assertCategory(userId, data.defaultCategoryId);
 

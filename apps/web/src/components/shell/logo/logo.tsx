@@ -6,7 +6,9 @@ import Link from 'next/link';
 export function Logo() {
   return (
     <Link href="/" className="logo" aria-label="CoinKeeper home">
-      <ChartPie />
+      <span className="logo__mark" aria-hidden>
+        <ChartPie />
+      </span>
       CoinKeeper
     </Link>
   );

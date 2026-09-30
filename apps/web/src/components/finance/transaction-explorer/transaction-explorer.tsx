@@ -1,5 +1,7 @@
 'use client';
 
+import './transaction-explorer.scss';
+
 import { Download } from 'lucide-react';
 import { useState } from 'react';
 
@@ -16,13 +18,14 @@ import {
   PillSelect,
   PillSelectOption,
 } from '@/components/ui';
+import { formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { exportTransactions } from '../export-transactions';
 import { categoryLabel, describeTransaction } from '../transaction-labels';
 import { TransactionTable } from '../transaction-table';
 import { TransactionRow } from '../use-finance-data';
 
-const PageSize = 10;
+const PageSize = 50;
 const Statuses = ['Needs review', 'pending', 'cleared', 'reconciled'];
 
 const typeOf = (transaction: TransactionRow) => {
@@ -34,6 +37,44 @@ const typeOf = (transaction: TransactionRow) => {
 
 const statusOf = (transaction: TransactionRow) =>
   transaction.needsReview ? 'Needs review' : transaction.status;
+
+const sumsByCurrency = (rows: TransactionRow[], sign: 1 | -1) => {
+  const sums = new Map<string, number>();
+
+  for (const row of rows) {
+    if (row.kind !== 'standard' || Math.sign(row.amountMinor) !== sign) continue;
+
+    sums.set(row.currency, (sums.get(row.currency) ?? 0) + Math.abs(row.amountMinor));
+  }
+
+  return [...sums.entries()].map(([currency, total]) => formatMoney(total, currency)).join(' · ');
+};
+
+function FilteredSummary({ rows }: { rows: TransactionRow[] }) {
+  const spent = sumsByCurrency(rows, -1);
+  const paidIn = sumsByCurrency(rows, 1);
+
+  return (
+    <p className="transaction-explorer__summary" role="status">
+      <span>
+        {rows.length} transaction{rows.length === 1 ? '' : 's'}
+      </span>
+      {spent && (
+        <span>
+          Spent <strong className="transaction-explorer__figure">{spent}</strong>
+        </span>
+      )}
+      {paidIn && (
+        <span>
+          Paid in{' '}
+          <strong className="transaction-explorer__figure transaction-explorer__figure--positive">
+            {paidIn}
+          </strong>
+        </span>
+      )}
+    </p>
+  );
+}
 
 const capitalize = (label: string) => label[0].toUpperCase() + label.slice(1);
 
@@ -141,6 +182,7 @@ export function TransactionExplorer({
           />
         </Field>
       </FilterBar>
+      <FilteredSummary rows={filtered} />
       {filtered.length ? (
         <TransactionTable
           transactions={filtered.slice((current - 1) * PageSize, current * PageSize)}

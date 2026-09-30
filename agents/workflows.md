@@ -7,7 +7,7 @@
 1. Read `CLAUDE.md`, then `agents/README.md`, then only the agent docs the task needs.
 2. Write plans, scratch diagrams and intermediate output to `temp/` (never to `docs/`, `agents/` or the source tree).
 3. Check the existing tests for the area you touch; they encode the invariants.
-4. Before writing a helper, constant, colour or style value, search `packages/shared/src/lib/`, `packages/shared/src/constants/`, `apps/web/src/lib/`, `apps/web/src/constants/`, `apps/web/src/styles/theme.ts`, `apps/web/src/styles/tokens.scss` and `apps/web/src/styles/abstracts/` and extend what exists (`agents/conventions.md` > Reuse first). Before writing markup, check `apps/web/src/components/ui/index.ts`.
+4. Before writing a helper, constant, colour or style value, search `packages/shared/src/lib/`, `packages/shared/src/constants/`, `apps/web/src/lib/`, `apps/web/src/constants/`, `apps/web/src/styles/theme/`, `apps/web/src/styles/theme.ts` and `apps/web/src/styles/abstracts/` and extend what exists (`agents/conventions.md` > Reuse first). Before writing markup, check `apps/web/src/components/ui/index.ts`.
 5. Check "Project skills by task" below: when a project skill covers the change, load it and follow its workflow.
 
 ## Add a feature (end to end)
@@ -50,7 +50,11 @@ Search first (`grep -rn "<idea>" packages/shared/src apps/web/src/lib apps/web/s
 
 ## Add a colour or style value
 
-SCSS: add a `--token` to `apps/web/src/styles/tokens.scss` (light and dark, or the theme-independent block) and use `var(--token)`. Spacing, radii, breakpoints and repeated declaration groups belong in `apps/web/src/styles/abstracts/` (`_functions.scss`, `_breakpoints.scss`, `_mixins.scss`), each documented in `docs/architecture/components.md`. TypeScript: add it to `Colors` / `ChartStyle` in `apps/web/src/styles/theme.ts`. Never write a literal colour anywhere else; `npm run lint` rejects it. Document new tokens in `docs/architecture/code-style.md` only if they introduce a new concept.
+1. Add the value to the right file in `apps/web/src/styles/theme/`: a colour as `$color-<name>` in `_colors.scss` plus an entry in the `$colors` map (derive shades from an existing colour with `sass:color` when they belong to its family); a type size, weight, line height or letter spacing in `_typography.scss`; a radius or border in `_shape.scss`; a shadow or z-index in `_elevation.scss`; a spacing step in `_spacing.scss`; a layout size in `_layout.scss`; a duration or easing in `_motion.scss`. `tokens.scss` emits it as a custom property.
+2. SCSS: use `var(--<prefix>-<name>)` or the matching function (`color()`, `font-size()`, `radius()`, `border()`, `shadow()`, `z-index()`, `duration()`, and the others in `_functions.scss`); `space()` and `size()` for spacing and layout sizes. Repeated declaration groups become mixins in `apps/web/src/styles/abstracts/_mixins.scss`.
+3. TypeScript: reference the variable (`var(--color-<name>)`), through `Colors` / `ChartStyle` in `apps/web/src/styles/theme.ts` when several files need it.
+4. Document a new theme file, function or mixin in `docs/architecture/components.md` › Theme / SCSS abstractions and in `agents/components.md`.
+5. Run `npm run lint` (Stylelint rejects literals outside the theme) and `npm test -- --run` (`apps/web/src/styles/theme.test.ts` rejects an undefined `var(--x)`).
 
 ## Add an exchange-rate provider
 

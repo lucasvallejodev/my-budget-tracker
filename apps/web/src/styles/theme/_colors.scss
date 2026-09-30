@@ -1,0 +1,124 @@
+@use 'sass:color';
+@use 'sass:map';
+@use 'sass:math';
+
+@function hex($color) {
+  @return rgb(
+    math.round(color.channel($color, 'red', $space: rgb)),
+    math.round(color.channel($color, 'green', $space: rgb)),
+    math.round(color.channel($color, 'blue', $space: rgb))
+  );
+}
+
+$color-brand: #6941c6 !default;
+$color-text: #101828 !default;
+$color-canvas: #f6f7f9 !default;
+$color-surface: #ffffff !default;
+$color-positive: #067647 !default;
+$color-positive-mark: #079455 !default;
+$color-warning: #b54708 !default;
+$color-warning-mark: #dc6803 !default;
+$color-negative: #b42318 !default;
+$color-negative-mark: #d92d20 !default;
+$color-soft-tint: 6% !default;
+$color-selection-tint: 22% !default;
+$color-overlay-alpha: 0.52 !default;
+$color-brand-hover: hex(color.adjust($color-brand, $lightness: -10%));
+$color-brand-soft: hex(color.mix($color-brand, $color-surface, $color-soft-tint));
+$color-brand-text: hex(color.adjust($color-brand, $lightness: -22%));
+$color-on-brand: $color-surface;
+$color-surface-soft: #f9fafb !default;
+$color-surface-sunken: #f2f4f7 !default;
+$color-border: #e6e8ec !default;
+$color-border-strong: #d0d5dd !default;
+$color-text-body: #344054 !default;
+$color-text-muted: #667085 !default;
+$color-text-faint: #98a2b3 !default;
+$color-positive-soft: #ecfdf3 !default;
+$color-warning-soft: #fffaeb !default;
+$color-info: #175cd3 !default;
+$color-info-soft: #eff8ff !default;
+$color-track: #eef0f3 !default;
+$color-negative-soft: #fef3f2 !default;
+$color-selection: hex(color.mix($color-brand, $color-surface, $color-selection-tint));
+$color-selection-text: hex(color.adjust($color-brand, $lightness: -25%));
+$color-overlay: color.change($color-text, $alpha: $color-overlay-alpha);
+$color-print-canvas: #ffffff !default;
+$color-print-text: #000000 !default;
+$color-chart-income: $color-positive-mark;
+$color-chart-expense: #7b8494 !default;
+$color-chart-grid: $color-border;
+$color-chart-axis: $color-text-muted;
+$color-chart-muted: $color-border-strong;
+$color-account-checking: #175cd3 !default;
+$color-account-savings: #107569 !default;
+$color-account-cash: #067647 !default;
+$color-account-credit-card: #c4320a !default;
+$color-account-investment: #6941c6 !default;
+$color-account-loan: #475467 !default;
+$color-account-other: #667085 !default;
+$color-avatar-tints: (#fce7f6, #e0eaff, #d1fadf, #fef0c7, #ebe9fe, #cff9fe, #fee4e2, #eaecf0) !default;
+$color-avatar-text: $color-text-body;
+$color-tint-amount: 12% !default;
+$color-metric-income: $color-positive;
+$color-metric-spending: $color-text-body;
+$color-metric-kept: $color-brand;
+$color-metric-rate: $color-account-savings;
+$color-metric-budgeted: $color-info;
+$color-metric-net-worth: $color-account-checking;
+$color-metric-total: $color-text-muted;
+
+$colors: (
+  'account-cash': $color-account-cash,
+  'account-checking': $color-account-checking,
+  'account-credit-card': $color-account-credit-card,
+  'account-investment': $color-account-investment,
+  'account-loan': $color-account-loan,
+  'account-other': $color-account-other,
+  'account-savings': $color-account-savings,
+  'avatar-text': $color-avatar-text,
+  'border': $color-border,
+  'border-strong': $color-border-strong,
+  'brand': $color-brand,
+  'brand-hover': $color-brand-hover,
+  'brand-soft': $color-brand-soft,
+  'brand-text': $color-brand-text,
+  'canvas': $color-canvas,
+  'info': $color-info,
+  'info-soft': $color-info-soft,
+  'metric-budgeted': $color-metric-budgeted,
+  'metric-income': $color-metric-income,
+  'metric-kept': $color-metric-kept,
+  'metric-net-worth': $color-metric-net-worth,
+  'metric-rate': $color-metric-rate,
+  'metric-spending': $color-metric-spending,
+  'metric-total': $color-metric-total,
+  'chart-axis': $color-chart-axis,
+  'chart-expense': $color-chart-expense,
+  'chart-grid': $color-chart-grid,
+  'chart-income': $color-chart-income,
+  'chart-muted': $color-chart-muted,
+  'negative': $color-negative,
+  'negative-mark': $color-negative-mark,
+  'negative-soft': $color-negative-soft,
+  'on-brand': $color-on-brand,
+  'overlay': $color-overlay,
+  'positive': $color-positive,
+  'positive-mark': $color-positive-mark,
+  'positive-soft': $color-positive-soft,
+  'print-canvas': $color-print-canvas,
+  'print-text': $color-print-text,
+  'selection': $color-selection,
+  'selection-text': $color-selection-text,
+  'surface': $color-surface,
+  'surface-soft': $color-surface-soft,
+  'surface-sunken': $color-surface-sunken,
+  'text': $color-text,
+  'text-body': $color-text-body,
+  'text-faint': $color-text-faint,
+  'text-muted': $color-text-muted,
+  'track': $color-track,
+  'warning': $color-warning,
+  'warning-mark': $color-warning-mark,
+  'warning-soft': $color-warning-soft,
+);

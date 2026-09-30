@@ -1,0 +1,40 @@
+$font-family-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', sans-serif !default;
+$font-family-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', monospace !default;
+
+$font-families: (
+  'mono': $font-family-mono,
+  'sans': $font-family-sans,
+);
+
+$font-sizes: (
+  'micro': 11px,
+  'caption': 12px,
+  'meta': 13px,
+  'body': 14px,
+  'card-title': 15px,
+  'subtitle': 16px,
+  'title': 18px,
+  'stat': 20px,
+  'page-title': 24px,
+  'card-hero': 28px,
+  'hero': 36px,
+) !default;
+
+$font-weights: (
+  'regular': 400,
+  'medium': 500,
+  'semibold': 600,
+  'bold': 650,
+) !default;
+
+$line-heights: (
+  'body': 1.5,
+  'heading': 1.25,
+  'number': 1.2,
+) !default;
+
+$letter-spacings: (
+  'tight': -0.02em,
+  'eyebrow': 0.04em,
+  'wide': 0.12em,
+) !default;

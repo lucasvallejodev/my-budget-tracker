@@ -129,7 +129,7 @@ const componentModuleImports = moduleName => ({
 });
 
 const colourMessage =
-  'Hard-coded colour. Add it to `Colors` in apps/web/src/styles/theme.ts (or a token in apps/web/src/styles/tokens.scss) and reference it from there.';
+  'Hard-coded colour. Add it to the SCSS theme in apps/web/src/styles/theme/_colors.scss and reference it as var(--color-…) (in TypeScript through `Colors` in apps/web/src/styles/theme.ts).';
 
 const config = [
   {
@@ -142,6 +142,7 @@ const config = [
       'coverage/**',
       'playwright-report/**',
       'temp/**',
+      '.claude/worktrees/**',
       'docs/**',
       '**/next-env.d.ts',
     ],

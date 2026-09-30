@@ -9,6 +9,13 @@ import { TransactionTable } from './transaction-table';
 
 afterEach(cleanup);
 
+const renderTable = (transactions: TransactionRow[]) =>
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <TransactionTable transactions={transactions} />
+    </QueryClientProvider>
+  );
+
 const leg = (overrides: Partial<TransactionRow>): TransactionRow => ({
   ...SampleTransactions[1],
   categoryIcon: null,
@@ -53,15 +60,58 @@ describe('transfer legs', () => {
     ).toBe('Opening balance');
   });
 
-  it('renders a transfer row with a signed amount and no review badge', () => {
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <TransactionTable transactions={[leg({ amountMinor: -10500 })]} />
-      </QueryClientProvider>
-    );
+  it('renders a lone transfer leg as one grey row that is not spending', () => {
+    renderTable([leg({ amountMinor: -10500 })]);
+
     expect(screen.getByText('Transfer to Visa')).toBeTruthy();
-    expect(screen.getByText('-$105.00')).toBeTruthy();
+    expect(screen.getByText('$105.00')).toBeTruthy();
+    expect(screen.getByText('Not counted as spending')).toBeTruthy();
     expect(screen.queryByText('Needs review')).toBeNull();
-    expect(screen.getByText('Cleared')).toBeTruthy();
+    expect(screen.queryByText('Cleared')).toBeNull();
+  });
+
+  it('collapses both legs into one row from one account to the other', () => {
+    renderTable([
+      leg({
+        accountName: 'Checking',
+        amountMinor: -10500,
+        id: 'out',
+      }),
+      leg({
+        accountName: 'Visa',
+        amountMinor: 10500,
+        id: 'in',
+      }),
+    ]);
+
+    expect(screen.getByText('Checking → Visa')).toBeTruthy();
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+  });
+});
+
+describe('TransactionTable', () => {
+  it('groups rows by day and offers a category for uncategorized entries', () => {
+    renderTable([
+      leg({
+        amountMinor: -2399,
+        date: '2026-09-28',
+        id: 'unsorted',
+        kind: 'standard',
+        needsReview: true,
+        originalPayee: 'MKTPLACE*7731',
+        transferId: null,
+      }),
+      {
+        ...SampleTransactions[0],
+        date: '2026-09-27',
+        id: 'known',
+      },
+    ]);
+
+    expect(screen.getByRole('heading', { name: /28 Sep/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /27 Sep/ })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Category for MKTPLACE*7731: Choose category' })
+    ).toBeTruthy();
   });
 });

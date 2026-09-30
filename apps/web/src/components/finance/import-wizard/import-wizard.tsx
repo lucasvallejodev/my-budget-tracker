@@ -12,6 +12,7 @@ import {
   Button,
   EmptyState,
   Field,
+  FileDrop,
   FilterBar,
   ListRow,
   Page,
@@ -162,25 +163,19 @@ export function ImportWizard() {
         description="Upload a CSV export from your bank. Rows are matched against what you already entered, duplicates are skipped, and imported entries wait in the review inbox."
       />
       <Panel title="1 · Account and file">
-        <FilterBar>
+        <Stack gap="medium">
           <Field variant="filter">
             Account
             <AccountPicker value={accountId} onChange={setAccountId} />
           </Field>
-          <Field variant="filter">
-            CSV file
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              onChange={event => void onFile(event.target.files?.[0])}
-            />
-          </Field>
-          {fileName && (
-            <Text tone="muted">
-              {fileName} · {headers.length} columns
-            </Text>
-          )}
-        </FilterBar>
+          <FileDrop
+            label="CSV file"
+            accept=".csv,text/csv"
+            hint="A CSV export from your bank, with a header row"
+            fileName={fileName ? `${fileName} · ${headers.length} columns` : undefined}
+            onFile={file => void onFile(file)}
+          />
+        </Stack>
       </Panel>
       {headers.length > 0 && (
         <Panel

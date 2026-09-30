@@ -105,8 +105,8 @@ describe('RulesSettings', () => {
 
     renderRules();
     fireEvent.change(screen.getByLabelText('Text to look for'), { target: { value: 'LIDL' } });
-    fireEvent.click(screen.getByRole('button', { name: /No category/ }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Groceries' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Category: Choose category' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Groceries' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add rule' }));
     await vi.waitFor(() =>
       expect(actions.createRule).toHaveBeenCalledWith({

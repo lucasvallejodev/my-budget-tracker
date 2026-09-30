@@ -1,0 +1,60 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .stat {
+    @include flex-column(space(1) * 0.5);
+
+    min-width: 0;
+
+    &__label {
+      @include flex-row(space(2));
+
+      color: var(--color-text-muted);
+      font-size: font-size(meta);
+      font-weight: font-weight(medium);
+    }
+
+    &__value {
+      @include tabular-figures;
+
+      margin-top: space(1);
+      color: var(--color-text);
+      font-size: font-size(stat);
+      font-weight: font-weight(bold);
+      letter-spacing: letter-spacing(tight);
+      line-height: line-height(number);
+    }
+
+    &--large &__value {
+      font-size: font-size(card-hero);
+    }
+
+    &--hero &__value {
+      font-size: font-size(hero);
+    }
+
+    &__meta {
+      @include flex-row(space(1));
+
+      flex-wrap: wrap;
+      color: var(--color-text-muted);
+      font-size: font-size(caption);
+    }
+
+    &__delta {
+      @include flex-row(space(1) * 0.5);
+      @include tabular-figures;
+
+      color: var(--color-positive);
+      font-weight: font-weight(semibold);
+
+      svg {
+        @include icon-size(13px);
+      }
+
+      &--bad {
+        color: var(--color-negative);
+      }
+    }
+  }
+}

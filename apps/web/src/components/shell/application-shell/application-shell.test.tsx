@@ -1,44 +1,24 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { type AccountSummary, QueryKeys } from '@/components/finance';
+import { QueryKeys } from '@/components/finance';
 
 import { ApplicationShell } from './application-shell';
 
 const push = vi.fn();
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/budgets',
+  usePathname: () => '/accounts/visa',
   useRouter: () => ({ push }),
 }));
 
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-});
+afterEach(cleanup);
 
 const renderShell = () => {
   const client = new QueryClient();
 
-  vi.stubGlobal('matchMedia', () => ({
-    addEventListener: vi.fn(),
-    matches: false,
-    removeEventListener: vi.fn(),
-  }));
-  client.setQueryData(
-    [...QueryKeys.accounts, false],
-    [
-      {
-        balanceMinor: -5000,
-        classification: 'liability',
-        currency: 'EUR',
-        id: 'visa',
-        name: 'Visa',
-        type: 'credit_card',
-      } as AccountSummary,
-    ]
-  );
+  client.setQueryData(QueryKeys.summary(), { needsReviewCount: 2 });
 
   return render(
     <QueryClientProvider client={client}>
@@ -47,23 +27,63 @@ const renderShell = () => {
   );
 };
 
+const mainNavigation = () => within(screen.getByRole('navigation', { name: 'Main navigation' }));
+
 describe('ApplicationShell', () => {
-  it('marks the current route and lists accounts with their balance', () => {
+  it('groups the navigation and marks the section of the current page', () => {
     renderShell();
 
-    expect(screen.getByRole('link', { name: /Budgets/ }).getAttribute('aria-current')).toBe('page');
-    expect(screen.getByRole('link', { name: /Visa/ }).getAttribute('href')).toBe('/accounts/visa');
+    const navigation = mainNavigation();
+
+    expect(navigation.getByText('Money')).toBeTruthy();
+    expect(navigation.getByText('Plan')).toBeTruthy();
+    expect(navigation.getByRole('link', { name: /Home/ }).getAttribute('href')).toBe('/');
+    expect(navigation.getByRole('link', { name: /Accounts/ }).getAttribute('aria-current')).toBe(
+      'page'
+    );
+    expect(navigation.getByRole('link', { name: /Home/ }).getAttribute('aria-current')).toBeNull();
     expect(screen.getByRole('main').textContent).toBe('Page content');
   });
 
-  it('searches transactions from the header', () => {
+  it('shows how many transactions wait for review and no account list', () => {
     renderShell();
 
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search transactions' }), {
-      target: { value: 'rent' },
-    });
+    expect(mainNavigation().getByRole('link', { name: /Review/ }).textContent).toContain('2');
+    expect(screen.queryByRole('link', { name: /Visa/ })).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Account menu' })).toHaveLength(1);
+  });
+
+  it('searches transactions from the header and focuses search with Ctrl+K', () => {
+    renderShell();
+
+    const search = screen.getByRole('textbox', { name: 'Search transactions' });
+
+    fireEvent.keyDown(window, { ctrlKey: true, key: 'k' });
+
+    expect(document.activeElement).toBe(search);
+
+    fireEvent.change(search, { target: { value: 'rent' } });
     fireEvent.submit(screen.getByRole('search'));
 
     expect(push).toHaveBeenCalledWith('/transactions?q=rent');
+  });
+
+  it('offers a global New transaction button', () => {
+    renderShell();
+
+    expect(screen.getByRole('button', { name: 'New transaction' })).toBeTruthy();
+  });
+
+  it('offers a bottom tab bar whose More button opens the navigation drawer', () => {
+    renderShell();
+
+    const tabs = within(screen.getByRole('navigation', { name: 'Quick navigation' }));
+
+    expect(tabs.getByRole('link', { name: 'Activity' }).getAttribute('href')).toBe('/transactions');
+    expect(tabs.getByRole('button', { name: 'Add transaction' })).toBeTruthy();
+
+    fireEvent.click(tabs.getByRole('button', { name: 'More' }));
+
+    expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeTruthy();
   });
 });

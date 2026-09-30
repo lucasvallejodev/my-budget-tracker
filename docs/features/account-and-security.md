@@ -10,7 +10,7 @@ CoinKeeper has its own accounts: there is no third-party sign-in. Your email and
 
 1. Open the app. Without a session you land on **Sign in to CoinKeeper**; follow **Create one** under the form.
 2. Enter your name (optional), your email and a password of 12 to 128 characters, then repeat the password.
-3. Submit. The app creates your account, your settings (primary currency EUR, which you can change in **Settings › Currencies**) and the [default categories](../reference/default-taxonomy.md), signs you in and opens the dashboard.
+3. Submit. The app creates your account, your settings (primary currency EUR, which you can change in **Settings › Currencies**) and the [default categories](../reference/default-taxonomy.md), signs you in and opens Home.
 
 An email can be used by one account only; a taken email is reported under the form.
 
@@ -19,7 +19,7 @@ An email can be used by one account only; a taken email is reported under the fo
 ### Sign in
 
 1. Enter your email and password on the sign-in page and submit.
-2. You return to the page you were trying to open, or to the dashboard.
+2. You return to the page you were trying to open, or to Home.
 
 A wrong email and a wrong password give the same message, so the form does not reveal which emails have accounts. More than ten sign-in attempts in a minute from the same address are refused until the minute has passed. After ten wrong passwords for the same email within 15 minutes, from any address, sign-in for that email is paused until the 15 minutes are over, even with the right password; this answers the same whether or not the email has an account.
 
@@ -27,7 +27,7 @@ A wrong email and a wrong password give the same message, so the form does not r
 
 ### Sign out
 
-Open the account menu (your initials, bottom of the sidebar or top right on a phone) and choose **Sign out**. The session ends on the server and the browser forgets the cookie. The same menu shows your name and email and links to **Settings** and **Deleted items**.
+Open the account menu (your initials and name at the bottom of the sidebar; on a phone, open the navigation menu first) and choose **Sign out**. The session ends on the server and the browser forgets the cookie. The same menu shows your name and email and links to **Settings** and **Deleted items**.
 
 <!-- screenshot: open account menu with initials avatar, name, email, Settings, Deleted items and Sign out (docs/assets/screenshots/account-user-menu.png) -->
 
@@ -61,6 +61,10 @@ npm run user:reset-password -- you@example.com
 ```
 
 It asks for the new password (or reads `NEW_PASSWORD` from the environment), sets it and signs the account out everywhere. Then sign in with the new password.
+
+## Settings
+
+**Settings** has six tabs: **Profile**, **Categories**, **Currencies**, **Rules**, **Security** and **Deleted items**. Profile and Security are described above; Categories, Currencies, Rules and Deleted items open their own pages, and the Categories tab also holds the **Emoji for categories and payees** switch (see [Categories › Use emoji](categories.md#use-emoji)).
 
 ## How it works
 

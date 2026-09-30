@@ -1,5 +1,8 @@
+import './icon.scss';
+
 import { Icons } from '@/constants/icons';
 import { isIconName } from '@coinkeeper/shared/constants/icon-names';
+import { isEmoji } from '@coinkeeper/shared/lib/patterns';
 
 type IconProps = {
   className?: string;
@@ -9,13 +12,24 @@ type IconProps = {
   strokeWidth?: number;
 };
 
+const DefaultSize = 20;
+const DefaultStrokeWidth = 2;
+
 export const Icon: React.FC<IconProps> = ({
   className = '',
   color = 'currentColor',
   icon,
-  size = 20,
-  strokeWidth = 2,
+  size = DefaultSize,
+  strokeWidth = DefaultStrokeWidth,
 }) => {
+  if (icon && isEmoji(icon)) {
+    return (
+      <span className="icon" style={{ fontSize: size }} aria-hidden>
+        {icon}
+      </span>
+    );
+  }
+
   const IconComponent = icon && isIconName(icon) ? Icons[icon] : Icons.CircleHelp;
 
   return (

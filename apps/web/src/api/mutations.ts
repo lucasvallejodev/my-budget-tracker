@@ -88,6 +88,12 @@ export const categorizeTransaction = (id: string, categoryId: string | null) =>
     needsReview: false,
   });
 
+export const reopenReview = (id: string, categoryId: string | null) =>
+  apiRequest<TransactionRow>('PATCH', `/transactions/${id}`, {
+    categoryId: categoryId ?? '',
+    needsReview: true,
+  });
+
 export const deleteTransaction = ({ id, transferId }: TransactionReference) =>
   transferId
     ? apiRequest<void>('DELETE', `/transfers/${transferId}`)

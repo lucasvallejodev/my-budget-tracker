@@ -4,7 +4,7 @@
   .menu {
     @include floating-panel(240px);
 
-    z-index: 90;
+    z-index: z-index(popover);
 
     &__item {
       @include option-item('[data-highlighted]');

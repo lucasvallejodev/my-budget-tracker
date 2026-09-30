@@ -1,23 +1,23 @@
 ---
 name: ui-review
-description: Reviews a CoinKeeper screen or component in apps/web for interface quality, accessibility against WCAG 2.2 AA (labels, fieldset and legend, aria-live status messages, focus management and visibility, color never the only signal, reduced motion, 200 % zoom and 320 px reflow, 24 px touch targets, contrast in both themes) and responsive behavior under our SCSS rules (mobile-first media-up mixins, tokens, BEM), plus money shown only through formatMoney or Amount. Reports findings as path:line grouped by severity, with a fix for each. Use when asked to review a UI, audit accessibility or a11y, check WCAG, keyboard or screen reader support, check a screen on mobile or tablet, or before merging a new screen or ui component. Not for automated axe or Playwright checks (use e2e-playwright), render speed or data fetching (use react-client-patterns), docs prose (use docs-writing), or security (use api-security-review).
+description: Reviews a CoinKeeper screen or component in apps/web for interface quality, accessibility against WCAG 2.2 AA (labels, fieldset and legend, aria-live status messages, focus management and visibility, color never the only signal, reduced motion, 200 % zoom and 320 px reflow, 24 px touch targets, contrast on white and on the canvas) and responsive behavior under our SCSS rules (mobile-first media-up mixins, the SCSS theme, BEM), plus money shown only through formatMoney or Amount. Reports findings as path:line grouped by severity, with a fix for each. Use when asked to review a UI, audit accessibility or a11y, check WCAG, keyboard or screen reader support, check a screen on mobile or tablet, or before merging a new screen or ui component. Not for automated axe or Playwright checks (use e2e-playwright), render speed or data fetching (use react-client-patterns), docs prose (use docs-writing), or security (use api-security-review).
 ---
 
 # UI review
 
-Review what the user names (a screen, a component folder, a diff) and report problems a user would hit: things they cannot reach, read, understand or undo, and layouts that break on their device. Findings are evidence-based (`path:line`), ranked by severity, and each comes with a fix written in our vocabulary (BEM, `ui` components, tokens, mixins), never in Tailwind or generic CSS-in-JS terms. Do not fetch remote guidelines; the rules are in `references/`.
+Review what the user names (a screen, a component folder, a diff) and report problems a user would hit: things they cannot reach, read, understand or undo, and layouts that break on their device. Findings are evidence-based (`path:line`), ranked by severity, and each comes with a fix written in our vocabulary (BEM, `ui` components, theme variables and functions, mixins), never in Tailwind or generic CSS-in-JS terms. Do not fetch remote guidelines; the rules are in `references/`.
 
 ## Before you start
 
 - [agents/components.md](../../../agents/components.md): BEM, cascade layers, breakpoints and mixins, focus rules.
 - [agents/conventions.md](../../../agents/conventions.md) › Client patterns (accessible names, `QueryContent`), Styling, Money.
-- `apps/web/src/styles/tokens.scss` (both themes), `apps/web/src/styles/abstracts/`, `apps/web/src/app/globals.scss` (focus ring, reduced-motion rule).
+- `apps/web/src/styles/theme/` (one light theme: colours, type, radii, borders, shadows), `apps/web/src/styles/abstracts/`, `apps/web/src/app/globals.scss` (focus ring, reduced-motion rule).
 
 ## Workflow
 
 1. **Scope.** Read the named `.tsx` files, their `.scss`, and the props of every `ui` component they render (`apps/web/src/components/ui/index.ts`), because semantics often live there (`Field` renders a `<label>`, `QueryContent` renders `role="status"`, Radix gives `Dialog` its focus trap). If the user gave no target, ask for one.
 2. **Static pass.** Walk [checklist.md](references/checklist.md) section by section, then [responsive.md](references/responsive.md). Record each problem with the line that causes it.
-3. **Runtime pass (when the app can run).** `npm run dev`, sign up a throwaway account as `CLAUDE.md` › Known constraints describes, then with the browser tools: 375×812, 768×1024, 1440×900 and a 320 px wide viewport (reflow); Tab and Shift+Tab through every control, Enter and Escape in dialogs and menus; both themes (`resize_window` `colorScheme`). Reset the viewport to desktop afterwards. If you cannot run it, say which checks stay unverified.
+3. **Runtime pass (when the app can run).** `npm run dev`, sign up a throwaway account as `CLAUDE.md` › Known constraints describes, then with the browser tools: 375×812, 768×1024, 1440×900 and a 320 px wide viewport (reflow); Tab and Shift+Tab through every control, Enter and Escape in dialogs and menus. Reset the viewport to desktop afterwards. If you cannot run it, say which checks stay unverified.
 4. **Report** in the format below. Do not change code unless the user asks; when they do, follow the house rules and run the gate.
 
 ## Severity
@@ -36,7 +36,7 @@ Review what the user names (a screen, a component folder, a diff) and report pro
 apps/web/src/components/finance/x/x.tsx:42 - 2.1.1 Keyboard - row opens the dialog on div click only → render a Button or a link
 
 ## Serious
-apps/web/src/components/finance/x/x.scss:18 - 1.4.3 Contrast - var(--muted) on var(--canvas) is 4.52:1 at 12px → use var(--ink) or 13px+ muted-text
+apps/web/src/components/finance/x/x.scss:18 - 1.4.3 Contrast - var(--color-text-faint) on var(--color-surface) is 2.58:1 → use var(--color-text-muted)
 
 ## Moderate
 …

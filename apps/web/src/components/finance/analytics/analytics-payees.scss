@@ -1,0 +1,44 @@
+@use 'abstracts' as *;
+
+.analytics-payees {
+  display: grid;
+  align-items: start;
+  gap: space(4);
+
+  @include media-up(laptop) {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+
+  &__side {
+    @include flex-column(space(4));
+  }
+
+  &__name {
+    @include flex-row(space(3));
+
+    color: var(--color-text);
+    font-weight: font-weight(semibold);
+  }
+
+  &__accounts {
+    @include reset-list;
+    @include flex-column(space(3));
+  }
+
+  &__account {
+    @include flex-row(space(3));
+  }
+
+  &__account-name {
+    @include truncate;
+
+    flex: 1;
+    font-weight: font-weight(medium);
+  }
+
+  &__amount {
+    @include tabular-figures;
+
+    font-weight: font-weight(semibold);
+  }
+}

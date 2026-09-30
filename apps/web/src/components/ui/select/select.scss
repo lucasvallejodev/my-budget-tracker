@@ -28,8 +28,8 @@
     }
 
     &__label {
-      font-weight: 550;
-      font-size: 13px;
+      font-weight: font-weight(semibold);
+      font-size: font-size(meta);
     }
   }
 }

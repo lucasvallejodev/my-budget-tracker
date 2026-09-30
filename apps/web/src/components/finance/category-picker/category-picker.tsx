@@ -1,32 +1,23 @@
 'use client';
 
-import './category-picker.scss';
-
-import { CircleOffIcon } from 'lucide-react';
-import { ComponentProps, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
+import { ComponentProps, useMemo } from 'react';
 
 import {
+  Avatar,
   Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
+  Combobox,
+  type ComboboxOption,
+  type ComboboxSection,
   Icon,
-  Input,
-  Text,
 } from '@/components/ui';
+import { RememberedFields, rememberedList, rememberInList } from '@/lib/form-memory';
 
 import { CategoryTree, useCategories } from '../use-finance-data';
 
-const ChipIconSize = 24;
-const LeaveIconSize = 16;
-
-type CategoryPickerProps = Omit<ComponentProps<'button'>, 'value' | 'onChange'> & {
-  invalid?: boolean;
-  kind?: 'income' | 'expense';
-  onChange: (categoryId: string | undefined) => void;
-  value?: string;
-};
+const RecentCategoryLimit = 5;
+const CategoriesPath = '/settings/categories';
 
 export type FlatCategory = {
   color: string;
@@ -36,6 +27,24 @@ export type FlatCategory = {
   id: string;
   kind: 'income' | 'expense';
   name: string;
+};
+
+export type CategoryPickerVariant = 'chip' | 'field';
+
+type CategoryPickerProps = Omit<
+  ComponentProps<'button'>,
+  'children' | 'onChange' | 'value' | 'placeholder'
+> & {
+  invalid?: boolean;
+  kind?: 'income' | 'expense';
+  label?: string;
+  onChange: (categoryId: string | undefined) => void;
+  onOpenChange?: (open: boolean) => void;
+  open?: boolean;
+  placeholder?: string;
+  suggestedId?: string | null;
+  value?: string;
+  variant?: CategoryPickerVariant;
 };
 
 export function flattenCategories(tree: CategoryTree[] | undefined): FlatCategory[] {
@@ -54,119 +63,110 @@ export function flattenCategories(tree: CategoryTree[] | undefined): FlatCategor
   );
 }
 
-function CategoryChip({ category }: { category: Pick<FlatCategory, 'name' | 'icon' | 'color'> }) {
+function CategoryAvatar({ category }: { category: Pick<FlatCategory, 'color' | 'icon'> }) {
   return (
-    <>
-      <div className="category-picker__chip" style={{ backgroundColor: category.color }}>
-        <Icon icon={category.icon} size={ChipIconSize} />
-      </div>
-      <div>{category.name}</div>
-    </>
+    <Avatar color={category.color} size="small">
+      <Icon icon={category.icon} />
+    </Avatar>
   );
 }
 
-function CategoryGroupOptions({
-  group,
-  onChoose,
-  term,
-  value,
-}: {
-  group: CategoryTree;
-  onChoose: (categoryId: string) => void;
-  term: string;
-  value?: string;
-}) {
-  const visible = group.categories.filter(
-    category => !category.archivedAt && (!term || category.name.toLowerCase().includes(term))
+const toOption = (category: FlatCategory): ComboboxOption => ({
+  id: category.id,
+  keywords: [category.groupName],
+  label: category.name,
+  leading: <CategoryAvatar category={category} />,
+});
+
+const pinnedSection = (
+  id: string,
+  heading: string,
+  ids: string[],
+  byId: Map<string, FlatCategory>
+): ComboboxSection => ({
+  heading,
+  hideWhileSearching: true,
+  id,
+  options: ids.flatMap(categoryId => {
+    const category = byId.get(categoryId);
+
+    return category ? [{ ...toOption(category), hint: category.groupName }] : [];
+  }),
+});
+
+const categorySections = (
+  categories: FlatCategory[],
+  suggestedId: string | null | undefined
+): ComboboxSection[] => {
+  const byId = new Map(categories.map(category => [category.id, category]));
+
+  const recent = rememberedList(RememberedFields.recentCategories).filter(
+    categoryId => categoryId !== suggestedId
   );
 
-  if (!visible.length) return null;
+  const groups = [...new Set(categories.map(category => category.groupId))].map(groupId => {
+    const members = categories.filter(category => category.groupId === groupId);
 
-  return (
-    <div className="category-picker__group">
-      <h3 className="category-picker__group-title" style={{ color: group.color }}>
-        {group.name}
-      </h3>
-      <div className="category-picker__grid">
-        {visible.map(category => (
-          <Button
-            key={category.id}
-            variant={value === category.id ? 'default' : 'outline'}
-            onClick={() => onChoose(category.id)}
-            className="category-picker__option"
-          >
-            <CategoryChip category={{ ...category, color: group.color }} />
-          </Button>
-        ))}
-      </div>
-    </div>
-  );
-}
+    return {
+      heading: members[0].groupName,
+      id: groupId,
+      options: members.map(toOption),
+    };
+  });
+
+  return [
+    pinnedSection('suggested', 'Suggested', suggestedId ? [suggestedId] : [], byId),
+    pinnedSection('recent', 'Recent', recent, byId),
+    ...groups,
+  ];
+};
 
 export function CategoryPicker({
   invalid,
   kind,
+  label = 'Category',
   onChange,
+  placeholder = 'Choose category',
+  suggestedId,
   value,
-  ...triggerProps
+  variant = 'field',
+  ...comboboxProps
 }: CategoryPickerProps) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const { data, isPending } = useCategories();
-  const flat = useMemo(() => flattenCategories(data), [data]);
-  const selected = flat.find(category => category.id === value);
-  const groups = (data ?? []).filter(group => !kind || group.kind === kind);
-  const term = search.trim().toLowerCase();
+  const { data } = useCategories();
+
+  const categories = useMemo(
+    () => flattenCategories(data).filter(category => !kind || category.kind === kind),
+    [data, kind]
+  );
 
   const choose = (categoryId: string | undefined) => {
+    if (categoryId) {
+      rememberInList(RememberedFields.recentCategories, categoryId, RecentCategoryLimit);
+    }
+
     onChange(categoryId);
-    setOpen(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="category-picker"
-          aria-invalid={invalid}
-          {...triggerProps}
-        >
-          <div className="category-picker__summary">
-            {selected ? (
-              <CategoryChip category={selected} />
-            ) : (
-              <CircleOffIcon className="category-picker__empty-icon" />
-            )}
-            <Text as="span" tone="muted" size="small">
-              {selected && 'Click to change'}
-              {!selected && (value ? 'Category unavailable' : 'No category (review later)')}
-            </Text>
-          </div>
+    <Combobox
+      {...comboboxProps}
+      label={label}
+      placeholder={placeholder}
+      searchPlaceholder="Type a category or group"
+      emptyText="No category matches."
+      clearLabel="Leave uncategorized"
+      invalid={invalid}
+      variant={variant}
+      value={value}
+      sections={categorySections(categories, suggestedId)}
+      onChange={choose}
+      footer={
+        <Button asChild variant="ghost" size="sm">
+          <Link href={CategoriesPath}>
+            <Plus aria-hidden /> Create a category
+          </Link>
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogTitle>Select a category</DialogTitle>
-        <Input
-          aria-label="Search categories"
-          placeholder="Search categories…"
-          value={search}
-          onChange={event => setSearch(event.target.value)}
-        />
-        {isPending && <p role="status">Loading categories…</p>}
-        {groups.map(group => (
-          <CategoryGroupOptions
-            key={group.id}
-            group={group}
-            term={term}
-            value={value}
-            onChoose={choose}
-          />
-        ))}
-        <Button variant="ghost" onClick={() => choose(undefined)}>
-          <CircleOffIcon size={LeaveIconSize} /> Leave uncategorized
-        </Button>
-      </DialogContent>
-    </Dialog>
+      }
+    />
   );
 }

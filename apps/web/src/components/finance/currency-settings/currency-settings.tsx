@@ -29,6 +29,7 @@ import {
   TableRow,
   ToggleSwitch,
 } from '@/components/ui';
+import { FALLBACK_CURRENCY } from '@coinkeeper/shared/constants/money';
 import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 
 import {
@@ -39,7 +40,6 @@ import {
   useSettings,
 } from '../use-finance-data';
 
-const FallbackCurrency = 'EUR';
 const DeleteIconSize = 16;
 
 type CurrencyOption = {
@@ -159,7 +159,7 @@ export function CurrencySettings() {
     onSuccess: refresh,
   });
 
-  const primary = settings.data?.primaryCurrency ?? FallbackCurrency;
+  const primary = settings.data?.primaryCurrency ?? FALLBACK_CURRENCY;
   const options = currencies.data ?? [];
 
   return (

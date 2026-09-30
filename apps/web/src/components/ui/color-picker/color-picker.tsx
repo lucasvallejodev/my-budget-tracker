@@ -3,7 +3,7 @@
 import './color-picker.scss';
 
 import { cn } from '@/lib/styles';
-import { Colors, GroupColors } from '@/styles/theme';
+import { DefaultPickerColor, GroupColors } from '@/styles/theme';
 import { isHexColor } from '@coinkeeper/shared/lib/patterns';
 
 export function ColorPicker({
@@ -34,7 +34,7 @@ export function ColorPicker({
       <input
         type="color"
         aria-label="Custom colour"
-        value={isHexColor(value) ? value : Colors.accent}
+        value={isHexColor(value) ? value : DefaultPickerColor}
         onChange={event => onChange(event.target.value.toUpperCase())}
       />
     </div>

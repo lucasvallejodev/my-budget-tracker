@@ -1,0 +1,19 @@
+@use 'abstracts' as *;
+
+.home {
+  &__row {
+    display: grid;
+    align-items: start;
+    gap: space(4);
+
+    @include media-up(laptop) {
+      grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    }
+  }
+
+  &__figures {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: space(3);
+  }
+}

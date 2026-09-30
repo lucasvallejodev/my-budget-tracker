@@ -26,7 +26,7 @@ describe('CashFlowChart', () => {
 
     expect(screen.getByRole('heading', { name: 'Cash Flow' })).toBeTruthy();
     expect(screen.getByText('Income vs spending · EUR')).toBeTruthy();
-    expect(screen.getByText('Purple: income · Dashed: expenses')).toBeTruthy();
+    expect(screen.getByText('Green: income · Dashed: spending')).toBeTruthy();
   });
 
   it('labels the value axis with the tick formatter', () => {

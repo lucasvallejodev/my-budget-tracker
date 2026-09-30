@@ -14,7 +14,7 @@ Read `playwright.config.ts` and `.github/workflows/playwright.yml` before changi
 
 ## Accessibility checks with axe
 
-`@axe-core/playwright` is a root dev dependency. `e2e/accessibility.spec.ts` signs up, seeds an account with `seedAccountWithExpense`, then visits the eight screens in `MainScreens` (dashboard, transactions, review, import, analytics, budgets, accounts, settings) in both `ColorSchemes` (light and dark, through `test.use({ colorScheme })`). On each it waits for the level-1 heading, runs `new AxeBuilder({ page }).withTags(WcagTags).analyze()` with the WCAG 2.0, 2.1 and 2.2 A and AA tags, and collects violations per screen path, so one failing run lists every screen at once: `expect(violationsByScreen).toEqual({})`.
+`@axe-core/playwright` is a root dev dependency. `e2e/accessibility.spec.ts` signs up, seeds an account with `seedAccountWithExpense`, then visits the eight screens in `MainScreens` (Home, transactions, review, import, analytics, budgets, accounts, settings); the app has one light theme, so there is no dark pass. On each it waits for the level-1 heading and for running animations to finish, runs `new AxeBuilder({ page }).withTags(WcagTags).analyze()` with the WCAG 2.0, 2.1 and 2.2 A and AA tags, and collects violations per screen path, so one failing run lists every screen at once: `expect(violationsByScreen).toEqual({})`.
 
 To cover a new screen, add `{ heading, path }` to `MainScreens`. To cover a state (an open dialog, a form after a failed submit, the mobile navigation), add a test in the same file that reaches the state and scans it the same way.
 

@@ -5,7 +5,7 @@
 ## Step by step
 
 1. Open **Import** in the sidebar.
-2. **Account and file**: pick the account the file belongs to and choose the CSV. The delimiter (comma, semicolon, tab, pipe) is detected and the column names are shown.
+2. **Account and file**: pick the account the file belongs to, then drop the CSV on the **CSV file** area or click it to choose the file. The area shows the file name and the number of columns once it is read; drop or choose another file to replace it. The delimiter (comma, semicolon, tab, pipe) is detected and the column names are shown.
 3. **Columns**: the wizard guesses which column holds the date, amount, payee, memo and reference id from the header names. Correct anything it got wrong:
    - use one **Amount** column when the file has signed amounts, or **Debit** and **Credit** columns when it splits them;
    - choose the **date format** if detection is ambiguous (`DD/MM/YYYY` versus `MM/DD/YYYY`);
@@ -27,7 +27,7 @@
 
 <!-- screenshot: import preview table with New, Matches existing and Already imported badges (docs/assets/screenshots/import-preview.png) -->
 
-6. Click **Import N new**. The result panel reports how many rows were inserted and matched, links to the [review inbox](review-inbox.md), and lists **possible transfers**: an imported outgoing row whose opposite appears in another account within four days. Click **Link as transfer** to pair them.
+6. Click **Import N new**. The result panel reports how many rows were inserted and matched, links to the [Review](review-inbox.md) page, and lists **possible transfers**: an imported outgoing row whose opposite appears in another account within four days. Click **Link as transfer** to pair them.
 
 <!-- screenshot: import result panel with a possible transfer and the "Link as transfer" button (docs/assets/screenshots/import-result.png) -->
 

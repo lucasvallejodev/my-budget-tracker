@@ -1,0 +1,97 @@
+@use 'abstracts' as *;
+
+.account-group {
+  @include surface(0);
+
+  &__head {
+    display: grid;
+    grid-template-areas:
+      'heading totals'
+      'meta totals';
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: space(3);
+    row-gap: space(1) * 0.5;
+    padding: space(4);
+    border-bottom: border(divider);
+  }
+
+  &__heading {
+    grid-area: heading;
+    margin: 0;
+    font-size: font-size(card-title);
+    font-weight: font-weight(semibold);
+  }
+
+  &__toggle {
+    @include reset-button;
+    @include flex-row(space(2));
+
+    color: var(--color-text);
+    font: inherit;
+    border-radius: radius(small);
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  &__chevron {
+    @include icon-size(size(icon-small));
+    @include transition(transform);
+
+    color: var(--color-text-muted);
+
+    &--closed {
+      transform: rotate(-90deg);
+    }
+  }
+
+  &__meta {
+    @include muted-text(font-size(caption));
+
+    grid-area: meta;
+    margin: 0;
+    padding-left: space(6);
+  }
+
+  &__change {
+    @include tabular-figures;
+
+    color: var(--color-positive);
+    font-weight: font-weight(semibold);
+
+    &--down {
+      color: var(--color-negative);
+    }
+  }
+
+  &__totals {
+    @include flex-column(space(1) * 0.5);
+
+    grid-area: totals;
+    align-items: flex-end;
+  }
+
+  &__total {
+    @include tabular-figures;
+
+    color: var(--color-text);
+    font-size: font-size(subtitle);
+    font-weight: font-weight(semibold);
+    white-space: nowrap;
+  }
+
+  &__owed {
+    margin-left: space(1);
+    color: var(--color-text-muted);
+    font-size: font-size(meta);
+    font-weight: font-weight(medium);
+  }
+
+  &__list {
+    @include reset-list;
+
+    padding: space(1) 0;
+  }
+}

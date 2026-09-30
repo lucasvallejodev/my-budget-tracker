@@ -1,13 +1,21 @@
 import { z } from 'zod';
 
 import { FieldLengths } from '../constants/field-lengths';
-import { deletedQuerySchema, includeArchivedQuerySchema, isoDateSchema } from './common';
+import {
+  deletedQuerySchema,
+  hexColorSchema,
+  iconSchema,
+  includeArchivedQuerySchema,
+  isoDateSchema,
+} from './common';
 import { AccountClassificationValues, AccountTypeValues } from './enums';
 
 export const accountFormSchema = z.object({
   accountNumber: z.string().max(FieldLengths.accountNumber).optional(),
+  color: hexColorSchema.nullable().optional(),
   countsInSpending: z.boolean().optional(),
   currency: z.string().length(FieldLengths.currencyCode, 'Choose a currency'),
+  icon: iconSchema.nullable().optional(),
   institution: z.string().max(FieldLengths.institution).optional(),
   name: z.string().trim().min(1, 'Name is required').max(FieldLengths.name),
   notes: z.string().max(FieldLengths.notes).optional(),

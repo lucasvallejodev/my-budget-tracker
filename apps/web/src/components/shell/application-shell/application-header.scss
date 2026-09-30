@@ -1,15 +1,18 @@
 @use 'abstracts' as *;
 
 .application-header {
-  @include flex-between(space(3));
+  @include flex-between(space(2));
 
-  height: 80px;
-  padding: 14px space(4);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: z-index(header);
+  height: size(header-height);
+  padding: 0 space(4);
+  background: var(--color-surface);
+  border-bottom: border(divider);
 
   @include media-up(laptop) {
-    padding: space(4) space(6);
+    padding: 0 space(8);
     gap: space(5);
   }
 
@@ -17,31 +20,25 @@
     display: none;
   }
 
-  &__menu-button {
-    @include media-up(laptop) {
-      display: none;
-    }
-  }
-
-  &__drawer {
-    inset: 0 auto 0 0;
-    transform: none;
-    width: min(300px, 90vw);
-    max-height: 100dvh;
-    border-radius: 0;
-  }
-
   &__search {
-    @include flex-row(space(2) + 2px);
-    @include bordered(9px);
+    @include flex-row(space(2));
 
     flex: 1;
-    padding: space(2) space(3);
-    color: var(--muted);
+    min-width: 0;
+    height: size(control-height);
+    padding: 0 space(3);
+    border: border(card);
+    border-radius: radius(control);
+    background: var(--color-surface-soft);
+    color: var(--color-text-faint);
+
+    &:focus-within {
+      border-color: var(--color-brand);
+      box-shadow: shadow(focus);
+    }
 
     @include media-up(laptop) {
-      flex: none;
-      width: 330px;
+      flex: 0 1 360px;
     }
   }
 
@@ -49,27 +46,55 @@
     @include reset-button;
 
     display: flex;
-    color: var(--muted);
+    color: var(--color-text-muted);
+
+    svg {
+      @include icon-size(size(icon-small));
+    }
   }
 
   &__search-input {
     @include reset-button;
 
-    outline: 0;
-    color: var(--ink);
-    width: 70px;
+    flex: 1;
     min-width: 0;
+    outline: 0;
+    color: var(--color-text);
 
-    @include media-up(phone-landscape) {
-      width: 100%;
+    &::placeholder {
+      color: var(--color-text-faint);
     }
   }
 
-  &__toolbar {
-    @include flex-row(2px);
+  &__shortcut {
+    display: none;
+    padding: 0 space(2);
+    border: border(card);
+    border-radius: radius(small);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-family: var(--font-sans);
+    font-size: font-size(micro);
 
-    @include media-up(phone-landscape) {
-      gap: space(2) + 2px;
+    @include media-up(laptop) {
+      display: inline;
+    }
+  }
+
+  &__add {
+    display: none;
+    flex: none;
+
+    @include media-up(laptop) {
+      display: inline-flex;
+    }
+  }
+
+  &__add-label {
+    display: none;
+
+    @include media-up(tablet) {
+      display: inline;
     }
   }
 }

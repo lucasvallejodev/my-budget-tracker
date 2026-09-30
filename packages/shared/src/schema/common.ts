@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
+import { FieldLengths } from '../constants/field-lengths';
+import { isIconName } from '../constants/icon-names';
 import { MAX_PAGE_SIZE } from '../constants/pagination';
 import { hasDistinctItems } from '../lib/arrays';
-import { Patterns } from '../lib/patterns';
+import { isEmoji, Patterns } from '../lib/patterns';
 
 export const idParamsSchema = z.object({ id: z.uuid() });
 
@@ -11,6 +13,13 @@ export type IdParams = z.infer<typeof idParamsSchema>;
 export const isoDateSchema = z.string().regex(Patterns.isoDate, 'Use YYYY-MM-DD');
 
 export const isoMonthSchema = z.string().regex(Patterns.isoMonth, 'Use YYYY-MM');
+
+export const hexColorSchema = z.string().regex(Patterns.hexColor, 'Choose a colour');
+
+export const iconSchema = z
+  .string()
+  .max(FieldLengths.icon)
+  .refine(value => isIconName(value) || isEmoji(value), 'Choose an icon or a single emoji');
 
 const MAX_ORDERED_IDS = 1000;
 

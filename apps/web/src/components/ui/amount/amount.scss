@@ -1,0 +1,9 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .amount {
+    @include tabular-figures;
+
+    white-space: nowrap;
+  }
+}

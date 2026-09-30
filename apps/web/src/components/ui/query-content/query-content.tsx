@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 
 import { Button } from '../button';
 import { EmptyState } from '../empty-state';
+import { SkeletonText } from '../skeleton';
 
 export function QueryContent({
   children,
@@ -20,7 +21,7 @@ export function QueryContent({
   onRetry?: () => void;
   pending: boolean;
 }) {
-  if (pending) return <p role="status">{loading}</p>;
+  if (pending) return <SkeletonText label={loading} />;
 
   if (error) {
     return (

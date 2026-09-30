@@ -1,13 +1,11 @@
 import { sql } from 'drizzle-orm';
 
-import { UNCATEGORIZED_COLOR } from '@coinkeeper/shared/constants/palette';
-import { isoDateOfMonthStart, toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
+import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import { convertMinor } from '@coinkeeper/shared/lib/money';
 import type {
   CashPoint,
   ConvertedTotals,
   CurrencyTotals,
-  GroupSlice,
   NetWorthBucket,
 } from '@coinkeeper/shared/schema/reports';
 
@@ -15,7 +13,10 @@ import { rowsOf, valueList } from '../batch';
 import { Db } from '../db';
 import { createFxService } from '../fx/service';
 import { monthRange } from '../ledger/service';
+import { monthEndBalances } from './balances';
+import { breakdownByCategory, breakdownByGroup, type BreakdownOptions } from './breakdown';
 import { spendingWhere } from './predicate';
+import { monthsEndingAt } from './range';
 import { spendingByAccount, spendingByPayee } from './rankings';
 
 const DEFAULT_CASH_FLOW_MONTHS = 8;
@@ -97,82 +98,22 @@ export const createReportService = (db: Db) => {
   const fx = createFxService(db);
 
   return {
-    async breakdownByCategory(userId: string, month: string, currency: string) {
-      const { end, start } = monthRange(month);
+    breakdownByCategory: (
+      userId: string,
+      month: string,
+      currency: string,
+      options?: BreakdownOptions
+    ) => breakdownByCategory(db, userId, month, { ...options, currency }),
 
-      const rows = await rowsOf<{
-        category_id: string | null;
-        category_name: string | null;
-        color: string | null;
-        group_id: string | null;
-        group_name: string | null;
-        icon: string | null;
-        spent_minor: string;
-      }>(
-        db,
-        sql`
-        SELECT c.id AS category_id, c.name AS category_name, c.icon, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
-        FROM transactions t
-        JOIN accounts a ON a.id = t.account_id
-        LEFT JOIN categories c ON c.id = t.category_id
-        LEFT JOIN category_groups g ON g.id = c.group_id
-        WHERE t.user_id = ${userId} AND ${spendingWhere} AND t.currency = ${currency}
-          AND t.date >= ${start} AND t.date < ${end}
-          AND COALESCE(g.kind, 'expense') = 'expense'
-        GROUP BY c.id, c.name, c.icon, g.id, g.name, g.color
-        ORDER BY spent_minor DESC`
-      );
-
-      return rows.map(row => ({
-        categoryId: row.category_id,
-        categoryName: row.category_name ?? 'Uncategorized',
-        color: row.color ?? UNCATEGORIZED_COLOR,
-        groupId: row.group_id,
-        groupName: row.group_name ?? 'Uncategorized',
-        icon: row.icon ?? 'CircleHelp',
-        spentMinor: Number(row.spent_minor),
-      }));
-    },
-    async breakdownByGroup(userId: string, month: string): Promise<GroupSlice[]> {
-      const { end, start } = monthRange(month);
-
-      const rows = await rowsOf<{
-        color: string | null;
-        currency: string;
-        group_id: string | null;
-        group_name: string | null;
-        spent_minor: string;
-      }>(
-        db,
-        sql`
-        SELECT t.currency, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
-        FROM transactions t
-        JOIN accounts a ON a.id = t.account_id
-        LEFT JOIN categories c ON c.id = t.category_id
-        LEFT JOIN category_groups g ON g.id = c.group_id
-        WHERE t.user_id = ${userId} AND ${spendingWhere}
-          AND t.date >= ${start} AND t.date < ${end}
-          AND COALESCE(g.kind, 'expense') = 'expense'
-        GROUP BY t.currency, g.id, g.name, g.color
-        ORDER BY t.currency, spent_minor DESC`
-      );
-
-      return rows.map(row => ({
-        color: row.color ?? UNCATEGORIZED_COLOR,
-        currency: row.currency,
-        groupId: row.group_id,
-        groupName: row.group_name ?? 'Uncategorized',
-        spentMinor: Number(row.spent_minor),
-      }));
-    },
+    breakdownByGroup: (userId: string, month: string, options?: BreakdownOptions) =>
+      breakdownByGroup(db, userId, month, options),
 
     async cashFlow(
       userId: string,
       month: string,
       months = DEFAULT_CASH_FLOW_MONTHS
     ): Promise<CashPoint[]> {
-      const { end } = monthRange(month);
-      const start = isoDateOfMonthStart(month, 1 - months);
+      const { end, start } = monthsEndingAt(month, months);
 
       const rows = await rowsOf<{
         currency: string;
@@ -264,6 +205,9 @@ export const createReportService = (db: Db) => {
       };
     },
 
+    monthEndBalances: (userId: string, month: string, months?: number) =>
+      monthEndBalances(db, userId, month, months),
+
     async monthlyTotals(userId: string, month: string): Promise<CurrencyTotals[]> {
       const { end, start } = monthRange(month);
 
@@ -318,8 +262,10 @@ export const createReportService = (db: Db) => {
       }));
     },
 
-    spendingByAccount: (userId: string, month: string) => spendingByAccount(db, userId, month),
+    spendingByAccount: (userId: string, month: string, months?: number) =>
+      spendingByAccount(db, userId, month, months),
 
-    spendingByPayee: (userId: string, month: string) => spendingByPayee(db, userId, month),
+    spendingByPayee: (userId: string, month: string, months?: number) =>
+      spendingByPayee(db, userId, month, months),
   };
 };

@@ -8,8 +8,8 @@
       width: 100%;
       justify-content: space-between;
       height: 38px;
-      font-size: 12px;
-      font-weight: 400;
+      font-size: font-size(caption);
+      font-weight: font-weight(regular);
     }
 
     &__popup {
@@ -22,7 +22,7 @@
       @include flex-between(space(2));
 
       padding: space(2) space(3);
-      border-top: 1px solid var(--border);
+      border-top: border(divider);
     }
   }
 }

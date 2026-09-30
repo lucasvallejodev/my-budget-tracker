@@ -15,6 +15,13 @@ describe('MetricCard', () => {
     expect(screen.getByText('Since last month')).toBeTruthy();
   });
 
+  it('gives each metric kind its own tinted icon', () => {
+    const { container } = render(<MetricCard kind="income" label="Income" value="€1.00" />);
+    const tile = container.querySelector<HTMLElement>('.avatar');
+
+    expect(tile?.style.getPropertyValue('--avatar-color')).toBe('var(--color-metric-income)');
+  });
+
   it('omits the trend line without trend or detail', () => {
     render(<MetricCard label="Balance" value="€0.00" />);
 

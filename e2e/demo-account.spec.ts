@@ -9,16 +9,16 @@ test('signs in to the seeded demo account and shows its history', async ({ page 
   await page.getByLabel('Password').fill(credentials.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Dashboard Overview' })).toBeVisible();
-  await expect(page.getByText('2 transactions need a category.')).toBeVisible();
-  await expect(page.getByText('USD account').first()).toBeVisible();
-  await expect(page.getByText('Everyday account').first()).toBeVisible();
+  await expect(page.getByRole('heading', { exact: true, name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '2 transactions need a category' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'USD' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
 
   await page.goto('/budgets');
-  await expect(page.getByText('Left per day')).toBeVisible();
-  await expect(page.getByText(/a day for \d+ days?|Nothing left to spend/).first()).toBeVisible();
+  await expect(page.getByText(/Left to spend in/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Category budgets' })).toBeVisible();
 
-  await page.goto('/analytics');
-  await expect(page.getByRole('heading', { name: 'Top payees · EUR' })).toBeVisible();
+  await page.goto('/analytics/payees');
+  await expect(page.getByRole('heading', { name: 'Top payees' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Oakwood Lettings' })).toBeVisible();
 });

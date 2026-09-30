@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { FieldLengths } from '../constants/field-lengths';
 
 export const settingsFormSchema = z.object({
+  allowEmoji: z.boolean().optional(),
   locale: z.string().min(FieldLengths.localeMin).max(FieldLengths.localeMax).optional(),
   primaryCurrency: z.string().length(FieldLengths.currencyCode).optional(),
   showConvertedTotals: z.boolean().optional(),
@@ -11,6 +12,7 @@ export const settingsFormSchema = z.object({
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 
 export const settingsSchema = z.object({
+  allowEmoji: z.boolean(),
   locale: z.string(),
   primaryCurrency: z.string(),
   showConvertedTotals: z.boolean(),

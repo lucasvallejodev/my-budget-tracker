@@ -56,9 +56,9 @@ apps/api/src/
 apps/web/src/
 ├─ app/                    Next.js App Router (pages only; no route handlers or server actions)
 │  ├─ (auth)/              sign-in/ and sign-up/ pages rendering AuthForm inside AuthScreen
-│  ├─ (main)/              Signed-in pages (dashboard, transactions, accounts, budgets, settings, settings/deleted, …)
-│  │  └─ routes.ts         Sidebar navigation entries
-│  ├─ layout.tsx           Root layout with the React Query provider and the toaster
+│  ├─ (main)/              Signed-in pages (Home at /, transactions, accounts, budgets, analytics with spending/, cash-flow/ and payees/, settings, settings/deleted, …)
+│  │  └─ routes.ts         Sidebar navigation: Home, Money and Plan sections, Import and Settings
+│  ├─ layout.tsx           Root layout: Inter font (next/font), React Query provider, toaster
 │  └─ globals.scss         Resets (in @layer reset) and the cascade-layer order
 ├─ api/
 │  ├─ client.ts            apiRequest, apiGet, apiList, apiPages, ApiError (relative /api/v1 URLs, 401 → /sign-in)
@@ -66,15 +66,17 @@ apps/web/src/
 ├─ components/             One folder per component: <name>.tsx, <name>.test.tsx, index.ts, <name>.scss
 │  ├─ ui/                  Project-wide building blocks: layout, content, form controls, dialogs (Radix-based)
 │  ├─ finance/             Finance components and screens, plus use-finance-data.ts (hooks, QueryKeys, FinanceKeys) and sample-data.ts
-│  ├─ shell/               Application shell, auth screen and form, user menu, logo, theme toggle
+│  ├─ shell/               Application shell (sidebar, header, phone tab bar, navigation drawer), auth screen and form, user menu, logo
 │  └─ structure.test.ts    Checks the folder contract
-├─ lib/                    Web-only helpers: math.ts, styles.ts (cn), appearance.ts (theme), hydration.ts (useHydrated)
-├─ constants/              account.ts (type labels, grouping), icons.ts (lucide component for every shared icon name)
+├─ lib/                    Web-only helpers: math.ts, styles.ts (cn), hydration.ts (useHydrated), navigation.ts, form-memory.ts, payee-avatar.ts, analytics-filters.ts (Analytics URL filters)
+├─ constants/              account.ts (type labels, icons, colours, grouping), icons.ts (lucide component for every shared icon name), metrics.ts (metric icons and colours)
 ├─ providers/              React Query provider
 ├─ styles/
-│  ├─ abstracts/           Breakpoint mixins, space() and radius() functions, shared mixins (@use 'abstracts' as *)
-│  ├─ tokens.scss          CSS colour tokens (light, dark and theme-independent)
-│  └─ theme.ts             Colours and chart styles needed from TypeScript (Colors, GroupColors, ChartStyle)
+│  ├─ theme/               The design values: _colors, _typography, _shape, _elevation, _spacing, _layout, _motion
+│  ├─ abstracts/           Forwards the theme; breakpoint mixins, theme functions (space(), radius(), color(), …), shared mixins (@use 'abstracts' as *)
+│  ├─ tokens.scss          Emits every theme value as a CSS custom property on :root
+│  ├─ theme.ts             Theme references needed from TypeScript (Colors, GroupColors, ChartStyle)
+│  └─ theme.test.ts        Compiles the theme and checks every var(--…) the app uses is defined
 ├─ types/                  Shared UI types (route-item.ts)
 └─ proxy.ts                Page guard (Next.js 16 middleware): no session cookie → /sign-in?next=…
 ```

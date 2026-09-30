@@ -1,0 +1,31 @@
+@use 'abstracts' as *;
+
+.budget-overview {
+  &__columns {
+    display: grid;
+    align-items: start;
+    gap: space(4);
+
+    @include media-up(laptop) {
+      grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    }
+  }
+
+  &__sections {
+    margin: 0 (-(size(card-padding))) (-(size(card-padding)));
+  }
+
+  &__section {
+    @include flex-row(space(2));
+
+    padding: space(3) size(card-padding);
+    border-top: border(divider);
+    background: var(--color-surface-soft);
+    font-size: font-size(meta);
+    font-weight: font-weight(bold);
+  }
+
+  &__list {
+    @include reset-list;
+  }
+}

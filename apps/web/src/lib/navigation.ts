@@ -51,3 +51,26 @@ const TransactionsPath = '/transactions';
  */
 export const transactionsHref = (search: string, month?: string): string =>
   `${TransactionsPath}?${new URLSearchParams(month ? { month, q: search } : { q: search })}`;
+
+/**
+ * Tells whether a navigation entry is the current page.
+ *
+ * @remarks
+ * Home matches only `/`; every other entry also matches its sub-pages, so `/accounts/abc` marks
+ * Accounts and `/analytics/spending` marks Analytics as current.
+ *
+ * @param currentPath - The path the browser shows, without query or hash.
+ * @param entryPath - The path of the navigation entry.
+ * @returns `true` when the entry should be marked as the current page.
+ *
+ * @example
+ * ```ts
+ * isCurrentPath('/accounts/abc', '/accounts'); // true
+ * isCurrentPath('/accounts', '/'); // false
+ * isCurrentPath('/account-types', '/accounts'); // false
+ * ```
+ */
+export const isCurrentPath = (currentPath: string, entryPath: string): boolean =>
+  entryPath === HomePath
+    ? currentPath === HomePath
+    : currentPath === entryPath || currentPath.startsWith(`${entryPath}${HomePath}`);

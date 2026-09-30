@@ -2,28 +2,32 @@
 
 @layer ui {
   .tabs {
-    @include flex-row(6px);
+    @include flex-row(space(1));
 
     flex-wrap: wrap;
-    padding: 5px;
-    background: var(--surface-soft);
-    border-radius: radius(lg);
+    padding: space(1) * 0.75;
+    border-radius: radius(control) + 1px;
+    background: var(--color-surface-sunken);
 
     &__trigger {
       @include reset-button;
 
-      color: var(--muted);
-      padding: space(2) + 2px 15px;
-      border-radius: radius(sm);
+      padding: space(1) space(3);
+      border-radius: radius(small) + 1px;
+      color: var(--color-text-muted);
+      font-size: font-size(meta);
+      font-weight: font-weight(semibold);
       text-align: left;
 
       &[data-state='active'] {
-        @include accent-highlight;
+        background: var(--color-surface);
+        color: var(--color-text);
+        box-shadow: shadow(selected);
       }
     }
 
     &__panel {
-      padding-top: space(6);
+      padding-top: space(5);
       min-width: 0;
     }
   }

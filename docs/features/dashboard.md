@@ -1,37 +1,33 @@
-# Dashboard and analytics
+# Home page
 
-> Summary: what the dashboard shows, how each number is computed, and what the analytics page adds (top payees, spending by account, links to the matching transactions).
+> Summary: what the Home page shows (left to spend, income, spending and kept, net worth with a sparkline, the attention strip, spending by group, budgets to watch, recent activity, cash flow) and how each number is computed; the Analytics pages have their own page.
 
-## Dashboard
+## What Home shows
 
-For the selected month (month picker in the header) and for each currency you use:
+Home (`/`) is the first entry in the sidebar and the page you land on after signing in. The heading reads **Home** with today's date and the days left in the month ("Wednesday 30 September · 1 day left this month"). The header holds the currency switch (see [Multi-currency › Choose a currency](multi-currency.md#choose-a-currency)) and the month picker. Every block shows the chosen currency and month.
 
-| Block                            | What it shows                                                                                                | Source                             |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
-| Income · Spending · Savings rate | totals for the month                                                                                         | `reports.monthlyTotals`            |
-| Cash flow chart                  | income and spending for the last 8 months; the axis shows compact amounts (`€3K`), the tooltip exact ones    | `reports.cashFlow`                 |
-| Recent transactions              | the six latest rows across all accounts                                                                      | `GET /api/v1/transactions?limit=6` |
-| Net worth card                   | assets, amounts owed and net per currency, with the number of accounts                                       | `reports.netWorth`                 |
-| Spending by group                | donut coloured with group colours, plus an "Uncategorized" slice                                             | `reports.breakdownByGroup`         |
-| Review notice                    | count of rows needing a category, linking to the inbox                                                       | `ledger.needsReviewCount`          |
-| Converted totals (optional)      | approximate totals in the primary currency with the rates used, each shown to at most six significant digits | `reports.convertedTotals`          |
+| Block                  | What it shows                                                                                                                                                                                                                                                                                                                                      | Source                                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Hero card              | with budgets: **Left to spend in September** (the month shown) "of" the total budgeted, a plan tag ("12.00 EUR under plan", "12.00 EUR ahead of plan" or **Over budget**), the month bar with a **Today** marker, what was spent with its share and the share of the month gone, and the daily allowance; without budgets: a prompt to add budgets | `useBudgets`, `budgetFigures` and `monthTotals`             |
+| Income, Spending, Kept | three figures in the hero card, each with an icon; income and spending show the change against last month, green when it is good (income up, spending down) and red otherwise; **Kept** is income minus spending with its share of income                                                                                                          | `reports.monthlyTotals` for this month and last month       |
+| Net worth              | one row per currency, the chosen one first and larger: net worth, the change since last month and a six-month sparkline; below it assets, amounts owed and, with converted totals on, the approximate total in your primary currency                                                                                                               | `reports.netWorth`, `GET /api/v1/reports/balances?months=6` |
+| Attention strip        | up to three links: transactions needing a category (to Review), a budget over its limit or the number over (to Budgets), budgets spending too fast (to Budgets); hidden when there is nothing to act on                                                                                                                                            | `ledger.needsReviewCount`, budget states                    |
+| Where your money went  | spending by category group as labeled bars, largest first, with the amount, the share of the month and the change against last month ("New this month" for a group with no spending then); beyond five groups the rest fold into "Other groups (n)"                                                                                                | `reports.breakdownByGroup` for this month and last month    |
+| Budgets to watch       | budgets over their limit or spending too fast, as compact rows; the others are summarized as "On track" with their names; shown when the currency has budgets                                                                                                                                                                                      | budget states                                               |
+| Recent activity        | the six latest transactions of the month, in the transaction list layout, with a link to all transactions                                                                                                                                                                                                                                          | `GET /api/v1/transactions?limit=6&month=`                   |
+| Cash flow              | income and spending for the last six months; the axis shows compact amounts (`€3K`), the tooltip exact ones                                                                                                                                                                                                                                        | `reports.cashFlow`                                          |
 
-<!-- screenshot: full dashboard for one currency with all blocks visible (docs/assets/screenshots/dashboard-full.png) -->
+Budget states, the plan tag and the attention links follow the rules in [Budgets › Budget status](budgets.md#budget-status). Group names in **Where your money went** link to the Transactions page filtered by that group and month.
+
+When converted totals are on and you pick **≈ All in EUR** (your primary currency), Home shows only the converted income, spending and kept, with the rates used, next to the net worth card, plus the attention strip and recent activity. Spending by group, budgets and cash flow are hidden because they are per currency.
+
+<!-- screenshot: Home for the current month in EUR with the hero card and Today marker, the net worth card with its sparkline, the attention strip, Where your money went, Budgets to watch, Recent activity and the cash flow chart (docs/assets/screenshots/home-full.png) -->
+
+<!-- screenshot: Home with the currency switch set to "≈ All in EUR" showing the converted figures and the rates caption (docs/assets/screenshots/home-converted.png) -->
 
 ## Analytics
 
-The Analytics page reuses the same data with the cash-flow chart, net worth and breakdown, without the recent-transactions panel. It is the place to compare months with the month picker.
-
-Below them, for each currency, two rankings answer "where does the money go?":
-
-| Ranking             | What it shows                                                                                       | Source                                     |
-| ------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Top payees          | the eight payees with the most spending that month, with the number of transactions and a share bar | `GET /api/v1/reports/breakdown?by=payee`   |
-| Spending by account | how much of the month's spending went through each account                                          | `GET /api/v1/reports/breakdown?by=account` |
-
-Every name in the rankings, and every group in the **Spending by group** legend on the dashboard and on Analytics, links to the Transactions page filtered by that name and month.
-
-<!-- screenshot: Analytics page with the Top payees and Spending by account rankings for EUR (docs/assets/screenshots/analytics-rankings.png) -->
+Analytics (`/analytics`) looks at one currency over a period of one to twelve months, compared with the period before or the same period last year, in four pages: Overview, Spending, Cash flow, and Payees & accounts. See [Analytics](analytics.md).
 
 ## How the numbers are computed
 
@@ -44,5 +40,6 @@ t.deleted_at IS NULL AND t.kind = 'standard' AND NOT t.excluded AND a.counts_in_
 - **Income** is the sum of rows in income groups, plus positive uncategorised rows.
 - **Spending** is the negated sum of rows in expense groups, plus negative uncategorised rows. Refunds (positive rows in an expense category) reduce the category and the total.
 - **Net worth** sums every live row of every non-archived account, so transfers and opening balances count; assets and liabilities are reported separately and netted.
-- Everything is grouped by currency; nothing is converted unless the converted-totals panel is on.
-- Payee and account rankings (`apps/api/src/modules/reports/rankings.ts`) use the same predicate; a transaction without a payee is ranked under its bank description, or "No payee".
+- Everything is grouped by currency; nothing is converted unless converted totals are on and you pick **≈ All in EUR** (your primary currency).
+- The net worth change and sparkline come from month-end balances per account (`GET /api/v1/reports/balances`), summed per currency in the browser (`netWorthByMonth` in `apps/web/src/components/finance/net-worth.ts`, shared with Accounts); the change compares today's net worth with the end of last month.
+- The payee and account rankings on Analytics (`apps/api/src/modules/reports/rankings.ts`) use the same predicate; a transaction without a payee is ranked under its bank description, or "No payee".

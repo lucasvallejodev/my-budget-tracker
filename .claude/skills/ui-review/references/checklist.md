@@ -20,7 +20,7 @@
 - Headings form an outline: one `h1` per page (`PageHeading`), no skipped levels inside panels. `EmptyState` renders an `h3`; check it sits under an `h2`.
 - Landmarks and the skip link exist in `shell/application-shell` (`application-shell__skip-link` to `#main-content`); a screen must not add a second `main`.
 - Tables of data use `ui/table` with header cells; lists use list semantics (`ListRow` inside a list). `Table` requires a `label`: its wrapper is a `role="region"` with that `aria-label` and `tabIndex={0}`, so keyboard users can scroll a wide table (axe `scrollable-region-focusable`) and see a focus ring. Flag a label that does not name the data ("Table", "Data") and a hand-written `<table>` or scroll wrapper that bypasses it.
-- Charts (`cash-flow-chart`, `distribution-chart`) need a text alternative: a visible legend with values (as `distribution-chart__legend` does) or a table, not only the SVG.
+- Charts (`cash-flow-chart`, `analytics/analytics-charts.tsx`, `accounts-overview/net-worth-trend.tsx`) need a text alternative: a visible legend with values (as `analytics-cash-flow__legend` does) or a table (as the Cash flow page's month-by-month table), not only the SVG.
 - **2.5.3 Label in Name.** A visible label and the accessible name start with the same words (`aria-label="Delete"` on a button showing "Remove" fails).
 
 ## Forms
@@ -51,12 +51,12 @@
 
 ## Color and contrast
 
-Tokens are in `apps/web/src/styles/tokens.scss`; check the pair in the light theme and in `:root[data-theme='dark']`.
+Colours are in `apps/web/src/styles/theme/_colors.scss` (one light theme, emitted as `--color-*` by `tokens.scss`); check each pair on white (`--color-surface`, cards) and on the canvas (`--color-canvas`, page background).
 
-- **1.4.3 Contrast (Minimum).** Text 4.5:1, large text (24 px, or 18.66 px bold) 3:1. Known tight pair: `--muted` on `--canvas` is 4.52:1 in light mode, so muted text on the canvas must not get lighter or smaller than the `muted-text` default.
-- **1.4.11 Non-text Contrast.** Control boundaries and focus indicators 3:1 against the background. `--border` (`#e5e7eb`) on `--surface` (`#ffffff`) is about 1.2:1, so an input whose only boundary is that border (`text-field` mixin) should be flagged unless another cue (fill, label position) identifies it.
-- **1.4.1 Use of Color.** Color is never the only signal. Signed amounts use `<Amount signed />`, which adds a `+`/`−` sign through `signDisplay: 'exceptZero'` besides the tone; budget progress needs text ("80 % used", "Over by …"), not just a red bar; chart series need labels or a legend with values. Category group colors are user data and carry no meaning on their own.
-- Fixes use tokens (`var(--ink)`, `var(--danger)`) or `Colors`/`ChartStyle` from `apps/web/src/styles/theme.ts`, never literals (Stylelint and ESLint reject them).
+- **1.4.3 Contrast (Minimum).** Text 4.5:1, large text (24 px, or 18.66 px bold) 3:1. Known tight pairs: `--color-text-muted` is 4.97:1 on white and 4.64:1 on the canvas, so muted text must not get lighter; `--color-text-faint` is 2.58:1 on white and is only for placeholders and decoration, never for text a user must read.
+- **1.4.11 Non-text Contrast.** Control boundaries and focus indicators 3:1 against the background. `--color-border` on white is about 1.2:1 and `--color-border-strong` (the `control` border of the `text-field` mixin) about 1.5:1, so an input whose only boundary is its border should be flagged unless another cue (fill, label position) identifies it.
+- **1.4.1 Use of Color.** Color is never the only signal. Signed amounts use `<Amount signed />`, which adds a `+`/`−` sign through `signDisplay: 'exceptZero'` besides the tone; budget progress needs text ("120.00 € of 400.00 € · 30%", "12.00 € over", a status label), not just a red bar; chart series need labels or a legend with values. Category group colors are user data and carry no meaning on their own.
+- Fixes use theme variables (`var(--color-text)`, `var(--color-negative)`, or `color(text)`) or `Colors`/`ChartStyle` from `apps/web/src/styles/theme.ts`, never literals (Stylelint and ESLint reject them).
 
 ## Motion
 
@@ -95,7 +95,7 @@ Generic guidelines assume Tailwind or ad-hoc CSS. Propose fixes in our terms:
 | `truncate`, `line-clamp`, `min-w-0`                 | `@include truncate;` and `min-width: 0` on the block element                    |
 | `sm:` / `md:` / `lg:` classes, `@media (max-width)` | Mobile-first base styles plus `@include media-up(tablet-landscape) { … }`       |
 | Utility class or inline `style`                     | A BEM element or modifier in the component's own `.scss`                        |
-| Hex color, `text-red-600`                           | A token (`var(--danger)`), or a new token in `tokens.scss`                      |
+| Hex color, `text-red-600`                           | A theme colour (`var(--color-negative)`), or a new one in `theme/_colors.scss`  |
 | `Intl.NumberFormat` for currency                    | `<Amount />` or `formatMoney`                                                   |
 | Native `<select>` styling                           | `PillSelect` / `Select` from `@/components/ui` (native `<select>` is not used)  |
 | Title Case headings and buttons                     | Sentence case                                                                   |

@@ -1,12 +1,10 @@
 'use client';
 
-import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button, Page, PageHeading, QueryContent } from '@/components/ui';
 
 import { MonthPicker } from '../month-picker';
-import { TransactionDialog } from '../transaction-dialog';
 import { TransactionExplorer } from '../transaction-explorer';
 import { currentMonth, useTransactions } from '../use-finance-data';
 
@@ -48,14 +46,6 @@ export function TransactionsPage({
                 All months
               </Button>
             )}
-            <TransactionDialog
-              trigger={
-                <Button>
-                  <Plus />
-                  New transaction
-                </Button>
-              }
-            />
           </>
         }
       />

@@ -1,0 +1,22 @@
+@use 'abstracts' as *;
+
+.transaction-explorer {
+  &__summary {
+    @include flex-row(space(6));
+
+    flex-wrap: wrap;
+    margin: space(3) 0;
+    color: var(--color-text-muted);
+    font-size: font-size(meta);
+  }
+
+  &__figure {
+    @include tabular-figures;
+
+    color: var(--color-text);
+  }
+
+  &__figure--positive {
+    color: var(--color-positive);
+  }
+}

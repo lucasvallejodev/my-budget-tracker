@@ -2,22 +2,23 @@
 
 @layer ui {
   .panel {
-    @include surface(18px);
-
-    @include media-up(tablet-landscape) {
-      padding: space(6);
-    }
+    @include surface;
 
     &__head {
-      @include flex-between(space(4), flex-start);
+      @include flex-between(space(3), flex-start);
 
-      margin-bottom: space(6);
+      margin-bottom: space(4);
+    }
+
+    &__title {
+      font-size: font-size(card-title);
+      font-weight: font-weight(bold);
     }
 
     &__description {
       @include muted-text;
 
-      margin-top: 3px;
+      margin-top: space(1) * 0.5;
     }
   }
 }

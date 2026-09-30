@@ -2,7 +2,7 @@
 
 @layer ui {
   .dialog {
-    @include flex-column(18px);
+    @include flex-column(space(5));
 
     position: fixed;
     left: 50%;
@@ -12,11 +12,11 @@
     max-height: calc(100dvh - 48px);
     overflow-y: auto;
     padding: space(5);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    background: var(--surface);
-    color: var(--ink);
-    box-shadow: var(--shadow);
+    border: border(divider);
+    border-radius: radius(dialog);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: shadow(pop);
 
     @include media-up(tablet) {
       padding: space(7);
@@ -25,7 +25,7 @@
     &__overlay {
       position: fixed;
       inset: 0;
-      background: var(--overlay);
+      background: var(--color-overlay);
       backdrop-filter: blur(3px);
     }
 
@@ -35,15 +35,15 @@
       position: absolute;
       right: space(3);
       top: space(2) + 2px;
-      color: var(--muted);
-      padding: 6px;
-      border-radius: radius(sm);
+      color: var(--color-text-muted);
+      padding: space(2);
+      border-radius: radius(control);
     }
 
     &__title {
-      padding-right: 25px;
-      font-size: 22px;
-      font-weight: 600;
+      padding-right: space(6);
+      font-size: font-size(title);
+      font-weight: font-weight(semibold);
     }
 
     &__description {

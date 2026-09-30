@@ -83,7 +83,7 @@ export function CashFlowChart({
           </AreaChart>
         </ResponsiveContainer>
       </ChartFrame>
-      <Text tone="muted">Purple: income · Dashed: expenses</Text>
+      <Text tone="muted">Green: income · Dashed: spending</Text>
     </Panel>
   );
 }
