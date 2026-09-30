@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 import {
   Avatar,
+  EmptyState,
   Panel,
   QueryContent,
   Table,
@@ -44,12 +45,17 @@ function TopPayeesTable({ context }: { context: AnalyticsContext }) {
     months: filters.range,
   });
 
-  const rows = (payees.data ?? []).filter(row => row.currency === currency).slice(0, TopPayees);
-  const total = rows.reduce((sum, row) => sum + row.spentMinor, 0);
+  const all = (payees.data ?? []).filter(row => row.currency === currency);
+  const rows = all.slice(0, TopPayees);
+  const total = all.reduce((sum, row) => sum + row.spentMinor, 0);
 
   return (
     <Panel title="Top payees" description={periodLabel(filters.month, filters.range)}>
-      <QueryContent pending={payees.isPending} loading="Loading…">
+      <QueryContent
+        pending={payees.isPending}
+        loading="Loading…"
+        empty={!rows.length && <EmptyState title="No spending in this period" />}
+      >
         {() => (
           <Table label="Top payees">
             <thead>
@@ -100,15 +106,23 @@ function AccountSpending({ context }: { context: AnalyticsContext }) {
 
   return (
     <Panel title="Spending by account" description="Which card or account paid">
-      <ul className="analytics-payees__accounts">
-        {rows.map(row => (
-          <li key={row.id ?? row.name} className="analytics-payees__account">
-            <AccountIcon account={accounts.data?.find(account => account.id === row.id)} />
-            <span className="analytics-payees__account-name">{row.name}</span>
-            <span className="analytics-payees__amount">{format(row.spentMinor)}</span>
-          </li>
-        ))}
-      </ul>
+      <QueryContent
+        pending={spending.isPending}
+        loading="Loading…"
+        empty={!rows.length && <EmptyState title="No spending in this period" />}
+      >
+        {() => (
+          <ul className="analytics-payees__accounts">
+            {rows.map(row => (
+              <li key={row.id ?? row.name} className="analytics-payees__account">
+                <AccountIcon account={accounts.data?.find(account => account.id === row.id)} />
+                <span className="analytics-payees__account-name">{row.name}</span>
+                <span className="analytics-payees__amount">{format(row.spentMinor)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </QueryContent>
     </Panel>
   );
 }

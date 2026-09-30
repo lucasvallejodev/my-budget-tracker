@@ -75,7 +75,7 @@ const BreakdownQueries: Record<keyof BreakdownItems, { by: string; split?: strin
 
 export const QueryKeys = {
   accounts: ['accounts'] as const,
-  balances: (months: number) => ['summary', 'balances', months] as const,
+  balances: (months: number, month?: string) => ['summary', 'balances', months, month] as const,
   breakdown: (kind: string, params: BreakdownParams) =>
     ['summary', 'breakdown', kind, params] as const,
   budgets: (month: string) => ['budgets', month] as const,
@@ -204,10 +204,10 @@ export function useCategoryBreakdown(month: string, currency: string) {
   });
 }
 
-export function useBalances(months: number) {
+export function useBalances(months: number, month?: string) {
   return useQuery({
-    queryFn: () => apiList<BalancePoint>('/reports/balances', { months: String(months) }),
-    queryKey: QueryKeys.balances(months),
+    queryFn: () => apiList<BalancePoint>('/reports/balances', { month, months: String(months) }),
+    queryKey: QueryKeys.balances(months, month),
   });
 }
 

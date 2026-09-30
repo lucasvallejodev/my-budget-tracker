@@ -19,6 +19,21 @@ describe('IconPicker', () => {
     );
   });
 
+  it('reads icon names as words and moves focus with the arrow keys', () => {
+    render(<IconPicker value="ShoppingCart" onChange={vi.fn()} />);
+
+    const current = screen.getByRole('option', { name: 'Shopping cart' });
+    const options = screen.getAllByRole('option');
+    const index = options.indexOf(current);
+
+    expect(current.getAttribute('tabindex')).toBe('0');
+    expect(options.filter(option => option.getAttribute('tabindex') === '0')).toHaveLength(1);
+
+    fireEvent.keyDown(current, { key: 'ArrowRight' });
+
+    expect(document.activeElement).toBe(options[index + 1]);
+  });
+
   it('says when nothing matches', () => {
     render(<IconPicker value="" onChange={vi.fn()} />);
     fireEvent.change(screen.getByLabelText('Search icons'), { target: { value: 'zzzz' } });

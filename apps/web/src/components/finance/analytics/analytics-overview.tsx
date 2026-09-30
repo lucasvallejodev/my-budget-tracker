@@ -6,7 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Button, ColorSwatch, Panel, QueryContent, Stat } from '@/components/ui';
+import { Button, ColorSwatch, EmptyState, Panel, QueryContent, Stat } from '@/components/ui';
 import { analyticsHref } from '@/lib/analytics-filters';
 import { getPercentage } from '@/lib/math';
 import { transactionsHref } from '@/lib/navigation';
@@ -14,7 +14,7 @@ import { cn } from '@/lib/styles';
 
 import { compareWith } from '../comparisons';
 import { MetricIcon } from '../metric-icon';
-import { SpendingBars } from '../spending-bars';
+import { groupSpendingSlices, hasSpendingIn, SpendingBars } from '../spending-bars';
 import { SpendingRanking } from '../spending-ranking';
 import { useBreakdown, useCashFlow } from '../use-finance-data';
 import { MonthlyBars } from './analytics-charts';
@@ -135,12 +135,19 @@ function BiggestChanges({ context }: { context: AnalyticsContext }) {
     ChangeRows
   );
 
+  const before = periodLabel(comparisonEnd(filters), filters.range);
+
+  const emptyTitle = hasSpendingIn(previous.data ?? [], currency)
+    ? !changes.length && 'Nothing to compare in these periods'
+    : `No spending in ${before} to compare with`;
+
   return (
-    <Panel
-      title="Biggest changes"
-      description={`By group against ${periodLabel(comparisonEnd(filters), filters.range)}`}
-    >
-      <QueryContent pending={current.isPending || previous.isPending} loading="Loading…">
+    <Panel title="Biggest changes" description={`By group against ${before}`}>
+      <QueryContent
+        pending={current.isPending || previous.isPending}
+        loading="Loading…"
+        empty={emptyTitle && <EmptyState title={emptyTitle} />}
+      >
         {() => (
           <ul className="analytics-overview__changes">
             {changes.map(change => (
@@ -177,6 +184,7 @@ function Rankings({ context }: { context: AnalyticsContext }) {
   };
 
   const groups = useBreakdown('group', params);
+  const previousGroups = useBreakdown('group', { ...params, month: comparisonEnd(filters) });
   const payees = useBreakdown('payee', params);
 
   return (
@@ -192,17 +200,15 @@ function Rankings({ context }: { context: AnalyticsContext }) {
         }
       >
         <SpendingBars
-          comparison={periodLabel(comparisonEnd(filters), filters.range)}
+          comparison={
+            hasSpendingIn(previousGroups.data ?? [], currency)
+              ? periodLabel(comparisonEnd(filters), filters.range)
+              : undefined
+          }
           format={format}
           month={filters.month}
           visible={RankedRows}
-          slices={(groups.data ?? [])
-            .filter(slice => slice.currency === currency)
-            .map(slice => ({
-              color: slice.color,
-              name: slice.groupName,
-              spentMinor: slice.spentMinor,
-            }))}
+          slices={groupSpendingSlices(groups.data ?? [], previousGroups.data ?? [], currency)}
         />
       </Panel>
       <SpendingRanking

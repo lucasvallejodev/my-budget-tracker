@@ -1,4 +1,4 @@
-import type { BalancePoint } from './use-finance-data';
+import type { AccountSummary, BalancePoint, Summary } from './use-finance-data';
 
 export type MonthTotal = {
   label: string;
@@ -27,4 +27,37 @@ export const netWorthByMonth = (balances: BalancePoint[], currency: string): Mon
       month,
       totalMinor,
     }));
+};
+
+export type NetWorthBucket = Summary['netWorth'][number];
+
+export const netWorthAt = (
+  balances: BalancePoint[],
+  accounts: AccountSummary[],
+  month: string
+): NetWorthBucket[] => {
+  const buckets = new Map<string, NetWorthBucket>();
+
+  for (const point of balances) {
+    if (point.month !== month) continue;
+
+    const liability =
+      accounts.find(account => account.id === point.accountId)?.classification === 'liability';
+
+    const bucket = buckets.get(point.currency) ?? {
+      assetsMinor: 0,
+      currency: point.currency,
+      liabilitiesMinor: 0,
+      netMinor: 0,
+    };
+
+    buckets.set(point.currency, {
+      ...bucket,
+      assetsMinor: bucket.assetsMinor + (liability ? 0 : point.balanceMinor),
+      liabilitiesMinor: bucket.liabilitiesMinor + (liability ? point.balanceMinor : 0),
+      netMinor: bucket.netMinor + point.balanceMinor,
+    });
+  }
+
+  return [...buckets.values()];
 };

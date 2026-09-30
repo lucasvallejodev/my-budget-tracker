@@ -24,9 +24,9 @@ describe('CashFlowChart', () => {
   it('renders the panel with its description and legend note', () => {
     render(<CashFlowChart description="Income vs spending · EUR" data={[]} />);
 
-    expect(screen.getByRole('heading', { name: 'Cash Flow' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Cash flow' })).toBeTruthy();
     expect(screen.getByText('Income vs spending · EUR')).toBeTruthy();
-    expect(screen.getByText('Green: income · Dashed: spending')).toBeTruthy();
+    expect(screen.getByText('Solid green line: income · Dashed line: spending')).toBeTruthy();
   });
 
   it('labels the value axis with the tick formatter', () => {

@@ -32,8 +32,8 @@ For example, `/analytics/spending?compare=year&month=2026-09&range=3` shows July
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Figures             | **Income**, **Spending**, **Kept** (income minus spending) and **Savings rate** (kept as a share of income) for the period, each compared with the comparison period; the change is green when it is good (income or kept up, spending down) |
 | Income and spending | income and spending per month as bars, over the period or at least the last six months; clicking a month opens the Overview for that single month                                                                                            |
-| Biggest changes     | spending per category group in the comparison period and in this period ("120.00 EUR → 180.00 EUR") with the difference, largest change first                                                                                                |
-| Top groups          | spending by group as labeled bars, with a link to the Spending page                                                                                                                                                                          |
+| Biggest changes     | spending per category group in the comparison period and in this period ("120.00 EUR → 180.00 EUR") with the difference, largest change first; "No spending in … to compare with" when the comparison period is empty                                                                                               |
+| Top groups          | spending by group as labeled bars with the change against the comparison period ("None in August" for a new group; no change shown when the comparison period had no spending), with a link to the Spending page                                                                                                                                                                          |
 | Top payees          | the five payees with the most spending, with a link to the Payees & accounts page                                                                                                                                                            |
 
 <!-- screenshot: Analytics Overview in EUR for one month with the four figures, income and spending bars, Biggest changes, Top groups and Top payees (docs/assets/screenshots/analytics-overview.png) -->
@@ -61,7 +61,7 @@ For example, `/analytics/spending?compare=year&month=2026-09&range=3` shows July
 
 | Block               | What it shows                                                                                                                                                           |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Top payees          | the fifteen payees with the most spending in the period, each with its avatar or logo, the number of transactions, the average per transaction, the total and the share |
+| Top payees          | the fifteen payees with the most spending in the period, each with its avatar or logo, the number of transactions, the average per transaction, the total and the share of all payee spending in the period|
 | Spending by account | how much of the period's spending went through each account, with the account type icon                                                                                 |
 | About payee logos   | a note: brand logos are bundled with CoinKeeper, so payee names never leave your server; other payees get their initials on a colour picked from the name               |
 

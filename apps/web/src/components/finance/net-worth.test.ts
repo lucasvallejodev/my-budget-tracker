@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { netWorthByMonth, shortMonthLabel } from './net-worth';
+import { netWorthAt, netWorthByMonth, shortMonthLabel } from './net-worth';
+import type { AccountSummary } from './use-finance-data';
 
 describe('net worth', () => {
   it('adds up month-end balances of one currency in month order', () => {
@@ -47,5 +48,45 @@ describe('net worth', () => {
       },
     ]);
     expect(shortMonthLabel('2026-01')).toBe('Jan');
+  });
+
+  it('totals the balances of one month-end per currency, split into assets and owed', () => {
+    const accounts = [
+      { classification: 'asset', id: 'checking' },
+      { classification: 'liability', id: 'card' },
+    ] as AccountSummary[];
+
+    const point = (accountId: string, month: string, balanceMinor: number, currency = 'EUR') => ({
+      accountId,
+      balanceMinor,
+      currency,
+      month,
+    });
+
+    expect(
+      netWorthAt(
+        [
+          point('checking', '2026-08', 5000),
+          point('card', '2026-08', -1200),
+          point('checking', '2026-09', 9000),
+          point('usd', '2026-08', 700, 'USD'),
+        ],
+        accounts,
+        '2026-08'
+      )
+    ).toEqual([
+      {
+        assetsMinor: 5000,
+        currency: 'EUR',
+        liabilitiesMinor: -1200,
+        netMinor: 3800,
+      },
+      {
+        assetsMinor: 700,
+        currency: 'USD',
+        liabilitiesMinor: 0,
+        netMinor: 700,
+      },
+    ]);
   });
 });

@@ -5,9 +5,11 @@ import './tab-bar.scss';
 import { House, LucideIcon, Menu, Plus, ReceiptText, Target } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { RefObject } from 'react';
 
 import { TransactionDialog } from '@/components/finance';
 import { isCurrentPath } from '@/lib/navigation';
+import { cn } from '@/lib/styles';
 
 type TabLink = {
   icon: LucideIcon;
@@ -50,8 +52,19 @@ function TabBarLink({ path, tab }: { path: string; tab: TabLink }) {
   );
 }
 
-export function TabBar({ onMore }: { onMore: () => void }) {
+const TabPaths = [...LeadingTabs, ...TrailingTabs].map(tab => tab.path);
+
+export function TabBar({
+  moreOpen,
+  moreRef,
+  onMore,
+}: {
+  moreOpen: boolean;
+  moreRef: RefObject<HTMLButtonElement | null>;
+  onMore: () => void;
+}) {
   const path = usePathname();
+  const underMore = !TabPaths.some(tabPath => isCurrentPath(path, tabPath));
 
   return (
     <nav className="tab-bar" aria-label="Quick navigation">
@@ -68,7 +81,14 @@ export function TabBar({ onMore }: { onMore: () => void }) {
       {TrailingTabs.map(tab => (
         <TabBarLink key={tab.path} path={path} tab={tab} />
       ))}
-      <button type="button" className="tab-bar__item" onClick={onMore}>
+      <button
+        ref={moreRef}
+        type="button"
+        className={cn('tab-bar__item', { 'tab-bar__item--current': underMore })}
+        aria-haspopup="dialog"
+        aria-expanded={moreOpen}
+        onClick={onMore}
+      >
         <Menu aria-hidden />
         More
       </button>

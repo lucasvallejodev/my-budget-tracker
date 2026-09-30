@@ -52,9 +52,12 @@
 
   &__figures {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: space(3);
     padding-top: space(4);
     border-top: border(divider);
+
+    @include media-up(phone-landscape) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 }

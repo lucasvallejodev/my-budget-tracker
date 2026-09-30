@@ -22,10 +22,10 @@ Each type has its own icon and colour (a bank for checking, a piggy bank for sav
 
 | Block               | What it shows                                                                                                                                                                                                                                         |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Net worth over time | net worth in the chosen currency today, a chart of month-end net worth and the change over the range in money and percent; **1M**, **3M**, **6M** and **12M** pick the range (6M by default)                                                          |
-| Account groups      | one collapsible group per type group (Cash & checking, Savings & investments, Credit cards, Loans, Other) with the number of accounts, the total per currency and the change this month                                                               |
+| Net worth over time | net worth in the chosen currency today, a chart of month-end net worth from the first month with data and the change over the range in money and percent (no percent when the range starts at zero); **1M**, **3M**, **6M** and **12M** pick the range (6M by default)                                                          |
+| Account groups      | one collapsible group per type group (Cash & checking, Savings & investments, Credit cards, Loans, Other) with the number of accounts, the total per currency and the change this month (for credit cards and loans, the change in what you owe: red when it grew, green when it fell)                                                              |
 | Account rows        | the type icon in a rounded square, the name, institution · currency · last four digits, a balance sparkline (hidden on phones) and the balance, with "owed" after credit cards and loans; the whole row opens the account                             |
-| Row actions         | **Pay card** on a credit card or loan you owe on: the new-transaction dialog as a transfer from one of your asset accounts for the amount owed; the row menu with **Open account**, **Edit account** and **Archive account** (or **Restore account**) |
+| Row actions         | **Pay card** (from a tablet up; in the row menu on phones) on a credit card or loan you owe on: the new-transaction dialog as a transfer from one of your asset accounts for the amount owed; the row menu with **Open account**, **Edit account** and **Archive account** (or **Restore account**) |
 | Summary             | assets and liabilities in the chosen currency as stacked bars by account type, with a legend; **Totals** and **Percent** switch the legend between amounts and shares                                                                                 |
 | By currency         | net worth per currency with the number of accounts; with converted totals on, the approximate total in your primary currency and the rates used                                                                                                       |
 
@@ -62,7 +62,7 @@ The app offers archiving only. The API can also delete an account (`DELETE /api/
 
 ### Read an account page
 
-The account page shows the balance (or amount owed), the number of transactions, the details panel and the full ledger for that account with filters and export. **Add transaction** opens the new-transaction dialog with this account selected. Liability accounts also show a **Pay card** button; see [Transfers and credit cards](transfers-and-credit-cards.md).
+The account page shows the balance (or amount owed), the number of transactions, the details panel and the full ledger for that account with filters and export. **Add transaction** opens the new-transaction dialog with this account selected. Liability accounts show **Amount owed** with a card icon and a **Pay card** button, which pays from an asset account in the same currency when there is one; see [Transfers and credit cards](transfers-and-credit-cards.md).
 
 <!-- screenshot: credit-card account page with "Amount owed" and the Pay card button (docs/assets/screenshots/accounts-card-detail.png) -->
 

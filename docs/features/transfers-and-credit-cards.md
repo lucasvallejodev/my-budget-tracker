@@ -24,7 +24,7 @@ A transfer is stored as two rows, one per account, with opposite signs and the s
 ### Pay a credit card or loan
 
 1. Open the card's account page. It shows **Amount owed** and a **Pay card** button whenever something is owed.
-2. Click **Pay card**. The transfer form opens with the card as destination, your first asset account as source and the owed amount pre-filled.
+2. Click **Pay card**. The transfer form opens with the card as destination, an asset account in the card's currency as source (any asset account when none matches) and the owed amount pre-filled.
 3. Adjust the source account, amount or date if needed and click **Record transfer**.
 
 <!-- screenshot: Pay card dialog pre-filled from a credit-card account page (docs/assets/screenshots/transfer-pay-card.png) -->

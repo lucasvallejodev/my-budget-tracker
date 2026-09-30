@@ -1,0 +1,11 @@
+@use 'abstracts' as *;
+
+.account-actions {
+  &__pay {
+    display: none;
+
+    @include media-up(tablet) {
+      display: inline-flex;
+    }
+  }
+}

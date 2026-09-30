@@ -38,6 +38,46 @@ describe('BudgetLine', () => {
     );
   });
 
+  it('names the status in words, not only by colour', () => {
+    const { rerender } = render(
+      <ul>
+        <BudgetLine figures={budgetFigures(groceries(30000), '2026-09-10')} format={format} />
+      </ul>
+    );
+
+    expect(screen.getByText('Spending too fast')).toBeTruthy();
+    expect(
+      screen.getByRole('progressbar', {
+        name: 'Groceries: 86% of the budget spent, spending too fast',
+      })
+    ).toBeTruthy();
+
+    rerender(
+      <ul>
+        <BudgetLine
+          figures={budgetFigures(groceries(30000), '2026-09-10')}
+          format={format}
+          showStatus={false}
+        />
+      </ul>
+    );
+
+    expect(screen.queryByText('Spending too fast')).toBeNull();
+
+    rerender(
+      <ul>
+        <BudgetLine
+          compact
+          figures={budgetFigures(groceries(30000), '2026-09-10')}
+          format={format}
+          showStatus={false}
+        />
+      </ul>
+    );
+
+    expect(screen.getByText('Spending too fast').className).toBe('budget-line__meta');
+  });
+
   it('offers edit, transactions and delete in the row menu', () => {
     const onEdit = vi.fn();
 

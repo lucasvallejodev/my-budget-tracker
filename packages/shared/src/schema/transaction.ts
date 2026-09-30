@@ -90,6 +90,7 @@ export type TransactionPatchValues = z.infer<typeof transactionPatchSchema>;
 export const transactionListQuerySchema = deletedQuerySchema.extend({
   accountId: z.uuid().optional(),
   categoryId: z.uuid().optional(),
+  currency: z.string().length(FieldLengths.currencyCode).optional(),
   cursor: z.string().max(CURSOR_MAX_LENGTH).optional(),
   from: isoDateSchema.optional(),
   kind: z.enum(TransactionKindValues).optional(),

@@ -3,6 +3,7 @@
 import {
   Bar,
   BarChart,
+  type BarRectangleItem,
   CartesianGrid,
   Legend,
   ResponsiveContainer,
@@ -36,6 +37,12 @@ export type StackSeries = {
   name: string;
 };
 
+const selectBar = (bar: BarRectangleItem, onSelect?: (month: string) => void) => {
+  const month = (bar.payload as MonthlyBar | undefined)?.month;
+
+  if (month) onSelect?.(month);
+};
+
 export function MonthlyBars({
   data,
   format,
@@ -50,17 +57,18 @@ export function MonthlyBars({
   onSelect?: (month: string) => void;
 }) {
   return (
-    <ChartFrame label={label}>
+    <ChartFrame
+      label={label}
+      data={{
+        columns: ['Month', 'Income', 'Spending'],
+        rows: data.map(row => ({
+          label: row.label,
+          values: [format(row.income), format(row.expense)],
+        })),
+      }}
+    >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          accessibilityLayer
-          onClick={state => {
-            const month = data[Number(state.activeTooltipIndex)]?.month;
-
-            if (month) onSelect?.(month);
-          }}
-        >
+        <BarChart data={data} accessibilityLayer={false}>
           <CartesianGrid vertical={false} stroke={ChartStyle.grid} />
           <XAxis dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
           <YAxis
@@ -75,6 +83,8 @@ export function MonthlyBars({
           <Bar
             name="Income"
             dataKey="income"
+            cursor={onSelect ? 'pointer' : undefined}
+            onClick={bar => selectBar(bar, onSelect)}
             fill={Colors.chart.income}
             radius={[BarRadius, BarRadius, 0, 0]}
             maxBarSize={MaxBarSize}
@@ -82,6 +92,8 @@ export function MonthlyBars({
           <Bar
             name="Spending"
             dataKey="expense"
+            cursor={onSelect ? 'pointer' : undefined}
+            onClick={bar => selectBar(bar, onSelect)}
             fill={Colors.chart.expense}
             radius={[BarRadius, BarRadius, 0, 0]}
             maxBarSize={MaxBarSize}
@@ -106,9 +118,18 @@ export function StackedGroups({
   series: StackSeries[];
 }) {
   return (
-    <ChartFrame label={label}>
+    <ChartFrame
+      label={label}
+      data={{
+        columns: ['Month', ...series.map(item => item.name)],
+        rows: data.map(row => ({
+          label: String(row.label),
+          values: series.map(item => format(Number(row[item.key] ?? 0))),
+        })),
+      }}
+    >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} accessibilityLayer>
+        <BarChart data={data} accessibilityLayer={false}>
           <CartesianGrid vertical={false} stroke={ChartStyle.grid} />
           <XAxis dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
           <YAxis

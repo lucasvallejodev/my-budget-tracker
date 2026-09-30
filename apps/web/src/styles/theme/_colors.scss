@@ -66,6 +66,7 @@ $color-metric-kept: $color-brand;
 $color-metric-rate: $color-account-savings;
 $color-metric-budgeted: $color-info;
 $color-metric-net-worth: $color-account-checking;
+$color-metric-owed: $color-account-credit-card;
 $color-metric-total: $color-text-muted;
 
 $colors: (
@@ -90,6 +91,7 @@ $colors: (
   'metric-income': $color-metric-income,
   'metric-kept': $color-metric-kept,
   'metric-net-worth': $color-metric-net-worth,
+  'metric-owed': $color-metric-owed,
   'metric-rate': $color-metric-rate,
   'metric-spending': $color-metric-spending,
   'metric-total': $color-metric-total,

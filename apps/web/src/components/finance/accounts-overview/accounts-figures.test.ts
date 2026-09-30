@@ -100,6 +100,21 @@ describe('accounts figures', () => {
     expect(seriesForRange(series, 12)).toHaveLength(3);
     expect(rangeChange(series, 9000)).toEqual({ changeMinor: 3000, percent: 50 });
     expect(rangeChange([], 9000)).toEqual({ changeMinor: 0, percent: 0 });
+    expect(
+      rangeChange(
+        [
+          {
+            label: 'Aug',
+            month: '2026-08',
+            totalMinor: 0,
+          },
+        ],
+        9000
+      )
+    ).toEqual({
+      changeMinor: 9000,
+      percent: null,
+    });
   });
 
   it('measures the change since last month-end per account', () => {
@@ -133,6 +148,7 @@ describe('accounts figures', () => {
     expect(groups[0].accounts).toHaveLength(3);
     expect(groups[0].changes[0]).toEqual({ amountMinor: 2000, currency: 'EUR' });
     expect(groups[2].liability).toBe(true);
+    expect(groups[2].changes).toEqual([{ amountMinor: 2000, currency: 'EUR' }]);
   });
 
   it('splits assets and liabilities by account type', () => {

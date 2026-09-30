@@ -11,6 +11,7 @@ import { Amount, Button, EmptyState, Grid, Page, PageHeading, Panel, Text } from
 import { accountTypeLabel } from '@/constants/account';
 import { formatMoney, minorToDecimalString } from '@coinkeeper/shared/lib/money';
 
+import { paymentAccountFor } from '../accounts-overview';
 import { CreateAccountDialog } from '../create-account-dialog';
 import { MetricCard } from '../metric-card';
 import { TransactionDialog } from '../transaction-dialog';
@@ -60,10 +61,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
   const isLiability = account.classification === 'liability';
   const owed = -account.balanceMinor;
 
-  const checking = accounts.data?.find(
-    candidate =>
-      candidate.classification === 'asset' && !candidate.archivedAt && candidate.id !== account.id
-  );
+  const paymentAccountId = paymentAccountFor(account, accounts.data ?? []);
 
   return (
     <Page>
@@ -104,7 +102,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
       />
       <Grid>
         <MetricCard
-          kind="netWorth"
+          kind={isLiability ? 'owed' : 'netWorth'}
           label={isLiability ? 'Amount owed' : 'Balance'}
           value={formatMoney(isLiability ? owed : account.balanceMinor, account.currency)}
           detail={`${account.transactionCount} transaction${account.transactionCount === 1 ? '' : 's'}`}
@@ -141,7 +139,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
           onOpenChange={setPaying}
           preset={{
             amountFrom: minorToDecimalString(owed, account.currency),
-            fromAccountId: checking?.id ?? '',
+            fromAccountId: paymentAccountId ?? '',
             memo: `Payment to ${account.name}`,
             mode: 'transfer',
             toAccountId: account.id,

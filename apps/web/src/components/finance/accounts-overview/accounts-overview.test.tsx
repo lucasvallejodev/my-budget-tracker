@@ -170,7 +170,7 @@ describe('AccountsOverview', () => {
     renderOverview();
 
     expect(
-      screen.getByRole('img', { name: 'Net worth in EUR over the last 6 months' })
+      screen.getByRole('img', { name: 'Net worth in EUR over the last 2 months' })
     ).toBeTruthy();
     expect(screen.getByText(`${euros(1000)} (17%)`)).toBeTruthy();
 

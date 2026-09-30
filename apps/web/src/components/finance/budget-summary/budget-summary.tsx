@@ -2,7 +2,7 @@ import './budget-summary.scss';
 
 import { Check, Target, TrendingUp } from 'lucide-react';
 
-import { Badge, ColorSwatch, ProgressBar, Stat } from '@/components/ui';
+import { Badge, type BadgeTone, ColorSwatch, ProgressBar, Stat } from '@/components/ui';
 import { getPercentage } from '@/lib/math';
 import { budgetPace } from '@coinkeeper/shared/lib/budget-pace';
 import { calendarPeriod, periodProgress } from '@coinkeeper/shared/lib/periods';
@@ -38,6 +38,20 @@ export const monthTotals = (figures: BudgetFigures[], month: string, today: stri
     spentMinor,
     state: budgetState(spentMinor, limitMinor, pace.tooFast),
   };
+};
+
+export const summaryTag = (
+  totals: ReturnType<typeof monthTotals>,
+  figures: BudgetFigures[]
+): { label: string; tone: BadgeTone } => {
+  const overCount = figures.filter(item => item.state === 'over').length;
+
+  if (totals.state === 'over') return { label: BudgetStates.over.label, tone: 'danger' };
+  if (overCount) return { label: `${overCount} over budget`, tone: 'warning' };
+  if (!totals.pace.isCurrent) return { label: 'Within budget', tone: 'success' };
+  if (totals.state === 'fast') return { label: BudgetStates.fast.label, tone: 'warning' };
+
+  return { label: 'On pace', tone: 'success' };
 };
 
 const leftMeta = (totals: ReturnType<typeof monthTotals>, format: Format) => {
@@ -107,6 +121,7 @@ export function BudgetSummary({
   const totals = monthTotals(figures, month, today);
   const { limitMinor, pace, period, progress, spentMinor } = totals;
   const status = BudgetStates[totals.state];
+  const tag = summaryTag(totals, figures);
   const monthName = monthLabel(month).split(' ')[0];
   const endLabel = dayMonthLabel(period.to);
 
@@ -117,11 +132,8 @@ export function BudgetSummary({
         <div className="budget-summary__hero">
           <span className="budget-summary__hero-value">{format(limitMinor - spentMinor)}</span>
           <span className="budget-summary__hero-total">of {format(limitMinor)}</span>
-          <Badge
-            tone={status.tone}
-            icon={totals.state === 'ok' ? <Check aria-hidden /> : undefined}
-          >
-            {totals.state === 'ok' ? 'On pace' : status.label}
+          <Badge tone={tag.tone} icon={tag.tone === 'success' ? <Check aria-hidden /> : undefined}>
+            {tag.label}
           </Badge>
         </div>
         <ProgressBar

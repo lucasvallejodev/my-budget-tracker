@@ -111,7 +111,7 @@ describe('TransactionTable', () => {
     expect(screen.getByRole('heading', { name: /28 Sep/ })).toBeTruthy();
     expect(screen.getByRole('heading', { name: /27 Sep/ })).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: 'Category for MKTPLACE*7731: Choose category' })
+      screen.getByRole('button', { name: 'Category for MKTPLACE*7731: Categorize' })
     ).toBeTruthy();
   });
 });

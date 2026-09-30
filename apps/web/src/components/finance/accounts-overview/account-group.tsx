@@ -19,7 +19,7 @@ import {
   paymentAccountFor,
 } from './accounts-figures';
 
-function GroupChange({ changes }: { changes: CurrencyAmount[] }) {
+function GroupChange({ changes, liability }: { changes: CurrencyAmount[]; liability: boolean }) {
   const moved = changes.filter(change => change.amountMinor);
 
   if (!moved.length) return <>No change this month</>;
@@ -31,7 +31,9 @@ function GroupChange({ changes }: { changes: CurrencyAmount[] }) {
           {index ? ', ' : ''}
           <span
             className={cn('account-group__change', {
-              'account-group__change--down': change.amountMinor < 0,
+              'account-group__change--down': liability
+                ? change.amountMinor > 0
+                : change.amountMinor < 0,
             })}
           >
             {formatMoney(change.amountMinor, change.currency, { signDisplay: 'exceptZero' })}
@@ -89,7 +91,8 @@ export function AccountGroup({
           </button>
         </h2>
         <p className="account-group__meta">
-          {countLabel(group.accounts.length, 'account')} · <GroupChange changes={group.changes} />
+          {countLabel(group.accounts.length, 'account')} ·{' '}
+          <GroupChange changes={group.changes} liability={group.liability} />
         </p>
         <GroupTotals liability={group.liability} totals={group.totals} />
       </header>

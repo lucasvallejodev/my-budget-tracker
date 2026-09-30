@@ -4,7 +4,7 @@ import './review-inbox.scss';
 
 import { useMutation } from '@tanstack/react-query';
 import { Check, Sparkles, Undo2 } from 'lucide-react';
-import { KeyboardEvent, useMemo, useState } from 'react';
+import { KeyboardEvent, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { categorizeTransaction, reopenReview } from '@/api/mutations';
@@ -78,6 +78,77 @@ const focusSibling = (row: HTMLElement, direction: 'next' | 'previous') => {
   if (sibling instanceof HTMLElement) sibling.focus();
 };
 
+const handleRowKey = (
+  event: KeyboardEvent<HTMLLIElement>,
+  actions: { confirm: () => void; openCategory: () => void }
+) => {
+  if (event.target !== event.currentTarget) return;
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    focusSibling(event.currentTarget, event.key === 'ArrowDown' ? 'next' : 'previous');
+  } else if (event.key.toLowerCase() === CategoryShortcut) {
+    event.preventDefault();
+    actions.openCategory();
+  } else if (event.key === 'Enter') {
+    actions.confirm();
+  }
+};
+
+function useRowFocus(onDecide: (decision: Decision) => void) {
+  const rowRef = useRef<HTMLLIElement>(null);
+  const openedFromRow = useRef(false);
+  const decided = useRef(false);
+
+  const restoreFocus = () => {
+    const row = rowRef.current;
+    const target = decided.current ? (row?.nextElementSibling ?? row?.previousElementSibling) : row;
+
+    if (target instanceof HTMLElement) target.focus();
+  };
+
+  return {
+    closeAutoFocus: (event: Event) => {
+      if (!openedFromRow.current) return;
+
+      openedFromRow.current = false;
+      event.preventDefault();
+      restoreFocus();
+    },
+    decide: (decision: Decision) => {
+      decided.current = true;
+      onDecide(decision);
+    },
+    openFromRow: () => {
+      openedFromRow.current = true;
+    },
+    restoreFocus,
+    rowRef,
+  };
+}
+
+function ReviewAction({
+  onConfirm,
+  suggested,
+  title,
+}: {
+  onConfirm: () => void;
+  suggested: boolean;
+  title: string;
+}) {
+  return (
+    <Button
+      className="review-inbox__action"
+      size="sm"
+      variant={suggested ? 'default' : 'outline'}
+      aria-label={`${suggested ? 'Accept' : 'Mark as reviewed'}: ${title}`}
+      onClick={onConfirm}
+    >
+      <Check aria-hidden /> {suggested ? 'Accept' : 'Done'}
+    </Button>
+  );
+}
+
 function ReviewRow({
   currentYear,
   onDecide,
@@ -95,30 +166,35 @@ function ReviewRow({
 }) {
   const title = describeTransaction(transaction);
   const suggested = suggestion?.categoryId;
+  const { closeAutoFocus, decide, openFromRow, restoreFocus, rowRef } = useRowFocus(onDecide);
 
   const confirm = () =>
-    onDecide({
+    decide({
       categoryId: suggested ?? transaction.categoryId,
       row: transaction,
       source: suggestion?.source ?? 'manual',
     });
 
-  const onKeyDown = (event: KeyboardEvent<HTMLLIElement>) => {
-    if (event.target !== event.currentTarget) return;
-
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      event.preventDefault();
-      focusSibling(event.currentTarget, event.key === 'ArrowDown' ? 'next' : 'previous');
-    } else if (event.key.toLowerCase() === CategoryShortcut) {
-      event.preventDefault();
-      onOpenChange(true);
-    } else if (event.key === 'Enter') {
-      confirm();
-    }
-  };
+  const onKeyDown = (event: KeyboardEvent<HTMLLIElement>) =>
+    handleRowKey(event, {
+      confirm: () => {
+        confirm();
+        restoreFocus();
+      },
+      openCategory: () => {
+        openFromRow();
+        onOpenChange(true);
+      },
+    });
 
   return (
-    <li className="review-inbox__row" tabIndex={0} aria-label={title} onKeyDown={onKeyDown}>
+    <li
+      ref={rowRef}
+      className="review-inbox__row"
+      tabIndex={0}
+      aria-label={title}
+      onKeyDown={onKeyDown}
+    >
       <PayeeAvatar name={title} icon={transaction.payeeIcon} color={transaction.payeeColor} />
       <div className="review-inbox__text">
         <span className="review-inbox__title">{title}</span>
@@ -132,8 +208,9 @@ function ReviewRow({
           suggestedId={suggested}
           open={open}
           onOpenChange={onOpenChange}
+          onCloseAutoFocus={closeAutoFocus}
           onChange={categoryId =>
-            onDecide({
+            decide({
               categoryId: categoryId ?? null,
               row: transaction,
               source: 'manual',
@@ -149,15 +226,7 @@ function ReviewRow({
       <span className="review-inbox__amount">
         <Amount amountMinor={transaction.amountMinor} currency={transaction.currency} signed />
       </span>
-      <Button
-        className="review-inbox__action"
-        size="sm"
-        variant={suggested ? 'default' : 'outline'}
-        aria-label={`${suggested ? 'Accept' : 'Mark as reviewed'}: ${title}`}
-        onClick={confirm}
-      >
-        <Check aria-hidden /> {suggested ? 'Accept' : 'Done'}
-      </Button>
+      <ReviewAction suggested={!!suggested} title={title} onConfirm={confirm} />
     </li>
   );
 }

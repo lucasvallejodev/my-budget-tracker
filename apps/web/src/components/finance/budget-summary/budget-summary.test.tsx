@@ -5,7 +5,7 @@ import { formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { budgetFigures } from '../budget-status';
 import type { BudgetRow } from '../use-finance-data';
-import { BudgetSummary, monthTotals } from './budget-summary';
+import { BudgetSummary, monthTotals, summaryTag } from './budget-summary';
 
 afterEach(cleanup);
 
@@ -44,6 +44,27 @@ describe('BudgetSummary', () => {
     expect(screen.getByText('Over budget').previousElementSibling?.textContent).toBe('1');
     expect(screen.getByText('Spending too fast').previousElementSibling?.textContent).toBe('1');
     expect(screen.getByText('On track').previousElementSibling?.textContent).toBe('1');
+  });
+
+  it('tags the month with the worst news first', () => {
+    const onTrack = [budgetFigures(row(100, 35000), Today)];
+
+    expect(summaryTag(monthTotals(figures, '2026-09', Today), figures)).toEqual({
+      label: '1 over budget',
+      tone: 'warning',
+    });
+    expect(summaryTag(monthTotals(onTrack, '2026-09', Today), onTrack).label).toBe('On pace');
+
+    const over = [budgetFigures(row(900, 500), Today)];
+
+    expect(summaryTag(monthTotals(over, '2026-09', Today), over).label).toBe('Over budget');
+
+    const closed = [budgetFigures(row(100, 500), '2026-10-05')];
+
+    expect(summaryTag(monthTotals(closed, '2026-09', '2026-10-05'), closed)).toEqual({
+      label: 'Within budget',
+      tone: 'success',
+    });
   });
 
   it('closes a past month without a projection', () => {

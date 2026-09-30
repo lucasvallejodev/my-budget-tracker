@@ -11,7 +11,7 @@ A transaction is flagged `needs_review` when it is:
 - left behind when its category was archived without a replacement;
 - migrated from the legacy schema, whose categories no longer exist.
 
-Home shows a notice with the count and a link; the **Review** entry in the sidebar shows the same count as a badge.
+Home shows a notice with the count and a link; the **Review** entry in the sidebar shows the same count as a badge (read as "2 to review" by screen readers).
 
 <!-- screenshot: Home notice "3 transactions need a category" above the metric cards (docs/assets/screenshots/review-dashboard-notice.png) -->
 

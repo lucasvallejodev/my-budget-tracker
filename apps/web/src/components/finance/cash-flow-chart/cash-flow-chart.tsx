@@ -44,10 +44,19 @@ export function CashFlowChart({
   const id = useId().replace(Patterns.reactIdColon, '');
 
   return (
-    <Panel title="Cash Flow" description={description} action={action}>
-      <ChartFrame>
+    <Panel title="Cash flow" description={description} action={action}>
+      <ChartFrame
+        label="Income and spending per month"
+        data={{
+          columns: ['Month', 'Income', 'Spending'],
+          rows: data.map(point => ({
+            label: point.label,
+            values: [format(point.income), format(point.expense)],
+          })),
+        }}
+      >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} accessibilityLayer>
+          <AreaChart data={data} accessibilityLayer={false}>
             <defs>
               <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={Colors.chart.income} stopOpacity={IncomeFillOpacity} />
@@ -74,7 +83,7 @@ export function CashFlowChart({
             />
             <Area
               type="monotone"
-              name="Expenses"
+              name="Spending"
               dataKey="expense"
               stroke={Colors.chart.expense}
               strokeDasharray="5 5"
@@ -83,7 +92,7 @@ export function CashFlowChart({
           </AreaChart>
         </ResponsiveContainer>
       </ChartFrame>
-      <Text tone="muted">Green: income · Dashed: spending</Text>
+      <Text tone="muted">Solid green line: income · Dashed line: spending</Text>
     </Panel>
   );
 }

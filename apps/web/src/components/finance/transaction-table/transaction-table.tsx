@@ -87,6 +87,7 @@ function CategoryCell({
     return (
       <CategoryPicker
         variant="chip"
+        placeholder="Categorize"
         label={`Category for ${describeTransaction(transaction)}`}
         kind={transaction.amountMinor < 0 ? 'expense' : 'income'}
         onChange={onCategorize}
@@ -104,6 +105,30 @@ function CategoryCell({
   );
 }
 
+function RowMeta({
+  showAccount,
+  transaction,
+}: {
+  showAccount: boolean;
+  transaction: ListedTransaction;
+}) {
+  const detail = secondLine(transaction);
+
+  if (!detail && !showAccount) return null;
+
+  return (
+    <span className="transaction-table__meta">
+      {showAccount && (
+        <span className="transaction-table__compact-account">
+          {transaction.accountName}
+          {detail && ' · '}
+        </span>
+      )}
+      {detail}
+    </span>
+  );
+}
+
 function TransactionListRow({
   onCategorize,
   showAccount,
@@ -115,7 +140,6 @@ function TransactionListRow({
   showActions: boolean;
   transaction: ListedTransaction;
 }) {
-  const detail = secondLine(transaction);
   const isTransfer = transaction.kind === 'transfer';
 
   return (
@@ -125,7 +149,7 @@ function TransactionListRow({
         <span className="transaction-table__title">
           {isTransfer ? transferTitle(transaction) : describeTransaction(transaction)}
         </span>
-        {detail && <span className="transaction-table__meta">{detail}</span>}
+        <RowMeta showAccount={showAccount && !isTransfer} transaction={transaction} />
       </div>
       <div className="transaction-table__category">
         <CategoryCell

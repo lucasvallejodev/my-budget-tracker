@@ -1480,7 +1480,7 @@ describe('review suggestions', () => {
 });
 
 describe('month-end balances and breakdown ranges', () => {
-  it('accumulates the ledger month by month for live accounts of the owner', async () => {
+  it("accumulates the ledger month by month from each live account's first activity", async () => {
     const checking = await services.accounts.create(owner, {
       currency: 'EUR',
       name: 'Checking',
@@ -1555,24 +1555,6 @@ describe('month-end balances and breakdown ranges', () => {
         balanceMinor: 98000,
         currency: 'EUR',
         month: '2026-09',
-      },
-      {
-        accountId: card.id,
-        balanceMinor: 0,
-        currency: 'EUR',
-        month: '2026-06',
-      },
-      {
-        accountId: card.id,
-        balanceMinor: 0,
-        currency: 'EUR',
-        month: '2026-07',
-      },
-      {
-        accountId: card.id,
-        balanceMinor: 0,
-        currency: 'EUR',
-        month: '2026-08',
       },
       {
         accountId: card.id,

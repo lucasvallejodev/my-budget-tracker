@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { QueryKeys } from '@/components/finance';
@@ -74,7 +74,7 @@ describe('ApplicationShell', () => {
     expect(screen.getByRole('button', { name: 'New transaction' })).toBeTruthy();
   });
 
-  it('offers a bottom tab bar whose More button opens the navigation drawer', () => {
+  it('offers a bottom tab bar whose More button opens the navigation drawer', async () => {
     renderShell();
 
     const tabs = within(screen.getByRole('navigation', { name: 'Quick navigation' }));
@@ -82,8 +82,28 @@ describe('ApplicationShell', () => {
     expect(tabs.getByRole('link', { name: 'Activity' }).getAttribute('href')).toBe('/transactions');
     expect(tabs.getByRole('button', { name: 'Add transaction' })).toBeTruthy();
 
-    fireEvent.click(tabs.getByRole('button', { name: 'More' }));
+    const more = tabs.getByRole('button', { name: 'More' });
 
-    expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeTruthy();
+    expect(more.className).toContain('tab-bar__item--current');
+    expect(more.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.click(more);
+
+    const drawer = screen.getByRole('dialog', { name: 'Navigation' });
+
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    await waitFor(() =>
+      expect(document.activeElement).toBe(within(drawer).getByRole('link', { name: 'Accounts' }))
+    );
+
+    fireEvent.keyDown(drawer, { key: 'Escape' });
+
+    await waitFor(() => expect(document.activeElement).toBe(more));
+  });
+
+  it('reads the review count as words', () => {
+    renderShell();
+
+    expect(mainNavigation().getByRole('link', { name: 'Review, 2 to review' })).toBeTruthy();
   });
 });

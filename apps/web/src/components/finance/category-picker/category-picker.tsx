@@ -39,6 +39,7 @@ type CategoryPickerProps = Omit<
   kind?: 'income' | 'expense';
   label?: string;
   onChange: (categoryId: string | undefined) => void;
+  onCloseAutoFocus?: (event: Event) => void;
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
   placeholder?: string;

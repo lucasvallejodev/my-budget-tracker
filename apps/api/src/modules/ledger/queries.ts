@@ -100,6 +100,7 @@ const buildListWhere = (userId: string, filters: ListFilters): SQL | undefined =
 
   if (filters.accountId) conditions.push(eq(transactions.accountId, filters.accountId));
   if (filters.categoryId) conditions.push(eq(transactions.categoryId, filters.categoryId));
+  if (filters.currency) conditions.push(eq(transactions.currency, filters.currency));
   if (filters.needsReview) conditions.push(eq(transactions.needsReview, true));
   if (filters.kind) conditions.push(eq(transactions.kind, filters.kind));
   if (filters.ids) conditions.push(inArray(transactions.id, filters.ids));

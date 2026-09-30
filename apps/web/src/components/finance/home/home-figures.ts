@@ -1,6 +1,5 @@
 import type { AttentionItem } from '../attention-strip';
 import type { BudgetFigures } from '../budget-status';
-import type { SpendingSlice } from '../spending-bars';
 import type { Summary } from '../use-finance-data';
 
 type Format = (value: number) => string;
@@ -65,22 +64,6 @@ export const attentionItems = (
   ),
   ...fastItems(figures.filter(item => item.state === 'fast')),
 ];
-
-export const spendingSlices = (
-  summary: Summary,
-  previous: Summary | undefined,
-  currency: string
-): SpendingSlice[] =>
-  summary.breakdown
-    .filter(slice => slice.currency === currency)
-    .map(slice => ({
-      color: slice.color,
-      name: slice.groupName,
-      previousMinor: previous?.breakdown.find(
-        candidate => candidate.currency === currency && candidate.groupName === slice.groupName
-      )?.spentMinor,
-      spentMinor: slice.spentMinor,
-    }));
 
 export const heroTotals = (
   summary: Summary,

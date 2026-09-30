@@ -23,7 +23,7 @@ A limit for one category, one month and one currency. Spending against it is wha
 
 The card adds up every budget of the chosen currency and month:
 
-- **Left to spend in September** (the month shown): what is left of all limits, "of" the total budgeted, and a status tag: **On pace**, **Spending too fast** or **Over budget** (the same rules as a single budget, applied to the totals).
+- **Left to spend in September** (the month shown): what is left of all limits, "of" the total budgeted, and a status tag with the most important news first: **Over budget** when the totals are over, **2 over budget** (in amber) when the totals are fine but some budgets are over, **Within budget** for a finished month, then **Spending too fast** or **On pace** from the totals' pace.
 - One bar for the month, colored by that status. In the current month a marker labeled "Today · 18 of 30 days" shows where spending would be at an even pace.
 - Four figures:
 
@@ -38,7 +38,7 @@ The card adds up every budget of the chosen currency and month:
 
 ## Category budgets
 
-Each budget is a compact row: the category icon, its name and group, a bar colored by status with the pace marker in the current month, "spent of limit · %", then "12.00 EUR left" or "12.00 EUR over" (in red) and, in the current month, the daily allowance ("7.69 EUR a day", or "Nothing left this month").
+Each budget is a compact row: the category icon, its name and group, a bar colored by status with the pace marker in the current month (outside the **By status** order, a **Spending too fast** or **Over budget** badge under the name says the status in words too), "spent of limit · %", then "12.00 EUR left" or "12.00 EUR over" (in red) and, in the current month, the daily allowance ("7.69 EUR a day", or "Nothing left this month").
 
 A segmented control orders the rows:
 

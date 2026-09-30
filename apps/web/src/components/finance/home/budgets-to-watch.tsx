@@ -32,7 +32,13 @@ export function BudgetsToWatch({
     >
       <ul className="budgets-to-watch__list">
         {watch.map(item => (
-          <BudgetLine key={item.budget.id} compact figures={item} format={format} />
+          <BudgetLine
+            key={item.budget.id}
+            compact
+            figures={item}
+            format={format}
+            showStatus={false}
+          />
         ))}
       </ul>
       {fine.length > 0 && (

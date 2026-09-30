@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 import {
   Avatar,
+  Badge,
   Button,
   Icon,
   Menu,
@@ -20,7 +21,7 @@ import { transactionsHref } from '@/lib/navigation';
 import { cn } from '@/lib/styles';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
 
-import { type BudgetFigures, BudgetStates } from '../budget-status';
+import { type BudgetFigures, type BudgetState, BudgetStates } from '../budget-status';
 
 type Format = (value: number) => string;
 
@@ -34,23 +35,79 @@ export const allowanceLabel = ({ leftMinor, pace }: BudgetFigures, format: Forma
   return `${format(pace.perDayLeftMinor)} a day`;
 };
 
+const rowNote = (figures: BudgetFigures, format: Format, compact: boolean) =>
+  compact && figures.state !== 'ok'
+    ? BudgetStates[figures.state].label
+    : allowanceLabel(figures, format);
+
+function StatusBadge({ state }: { state: BudgetState }) {
+  if (state === 'ok') return null;
+
+  const { icon: StatusIcon, label, tone } = BudgetStates[state];
+
+  return (
+    <span className="budget-line__status">
+      <Badge tone={tone} icon={<StatusIcon aria-hidden />}>
+        {label}
+      </Badge>
+    </span>
+  );
+}
+
+function BudgetLineMenu({
+  categoryName,
+  href,
+  onDelete,
+  onEdit,
+}: {
+  categoryName: string;
+  href: string;
+  onDelete: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <Menu>
+      <MenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="budget-line__menu"
+          aria-label={`Actions for the ${categoryName} budget`}
+        >
+          <Ellipsis />
+        </Button>
+      </MenuTrigger>
+      <MenuContent align="end">
+        <MenuItem onSelect={onEdit}>Edit budget</MenuItem>
+        <MenuItem asChild>
+          <Link href={href}>View transactions</Link>
+        </MenuItem>
+        <MenuItem onSelect={onDelete}>Delete budget</MenuItem>
+      </MenuContent>
+    </Menu>
+  );
+}
+
 export function BudgetLine({
   compact = false,
   figures,
   format,
   onDelete,
   onEdit,
+  showStatus = true,
 }: {
   compact?: boolean;
   figures: BudgetFigures;
   format: Format;
   onDelete?: () => void;
   onEdit?: () => void;
+  showStatus?: boolean;
 }) {
   const { budget, pace, state } = figures;
   const month = budget.month.slice(0, ISO_MONTH_LENGTH);
   const href = transactionsHref(budget.categoryName, month);
   const percent = getPercentage(budget.spentMinor, budget.amountMinor);
+  const status = BudgetStates[state];
 
   return (
     <li className={cn('budget-line', { 'budget-line--compact': compact })}>
@@ -62,14 +119,15 @@ export function BudgetLine({
           {budget.categoryName}
         </Link>
         {!compact && <span className="budget-line__meta">{budget.groupName}</span>}
+        {showStatus && <StatusBadge state={state} />}
       </div>
       <div className="budget-line__progress">
         <ProgressBar
-          label={`${budget.categoryName}: ${percent}% of the budget spent`}
+          label={`${budget.categoryName}: ${percent}% of the budget spent, ${status.label.toLowerCase()}`}
           max={budget.amountMinor || 1}
           value={Math.min(budget.spentMinor, budget.amountMinor)}
           marker={pace.isCurrent ? pace.expectedMinor : undefined}
-          tone={BudgetStates[state].progress}
+          tone={status.progress}
         />
         <span className="budget-line__meta">
           {format(budget.spentMinor)} of {format(budget.amountMinor)} · {percent}%
@@ -81,28 +139,15 @@ export function BudgetLine({
         >
           {leftLabel(figures, format)}
         </span>
-        <span className="budget-line__meta">{allowanceLabel(figures, format)}</span>
+        <span className="budget-line__meta">{rowNote(figures, format, compact)}</span>
       </div>
       {onEdit && onDelete && (
-        <Menu>
-          <MenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="budget-line__menu"
-              aria-label={`Actions for the ${budget.categoryName} budget`}
-            >
-              <Ellipsis />
-            </Button>
-          </MenuTrigger>
-          <MenuContent align="end">
-            <MenuItem onSelect={onEdit}>Edit budget</MenuItem>
-            <MenuItem asChild>
-              <Link href={href}>View transactions</Link>
-            </MenuItem>
-            <MenuItem onSelect={onDelete}>Delete budget</MenuItem>
-          </MenuContent>
-        </Menu>
+        <BudgetLineMenu
+          categoryName={budget.categoryName}
+          href={href}
+          onDelete={onDelete}
+          onEdit={onEdit}
+        />
       )}
     </li>
   );

@@ -17,6 +17,7 @@ export const Patterns = {
   emoji:
     /^(?:\p{Regional_Indicator}{2}|[\p{Extended_Pictographic}\p{Emoji_Presentation}][\uFE0F\p{Emoji_Modifier}\u{E0020}-\u{E007F}]*(?:\u200D[\p{Extended_Pictographic}\p{Emoji_Presentation}][\uFE0F\p{Emoji_Modifier}]?)*)$/u,
   hexColor: /^#[0-9a-fA-F]{6}$/,
+  identifierWordStart: /(?<=[a-z])(?=[A-Z0-9])/g,
   isoDate: /^\d{4}-\d{2}-\d{2}$/,
   isoMonth: /^\d{4}-\d{2}$/,
   lineBreak: /\r?\n/,

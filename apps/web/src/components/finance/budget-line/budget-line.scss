@@ -41,6 +41,11 @@
     min-width: 0;
   }
 
+  &__status {
+    display: flex;
+    margin-top: space(1);
+  }
+
   &__title {
     @include truncate;
 

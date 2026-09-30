@@ -42,6 +42,23 @@ describe('Finance controls', () => {
     chooseOption('Type', 'Expense');
     expect(screen.getByText('No transactions found')).toBeTruthy();
   });
+  it('filters by account and counts the filters in use for the phone toggle', () => {
+    renderExplorer();
+
+    const total = screen.getByRole('status').textContent;
+    const toggle = screen.getByRole('button', { name: 'Filters' });
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.click(toggle);
+    chooseOption('Account', 'Demo checking');
+
+    expect(screen.getByRole('button', { name: 'Filters (1)' }).getAttribute('aria-expanded')).toBe(
+      'true'
+    );
+    expect(screen.getByRole('status').textContent).toBe(total);
+  });
+
   it('finds transactions by their category group', () => {
     renderExplorer();
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Food & Dining' } });

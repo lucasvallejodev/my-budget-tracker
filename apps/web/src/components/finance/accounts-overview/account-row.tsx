@@ -51,7 +51,7 @@ export function AccountRow({
         </span>
         <span className="account-row__balance">
           {formatMoney(displayedBalance(account, account.balanceMinor), account.currency)}
-          {isLiability(account) && <span className="account-row__owed">owed</span>}
+          {isLiability(account) && <span className="account-row__owed"> owed</span>}
         </span>
       </Link>
       <div className="account-row__actions">

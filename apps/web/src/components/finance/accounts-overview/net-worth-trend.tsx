@@ -33,14 +33,16 @@ const RangeOptions = AnalyticsRanges.map(range => ({ label: `${range}M`, value: 
 
 const changeDelta = (
   changeMinor: number,
-  percent: number,
+  percent: number | null,
   currency: string
 ): StatDelta | undefined => {
   if (!changeMinor) return undefined;
 
+  const amount = formatMoney(Math.abs(changeMinor), currency);
+
   return {
     good: changeMinor > 0,
-    label: `${formatMoney(Math.abs(changeMinor), currency)} (${Math.abs(percent)}%)`,
+    label: percent === null ? amount : `${amount} (${Math.abs(percent)}%)`,
     rising: changeMinor > 0,
   };
 };
@@ -111,7 +113,7 @@ export function NetWorthTrend({
   const [range, setRange] = useState(DefaultRange);
   const points = seriesForRange(series, range);
   const { changeMinor, percent } = rangeChange(points, currentMinor);
-  const period = countLabel(range, 'month');
+  const period = countLabel(Math.min(range, Math.max(points.length - 1, 1)), 'month');
 
   return (
     <Panel

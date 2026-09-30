@@ -533,12 +533,6 @@ describe('reports and settings', () => {
     ).toEqual([
       {
         accountId: account.id,
-        balanceMinor: 0,
-        currency: 'EUR',
-        month: '2026-07',
-      },
-      {
-        accountId: account.id,
         balanceMinor: 10000,
         currency: 'EUR',
         month: '2026-08',
@@ -550,7 +544,9 @@ describe('reports and settings', () => {
         month: '2026-09',
       },
     ]);
-    expect((await ada.request('GET', '/reports/balances')).json().items).toHaveLength(6);
+    expect((await ada.request('GET', '/reports/balances?month=2026-12')).json().items).toHaveLength(
+      5
+    );
     expect((await bob.request('GET', '/reports/balances?month=2026-09')).json().items).toEqual([]);
     expect((await ada.request('GET', '/reports/balances?months=0')).statusCode).toBe(400);
     expect((await ada.request('GET', '/reports/balances?months=25')).statusCode).toBe(400);

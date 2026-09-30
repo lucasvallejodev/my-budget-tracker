@@ -106,7 +106,7 @@ function renderHome(converted: Summary['converted'] = null) {
   client.setQueryData(QueryKeys.summary(month), summary(month, 120000, converted));
   client.setQueryData(QueryKeys.summary(previous), summary(previous, 150000));
   client.setQueryData(QueryKeys.budgets(month), [budget]);
-  client.setQueryData(QueryKeys.balances(6), [
+  client.setQueryData(QueryKeys.balances(6, month), [
     {
       accountId: 'checking',
       balanceMinor: 450000,
@@ -124,7 +124,14 @@ function renderHome(converted: Summary['converted'] = null) {
     primaryCurrency: 'EUR',
     showConvertedTotals: !!converted,
   });
-  client.setQueryData(QueryKeys.transactions({ limit: '6', month }), []);
+  client.setQueryData(
+    QueryKeys.transactions({
+      currency: 'EUR',
+      limit: '6',
+      month,
+    }),
+    []
+  );
 
   return render(
     <QueryClientProvider client={client}>
@@ -173,6 +180,10 @@ describe('Home', () => {
     expect(screen.getByRole('heading', { name: '≈ All in EUR' })).toBeTruthy();
     expect(screen.getByText(/Approximate, using your manual rates/)).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Where your money went' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'See EUR in detail' }));
+
+    expect(screen.getByRole('heading', { name: 'Where your money went' })).toBeTruthy();
   });
 });
 

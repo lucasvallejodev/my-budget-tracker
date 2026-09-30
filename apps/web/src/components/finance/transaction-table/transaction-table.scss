@@ -129,6 +129,12 @@
     font-size: font-size(caption);
   }
 
+  &__compact-account {
+    @include media-up(tablet-landscape) {
+      display: none;
+    }
+  }
+
   &__category {
     grid-area: category;
     min-width: 0;

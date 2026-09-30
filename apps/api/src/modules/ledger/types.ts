@@ -6,6 +6,7 @@ export type { TransactionRow, Transfer };
 export type ListFilters = {
   accountId?: string;
   categoryId?: string;
+  currency?: string;
   cursor?: string;
   deleted?: boolean;
   from?: string;

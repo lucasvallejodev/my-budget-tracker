@@ -11,7 +11,7 @@ export type CurrencyAmount = {
 
 export type RangeChange = {
   changeMinor: number;
-  percent: number;
+  percent: number | null;
 };
 
 export type AccountGroupFigures = {
@@ -88,7 +88,10 @@ export const rangeChange = (series: MonthTotal[], currentMinor: number): RangeCh
   const startMinor = series[0]?.totalMinor ?? currentMinor;
   const changeMinor = currentMinor - startMinor;
 
-  return { changeMinor, percent: getPercentage(changeMinor, Math.abs(startMinor)) };
+  return {
+    changeMinor,
+    percent: startMinor ? getPercentage(changeMinor, Math.abs(startMinor)) : null,
+  };
 };
 
 export const balancesByAccount = (balances: BalancePoint[]): BalancesByAccount => {
@@ -137,18 +140,21 @@ export const groupAccounts = (
     if (!members.length) return [];
 
     const active = members.filter(isActive);
+    const liability = members.every(isLiability);
 
     return [
       {
         accounts: members,
         changes: sumByCurrency(
           active.map(account => ({
-            amountMinor: monthChange(account, balances, previousMonth),
+            amountMinor: liability
+              ? displayedBalance(account, monthChange(account, balances, previousMonth))
+              : monthChange(account, balances, previousMonth),
             currency: account.currency,
           }))
         ),
         label: group.label,
-        liability: members.every(isLiability),
+        liability,
         totals: sumByCurrency(
           active.map(account => ({ amountMinor: account.balanceMinor, currency: account.currency }))
         ),

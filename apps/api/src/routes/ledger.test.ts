@@ -196,6 +196,23 @@ describe('transactions', () => {
     expect((await ada.request('POST', `/transactions/${id}/restore`)).statusCode).toBe(404);
   });
 
+  it('filters the list by currency', async () => {
+    const euros = await createAccount(ada);
+    const dollars = await createAccount(ada, { currency: 'USD', name: 'Dollars' });
+
+    await ada.request('POST', '/transactions', spend(euros.id, '10'));
+    await ada.request('POST', '/transactions', spend(dollars.id, '20'));
+
+    const listed = (await ada.request('GET', '/transactions?currency=USD')).json().items as {
+      accountId: string;
+      currency: string;
+    }[];
+
+    expect(listed.length).toBeGreaterThan(0);
+    expect(listed.every(row => row.currency === 'USD' && row.accountId === dollars.id)).toBe(true);
+    expect((await ada.request('GET', '/transactions?currency=US')).statusCode).toBe(400);
+  });
+
   it('returns the payee icon and colour on every row', async () => {
     const account = await createAccount(ada);
 

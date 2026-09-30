@@ -28,8 +28,9 @@ function NavigationLink({ count, item, onNavigate, path }: NavigationLinkProps) 
       <item.icon aria-hidden />
       {item.name}
       {!!count && (
-        <span className="navigation__badge" aria-label={`${count} to review`}>
-          {count}
+        <span className="navigation__badge">
+          <span aria-hidden="true">{count}</span>
+          <span className="navigation__badge-label">{`, ${count} to review`}</span>
         </span>
       )}
     </Link>

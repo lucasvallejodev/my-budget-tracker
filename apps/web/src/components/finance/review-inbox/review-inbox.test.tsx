@@ -120,6 +120,20 @@ describe('ReviewInbox', () => {
     );
   });
 
+  it('returns focus to the row when the category picker opened with C is closed', async () => {
+    renderInbox([expense]);
+
+    const row = screen.getByRole('listitem', { name: 'Farmers stall' });
+
+    row.focus();
+    fireEvent.keyDown(row, { key: 'c' });
+    fireEvent.keyDown(await screen.findByRole('combobox', { name: /Farmers stall/ }), {
+      key: 'Escape',
+    });
+
+    await waitFor(() => expect(document.activeElement).toBe(row));
+  });
+
   it('says when everything is categorised', () => {
     renderInbox([]);
 

@@ -1,5 +1,7 @@
 'use client';
 
+import './account-actions.scss';
+
 import { useMutation } from '@tanstack/react-query';
 import { CreditCard, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
@@ -15,35 +17,27 @@ import { TransactionDialog } from '../transaction-dialog';
 import { type AccountSummary, useRefreshFinance } from '../use-finance-data';
 import { accountHref, isLiability } from './accounts-figures';
 
-function PayCard({
+function PayCardDialog({
   account,
+  onOpenChange,
   paymentAccountId,
 }: {
   account: AccountSummary;
+  onOpenChange: (open: boolean) => void;
   paymentAccountId?: string;
 }) {
-  const [paying, setPaying] = useState(false);
-  const owedMinor = -account.balanceMinor;
-
   return (
-    <>
-      <Button variant="secondary" size="sm" onClick={() => setPaying(true)}>
-        <CreditCard aria-hidden /> Pay card
-      </Button>
-      {paying && (
-        <TransactionDialog
-          open={paying}
-          onOpenChange={setPaying}
-          preset={{
-            amountFrom: minorToDecimalString(owedMinor, account.currency),
-            fromAccountId: paymentAccountId ?? '',
-            memo: `Payment to ${account.name}`,
-            mode: 'transfer',
-            toAccountId: account.id,
-          }}
-        />
-      )}
-    </>
+    <TransactionDialog
+      open
+      onOpenChange={onOpenChange}
+      preset={{
+        amountFrom: minorToDecimalString(-account.balanceMinor, account.currency),
+        fromAccountId: paymentAccountId ?? '',
+        memo: `Payment to ${account.name}`,
+        mode: 'transfer',
+        toAccountId: account.id,
+      }}
+    />
   );
 }
 
@@ -56,6 +50,7 @@ export function AccountActions({
 }) {
   const refresh = useRefreshFinance();
   const [editing, setEditing] = useState(false);
+  const [paying, setPaying] = useState(false);
   const archived = !!account.archivedAt;
   const canPay = isLiability(account) && account.balanceMinor < 0 && !archived;
 
@@ -70,7 +65,16 @@ export function AccountActions({
 
   return (
     <>
-      {canPay && <PayCard account={account} paymentAccountId={paymentAccountId} />}
+      {canPay && (
+        <Button
+          className="account-actions__pay"
+          variant="secondary"
+          size="sm"
+          onClick={() => setPaying(true)}
+        >
+          <CreditCard aria-hidden /> Pay card
+        </Button>
+      )}
       <Menu>
         <MenuTrigger asChild>
           <Button variant="ghost" size="icon" aria-label={`Actions for ${account.name}`}>
@@ -81,12 +85,20 @@ export function AccountActions({
           <MenuItem asChild>
             <Link href={accountHref(account.id)}>Open account</Link>
           </MenuItem>
+          {canPay && <MenuItem onSelect={() => setPaying(true)}>Pay card</MenuItem>}
           <MenuItem onSelect={() => setEditing(true)}>Edit account</MenuItem>
           <MenuItem disabled={archive.isPending} onSelect={() => archive.mutate(!archived)}>
             {archived ? 'Restore account' : 'Archive account'}
           </MenuItem>
         </MenuContent>
       </Menu>
+      {paying && (
+        <PayCardDialog
+          account={account}
+          onOpenChange={setPaying}
+          paymentAccountId={paymentAccountId}
+        />
+      )}
       {editing && (
         <CreateAccountDialog open={editing} onOpenChange={setEditing} account={account} />
       )}

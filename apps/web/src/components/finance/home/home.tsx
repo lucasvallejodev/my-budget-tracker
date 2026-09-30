@@ -8,6 +8,7 @@ import { useState } from 'react';
 
 import {
   Button,
+  Cluster,
   EmptyState,
   Notice,
   Page,
@@ -27,7 +28,8 @@ import { CashFlowChart } from '../cash-flow-chart';
 import { describeConversion } from '../conversion';
 import { ConvertedView, CurrencySwitch, useCurrencyView } from '../currency-switch';
 import { MonthPicker } from '../month-picker';
-import { SpendingBars } from '../spending-bars';
+import { netWorthAt } from '../net-worth';
+import { groupSpendingSlices, hasSpendingIn, SpendingBars } from '../spending-bars';
 import { longDayLabel } from '../transaction-labels';
 import { TransactionTable } from '../transaction-table';
 import {
@@ -44,7 +46,7 @@ import {
   useTransactions,
 } from '../use-finance-data';
 import { BudgetsToWatch } from './budgets-to-watch';
-import { attentionItems, heroTotals, spendingSlices } from './home-figures';
+import { attentionItems, heroTotals } from './home-figures';
 import { HomeHero } from './home-hero';
 import { NetWorthCard } from './net-worth-card';
 
@@ -60,6 +62,14 @@ const currenciesOf = (summary: Summary | undefined) => [
   ]),
 ];
 
+const homeDescription = (month: string, today: string) => {
+  if (month !== currentMonth()) return monthLabel(month);
+
+  const daysLeft = periodProgress(calendarPeriod(month), today).daysLeft;
+
+  return `${longDayLabel(today)} · ${daysLeft} day${daysLeft === 1 ? '' : 's'} left this month`;
+};
+
 const cashFlowPoints = (summary: Summary, currency: string) =>
   summary.cashFlow
     .filter(point => point.currency === currency)
@@ -71,8 +81,12 @@ const cashFlowPoints = (summary: Summary, currency: string) =>
       label: monthLabel(point.month).slice(0, MonthNameLength),
     }));
 
-function RecentActivity({ month }: { month: string }) {
-  const recent = useTransactions({ limit: RecentLimit, month });
+function RecentActivity({ currency, month }: { currency?: string; month: string }) {
+  const recent = useTransactions({
+    currency,
+    limit: RecentLimit,
+    month,
+  });
 
   return (
     <Panel
@@ -92,7 +106,15 @@ function RecentActivity({ month }: { month: string }) {
   );
 }
 
-function ConvertedOverview({ converted }: { converted: NonNullable<Summary['converted']> }) {
+function ConvertedOverview({
+  converted,
+  currencies,
+  onViewChange,
+}: {
+  converted: NonNullable<Summary['converted']>;
+  currencies: string[];
+  onViewChange: (view: string) => void;
+}) {
   const format = (value: number) => formatMoney(value, converted.currency);
 
   return (
@@ -108,6 +130,16 @@ function ConvertedOverview({ converted }: { converted: NonNullable<Summary['conv
           out. <Link href="/settings/currencies">Add rates</Link>
         </Notice>
       )}
+      <p className="home__converted-note">
+        Spending by group, budgets and cash flow are shown one currency at a time.
+      </p>
+      <Cluster>
+        {currencies.map(code => (
+          <Button key={code} variant="outline" size="sm" onClick={() => onViewChange(code)}>
+            See {code} in detail
+          </Button>
+        ))}
+      </Cluster>
     </Panel>
   );
 }
@@ -116,7 +148,7 @@ function useHomeData(month: string) {
   const summary = useSummary(month);
   const previous = useSummary(shiftMonth(month, -1));
   const budgets = useBudgets(month);
-  const balances = useBalances(BalanceMonths);
+  const balances = useBalances(BalanceMonths, month);
   const settings = useSettings();
 
   return {
@@ -135,13 +167,12 @@ export function Home() {
   const currencies = currenciesOf(summary.data);
   const primary = settings.data?.primaryCurrency ?? FALLBACK_CURRENCY;
   const [view, setView] = useCurrencyView(currencies, primary, !!summary.data?.converted);
-  const daysLeft = periodProgress(calendarPeriod(currentMonth()), today).daysLeft;
 
   return (
     <Page>
       <PageHeading
         title="Home"
-        description={`${longDayLabel(today)} · ${daysLeft} day${daysLeft === 1 ? '' : 's'} left this month`}
+        description={homeDescription(month, today)}
         actions={
           <>
             <CurrencySwitch
@@ -174,6 +205,8 @@ export function Home() {
           <HomeContent
             balances={balances.data ?? []}
             budgets={budgets.data ?? []}
+            currencies={currencies}
+            onViewChange={setView}
             month={month}
             previous={previous.data}
             summary={summary.data!}
@@ -189,7 +222,9 @@ export function Home() {
 type HomeContentProps = {
   balances: BalancePoint[];
   budgets: BudgetRow[];
+  currencies: string[];
   month: string;
+  onViewChange: (view: string) => void;
   previous?: Summary;
   summary: Summary;
   today: string;
@@ -218,10 +253,14 @@ function HomeSpending({
         description={`Spending by group · ${monthLabel(month)} · ${currency}`}
       >
         <SpendingBars
-          comparison={monthLabel(shiftMonth(month, -1)).split(' ')[0]}
+          comparison={
+            hasSpendingIn(previous?.breakdown ?? [], currency)
+              ? monthLabel(shiftMonth(month, -1)).split(' ')[0]
+              : undefined
+          }
           format={format}
           month={month}
-          slices={spendingSlices(summary, previous, currency)}
+          slices={groupSpendingSlices(summary.breakdown, previous?.breakdown ?? [], currency)}
         />
       </Panel>
       {figures.length > 0 && <BudgetsToWatch figures={figures} format={format} />}
@@ -240,10 +279,46 @@ function HomeCashFlow({ currency, summary }: { currency: string; summary: Summar
   );
 }
 
+function HomeNetWorth({
+  balances,
+  currency,
+  month,
+  summary,
+}: {
+  balances: BalancePoint[];
+  currency: string;
+  month: string;
+  summary: Summary;
+}) {
+  if (month === currentMonth()) {
+    return (
+      <NetWorthCard
+        balances={balances}
+        buckets={summary.netWorth}
+        converted={summary.converted}
+        currency={currency}
+        summary={summary}
+      />
+    );
+  }
+
+  return (
+    <NetWorthCard
+      balances={balances}
+      buckets={netWorthAt(balances, summary.accounts, month)}
+      currency={currency}
+      heading={`Net worth at the end of ${monthLabel(month)}`}
+      summary={summary}
+    />
+  );
+}
+
 function HomeContent({
   balances,
   budgets,
+  currencies,
   month,
+  onViewChange,
   previous,
   summary,
   today,
@@ -261,7 +336,11 @@ function HomeContent({
     <>
       <div className="home__row">
         {converted ? (
-          <ConvertedOverview converted={converted} />
+          <ConvertedOverview
+            converted={converted}
+            currencies={currencies}
+            onViewChange={onViewChange}
+          />
         ) : (
           <HomeHero
             figures={figures}
@@ -272,7 +351,7 @@ function HomeContent({
             totals={heroTotals(summary, previous, currency)}
           />
         )}
-        <NetWorthCard balances={balances} currency={currency} summary={summary} />
+        <HomeNetWorth balances={balances} currency={currency} month={month} summary={summary} />
       </div>
       <AttentionStrip items={attentionItems(summary.needsReviewCount, figures, format)} />
       {!converted && (
@@ -286,7 +365,7 @@ function HomeContent({
         />
       )}
       <div className="home__row">
-        <RecentActivity month={month} />
+        <RecentActivity currency={converted ? undefined : currency} month={month} />
         {!converted && <HomeCashFlow currency={currency} summary={summary} />}
       </div>
     </>

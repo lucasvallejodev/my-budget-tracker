@@ -1,6 +1,24 @@
 @use 'abstracts' as *;
 
 .transaction-explorer {
+  &__filters-toggle {
+    @include media-up(tablet-landscape) {
+      display: none;
+    }
+  }
+
+  &__filters {
+    display: none;
+
+    &--open {
+      display: block;
+    }
+
+    @include media-up(tablet-landscape) {
+      display: block;
+    }
+  }
+
   &__summary {
     @include flex-row(space(6));
 

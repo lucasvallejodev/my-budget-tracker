@@ -2,7 +2,7 @@
 
 import './application-shell.scss';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 
 import { Logo } from '../logo';
 import { UserMenu } from '../user-menu';
@@ -13,6 +13,7 @@ import { TabBar } from './tab-bar';
 
 export function ApplicationShell({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const moreRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div className="application-shell">
@@ -30,8 +31,12 @@ export function ApplicationShell({ children }: { children: ReactNode }) {
         <ApplicationHeader />
         <main id="main-content">{children}</main>
       </div>
-      <TabBar onMore={() => setDrawerOpen(true)} />
-      <NavigationDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
+      <TabBar moreOpen={drawerOpen} moreRef={moreRef} onMore={() => setDrawerOpen(true)} />
+      <NavigationDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        onClosed={() => moreRef.current?.focus()}
+      />
     </div>
   );
 }

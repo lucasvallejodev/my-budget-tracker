@@ -222,7 +222,7 @@ Design values come only from the theme. When the same group of declarations appe
 
 ### Focus outlines
 
-Focus outlines are drawn with CSS only, no JavaScript. `globals.scss` styles `:focus-visible`, which the browser matches for keyboard navigation but not for most mouse clicks, and removes the outline from `:focus:not(:focus-visible)`. Charts are the exception: Recharts makes the chart and its slices focusable and the browser can show a ring after a click, so outlines inside `.recharts-wrapper` are removed entirely. Component focus styles use `&:focus-visible { @include focus-ring; }`.
+Focus outlines are drawn with CSS only, no JavaScript. `globals.scss` styles `:focus-visible`, which the browser matches for keyboard navigation but not for most mouse clicks, and removes the outline from `:focus:not(:focus-visible)`. Charts are the exception: Recharts makes the chart and its slices focusable and the browser can show a ring after a click, so outlines inside `.recharts-wrapper` are removed entirely. Charts drawn in `ChartFrame` with `data` are hidden from screen readers and keyboard, and a visually hidden table under them lists the same numbers, so nobody needs the drawing to read them. Dialogs opened from state use `useDialogState` (`apps/web/src/lib/dialog-state.ts`), which focuses the control that opened the dialog again after it closes; one-tab-stop groups (`SegmentedControl`, `ColorPicker`, `IconPicker`) move with the arrow keys, Home and End through `nextRovingIndex` in `apps/web/src/lib/roving-focus.ts`, and colours and icons are named in words (`paletteColorName`, `humanizeIdentifier` in `packages/shared/src/lib/labels.ts`). Component focus styles use `&:focus-visible { @include focus-ring; }`.
 
 ## The `ui` catalogue
 

@@ -35,7 +35,8 @@
       @include icon-size(size(icon));
     }
 
-    &[aria-current='page'] {
+    &[aria-current='page'],
+    &--current {
       color: var(--color-brand);
     }
 

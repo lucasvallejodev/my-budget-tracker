@@ -5551,6 +5551,16 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
           },
           {
             "in": "query",
+            "name": "currency",
+            "required": false,
+            "schema": {
+              "maxLength": 3,
+              "minLength": 3,
+              "type": "string",
+            },
+          },
+          {
+            "in": "query",
             "name": "cursor",
             "required": false,
             "schema": {

@@ -127,6 +127,7 @@ function CategoryBudgets({
                   key={item.budget.id}
                   figures={item}
                   format={format}
+                  showStatus={mode !== 'status'}
                   onEdit={() => onEdit(item.budget)}
                   onDelete={() => onDelete(item.budget)}
                 />

@@ -7,7 +7,7 @@ import { Button, Sparkline, Stat } from '@/components/ui';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { describeConversion } from '../conversion';
-import { netWorthByMonth } from '../net-worth';
+import { type NetWorthBucket, netWorthByMonth } from '../net-worth';
 import type { AccountSummary, BalancePoint, Summary } from '../use-finance-data';
 
 const PreviousPointOffset = 2;
@@ -20,7 +20,7 @@ function CurrencyNetWorth({
 }: {
   accounts: AccountSummary[];
   balances: BalancePoint[];
-  bucket: Summary['netWorth'][number];
+  bucket: NetWorthBucket;
   lead: boolean;
 }) {
   const series = netWorthByMonth(balances, bucket.currency).map(point => point.totalMinor);
@@ -57,14 +57,20 @@ function CurrencyNetWorth({
 
 export function NetWorthCard({
   balances,
+  buckets: unsorted,
+  converted,
   currency,
+  heading = 'Net worth',
   summary,
 }: {
   balances: BalancePoint[];
+  buckets: NetWorthBucket[];
+  converted?: Summary['converted'];
   currency: string;
+  heading?: string;
   summary: Summary;
 }) {
-  const buckets = [...summary.netWorth].sort(
+  const buckets = [...unsorted].sort(
     (left, right) => Number(right.currency === currency) - Number(left.currency === currency)
   );
 
@@ -73,7 +79,7 @@ export function NetWorthCard({
   return (
     <section className="net-worth-card" aria-label="Net worth">
       <div className="net-worth-card__head">
-        <p className="net-worth-card__eyebrow">Net worth</p>
+        <p className="net-worth-card__eyebrow">{heading}</p>
         <Button asChild variant="ghost" size="sm">
           <Link href="/accounts">
             Accounts <ArrowRight aria-hidden />
@@ -97,10 +103,10 @@ export function NetWorthCard({
           <span>
             Owed <strong>{formatMoney(-lead.liabilitiesMinor, lead.currency)}</strong>
           </span>
-          {summary.converted && (
-            <span title={describeConversion(summary.converted)}>
-              ≈ {formatMoney(summary.converted.netWorthMinor, summary.converted.currency)} all in{' '}
-              {summary.converted.currency}
+          {converted && (
+            <span title={describeConversion(converted)}>
+              ≈ {formatMoney(converted.netWorthMinor, converted.currency)} all in{' '}
+              {converted.currency}
             </span>
           )}
         </p>

@@ -66,4 +66,8 @@
     line-height: line-height(body);
     text-align: center;
   }
+
+  &__badge-label {
+    @include visually-hidden;
+  }
 }

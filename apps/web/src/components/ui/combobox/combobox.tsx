@@ -34,6 +34,7 @@ type ComboboxProps = Omit<ComponentProps<'button'>, 'children' | 'onChange' | 'v
   invalid?: boolean;
   label: string;
   onChange: (optionId: string | undefined) => void;
+  onCloseAutoFocus?: (event: Event) => void;
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
   placeholder: string;
@@ -183,6 +184,7 @@ export function Combobox({
   invalid,
   label,
   onChange,
+  onCloseAutoFocus,
   onOpenChange,
   open: controlledOpen,
   placeholder,
@@ -219,7 +221,7 @@ export function Combobox({
           <ChevronDown className="combobox__chevron" aria-hidden />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="combobox__panel">
+      <PopoverContent align="start" className="combobox__panel" onCloseAutoFocus={onCloseAutoFocus}>
         <ComboboxPanel
           clearLabel={clearLabel}
           emptyText={emptyText}
