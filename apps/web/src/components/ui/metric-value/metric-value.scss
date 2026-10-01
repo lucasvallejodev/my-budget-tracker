@@ -3,10 +3,10 @@
 @layer ui {
   .metric-value {
     @include tabular-figures;
+    @include display-type;
 
     font-size: font-size(card-hero);
     font-weight: font-weight(bold);
-    letter-spacing: letter-spacing(tight);
     line-height: line-height(number);
 
     &--fluid {

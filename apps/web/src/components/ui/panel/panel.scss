@@ -11,6 +11,8 @@
     }
 
     &__title {
+      @include display-type;
+
       font-size: font-size(card-title);
       font-weight: font-weight(bold);
     }

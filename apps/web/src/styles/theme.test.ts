@@ -12,7 +12,7 @@ const DeclaredProperty = /^ *(--[a-z0-9-]+): ([^;\n]+);$/gm;
 const UsedProperty = /var\((--[a-z0-9-]+)/g;
 const OpaqueColour = /^(#[0-9a-f]{6}|rgb\(\d+, \d+, \d+\))$/;
 const SourceFile = /\.(scss|tsx?)$/;
-const ExternalProperties = ['--font-inter', '--radix-'];
+const ExternalProperties = ['--font-inter', '--font-source-serif', '--radix-'];
 
 const compiledTokens = () =>
   compile(path.join(StylesRoot, 'tokens.scss'), { loadPaths: [StylesRoot] }).css;
@@ -36,11 +36,12 @@ describe('theme', () => {
   it('emits the brand colour and its derived family as custom properties', () => {
     const properties = declaredProperties();
 
-    expect(properties.get('--color-brand')).toBe('#6941c6');
+    expect(properties.get('--color-brand')).toBe('#14213d');
     expect(properties.get('--color-brand-hover')).toMatch(OpaqueColour);
     expect(properties.get('--color-brand-soft')).toMatch(OpaqueColour);
     expect(properties.get('--font-sans')).toContain('var(--font-inter)');
-    expect(properties.get('--radius-card')).toBe('12px');
+    expect(properties.get('--font-display')).toContain('var(--font-source-serif)');
+    expect(properties.get('--radius-card')).toBe('6px');
   });
 
   it('defines every custom property the web app references', () => {

@@ -23,10 +23,10 @@
 
   &__value {
     @include tabular-figures;
+    @include display-type;
 
     font-size: font-size(hero);
     font-weight: font-weight(bold);
-    letter-spacing: letter-spacing(tight);
     line-height: line-height(number);
   }
 

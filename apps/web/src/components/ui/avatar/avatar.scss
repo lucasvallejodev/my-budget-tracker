@@ -17,6 +17,7 @@
     }
 
     &--filled {
+      border: border(avatar);
       background: var(--avatar-background);
       color: var(--avatar-foreground);
     }

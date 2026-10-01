@@ -2,12 +2,12 @@
 
 .logo {
   @include flex-row(space(2));
+  @include display-type;
 
   padding: 0 space(3) space(4);
   color: var(--color-text);
   font-size: font-size(title);
   font-weight: font-weight(bold);
-  letter-spacing: letter-spacing(tight);
 
   &__mark {
     @include grid-center;

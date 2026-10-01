@@ -58,7 +58,7 @@ apps/web/src/
 │  ├─ (auth)/              sign-in/ and sign-up/ pages rendering AuthForm inside AuthScreen
 │  ├─ (main)/              Signed-in pages (Home at /, transactions, accounts, budgets, analytics with spending/, cash-flow/ and payees/, settings, settings/deleted, …)
 │  │  └─ routes.ts         Sidebar navigation: Home, Money and Plan sections, Import and Settings
-│  ├─ layout.tsx           Root layout: Inter font (next/font), React Query provider, toaster
+│  ├─ layout.tsx           Root layout: Inter and Source Serif 4 fonts (next/font), React Query provider, toaster
 │  └─ globals.scss         Resets (in @layer reset) and the cascade-layer order
 ├─ api/
 │  ├─ client.ts            apiRequest, apiGet, apiList, apiPages, ApiError (relative /api/v1 URLs, 401 → /sign-in)

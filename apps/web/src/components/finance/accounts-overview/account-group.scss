@@ -17,6 +17,8 @@
   }
 
   &__heading {
+    @include display-type;
+
     grid-area: heading;
     margin: 0;
     font-size: font-size(card-title);
