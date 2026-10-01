@@ -143,6 +143,11 @@
   font-feature-settings: 'tnum';
 }
 
+@mixin display-type {
+  font-family: var(--font-display);
+  letter-spacing: letter-spacing(display);
+}
+
 @mixin eyebrow {
   color: var(--color-text-muted);
   font-size: font-size(caption);

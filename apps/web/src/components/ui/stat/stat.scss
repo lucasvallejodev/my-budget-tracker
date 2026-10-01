@@ -16,12 +16,12 @@
 
     &__value {
       @include tabular-figures;
+      @include display-type;
 
       margin-top: space(1);
       color: var(--color-text);
       font-size: font-size(stat);
       font-weight: font-weight(bold);
-      letter-spacing: letter-spacing(tight);
       line-height: line-height(number);
     }
 

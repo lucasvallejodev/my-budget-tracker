@@ -83,7 +83,7 @@
           "/^(font-weight\\(|var\\(--font-weight-|inherit$)/"
         ],
         "font-family": [
-          "/^(var\\(--font-(sans|mono)\\)|inherit$)/"
+          "/^(var\\(--font-(display|mono|sans)\\)|inherit$)/"
         ],
         "box-shadow": [
           "/^(shadow\\(|var\\(--shadow-|none$)/"

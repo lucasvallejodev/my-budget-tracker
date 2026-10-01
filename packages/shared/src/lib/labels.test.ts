@@ -14,8 +14,8 @@ describe('humanizeIdentifier', () => {
 
 describe('paletteColorName', () => {
   it('names palette colours and leaves custom ones as hex', () => {
-    expect(paletteColorName('#d97706')).toBe('Amber');
-    expect(paletteColorName('#64748B')).toBe('Slate light');
+    expect(paletteColorName('#9a7442')).toBe('Amber');
+    expect(paletteColorName('#6B7585')).toBe('Slate light');
     expect(paletteColorName('#123456')).toBe('#123456');
   });
 });

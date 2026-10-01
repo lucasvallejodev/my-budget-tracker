@@ -1,7 +1,9 @@
 $font-family-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', sans-serif !default;
+$font-family-display: var(--font-source-serif), Georgia, 'Times New Roman', serif !default;
 $font-family-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', monospace !default;
 
 $font-families: (
+  'display': $font-family-display,
   'mono': $font-family-mono,
   'sans': $font-family-sans,
 );
@@ -34,6 +36,7 @@ $line-heights: (
 ) !default;
 
 $letter-spacings: (
+  'display': 0,
   'tight': -0.02em,
   'eyebrow': 0.04em,
   'wide': 0.12em,
