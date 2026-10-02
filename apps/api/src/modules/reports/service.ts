@@ -24,6 +24,7 @@ const DEFAULT_CASH_FLOW_MONTHS = 8;
 type CategorySpending = {
   categoryId: string;
   currency: string;
+  fixedMinor: number;
   spentMinor: number;
 };
 
@@ -37,10 +38,16 @@ const categorySpending = async (
 
   const { end, start } = monthRange(month);
 
-  const rows = await rowsOf<{ category_id: string; currency: string; spent_minor: string }>(
+  const rows = await rowsOf<{
+    category_id: string;
+    currency: string;
+    fixed_minor: string;
+    spent_minor: string;
+  }>(
     db,
     sql`
-    SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor
+    SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor,
+      COALESCE(-SUM(t.amount_minor) FILTER (WHERE t.recurring_series_id IS NOT NULL), 0) AS fixed_minor
     FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     JOIN categories c ON c.id = t.category_id
@@ -54,11 +61,12 @@ const categorySpending = async (
   return rows.map(row => ({
     categoryId: row.category_id,
     currency: row.currency,
+    fixedMinor: Number(row.fixed_minor),
     spentMinor: Number(row.spent_minor),
   }));
 };
 
-type CategorySpendingOverMonths = CategorySpending & { months: number };
+type CategorySpendingOverMonths = Omit<CategorySpending, 'fixedMinor'> & { months: number };
 
 const categorySpendingBetween = async (
   db: Db,

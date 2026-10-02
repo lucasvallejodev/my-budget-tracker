@@ -11,6 +11,7 @@ import { createBudgetService } from './budgets/service';
 import { ensureUserBootstrap } from './categories/seed';
 import { createCategoryService } from './categories/service';
 import { Db, notFound, ServiceError } from './db';
+import { createForecastService } from './forecast/service';
 import { createFxService, ManualRateProvider } from './fx/service';
 import { createImportService } from './import/service';
 import { createLedgerService } from './ledger/service';
@@ -51,6 +52,7 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
     budgets: createBudgetService(db),
     categories: createCategoryService(db),
     db,
+    forecast: createForecastService(db),
     fx: createFxService(db, [new ManualRateProvider(db)]),
     async getSettings(userId: string): Promise<UserSettings> {
       const [settings] = await db

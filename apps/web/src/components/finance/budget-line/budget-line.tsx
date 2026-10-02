@@ -28,11 +28,16 @@ type Format = (value: number) => string;
 export const leftLabel = ({ leftMinor }: BudgetFigures, format: Format): string =>
   leftMinor < 0 ? `${format(-leftMinor)} over` : `${format(leftMinor)} left`;
 
-export const allowanceLabel = ({ leftMinor, pace }: BudgetFigures, format: Format): string => {
+const billsNote = ({ budget }: BudgetFigures, format: Format): string =>
+  budget.billsDueMinor > 0 ? ` · ${format(budget.billsDueMinor)} in bills to come` : '';
+
+export const allowanceLabel = (figures: BudgetFigures, format: Format): string => {
+  const { leftMinor, pace } = figures;
+
   if (!pace.isCurrent) return '';
   if (leftMinor <= 0) return 'Nothing left this month';
 
-  return `${format(pace.perDayLeftMinor)} a day`;
+  return `${format(pace.perDayLeftMinor)} a day${billsNote(figures, format)}`;
 };
 
 const rowNote = (figures: BudgetFigures, format: Format, compact: boolean) =>

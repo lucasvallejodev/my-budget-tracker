@@ -94,6 +94,38 @@ const occurrencesOf = (
     };
   });
 
+export type OccurrenceWindow = {
+  from: string;
+  to: string;
+  today: string;
+};
+
+export const occurrencesInRange = async (
+  db: DbOrTx,
+  userId: string,
+  window: OccurrenceWindow
+): Promise<Occurrence[]> => {
+  const series = await activeSeries(db, userId);
+
+  const payments = await paymentsBetween(
+    db,
+    userId,
+    series.map(item => item.id),
+    window
+  );
+
+  return series.flatMap(item => occurrencesOf(item, payments, window));
+};
+
+export const unpaidSpendingBetween = async (
+  db: DbOrTx,
+  userId: string,
+  window: OccurrenceWindow
+): Promise<Occurrence[]> =>
+  (await occurrencesInRange(db, userId, window)).filter(
+    occurrence => occurrence.status !== 'paid' && occurrence.amountMinor < 0
+  );
+
 export const upcomingOccurrences = async (
   db: Db,
   userId: string,
@@ -105,17 +137,7 @@ export const upcomingOccurrences = async (
     today,
   };
 
-  const series = await activeSeries(db, userId);
-
-  const payments = await paymentsBetween(
-    db,
-    userId,
-    series.map(item => item.id),
-    window
-  );
-
-  return series
-    .flatMap(item => occurrencesOf(item, payments, window))
+  return (await occurrencesInRange(db, userId, window))
     .filter(occurrence => occurrence.status !== 'paid' || occurrence.dueOn >= addDays(today, -days))
     .toSorted(
       (left, right) => left.dueOn.localeCompare(right.dueOn) || left.name.localeCompare(right.name)

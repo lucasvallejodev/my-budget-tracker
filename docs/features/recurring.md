@@ -1,6 +1,6 @@
 # Upcoming and recurring payments
 
-> Summary: recurring payments (bills, subscriptions, income) and the Upcoming page: adding a series by hand or from payments found in your history, how payments are matched to what is due, the paid, due soon, overdue and upcoming states, recording or linking a payment, payments added to Review when due, pausing and deleting, and how it works.
+> Summary: recurring payments (bills, subscriptions, income) and the Upcoming page: adding a series by hand or from payments found in your history, how payments are matched to what is due, the paid, due soon, overdue and upcoming states, recording or linking a payment, payments added to Review when due, the subscription review with monthly and yearly costs and price changes, pausing and deleting, and how it works.
 
 A recurring payment, or series, is something that happens on a rhythm: rent on the 1st, a streaming subscription every month, a salary, a yearly insurance premium. CoinKeeper uses series to show what is coming and what is still to pay. A series never changes a balance by itself: only real transactions do.
 
@@ -43,6 +43,10 @@ Payments are matched automatically (see [How payments are matched](#how-payments
 ### Payments added to Review when due
 
 A series with **Add it to Review when it is due** creates its due payment as a **pending** transaction that needs review, dated on the due day, the first time you open Upcoming on or after that day. It then waits on the [Review](review-inbox.md) page for you to confirm, edit or delete. Each occurrence is created once, however often the page loads; occurrences more than five weeks old, or due before the series existed (minus its match window), are never created.
+
+### Review your subscriptions
+
+**Subscription review** on Upcoming lists every series that takes money out, most expensive first, with what it costs a month and a year (a weekly or yearly payment is spread over the months) and when it was last paid. The line at the top adds up the active ones per currency. When the last two payments differ, a badge says **Up 8 %** or **Down 5 %**, which is how price rises show up. **Pause** keeps the series without counting its future payments; cancel the subscription with the provider yourself.
 
 ### Pause, edit or delete
 

@@ -6,7 +6,9 @@ import {
   accountFormSchema,
   accountListQuerySchema,
   accountPatchSchema,
+  accountProjectionSchema,
   accountSummarySchema,
+  projectionQuerySchema,
 } from '@coinkeeper/shared/schema/accounts';
 import { idParamsSchema, listOf } from '@coinkeeper/shared/schema/common';
 
@@ -27,6 +29,20 @@ export const accountsRoutes: FastifyPluginAsyncZod = async app => {
       },
     },
     async request => ({ items: await app.services.accounts.list(userIdOf(request), request.query) })
+  );
+
+  app.get(
+    '/accounts/projections',
+    {
+      schema: {
+        querystring: projectionQuerySchema,
+        response: withErrors({ [HttpStatus.ok]: listOf(accountProjectionSchema) }),
+        tags: Tags,
+      },
+    },
+    async request => ({
+      items: await app.services.forecast.projections(userIdOf(request), request.query),
+    })
   );
 
   app.get(

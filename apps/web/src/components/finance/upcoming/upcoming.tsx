@@ -19,6 +19,7 @@ import { LinkPaymentDialog } from './link-payment-dialog';
 import { OccurrenceList } from './occurrence-list';
 import { SeriesDialog } from './series-dialog';
 import { SeriesList } from './series-list';
+import { SubscriptionReview } from './subscription-review';
 import { SuggestionsPanel } from './suggestions-panel';
 import { useRecordDue } from './use-record-due';
 
@@ -72,6 +73,7 @@ export function Upcoming() {
             )}
           </QueryContent>
         </Panel>
+        <SubscriptionReview series={series.data ?? []} />
         <SuggestionsPanel onReview={initial => editing.open({ initial })} />
       </Stack>
       {editing.value && (

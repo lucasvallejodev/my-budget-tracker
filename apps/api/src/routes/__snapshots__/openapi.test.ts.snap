@@ -368,6 +368,106 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
         ],
       },
     },
+    "/api/v1/accounts/projections": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "maximum": 92,
+              "minimum": 1,
+              "type": "integer",
+            },
+          },
+          {
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "accountId": {
+                            "type": "string",
+                          },
+                          "balanceMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "currency": {
+                            "type": "string",
+                          },
+                          "lowestMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "lowestOn": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "projectedMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "scheduledCount": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "until": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "accountId",
+                          "balanceMinor",
+                          "currency",
+                          "lowestMinor",
+                          "lowestOn",
+                          "projectedMinor",
+                          "scheduledCount",
+                          "until",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "items",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "accounts",
+        ],
+      },
+    },
     "/api/v1/accounts/{id}": {
       "delete": {
         "parameters": [
@@ -1253,6 +1353,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "minimum": -9007199254740991,
                             "type": "integer",
                           },
+                          "billsDueMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
                           "categoryId": {
                             "type": "string",
                           },
@@ -1268,6 +1373,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "deletedAt": {
                             "nullable": true,
                             "type": "string",
+                          },
+                          "fixedSpentMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
                           },
                           "groupId": {
                             "type": "string",
@@ -1292,11 +1402,13 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                         },
                         "required": [
                           "amountMinor",
+                          "billsDueMinor",
                           "categoryId",
                           "categoryName",
                           "color",
                           "currency",
                           "deletedAt",
+                          "fixedSpentMinor",
                           "groupId",
                           "groupName",
                           "icon",
@@ -1498,6 +1610,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "minimum": -9007199254740991,
                       "type": "integer",
                     },
+                    "billsDueMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
                     "categoryId": {
                       "type": "string",
                     },
@@ -1513,6 +1630,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
+                    },
+                    "fixedSpentMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
                     },
                     "groupId": {
                       "type": "string",
@@ -1537,11 +1659,13 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                   },
                   "required": [
                     "amountMinor",
+                    "billsDueMinor",
                     "categoryId",
                     "categoryName",
                     "color",
                     "currency",
                     "deletedAt",
+                    "fixedSpentMinor",
                     "groupId",
                     "groupName",
                     "icon",
@@ -1628,6 +1752,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "minimum": -9007199254740991,
                       "type": "integer",
                     },
+                    "billsDueMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
                     "categoryId": {
                       "type": "string",
                     },
@@ -1643,6 +1772,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
+                    },
+                    "fixedSpentMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
                     },
                     "groupId": {
                       "type": "string",
@@ -1667,11 +1801,13 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                   },
                   "required": [
                     "amountMinor",
+                    "billsDueMinor",
                     "categoryId",
                     "categoryName",
                     "color",
                     "currency",
                     "deletedAt",
+                    "fixedSpentMinor",
                     "groupId",
                     "groupName",
                     "icon",
@@ -1696,6 +1832,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "minimum": -9007199254740991,
                       "type": "integer",
                     },
+                    "billsDueMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
                     "categoryId": {
                       "type": "string",
                     },
@@ -1711,6 +1852,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "deletedAt": {
                       "nullable": true,
                       "type": "string",
+                    },
+                    "fixedSpentMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
                     },
                     "groupId": {
                       "type": "string",
@@ -1735,11 +1881,13 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                   },
                   "required": [
                     "amountMinor",
+                    "billsDueMinor",
                     "categoryId",
                     "categoryName",
                     "color",
                     "currency",
                     "deletedAt",
+                    "fixedSpentMinor",
                     "groupId",
                     "groupName",
                     "icon",
@@ -6144,6 +6292,112 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                   },
                   "required": [
                     "items",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "reports",
+        ],
+      },
+    },
+    "/api/v1/reports/left-to-spend": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "currency",
+            "required": true,
+            "schema": {
+              "maxLength": 3,
+              "minLength": 3,
+              "type": "string",
+            },
+          },
+          {
+            "in": "query",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "type": "string",
+            },
+          },
+          {
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "billsDueMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "budgetedMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "currency": {
+                      "type": "string",
+                    },
+                    "daysLeft": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "incomeMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "leftMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "month": {
+                      "type": "string",
+                    },
+                    "perDayMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "unbudgetedSpentMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                  },
+                  "required": [
+                    "billsDueMinor",
+                    "budgetedMinor",
+                    "currency",
+                    "daysLeft",
+                    "incomeMinor",
+                    "leftMinor",
+                    "month",
+                    "perDayMinor",
+                    "unbudgetedSpentMinor",
                   ],
                   "type": "object",
                 },

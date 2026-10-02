@@ -64,6 +64,8 @@ export type BudgetFigures = {
 
 export const budgetFigures = (budget: BudgetRow, today: string): BudgetFigures => {
   const pace = budgetPace({
+    billsDueMinor: budget.billsDueMinor,
+    fixedSpentMinor: budget.fixedSpentMinor,
     limitMinor: budget.amountMinor,
     period: calendarPeriod(budget.month.slice(0, ISO_MONTH_LENGTH)),
     spentMinor: budget.spentMinor,

@@ -30,11 +30,13 @@ const month = currentMonth();
 const rows: BudgetRow[] = [
   {
     amountMinor: 40000,
+    billsDueMinor: 0,
     categoryId: 'c-groceries',
     categoryName: 'Groceries',
     color: '#DC2626',
     currency: 'EUR',
     deletedAt: null,
+    fixedSpentMinor: 0,
     groupId: 'g-food',
     groupName: 'Food & Dining',
     icon: 'ShoppingCart',
@@ -44,11 +46,13 @@ const rows: BudgetRow[] = [
   },
   {
     amountMinor: 5000,
+    billsDueMinor: 0,
     categoryId: 'c-coffee',
     categoryName: 'Coffee',
     color: '#DC2626',
     currency: 'EUR',
     deletedAt: null,
+    fixedSpentMinor: 0,
     groupId: 'g-food',
     groupName: 'Food & Dining',
     icon: 'Coffee',
@@ -71,6 +75,7 @@ function renderBudgets(data: BudgetRow[] = rows, breakdown: CategorySlice[] = []
   client.setQueryData(QueryKeys.budgetSuggestions(month), [
     {
       amountMinor: 4100,
+      billsDueMinor: 0,
       categoryId: 'c-groceries',
       currency: 'EUR',
       months: 3,

@@ -29,6 +29,7 @@ export { Home } from './home';
 export { ImportWizard } from './import-wizard';
 export type { SpendingSlice } from './spending-bars';
 export { foldSmallSlices, SpendingBars } from './spending-bars';
+export { LeftToSpend } from './left-to-spend';
 export { MetricCard } from './metric-card';
 export { MetricIcon } from './metric-icon';
 export { MonthPicker } from './month-picker';

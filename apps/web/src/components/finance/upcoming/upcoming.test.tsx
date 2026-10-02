@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createSeries, recordDuePayments, unlinkOccurrence } from '@/api/mutations';
+import { createSeries, recordDuePayments, unlinkOccurrence, updateSeries } from '@/api/mutations';
 import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import type {
   Occurrence,
@@ -197,5 +197,27 @@ describe('Upcoming', () => {
 
     expect(screen.getByRole('dialog', { name: 'New recurring payment' })).toBeTruthy();
     expect(screen.getByRole('combobox', { name: 'Repeats' }).textContent).toContain('Monthly');
+  });
+
+  it('reviews recurring charges with their yearly cost and price change, and pauses one', async () => {
+    renderUpcoming();
+
+    const review = screen.getByText('Subscription review').closest('section')!;
+
+    expect(within(review).getByText('€1,000.00 a month, €12,000.00 a year')).toBeTruthy();
+    expect(within(review).getByText('Up 5 %')).toBeTruthy();
+
+    fireEvent.click(within(review).getByRole('button', { name: 'Pause Rent' }));
+
+    await waitFor(() =>
+      expect(updateSeries).toHaveBeenCalledWith(
+        'series-rent',
+        expect.objectContaining({
+          amount: '1000.00',
+          name: 'Rent',
+          status: 'paused',
+        })
+      )
+    );
   });
 });

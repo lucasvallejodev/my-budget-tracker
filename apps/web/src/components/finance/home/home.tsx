@@ -27,6 +27,7 @@ import { type BudgetFigures, budgetFigures } from '../budget-status';
 import { CashFlowChart } from '../cash-flow-chart';
 import { describeConversion } from '../conversion';
 import { ConvertedView, CurrencySwitch, useCurrencyView } from '../currency-switch';
+import { LeftToSpend } from '../left-to-spend';
 import { MonthPicker } from '../month-picker';
 import { netWorthAt } from '../net-worth';
 import { groupSpendingSlices, hasSpendingIn, SpendingBars } from '../spending-bars';
@@ -354,6 +355,7 @@ function HomeContent({
         <HomeNetWorth balances={balances} currency={currency} month={month} summary={summary} />
       </div>
       <AttentionStrip items={attentionItems(summary.needsReviewCount, figures, format)} />
+      {!converted && month === currentMonth() && <LeftToSpend currency={currency} month={month} />}
       {!converted && (
         <HomeSpending
           currency={currency}

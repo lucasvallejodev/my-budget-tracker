@@ -16,6 +16,8 @@ import {
   currencyTotalsSchema,
   groupMonthSliceSchema,
   groupSliceSchema,
+  leftToSpendQuerySchema,
+  leftToSpendSchema,
   monthQuerySchema,
   netWorthBucketSchema,
   rankingSliceSchema,
@@ -29,7 +31,19 @@ const Tags = ['reports'];
 const DEFAULT_CASH_FLOW_MONTHS = 8;
 
 export const reportsRoutes: FastifyPluginAsyncZod = async app => {
-  const { accounts, ledger, reports } = app.services;
+  const { accounts, forecast, ledger, reports } = app.services;
+
+  app.get(
+    '/reports/left-to-spend',
+    {
+      schema: {
+        querystring: leftToSpendQuerySchema,
+        response: withErrors({ [HttpStatus.ok]: leftToSpendSchema }),
+        tags: Tags,
+      },
+    },
+    async request => forecast.leftToSpend(userIdOf(request), request.query)
+  );
 
   app.get(
     '/reports/summary',

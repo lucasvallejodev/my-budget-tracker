@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiList } from '@/api/client';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
 import { localIsoDate, localIsoMonth } from '@coinkeeper/shared/lib/date-helpers';
-import type { AccountSummary } from '@coinkeeper/shared/schema/accounts';
+import type { AccountProjection, AccountSummary } from '@coinkeeper/shared/schema/accounts';
 import type { Session, User } from '@coinkeeper/shared/schema/auth';
 import type { BudgetRow, BudgetSuggestion } from '@coinkeeper/shared/schema/budgets';
 import type { CategoryTree } from '@coinkeeper/shared/schema/categories';
@@ -25,6 +25,7 @@ import type {
   CategorySlice,
   GroupMonthSlice,
   GroupSlice,
+  LeftToSpend,
   RankingSlice,
   Summary,
 } from '@coinkeeper/shared/schema/reports';
@@ -34,6 +35,7 @@ import type { TemplateRow } from '@coinkeeper/shared/schema/templates';
 import type { ReviewSuggestion, TransactionRow } from '@coinkeeper/shared/schema/transaction';
 
 export type {
+  AccountProjection,
   AccountSummary,
   BalancePoint,
   BudgetRow,
@@ -44,6 +46,7 @@ export type {
   ExchangeRateRow,
   GroupMonthSlice,
   GroupSlice,
+  LeftToSpend,
   Occurrence,
   PayeeRow,
   RecurringSeriesRow,
@@ -97,8 +100,11 @@ export const QueryKeys = {
   currencies: ['currencies'] as const,
   deleted: (resource: string) => ['deleted', resource] as const,
   exchangeRates: ['exchange-rates'] as const,
+  leftToSpend: (month: string, currency: string, today: string) =>
+    ['summary', 'left-to-spend', month, currency, today] as const,
   me: ['me'] as const,
   payees: ['payees'] as const,
+  projections: (today: string, days: number) => ['accounts', 'projections', today, days] as const,
   recurring: (today: string) => ['recurring', 'series', today] as const,
   recurringSuggestions: (today: string) => ['recurring', 'suggestions', today] as const,
   reviewSuggestions: ['transactions', 'review-suggestions'] as const,
@@ -256,6 +262,30 @@ export function useBalances(months: number, month?: string) {
   return useQuery({
     queryFn: () => apiList<BalancePoint>('/reports/balances', { month, months: String(months) }),
     queryKey: QueryKeys.balances(months, month),
+  });
+}
+
+export function useLeftToSpend(month: string, currency: string) {
+  const today = localIsoDate(new Date());
+
+  return useQuery({
+    queryFn: () =>
+      apiGet<LeftToSpend>('/reports/left-to-spend', {
+        currency,
+        month,
+        today,
+      }),
+    queryKey: QueryKeys.leftToSpend(month, currency, today),
+  });
+}
+
+export function useProjections(days: number) {
+  const today = localIsoDate(new Date());
+
+  return useQuery({
+    queryFn: () =>
+      apiList<AccountProjection>('/accounts/projections', { days: String(days), today }),
+    queryKey: QueryKeys.projections(today, days),
   });
 }
 

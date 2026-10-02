@@ -111,4 +111,10 @@ describe('BudgetLine', () => {
     expect(allowanceLabel(figures, format)).toBe('€83.33 a day');
     expect(allowanceLabel(budgetFigures(groceries(10000), '2026-10-02'), format)).toBe('');
   });
+
+  it('keeps bills still due out of the daily allowance and says how much they are', () => {
+    const figures = budgetFigures({ ...groceries(10000), billsDueMinor: 4000 }, '2026-09-28');
+
+    expect(allowanceLabel(figures, format)).toBe('€70.00 a day · €40.00 in bills to come');
+  });
 });
