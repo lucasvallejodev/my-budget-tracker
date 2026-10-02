@@ -127,17 +127,17 @@ Six templates are ready in the transaction form: **Coffee** (3.20 EUR cash), **B
 
 ## What to check with it
 
-| Feature                  | Where                                                                                                            |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| Year-over-year analytics | Analytics with **Compare** set to the same period last year; the salary raise shows in income                    |
-| Split transactions       | Transactions, search "Big monthly shop": **Split into 2** with each category and amount; Budgets › Home & garden |
-| Templates                | New transaction: the chips; Settings › Templates                                                                 |
-| Upcoming                 | Upcoming: overdue water, SkyVault due today, rent and salary paid, the subscription review                       |
-| Detected payments        | Upcoming › Found in your history: City Transit, Mobi Mobile, PulseFit Gym                                        |
-| Left to spend            | Home, current month                                                                                              |
-| Projected balances       | Accounts › Next 30 days                                                                                          |
-| Budget period            | Settings › Budget period; Budgets show the period dates in their pace                                            |
-| Deleted items            | Settings › Deleted items: a transaction, a template and a recurring payment to restore                           |
+| Feature                  | Where                                                                                                                       |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Year-over-year analytics | Analytics with **Compare** set to the same period last year; the salary raise shows in income                               |
+| Split transactions       | Transactions, search "Big monthly shop": **Split into 2**, open it to see each category and amount; Budgets › Home & garden |
+| Templates                | New transaction: the chips; Settings › Templates                                                                            |
+| Upcoming                 | Upcoming: overdue water, SkyVault due today, rent and salary paid, the subscription review                                  |
+| Detected payments        | Upcoming › Found in your history: City Transit, Mobi Mobile, PulseFit Gym                                                   |
+| Left to spend            | Home, current month                                                                                                         |
+| Projected balances       | Accounts › Next 30 days                                                                                                     |
+| Budget period            | Settings › Budget period; Budgets show the period dates in their pace                                                       |
+| Deleted items            | Settings › Deleted items: a transaction, a template and a recurring payment to restore                                      |
 
 ## Safety
 

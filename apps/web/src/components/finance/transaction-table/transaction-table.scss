@@ -3,7 +3,6 @@
 .transaction-table {
   --transaction-table-columns: #{size(avatar)} minmax(0, 1fr) auto;
   --transaction-table-areas: 'avatar payee amount' 'avatar category amount';
-  --transaction-table-split-areas: 'avatar payee amount' 'avatar category category';
 
   @include bordered;
 
@@ -14,19 +13,16 @@
     --transaction-table-columns: #{size(avatar)} minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr)
       minmax(120px, auto);
     --transaction-table-areas: 'avatar payee category account amount';
-    --transaction-table-split-areas: initial;
   }
 
   &--actions {
     --transaction-table-columns: #{size(avatar)} minmax(0, 1fr) auto #{size(control-height-small)};
     --transaction-table-areas: 'avatar payee amount actions' 'avatar category amount actions';
-    --transaction-table-split-areas: 'avatar payee amount actions' 'avatar category category category';
 
     @include media-up(tablet-landscape) {
       --transaction-table-columns: #{size(avatar)} minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr)
         minmax(120px, auto) #{size(control-height-small)};
       --transaction-table-areas: 'avatar payee category account amount actions';
-      --transaction-table-split-areas: initial;
     }
   }
 
@@ -110,10 +106,6 @@
     > :first-child {
       grid-area: avatar;
     }
-  }
-
-  &__row--split {
-    grid-template-areas: var(--transaction-table-split-areas, var(--transaction-table-areas));
   }
 
   &__payee {

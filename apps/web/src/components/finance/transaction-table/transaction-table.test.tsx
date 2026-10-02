@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { SampleTransactions } from '../sample-data';
@@ -115,7 +115,7 @@ describe('TransactionTable', () => {
     ).toBeTruthy();
   });
 
-  it('shows each split line with its category and amount instead of a category picker', () => {
+  it('folds split lines into a sub-list that opens with their categories and amounts', () => {
     renderTable([
       {
         ...SampleTransactions[0],
@@ -145,10 +145,18 @@ describe('TransactionTable', () => {
       },
     ]);
 
-    expect(screen.getByText('Split into 2')).toBeTruthy();
+    const toggle = screen.getByRole('button', { name: 'Split into 2' });
 
-    expect(screen.getByText('Groceries').closest('li')?.textContent).toBe('Groceries$5.00');
-    expect(screen.getByText('Household').closest('li')?.textContent).toBe('Household$2.50');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('list', { name: 'Split into 2 categories' })).toBeNull();
+
+    fireEvent.click(toggle);
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('list', { name: 'Split into 2 categories' })).toBeTruthy();
+
+    expect(screen.getByText('Groceries').closest('li')?.textContent).toBe('Groceries-$5.00');
+    expect(screen.getByText('Household').closest('li')?.textContent).toBe('Household-$2.50');
     expect(screen.queryByRole('button', { name: /Categorize/ })).toBeNull();
   });
 });

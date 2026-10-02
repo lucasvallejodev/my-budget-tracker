@@ -1,34 +1,53 @@
 @use 'abstracts' as *;
 
 .split-categories {
-  @include flex-column(space(1));
+  @include reset-list;
 
-  min-width: 0;
+  grid-column: 2 / -1;
+  margin-top: space(1);
+  border-left: border(divider);
 
-  &__label {
-    @include flex-row(space(1));
+  &__toggle {
+    @include reset-button;
+    @include flex-row(space(2));
 
-    color: var(--color-text-muted);
-    font-size: font-size(caption);
-    font-weight: font-weight(semibold);
+    display: inline-flex;
+    max-width: 100%;
+    border-radius: radius(control);
+    color: var(--color-text-body);
+    font-size: font-size(meta);
+    font-weight: font-weight(medium);
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:focus-visible {
+      @include focus-ring;
+    }
   }
 
-  &__icon {
+  &__chevron {
     @include icon-size(size(icon-small));
+    @include transition(transform);
+
+    flex-shrink: 0;
+    color: var(--color-text-faint);
   }
 
-  &__lines {
-    @include reset-list;
-    @include flex-column(space(1));
+  &__toggle[aria-expanded='true'] &__chevron {
+    transform: rotate(180deg);
   }
 
   &__line {
     @include flex-row(space(2));
 
     min-width: 0;
+    padding: space(2) 0 space(2) space(3);
     color: var(--color-text-body);
     font-size: font-size(meta);
-    font-weight: font-weight(medium);
+
+    & + & {
+      border-top: border(divider);
+    }
   }
 
   &__name {
