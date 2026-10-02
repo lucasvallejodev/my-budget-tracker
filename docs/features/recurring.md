@@ -8,7 +8,7 @@ A recurring payment, or series, is something that happens on a rhythm: rent on t
 
 ### Open Upcoming
 
-Choose **Upcoming** under **Plan** in the sidebar (or open **More** on a phone). Like Analytics, the page is split into sections with tabs at the top; each section starts with a short explanation of what it shows and what you can do there. **New recurring payment** is available in every section.
+Choose **Upcoming** under **Plan** in the sidebar (or open **More** on a phone). Like Analytics, the page is split into sections with tabs at the top; each section starts with a collapsed **How does this work?** bar; open it for a short explanation of what the section shows and what you can do there. **New recurring payment** is available in every section.
 
 | Section               | Address                   | What it shows                                                                                                                                                                                                            |
 | --------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

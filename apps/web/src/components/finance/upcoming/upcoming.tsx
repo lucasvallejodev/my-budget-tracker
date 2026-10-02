@@ -163,7 +163,9 @@ export function Upcoming({ view = 'due' }: { view?: UpcomingView }) {
         }))}
       />
       <Stack gap="medium">
-        <SectionIntro steps={section.steps}>{section.intro}</SectionIntro>
+        <SectionIntro topic={section.label} steps={section.steps}>
+          {section.intro}
+        </SectionIntro>
         <SectionBody dialogs={dialogs} view={view} />
       </Stack>
       {dialogs.editing.value && (

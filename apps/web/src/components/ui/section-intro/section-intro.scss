@@ -2,12 +2,68 @@
 
 @layer ui {
   .section-intro {
-    @include flex-column(space(2));
-
-    padding: space(4);
     border-radius: radius(card);
     background: var(--color-surface-sunken);
     color: var(--color-text-body);
+
+    &__summary {
+      @include flex-row(space(2));
+
+      padding: space(3) space(4);
+      border-radius: radius(card);
+      cursor: pointer;
+      list-style: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      &:focus-visible {
+        @include focus-ring;
+      }
+    }
+
+    &__icon {
+      @include icon-size(size(icon-small));
+
+      flex-shrink: 0;
+      color: var(--color-text-faint);
+    }
+
+    &__question {
+      font-weight: font-weight(semibold);
+    }
+
+    &__topic {
+      @include muted-text;
+      @include truncate;
+
+      display: none;
+      min-width: 0;
+
+      @include media-up(phone-landscape) {
+        display: inline;
+      }
+    }
+
+    &__chevron {
+      @include icon-size(size(icon-small));
+      @include transition(transform);
+
+      flex-shrink: 0;
+      margin-left: auto;
+      color: var(--color-text-faint);
+    }
+
+    &[open] &__chevron {
+      transform: rotate(180deg);
+    }
+
+    &__body {
+      @include flex-column(space(2));
+
+      padding: 0 space(4) space(4);
+    }
 
     &__lead {
       margin: 0;
