@@ -58,20 +58,22 @@ function SplitLines({ control, currency, direction }: SplitLinesProps) {
       <legend className="split-lines__legend">Split between categories</legend>
       {fields.map((field, index) => (
         <div className="split-lines__line" key={field.id}>
-          <FormField
-            control={control}
-            name={`splits.${index}.categoryId`}
-            render={({ field: category, fieldState }) => (
-              <CategoryPicker
-                value={category.value || undefined}
-                kind={direction}
-                invalid={!!fieldState.error}
-                label={`Category of line ${index + 1}`}
-                placeholder="Choose category"
-                onChange={categoryId => category.onChange(categoryId ?? '')}
-              />
-            )}
-          />
+          <div className="split-lines__category">
+            <FormField
+              control={control}
+              name={`splits.${index}.categoryId`}
+              render={({ field: category, fieldState }) => (
+                <CategoryPicker
+                  value={category.value || undefined}
+                  kind={direction}
+                  invalid={!!fieldState.error}
+                  label={`Category of line ${index + 1}`}
+                  placeholder="Choose category"
+                  onChange={categoryId => category.onChange(categoryId ?? '')}
+                />
+              )}
+            />
+          </div>
           <FormField
             control={control}
             name={`splits.${index}.amount`}

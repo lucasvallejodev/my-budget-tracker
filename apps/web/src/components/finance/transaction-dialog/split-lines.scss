@@ -21,9 +21,22 @@
 
   &__line {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) size(amount-input) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: space(2);
     align-items: center;
+
+    @include media-up(tablet) {
+      grid-template-columns: minmax(0, 1fr) size(amount-input) auto;
+    }
+  }
+
+  &__category {
+    grid-column: 1 / -1;
+    min-width: 0;
+
+    @include media-up(tablet) {
+      grid-column: auto;
+    }
   }
 
   &__amount {
