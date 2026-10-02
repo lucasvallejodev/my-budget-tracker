@@ -115,7 +115,7 @@ describe('TransactionTable', () => {
     ).toBeTruthy();
   });
 
-  it('shows a split row with its line count instead of a category picker', () => {
+  it('shows each split line with its category and amount instead of a category picker', () => {
     renderTable([
       {
         ...SampleTransactions[0],
@@ -133,7 +133,7 @@ describe('TransactionTable', () => {
             memo: '',
           },
           {
-            amountMinor: -500,
+            amountMinor: -250,
             categoryIcon: null,
             categoryId: 'home',
             categoryName: 'Household',
@@ -146,7 +146,9 @@ describe('TransactionTable', () => {
     ]);
 
     expect(screen.getByText('Split into 2')).toBeTruthy();
-    expect(screen.getByTitle('Groceries, Household')).toBeTruthy();
+
+    expect(screen.getByText('Groceries').closest('li')?.textContent).toBe('Groceries$5.00');
+    expect(screen.getByText('Household').closest('li')?.textContent).toBe('Household$2.50');
     expect(screen.queryByRole('button', { name: /Categorize/ })).toBeNull();
   });
 });

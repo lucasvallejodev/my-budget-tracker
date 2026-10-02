@@ -3,7 +3,7 @@
 import './transaction-table.scss';
 
 import { useMutation } from '@tanstack/react-query';
-import { ArrowLeftRight, Split } from 'lucide-react';
+import { ArrowLeftRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { categorizeTransaction } from '@/api/mutations';
@@ -15,8 +15,9 @@ import { formatMoney } from '@coinkeeper/shared/lib/money';
 import { CategoryPicker } from '../category-picker';
 import { PayeeAvatar } from '../payee-avatar';
 import { TransactionActions } from '../transaction-actions';
-import { dayLabel, describeTransaction, splitLabel } from '../transaction-labels';
+import { dayLabel, describeTransaction } from '../transaction-labels';
 import { TransactionRow, useRefreshFinance } from '../use-finance-data';
+import { SplitCategories } from './split-categories';
 import { collapseTransfers, groupByDay, ListedTransaction } from './transaction-groups';
 
 const YearLength = 4;
@@ -85,19 +86,7 @@ function CategoryCell({
     return <span className="transaction-table__chip">Opening balance</span>;
   }
 
-  if (transaction.splits.length) {
-    return (
-      <span
-        className="transaction-table__chip"
-        title={transaction.splits.map(line => line.categoryName ?? 'Uncategorized').join(', ')}
-      >
-        <Avatar size="small">
-          <Split />
-        </Avatar>
-        {splitLabel(transaction)}
-      </span>
-    );
-  }
+  if (transaction.splits.length) return <SplitCategories transaction={transaction} />;
 
   if (!transaction.categoryId) {
     return (
@@ -159,7 +148,11 @@ function TransactionListRow({
   const isTransfer = transaction.kind === 'transfer';
 
   return (
-    <li className="transaction-table__row">
+    <li
+      className={cn('transaction-table__row', {
+        'transaction-table__row--split': transaction.splits.length > 0,
+      })}
+    >
       <RowAvatar transaction={transaction} />
       <div className="transaction-table__payee">
         <span className="transaction-table__title">

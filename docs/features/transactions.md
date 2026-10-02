@@ -31,9 +31,11 @@ One receipt can cover several categories, such as a supermarket bill with food a
 3. The status under the lines says how much is **left to assign**, or that **everything is assigned**. The lines must add up to the amount exactly; otherwise saving fails with "The split lines must add up to the transaction amount".
 4. Click **Create** or **Save**.
 
-In the list, a split row shows **Split into 2** (hover it to see the categories) instead of one category. Each line counts in its own category on Budgets, Analytics and Home, and filtering the list by a category also finds splits with a line in that category. The amount of a split can only change together with its lines: edit both in the form.
+In the list (Transactions, an account's page and Home's recent activity), a split row shows **Split into 2** and, under it, every line with its category icon, name and amount, instead of one category. On a phone the lines use the full width of the row. **Edit** shows the same lines in the form, where you can change them. Each line counts in its own category on Budgets, Analytics and Home, and filtering the list by a category also finds splits with a line in that category. The amount of a split can only change together with its lines: edit both in the form.
 
 To undo a split, turn the switch off and save; the transaction keeps its amount and waits for a category on the Review page unless you pick one. Choosing a single category for a split row (for example on the Review page) also replaces the split with that category.
+
+<!-- screenshot: Transactions list with a split row showing Split into 2, Groceries and Home & garden with their amounts (docs/assets/screenshots/transactions-split-row.png) -->
 
 <!-- screenshot: transaction form with Split between categories on, three lines and "Everything is assigned" (docs/assets/screenshots/transactions-split.png) -->
 
