@@ -4,16 +4,27 @@ import { normaliseEmail } from '@/auth/service';
 import { users } from '@/db/schema';
 import { payeeNameKey, resolvePayeesByName } from '@/modules/payees/service';
 import type { Services } from '@/modules/services';
+import {
+  periodFor,
+  periodRange,
+  type PeriodSettings,
+  ruleStart,
+} from '@coinkeeper/shared/lib/periods';
+import { DefaultWeekendDays } from '@coinkeeper/shared/schema/settings';
 
 import type { DemoCredentials } from './credentials';
+import { DeletedTemplate, type DemoTemplate, DemoTemplates } from './events';
 import { type AccountKey, DemoAccounts, DemoFxRate, DemoUser } from './persona';
 import { buildDemoPlan, type DemoPlan, type StandardEntry, type TransferEntry } from './plan';
+import { demoSeries } from './recurring';
 import { DemoRules } from './spending';
 
 export type DemoSeedResult = {
   accounts: number;
   budgets: number;
   email: string;
+  series: number;
+  templates: number;
   transactions: number;
   userId: string;
 };
@@ -22,6 +33,12 @@ type Lookups = {
   accountIds: Record<AccountKey, string>;
   categoryIds: Map<string, string>;
   payeeIds: Map<string, string>;
+  templateIds: Map<string, string>;
+};
+
+export const DemoPeriodSettings: PeriodSettings = {
+  rule: { kind: 'before_month_end', workingDays: 2 },
+  weekendDays: DefaultWeekendDays,
 };
 
 const removeDemoUser = async (services: Services, email: string): Promise<void> => {
@@ -76,9 +93,15 @@ const payeeIdsByName = async (
   userId: string,
   plan: DemoPlan
 ): Promise<Map<string, string>> => {
-  const names = plan.entries.flatMap(entry =>
-    entry.kind === 'standard' && entry.payee ? [entry.payee] : []
-  );
+  const names = [
+    ...plan.entries.flatMap(entry =>
+      entry.kind === 'standard' && entry.payee ? [entry.payee] : []
+    ),
+    ...demoSeries(plan).map(series => series.payee),
+    ...[...DemoTemplates, DeletedTemplate].flatMap(template =>
+      template.payee ? [template.payee] : []
+    ),
+  ];
 
   const payees = await resolvePayeesByName(services.db, userId, names);
 
@@ -93,22 +116,34 @@ const categoryId = (lookups: Lookups, name: string): string => {
   return id;
 };
 
-const recordStandard = (
+const payeeId = (lookups: Lookups, name: string | null | undefined) =>
+  name ? (lookups.payeeIds.get(payeeNameKey(name)) ?? null) : null;
+
+const recordStandard = async (
   services: Services,
   userId: string,
   lookups: Lookups,
   entry: StandardEntry
-) =>
-  services.ledger.createStandard(userId, {
+) => {
+  const row = await services.ledger.createStandard(userId, {
     accountId: lookups.accountIds[entry.account],
     amountMinor: entry.amountMinor,
     categoryId: entry.category ? categoryId(lookups, entry.category) : null,
     date: entry.date,
     memo: entry.memo,
     originalPayee: entry.bankDescription ?? null,
-    payeeId: entry.payee ? lookups.payeeIds.get(payeeNameKey(entry.payee)) : null,
+    payeeId: payeeId(lookups, entry.payee),
+    splits: entry.splits?.map(line => ({
+      amountMinor: line.amountMinor,
+      categoryId: categoryId(lookups, line.category),
+      memo: '',
+    })),
     status: entry.status,
+    templateId: entry.payee ? lookups.templateIds.get(entry.payee) : undefined,
   });
+
+  if (entry.deleted) await services.ledger.remove(userId, row.id);
+};
 
 const recordTransfer = (
   services: Services,
@@ -135,6 +170,107 @@ const recordEntries = async (
     if (entry.kind === 'standard') await recordStandard(services, userId, lookups, entry);
     else await recordTransfer(services, userId, lookups, entry);
   }
+};
+
+const templateInput = (lookups: Lookups, template: DemoTemplate) => ({
+  accountId: template.account ? lookups.accountIds[template.account] : null,
+  amountMinor: template.amountMinor,
+  categoryId: template.category ? categoryId(lookups, template.category) : null,
+  kind: template.kind,
+  memo: '',
+  name: template.name,
+  payeeId: payeeId(lookups, template.payee),
+  transferAccountId: template.to ? lookups.accountIds[template.to] : null,
+});
+
+const createTemplates = async (
+  services: Services,
+  userId: string,
+  lookups: Omit<Lookups, 'templateIds'>
+): Promise<Map<string, string>> => {
+  const byPayee = new Map<string, string>();
+
+  for (const template of DemoTemplates) {
+    const created = await services.templates.create(
+      userId,
+      templateInput({ ...lookups, templateIds: byPayee }, template)
+    );
+
+    if (template.payee) byPayee.set(template.payee, created.id);
+  }
+
+  const deleted = await services.templates.create(
+    userId,
+    templateInput({ ...lookups, templateIds: byPayee }, DeletedTemplate)
+  );
+
+  await services.templates.remove(userId, deleted.id);
+
+  return byPayee;
+};
+
+const createSeries = async (
+  services: Services,
+  userId: string,
+  lookups: Lookups,
+  plan: DemoPlan
+): Promise<number> => {
+  const all = demoSeries(plan);
+
+  for (const series of all) {
+    const created = await services.recurring.create(
+      userId,
+      {
+        accountId: lookups.accountIds[series.account],
+        amountMinor: series.amountMinor,
+        anchorDate: series.anchorDate,
+        cadence: series.cadence,
+        categoryId: categoryId(lookups, series.category),
+        endDate: null,
+        interval: series.interval,
+        kind: series.kind,
+        matchWindowDays: series.matchWindowDays,
+        name: series.name,
+        payeeId: payeeId(lookups, series.payee),
+        recordMode: series.recordMode ?? 'match_only',
+      },
+      { today: plan.today }
+    );
+
+    if (series.deleted) await services.recurring.remove(userId, created.id);
+  }
+
+  return all.filter(series => !series.deleted).length;
+};
+
+const moveCurrentPeriodToPayday = async (
+  services: Services,
+  userId: string,
+  plan: DemoPlan
+): Promise<void> => {
+  await services.updateSettings(userId, {
+    periodRule: DemoPeriodSettings.rule,
+    weekendDays: DemoPeriodSettings.weekendDays,
+  });
+
+  const current = periodFor(plan.today, DemoPeriodSettings);
+  const payday = plan.paydays.filter(date => date <= current.from).at(-1);
+  const previous = periodRange(previousKey(current.key), DemoPeriodSettings);
+
+  if (!payday || payday === ruleStart(current.key, DemoPeriodSettings)) return;
+  if (payday <= previous.from) return;
+
+  await services.periods.move(userId, current.key, payday);
+};
+
+const MONTH_KEY_LENGTH = 7;
+
+const previousKey = (key: string): string => {
+  const date = new Date(`${key}-01T00:00:00Z`);
+
+  date.setUTCMonth(date.getUTCMonth() - 1);
+
+  return date.toISOString().slice(0, MONTH_KEY_LENGTH);
 };
 
 const recordPlanning = async (
@@ -181,19 +317,29 @@ export const seedDemoAccount = async (
     showConvertedTotals: true,
   });
 
-  const lookups: Lookups = {
+  const references = {
     accountIds: await createAccounts(services, user.id, plan.openingDate),
     categoryIds: await categoryIdsByName(services, user.id),
     payeeIds: await payeeIdsByName(services, user.id, plan),
   };
 
+  const lookups: Lookups = {
+    ...references,
+    templateIds: await createTemplates(services, user.id, references),
+  };
+
+  const series = await createSeries(services, user.id, lookups, plan);
+
   await recordEntries(services, user.id, lookups, plan);
   await recordPlanning(services, user.id, lookups, plan);
+  await moveCurrentPeriodToPayday(services, user.id, plan);
 
   return {
     accounts: Object.keys(lookups.accountIds).length,
     budgets: plan.budgets.length,
     email: user.email,
+    series,
+    templates: DemoTemplates.length,
     transactions: plan.entries.length,
     userId: user.id,
   };

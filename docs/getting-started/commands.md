@@ -34,15 +34,15 @@ All commands run from the repository root. The repository is an npm workspaces m
 
 The database commands run in the API workspace, which owns the schema. See [Database migrations](../reference/migrations.md).
 
-| Command                | What it does                                                                                                                                        |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run db:up`        | Starts the PostgreSQL container.                                                                                                                    |
-| `npm run db:down`      | Stops Compose services. The data volume is kept.                                                                                                    |
-| `npm run db:generate`  | Generates a new SQL migration in `apps/api/drizzle/` from changes in `apps/api/src/db/schema.ts`. Review the SQL before applying it.                |
-| `npm run db:migrate`   | Applies pending migrations in `apps/api/drizzle/` to `DATABASE_URL`.                                                                                |
-| `npm run db:check`     | Read-only comparison of the live schema against all migrations applied to an in-memory PostgreSQL.                                                  |
-| `npm run db:seed:demo` | Creates or refreshes the demo user Jhon Doe with six months of history up to today; refuses to run in production ([Demo account](demo-account.md)). |
-| `npm run db:studio`    | Opens Drizzle Studio to browse the database.                                                                                                        |
+| Command                | What it does                                                                                                                                                                                                                            |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run db:up`        | Starts the PostgreSQL container.                                                                                                                                                                                                        |
+| `npm run db:down`      | Stops Compose services. The data volume is kept.                                                                                                                                                                                        |
+| `npm run db:generate`  | Generates a new SQL migration in `apps/api/drizzle/` from changes in `apps/api/src/db/schema.ts`. Review the SQL before applying it.                                                                                                    |
+| `npm run db:migrate`   | Applies pending migrations in `apps/api/drizzle/` to `DATABASE_URL`.                                                                                                                                                                    |
+| `npm run db:check`     | Read-only comparison of the live schema against all migrations applied to an in-memory PostgreSQL.                                                                                                                                      |
+| `npm run db:seed:demo` | Creates or refreshes the demo user Jhon Doe with two years of history up to today, including split purchases, recurring payments, templates and a payday budget period; refuses to run in production ([Demo account](demo-account.md)). |
+| `npm run db:studio`    | Opens Drizzle Studio to browse the database.                                                                                                                                                                                            |
 
 ## Docker
 

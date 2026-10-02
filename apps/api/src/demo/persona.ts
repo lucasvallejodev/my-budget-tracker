@@ -19,8 +19,34 @@ export type MonthlyItem = {
   amountMinor: AmountRange;
   category: string;
   day: number;
+  latestChargeMinor?: number;
   memo: string;
   payee: string;
+};
+
+export type YearlyItem = {
+  account: AccountKey;
+  amountMinor: AmountRange;
+  category: string;
+  day: number;
+  memo: string;
+  month: number;
+  payee: string;
+};
+
+export type SplitLine = {
+  amountMinor: AmountRange;
+  category: string;
+};
+
+export type SplitItem = {
+  account: AccountKey;
+  day: number;
+  lines: readonly SplitLine[];
+  memo: string;
+  name: string;
+  payee: string;
+  probability: number;
 };
 
 export type VariableItem = {
@@ -52,7 +78,7 @@ export type UnreviewedItem = {
 
 export const DemoUser = { name: 'Jhon Doe' } as const;
 
-export const DEMO_HISTORY_MONTHS = 6;
+export const DEMO_HISTORY_MONTHS = 24;
 export const PAYDAY_MAX_DAYS_BEFORE_MONTH_END = 4;
 export const PENDING_WITHIN_DAYS = 2;
 export const CARD_PAYMENT_DAY = 4;
@@ -107,24 +133,63 @@ export const Salary = {
   payee: 'Northwind Labs',
 } as const;
 
+export const SalaryBeforeRaise = {
+  amountMinor: 285_000,
+  untilOffset: -12,
+} as const;
+
+export const Cleaner = {
+  account: 'everyday',
+  amountMinor: 4500,
+  category: 'Home maintenance',
+  everyDays: 14,
+  firstWeekday: 5,
+  memo: 'Fortnightly cleaning',
+  payee: 'Sparkle Cleaning',
+} as const;
+
+export const WaterBill = {
+  account: 'everyday',
+  amountMinor: 6500,
+  category: 'Water & waste',
+  everyMonths: 3,
+  latestDueDaysAgo: 10,
+  memo: 'Quarterly water bill',
+  payee: 'Clearwater Utilities',
+} as const;
+
+export const DeletedDuplicate = {
+  account: 'creditCard',
+  amountMinor: -1650,
+  category: 'Movies & events',
+  daysAgo: 6,
+  memo: 'Charged twice by mistake',
+  payee: 'Starlight Cinema',
+} as const;
+
 export const SavingsTransfer = {
-  maxSteps: 12,
+  bufferMinor: 300_000,
+  maxMinor: 60_000,
   memo: 'Monthly savings',
-  minSteps: 8,
   stepMinor: 5000,
 } as const;
 
+export const SavingsTopUp = {
+  floorMinor: 20_000,
+  memo: 'Top up from savings',
+  stepMinor: 5000,
+  targetMinor: 100_000,
+} as const;
+
 export const UsdTopUp = {
+  amountMinor: 12_000,
   day: 10,
-  maxSteps: 14,
+  everyMonths: 3,
   memo: 'Top up the USD account',
-  minSteps: 10,
-  stepMinor: 1000,
 } as const;
 
 export const CashWithdrawal = {
   amountMinor: 10_000,
-  day: 14,
   memo: 'ATM withdrawal',
 } as const;
 
