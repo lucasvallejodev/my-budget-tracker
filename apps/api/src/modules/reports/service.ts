@@ -16,7 +16,7 @@ import { monthRange } from '../ledger/service';
 import { monthEndBalances } from './balances';
 import { breakdownByCategory, breakdownByGroup, type BreakdownOptions } from './breakdown';
 import { categoryLines, spendingWhere } from './predicate';
-import { monthsEndingAt } from './range';
+import { monthsEndingAt, type MonthSpan } from './range';
 import { spendingByAccount, spendingByPayee } from './rankings';
 
 const DEFAULT_CASH_FLOW_MONTHS = 8;
@@ -31,12 +31,10 @@ type CategorySpending = {
 const categorySpending = async (
   db: Db,
   userId: string,
-  month: string,
+  { end, start }: MonthSpan,
   currencies: string[]
 ): Promise<CategorySpending[]> => {
   if (!currencies.length) return [];
-
-  const { end, start } = monthRange(month);
 
   const rows = await rowsOf<{
     category_id: string;
@@ -151,8 +149,8 @@ export const createReportService = (db: Db) => {
       }));
     },
 
-    categorySpending: (userId: string, month: string, currencies: string[]) =>
-      categorySpending(db, userId, month, currencies),
+    categorySpending: (userId: string, span: MonthSpan, currencies: string[]) =>
+      categorySpending(db, userId, span, currencies),
 
     categorySpendingBetween: (userId: string, from: string, to: string) =>
       categorySpendingBetween(db, userId, from, to),
@@ -216,8 +214,12 @@ export const createReportService = (db: Db) => {
     monthEndBalances: (userId: string, month: string, months?: number) =>
       monthEndBalances(db, userId, month, months),
 
-    async monthlyTotals(userId: string, month: string): Promise<CurrencyTotals[]> {
-      const { end, start } = monthRange(month);
+    async monthlyTotals(
+      userId: string,
+      month: string,
+      span?: MonthSpan
+    ): Promise<CurrencyTotals[]> {
+      const { end, start } = span ?? monthRange(month);
 
       const rows = await rowsOf<{
         currency: string;

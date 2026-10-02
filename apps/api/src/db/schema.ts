@@ -7,6 +7,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   numeric,
   pgTable,
   primaryKey,
@@ -15,6 +16,8 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
+import { DefaultWeekendDays, type PeriodRuleValues } from '@coinkeeper/shared/schema/settings';
+
 import {
   accountClassification,
   accountType,
@@ -22,21 +25,18 @@ import {
   createdAt,
   deletedAt,
   id,
-  recurringCadence,
-  recurringKind,
-  recurringRecordMode,
-  recurringSource,
-  recurringStatus,
   transactionKind,
   transactionStatus,
   updatedAt,
+  userId,
 } from './columns';
+import { recurringSeries } from './planning';
 
 export * from './columns';
+export * from './planning';
 export type * from './types';
 
 const DEFAULT_MINOR_UNITS = 2;
-const DEFAULT_MATCH_WINDOW_DAYS = 3;
 
 export const users = pgTable(
   'users',
@@ -51,11 +51,6 @@ export const users = pgTable(
   },
   columns => [uniqueIndex('users_email_key').on(columns.email)]
 );
-
-const userId = () =>
-  text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' });
 
 export const sessions = pgTable(
   'sessions',
@@ -93,6 +88,11 @@ export const userSettings = pgTable('user_settings', {
     .references(() => currencies.code),
   allowEmoji: boolean('allow_emoji').notNull().default(false),
   locale: text('locale').notNull().default('en-US'),
+  periodRule: jsonb('period_rule')
+    .$type<PeriodRuleValues>()
+    .notNull()
+    .default({ kind: 'calendar' }),
+  weekendDays: integer('weekend_days').array().notNull().default(DefaultWeekendDays),
   seededVersion: integer('seeded_version'),
   showConvertedTotals: boolean('show_converted_totals').notNull().default(false),
   createdAt: createdAt(),
@@ -236,44 +236,6 @@ export const transactions = pgTable(
   ]
 );
 
-export const recurringSeries = pgTable(
-  'recurring_series',
-  {
-    id: id(),
-    userId: userId(),
-    name: text('name').notNull(),
-    kind: recurringKind('kind').notNull().default('bill'),
-    accountId: text('account_id')
-      .notNull()
-      .references(() => accounts.id),
-    payeeId: text('payee_id').references(() => payees.id),
-    categoryId: text('category_id').references(() => categories.id),
-    currency: char('currency', { length: 3 })
-      .notNull()
-      .references(() => currencies.code),
-    amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
-    amountMinMinor: bigint('amount_min_minor', { mode: 'number' }),
-    amountMaxMinor: bigint('amount_max_minor', { mode: 'number' }),
-    cadence: recurringCadence('cadence').notNull().default('monthly'),
-    interval: integer('interval').notNull().default(1),
-    anchorDate: date('anchor_date', { mode: 'string' }).notNull(),
-    endDate: date('end_date', { mode: 'string' }),
-    matchWindowDays: integer('match_window_days').notNull().default(DEFAULT_MATCH_WINDOW_DAYS),
-    recordMode: recurringRecordMode('record_mode').notNull().default('match_only'),
-    source: recurringSource('source').notNull().default('manual'),
-    status: recurringStatus('status').notNull().default('active'),
-    deletedAt: deletedAt(),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  columns => [
-    index('recurring_series_user_idx').on(columns.userId),
-    check('recurring_series_amount_check', sql`${columns.amountMinor} <> 0`),
-    check('recurring_series_interval_check', sql`${columns.interval} >= 1`),
-    check('recurring_series_window_check', sql`${columns.matchWindowDays} >= 0`),
-  ]
-);
-
 export const exchangeRates = pgTable(
   'exchange_rates',
   {
@@ -336,71 +298,6 @@ export const rules = pgTable(
     updatedAt: updatedAt(),
   },
   columns => [index('rules_user_idx').on(columns.userId)]
-);
-
-export const transactionSplits = pgTable(
-  'transaction_splits',
-  {
-    id: id(),
-    userId: userId(),
-    transactionId: text('transaction_id')
-      .notNull()
-      .references(() => transactions.id),
-    categoryId: text('category_id').references(() => categories.id),
-    amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
-    memo: text('memo').notNull().default(''),
-    sortOrder: integer('sort_order').notNull().default(0),
-    deletedAt: deletedAt(),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  columns => [
-    index('transaction_splits_transaction_idx')
-      .on(columns.transactionId)
-      .where(sql`${columns.deletedAt} IS NULL`),
-    index('transaction_splits_user_category_idx').on(columns.userId, columns.categoryId),
-    check('transaction_splits_amount_check', sql`${columns.amountMinor} <> 0`),
-  ]
-);
-
-export const transactionTemplates = pgTable(
-  'transaction_templates',
-  {
-    id: id(),
-    userId: userId(),
-    name: text('name').notNull(),
-    kind: transactionKind('kind').notNull().default('standard'),
-    accountId: text('account_id').references(() => accounts.id),
-    transferAccountId: text('transfer_account_id').references(() => accounts.id),
-    categoryId: text('category_id').references(() => categories.id),
-    payeeId: text('payee_id').references(() => payees.id),
-    amountMinor: bigint('amount_minor', { mode: 'number' }),
-    memo: text('memo').notNull().default(''),
-    sortOrder: integer('sort_order').notNull().default(0),
-    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
-    deletedAt: deletedAt(),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  columns => [
-    index('transaction_templates_user_idx').on(columns.userId),
-    uniqueIndex('transaction_templates_user_name_key')
-      .on(columns.userId, columns.name)
-      .where(sql`${columns.deletedAt} IS NULL`),
-    check('transaction_templates_kind_check', sql`${columns.kind} IN ('standard', 'transfer')`),
-    check(
-      'transaction_templates_category_kind_check',
-      sql`${columns.kind} = 'standard' OR ${columns.categoryId} IS NULL`
-    ),
-    check(
-      'transaction_templates_transfer_account_check',
-      sql`(${columns.kind} = 'transfer') OR ${columns.transferAccountId} IS NULL`
-    ),
-    check(
-      'transaction_templates_amount_account_check',
-      sql`${columns.amountMinor} IS NULL OR ${columns.accountId} IS NOT NULL`
-    ),
-  ]
 );
 
 export const categoryGroupRelations = relations(categoryGroups, ({ many }) => ({

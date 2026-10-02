@@ -403,6 +403,13 @@ const ForeignIdExemptions = new Map([
     'put /api/v1/exchange-rates/{base}/{quote}/{date}',
     'an upsert by natural key; "keeps upserts by natural key private" below covers it',
   ],
+  ...['get', 'put', 'delete'].map(
+    method =>
+      [
+        `${method} /api/v1/periods/{month}`,
+        'a month, not an id: each user only ever reads and moves their own periods; "keeps moved periods private" below covers it',
+      ] as const
+  ),
 ]);
 
 const ForeignBodyCases: ForeignBodyCase[] = [
@@ -635,6 +642,7 @@ const StatePaths = [
   '/transaction-templates?deleted=true',
   '/recurring-series',
   '/recurring-series?deleted=true',
+  '/periods/2026-10',
 ];
 
 let context: TestContext;
@@ -919,6 +927,14 @@ describe('foreign ids', () => {
     expect(byAccount.json().items).toEqual([]);
     expect(byCategory.json().items).toEqual([]);
     expect(suggestions.json().items).toEqual([]);
+  });
+
+  it('keeps moved periods private', async () => {
+    const ownerBefore = await stateOf(ada);
+    const moved = await bob.request('PUT', '/periods/2026-10', { startsOn: '2026-10-03' });
+
+    expect(moved.json().moved).toBe(true);
+    expect(await stateOf(ada)).toEqual(ownerBefore);
   });
 
   it('keeps upserts by natural key private', async () => {

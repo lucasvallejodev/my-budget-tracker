@@ -1,5 +1,5 @@
 import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
-import { addDays, calendarPeriod, periodProgress } from '@coinkeeper/shared/lib/periods';
+import { addDays, periodProgress } from '@coinkeeper/shared/lib/periods';
 import {
   type AccountProjection,
   DEFAULT_PROJECTION_DAYS,
@@ -11,6 +11,7 @@ import type { LeftToSpend } from '@coinkeeper/shared/schema/reports';
 import { createAccountService } from '../accounts/service';
 import { createBudgetService } from '../budgets/service';
 import type { Db } from '../db';
+import { periodOf, spanOf, userPeriods } from '../periods/service';
 import { occurrencesInRange, unpaidSpendingBetween } from '../recurring/occurrences';
 import { OVERDUE_LOOKBACK_DAYS } from '../recurring/rules';
 import { createReportService } from '../reports/service';
@@ -78,15 +79,16 @@ export const createForecastService = (db: Db) => {
     async leftToSpend(userId: string, options: LeftToSpendOptions): Promise<LeftToSpend> {
       const { currency, month } = options;
       const today = todayOf(options.today);
-      const period = calendarPeriod(month);
-      const totals = await reports.monthlyTotals(userId, month);
+      const period = periodOf(await userPeriods(db, userId), month);
+      const span = spanOf(period);
+      const totals = await reports.monthlyTotals(userId, month, span);
 
       const monthBudgets = (await budgets.list(userId, month)).filter(
         budget => budget.currency === currency
       );
 
       const budgeted = new Set(monthBudgets.map(budget => budget.categoryId));
-      const spending = await reports.breakdownByCategory(userId, month, currency);
+      const spending = await reports.breakdownByCategory(userId, month, currency, { span });
 
       const due = await unpaidSpendingBetween(db, userId, {
         from: period.from,

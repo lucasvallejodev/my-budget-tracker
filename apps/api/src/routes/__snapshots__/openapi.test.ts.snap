@@ -1394,6 +1394,12 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "month": {
                             "type": "string",
                           },
+                          "periodFrom": {
+                            "type": "string",
+                          },
+                          "periodTo": {
+                            "type": "string",
+                          },
                           "spentMinor": {
                             "maximum": 9007199254740991,
                             "minimum": -9007199254740991,
@@ -1414,6 +1420,8 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "icon",
                           "id",
                           "month",
+                          "periodFrom",
+                          "periodTo",
                           "spentMinor",
                         ],
                         "type": "object",
@@ -1651,6 +1659,12 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "month": {
                       "type": "string",
                     },
+                    "periodFrom": {
+                      "type": "string",
+                    },
+                    "periodTo": {
+                      "type": "string",
+                    },
                     "spentMinor": {
                       "maximum": 9007199254740991,
                       "minimum": -9007199254740991,
@@ -1671,6 +1685,8 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "icon",
                     "id",
                     "month",
+                    "periodFrom",
+                    "periodTo",
                     "spentMinor",
                   ],
                   "type": "object",
@@ -1793,6 +1809,12 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "month": {
                       "type": "string",
                     },
+                    "periodFrom": {
+                      "type": "string",
+                    },
+                    "periodTo": {
+                      "type": "string",
+                    },
                     "spentMinor": {
                       "maximum": 9007199254740991,
                       "minimum": -9007199254740991,
@@ -1813,6 +1835,8 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "icon",
                     "id",
                     "month",
+                    "periodFrom",
+                    "periodTo",
                     "spentMinor",
                   ],
                   "type": "object",
@@ -1873,6 +1897,12 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "month": {
                       "type": "string",
                     },
+                    "periodFrom": {
+                      "type": "string",
+                    },
+                    "periodTo": {
+                      "type": "string",
+                    },
                     "spentMinor": {
                       "maximum": 9007199254740991,
                       "minimum": -9007199254740991,
@@ -1893,6 +1923,8 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "icon",
                     "id",
                     "month",
+                    "periodFrom",
+                    "periodTo",
                     "spentMinor",
                   ],
                   "type": "object",
@@ -4220,6 +4252,210 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
         },
         "tags": [
           "payees",
+        ],
+      },
+    },
+    "/api/v1/periods/{month}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "days": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "from": {
+                      "type": "string",
+                    },
+                    "key": {
+                      "type": "string",
+                    },
+                    "moved": {
+                      "type": "boolean",
+                    },
+                    "ruleFrom": {
+                      "type": "string",
+                    },
+                    "to": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "days",
+                    "from",
+                    "key",
+                    "moved",
+                    "ruleFrom",
+                    "to",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "periods",
+        ],
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "days": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "from": {
+                      "type": "string",
+                    },
+                    "key": {
+                      "type": "string",
+                    },
+                    "moved": {
+                      "type": "boolean",
+                    },
+                    "ruleFrom": {
+                      "type": "string",
+                    },
+                    "to": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "days",
+                    "from",
+                    "key",
+                    "moved",
+                    "ruleFrom",
+                    "to",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "periods",
+        ],
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "startsOn": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "startsOn",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "days": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "from": {
+                      "type": "string",
+                    },
+                    "key": {
+                      "type": "string",
+                    },
+                    "moved": {
+                      "type": "boolean",
+                    },
+                    "ruleFrom": {
+                      "type": "string",
+                    },
+                    "to": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "days",
+                    "from",
+                    "key",
+                    "moved",
+                    "ruleFrom",
+                    "to",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "periods",
         ],
       },
     },
@@ -6839,6 +7075,40 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       },
                       "type": "array",
                     },
+                    "period": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "days": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer",
+                        },
+                        "from": {
+                          "type": "string",
+                        },
+                        "key": {
+                          "type": "string",
+                        },
+                        "moved": {
+                          "type": "boolean",
+                        },
+                        "ruleFrom": {
+                          "type": "string",
+                        },
+                        "to": {
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "days",
+                        "from",
+                        "key",
+                        "moved",
+                        "ruleFrom",
+                        "to",
+                      ],
+                      "type": "object",
+                    },
                     "totals": {
                       "items": {
                         "additionalProperties": false,
@@ -6875,6 +7145,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "month",
                     "needsReviewCount",
                     "netWorth",
+                    "period",
                     "totals",
                   ],
                   "type": "object",
@@ -7331,18 +7602,89 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "locale": {
                       "type": "string",
                     },
+                    "periodRule": {
+                      "oneOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "calendar",
+                              ],
+                              "type": "string",
+                            },
+                          },
+                          "required": [
+                            "kind",
+                          ],
+                          "type": "object",
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "day": {
+                              "maximum": 28,
+                              "minimum": 1,
+                              "type": "integer",
+                            },
+                            "kind": {
+                              "enum": [
+                                "fixed_day",
+                              ],
+                              "type": "string",
+                            },
+                          },
+                          "required": [
+                            "day",
+                            "kind",
+                          ],
+                          "type": "object",
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "before_month_end",
+                              ],
+                              "type": "string",
+                            },
+                            "workingDays": {
+                              "maximum": 10,
+                              "minimum": 0,
+                              "type": "integer",
+                            },
+                          },
+                          "required": [
+                            "kind",
+                            "workingDays",
+                          ],
+                          "type": "object",
+                        },
+                      ],
+                    },
                     "primaryCurrency": {
                       "type": "string",
                     },
                     "showConvertedTotals": {
                       "type": "boolean",
                     },
+                    "weekendDays": {
+                      "items": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer",
+                      },
+                      "type": "array",
+                    },
                   },
                   "required": [
                     "allowEmoji",
                     "locale",
+                    "periodRule",
                     "primaryCurrency",
                     "showConvertedTotals",
+                    "weekendDays",
                   ],
                   "type": "object",
                 },
@@ -7371,6 +7713,64 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "minLength": 2,
                     "type": "string",
                   },
+                  "periodRule": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "calendar",
+                            ],
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "kind",
+                        ],
+                        "type": "object",
+                      },
+                      {
+                        "properties": {
+                          "day": {
+                            "maximum": 28,
+                            "minimum": 1,
+                            "type": "integer",
+                          },
+                          "kind": {
+                            "enum": [
+                              "fixed_day",
+                            ],
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "day",
+                          "kind",
+                        ],
+                        "type": "object",
+                      },
+                      {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "before_month_end",
+                            ],
+                            "type": "string",
+                          },
+                          "workingDays": {
+                            "maximum": 10,
+                            "minimum": 0,
+                            "type": "integer",
+                          },
+                        },
+                        "required": [
+                          "kind",
+                          "workingDays",
+                        ],
+                        "type": "object",
+                      },
+                    ],
+                  },
                   "primaryCurrency": {
                     "maxLength": 3,
                     "minLength": 3,
@@ -7378,6 +7778,15 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                   },
                   "showConvertedTotals": {
                     "type": "boolean",
+                  },
+                  "weekendDays": {
+                    "items": {
+                      "maximum": 6,
+                      "minimum": 0,
+                      "type": "integer",
+                    },
+                    "maxItems": 6,
+                    "type": "array",
                   },
                 },
                 "type": "object",
@@ -7399,18 +7808,89 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "locale": {
                       "type": "string",
                     },
+                    "periodRule": {
+                      "oneOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "calendar",
+                              ],
+                              "type": "string",
+                            },
+                          },
+                          "required": [
+                            "kind",
+                          ],
+                          "type": "object",
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "day": {
+                              "maximum": 28,
+                              "minimum": 1,
+                              "type": "integer",
+                            },
+                            "kind": {
+                              "enum": [
+                                "fixed_day",
+                              ],
+                              "type": "string",
+                            },
+                          },
+                          "required": [
+                            "day",
+                            "kind",
+                          ],
+                          "type": "object",
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "before_month_end",
+                              ],
+                              "type": "string",
+                            },
+                            "workingDays": {
+                              "maximum": 10,
+                              "minimum": 0,
+                              "type": "integer",
+                            },
+                          },
+                          "required": [
+                            "kind",
+                            "workingDays",
+                          ],
+                          "type": "object",
+                        },
+                      ],
+                    },
                     "primaryCurrency": {
                       "type": "string",
                     },
                     "showConvertedTotals": {
                       "type": "boolean",
                     },
+                    "weekendDays": {
+                      "items": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer",
+                      },
+                      "type": "array",
+                    },
                   },
                   "required": [
                     "allowEmoji",
                     "locale",
+                    "periodRule",
                     "primaryCurrency",
                     "showConvertedTotals",
+                    "weekendDays",
                   ],
                   "type": "object",
                 },

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { formatMoney } from '@coinkeeper/shared/lib/money';
+import { calendarPeriod } from '@coinkeeper/shared/lib/periods';
 
 import { type BudgetRow, type CategorySlice, currentMonth, QueryKeys } from '../use-finance-data';
 import { BudgetOverview } from './budget-overview';
@@ -42,6 +43,8 @@ const rows: BudgetRow[] = [
     icon: 'ShoppingCart',
     id: 'b-groceries',
     month,
+    periodFrom: calendarPeriod(month).from,
+    periodTo: calendarPeriod(month).to,
     spentMinor: 12000,
   },
   {
@@ -58,6 +61,8 @@ const rows: BudgetRow[] = [
     icon: 'Coffee',
     id: 'b-coffee',
     month,
+    periodFrom: calendarPeriod(month).from,
+    periodTo: calendarPeriod(month).to,
     spentMinor: 6500,
   },
 ];

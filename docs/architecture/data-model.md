@@ -10,7 +10,7 @@ The schema lives in `apps/api/src/db/schema.ts` (the API owns the database); the
 
 - `users` holds the account you sign in with: a unique lower-case `email`, the argon2id `password_hash`, an optional `name` and `last_sign_in_at`. Every other table's `user_id` references `users(id) ON DELETE CASCADE`.
 - `sessions` holds one row per signed-in browser: the SHA-256 `token_hash` of the cookie token (never the token itself), `expires_at`, `last_used_at`, `user_agent` and `ip_address`. These rows are deleted on sign-out, revocation and expiry.
-- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets`, `exchange_rates`, `transaction_templates`, `transaction_splits` and `recurring_series` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
+- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets`, `exchange_rates`, `transaction_templates`, `transaction_splits`, `recurring_series` and `budget_period_starts` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
 
 ## Relationships
 
@@ -55,14 +55,16 @@ Seeded by migration with 27 currencies. Not scoped by user.
 
 One row per user, created at sign-up in the same transaction as the user.
 
-| Column                  | Type                 | Notes                                                                                                            |
-| ----------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `user_id`               | text PK → users      | the owner                                                                                                        |
-| `primary_currency`      | char(3) → currencies | default for new accounts and for converted totals                                                                |
-| `locale`                | text                 | reserved for number and date formatting                                                                          |
-| `seeded_version`        | int, nullable        | version of the default taxonomy that was seeded; null until seeding completes                                    |
-| `show_converted_totals` | bool                 | Home toggle                                                                                                      |
-| `allow_emoji`           | bool, default false  | lets the web app offer emoji next to the curated icons in icon pickers; a UI preference the API does not enforce |
+| Column                  | Type                   | Notes                                                                                                                                                            |
+| ----------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_id`               | text PK → users        | the owner                                                                                                                                                        |
+| `primary_currency`      | char(3) → currencies   | default for new accounts and for converted totals                                                                                                                |
+| `locale`                | text                   | reserved for number and date formatting                                                                                                                          |
+| `seeded_version`        | int, nullable          | version of the default taxonomy that was seeded; null until seeding completes                                                                                    |
+| `show_converted_totals` | bool                   | Home toggle                                                                                                                                                      |
+| `allow_emoji`           | bool, default false    | lets the web app offer emoji next to the curated icons in icon pickers; a UI preference the API does not enforce                                                 |
+| `period_rule`           | jsonb                  | the budget period rule: `{ kind: calendar }` (default), `{ kind: fixed_day, day }` or `{ kind: before_month_end, workingDays }`, validated by `periodRuleSchema` |
+| `weekend_days`          | int[], default `{0,6}` | days a period start moves away from (0 is Sunday)                                                                                                                |
 
 ### `accounts`
 
@@ -172,6 +174,16 @@ Unique on `(category_id, month, currency)`.
 | `pattern`     | text         | case-insensitive substring matched against payee, bank description and memo |
 | `category_id` | → categories | category to apply                                                           |
 | `priority`    | int          | lower runs first                                                            |
+
+### `budget_period_starts`
+
+| Column       | Type         | Notes                                                                       |
+| ------------ | ------------ | --------------------------------------------------------------------------- |
+| `period_key` | text         | the month that names the period, `YYYY-MM`; unique per user among live rows |
+| `starts_on`  | date         | the start moved by hand; the period before ends the day before              |
+| `deleted_at` | timestamptz? | soft delete; **Use the rule again** sets it                                 |
+
+Periods themselves are computed (`periodRange` in `packages/shared/src/lib/periods.ts`), never stored.
 
 ### `recurring_series`
 

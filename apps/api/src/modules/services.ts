@@ -4,7 +4,7 @@ import { createAuthService } from '@/auth/service';
 import { createSessionStore } from '@/auth/sessions';
 import { currencies, userSettings } from '@/db/schema';
 import type { Currency } from '@coinkeeper/shared/schema/currencies';
-import type { UserSettings } from '@coinkeeper/shared/schema/settings';
+import type { PeriodRuleValues, UserSettings } from '@coinkeeper/shared/schema/settings';
 
 import { createAccountService } from './accounts/service';
 import { createBudgetService } from './budgets/service';
@@ -16,6 +16,7 @@ import { createFxService, ManualRateProvider } from './fx/service';
 import { createImportService } from './import/service';
 import { createLedgerService } from './ledger/service';
 import { createPayeeService } from './payees/service';
+import { createPeriodService } from './periods/service';
 import { createRecurringService } from './recurring/service';
 import { createReportService } from './reports/service';
 import { createRuleService } from './rules/service';
@@ -29,8 +30,10 @@ type ServiceOptions = { sessionDays?: number; sessionMaxAgeDays?: number };
 const toSettings = (row: typeof userSettings.$inferSelect): UserSettings => ({
   allowEmoji: row.allowEmoji,
   locale: row.locale,
+  periodRule: row.periodRule,
   primaryCurrency: row.primaryCurrency,
   showConvertedTotals: row.showConvertedTotals,
+  weekendDays: row.weekendDays,
 });
 
 export const createServices = (db: Db, options: ServiceOptions = {}) => {
@@ -73,6 +76,7 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
         .orderBy(asc(currencies.code));
     },
     payees: createPayeeService(db),
+    periods: createPeriodService(db),
     recurring: createRecurringService(db),
     reports: createReportService(db),
     rules: createRuleService(db),
@@ -86,11 +90,18 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
       data: {
         allowEmoji?: boolean;
         locale?: string;
+        periodRule?: PeriodRuleValues;
         primaryCurrency?: string;
         showConvertedTotals?: boolean;
+        weekendDays?: number[];
       }
     ): Promise<UserSettings> {
-      const patch = { ...data };
+      const patch = {
+        ...data,
+        weekendDays: data.weekendDays
+          ? [...new Set(data.weekendDays)].toSorted((left, right) => left - right)
+          : undefined,
+      };
 
       if (data.primaryCurrency) {
         await assertCurrency(data.primaryCurrency);

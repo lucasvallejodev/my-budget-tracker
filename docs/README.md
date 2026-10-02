@@ -2,7 +2,7 @@
 
 > Summary: entry page of the documentation site; what the app is, how the docs are organised, and where to start.
 
-CoinKeeper is a personal budget and spending tracker: a Next.js client and a Fastify REST API with its own sign-in, on Drizzle ORM and PostgreSQL. It keeps a ledger of every movement of money across your accounts, in the currency of each account, and turns that ledger into balances, net worth, spending breakdowns, budgets and a review inbox.
+CoinKeeper is a personal budget and spending tracker: a Next.js client and a Fastify REST API with its own sign-in, on Drizzle ORM and PostgreSQL. It keeps a ledger of every movement of money across your accounts, in the currency of each account, and turns that ledger into balances, net worth, spending breakdowns, budgets, a review inbox and a view of the bills, subscriptions and income still to come.
 
 ## What makes it different
 

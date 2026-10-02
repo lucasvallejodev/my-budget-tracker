@@ -27,6 +27,8 @@ export const budgetRowSchema = z.object({
   icon: z.string(),
   id: z.string(),
   month: z.string(),
+  periodFrom: z.string(),
+  periodTo: z.string(),
   spentMinor: z.number().int(),
 });
 

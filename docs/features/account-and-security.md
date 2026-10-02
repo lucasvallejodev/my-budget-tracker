@@ -64,7 +64,7 @@ It asks for the new password (or reads `NEW_PASSWORD` from the environment), set
 
 ## Settings
 
-**Settings** has six tabs: **Profile**, **Categories**, **Currencies**, **Rules**, **Security** and **Deleted items**. Profile and Security are described above; Categories, Currencies, Rules and Deleted items open their own pages, and the Categories tab also holds the **Emoji for categories and payees** switch (see [Categories › Use emoji](categories.md#use-emoji)).
+**Settings** has eight tabs: **Profile**, **Categories**, **Budget period**, **Currencies**, **Rules**, **Templates**, **Security** and **Deleted items**. Profile and Security are described above; Budget period is described in [Budgets › Budget period](budgets.md#budget-period); Categories, Currencies, Rules, Templates and Deleted items open their own pages, and the Categories tab also holds the **Emoji for categories and payees** switch (see [Categories › Use emoji](categories.md#use-emoji)).
 
 ## How it works
 

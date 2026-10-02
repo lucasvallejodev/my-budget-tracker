@@ -30,7 +30,7 @@ import type {
   Summary,
 } from '@coinkeeper/shared/schema/reports';
 import type { RuleRow } from '@coinkeeper/shared/schema/rules';
-import type { UserSettings } from '@coinkeeper/shared/schema/settings';
+import type { Period, UserSettings } from '@coinkeeper/shared/schema/settings';
 import type { TemplateRow } from '@coinkeeper/shared/schema/templates';
 import type { ReviewSuggestion, TransactionRow } from '@coinkeeper/shared/schema/transaction';
 
@@ -104,6 +104,7 @@ export const QueryKeys = {
     ['summary', 'left-to-spend', month, currency, today] as const,
   me: ['me'] as const,
   payees: ['payees'] as const,
+  period: (month: string) => ['settings', 'period', month] as const,
   projections: (today: string, days: number) => ['accounts', 'projections', today, days] as const,
   recurring: (today: string) => ['recurring', 'series', today] as const,
   recurringSuggestions: (today: string) => ['recurring', 'suggestions', today] as const,
@@ -150,6 +151,13 @@ export function useSettings() {
   return useQuery({
     queryFn: () => apiGet<UserSettings>('/settings'),
     queryKey: QueryKeys.settings,
+  });
+}
+
+export function usePeriod(month: string) {
+  return useQuery({
+    queryFn: () => apiGet<Period>(`/periods/${month}`),
+    queryKey: QueryKeys.period(month),
   });
 }
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { FieldLengths } from '../constants/field-lengths';
 import { accountSummarySchema } from './accounts';
 import { isoDateSchema, isoMonthSchema } from './common';
+import { periodSchema } from './settings';
 
 export const currencyTotalsSchema = z.object({
   currency: z.string(),
@@ -67,6 +68,7 @@ export const summarySchema = z.object({
   month: z.string(),
   needsReviewCount: z.number().int(),
   netWorth: z.array(netWorthBucketSchema),
+  period: periodSchema,
   totals: z.array(currencyTotalsSchema),
 });
 

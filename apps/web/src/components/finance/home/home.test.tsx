@@ -4,6 +4,7 @@ import { cloneElement, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { formatMoney } from '@coinkeeper/shared/lib/money';
+import { calendarPeriod } from '@coinkeeper/shared/lib/periods';
 
 import { compareWith } from '../comparisons';
 import {
@@ -78,6 +79,11 @@ const summary = (
       netMinor: 480000,
     },
   ],
+  period: {
+    ...calendarPeriod(forMonth),
+    moved: false,
+    ruleFrom: calendarPeriod(forMonth).from,
+  },
   totals: [
     {
       currency: 'EUR',
@@ -97,6 +103,8 @@ const budget = {
   icon: 'ShoppingCart',
   id: 'b1',
   month: `${month}-01`,
+  periodFrom: calendarPeriod(month).from,
+  periodTo: calendarPeriod(month).to,
   spentMinor: 31000,
 } as BudgetRow;
 

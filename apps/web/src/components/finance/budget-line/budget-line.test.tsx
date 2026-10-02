@@ -19,6 +19,8 @@ const groceries = (spentMinor: number) =>
     groupName: 'Food & Dining',
     icon: 'ShoppingCart',
     month: '2026-09-01',
+    periodFrom: '2026-09-01',
+    periodTo: '2026-09-30',
     spentMinor,
   }) as Row;
 

@@ -13,6 +13,8 @@ import {
   TransactionStatusValues,
 } from '@coinkeeper/shared/schema/enums';
 
+import { users } from './schema';
+
 export const accountType = pgEnum('account_type', AccountTypeValues);
 export const accountClassification = pgEnum('account_classification', AccountClassificationValues);
 export const categoryKind = pgEnum('category_kind', CategoryKindValues);
@@ -39,3 +41,8 @@ export const updatedAt = () =>
     .$onUpdate(() => new Date());
 
 export const deletedAt = () => timestamp('deleted_at', { withTimezone: true });
+
+export const userId = () =>
+  text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' });

@@ -37,7 +37,7 @@ describe('SettingsView', () => {
     renderSettings();
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeTruthy();
     expect(screen.getByRole('tablist', { name: 'Settings Sections' })).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(7);
+    expect(screen.getAllByRole('tab')).toHaveLength(8);
     expect(screen.getByRole('heading', { name: 'Profile Information' })).toBeTruthy();
     expect(screen.getByText('Signed in as Ada Lovelace')).toBeTruthy();
     expect(screen.queryByText(/Component preview/)).toBeNull();
@@ -69,6 +69,7 @@ describe('SettingsView', () => {
     expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
       'Profile',
       'Categories',
+      'Budget period',
       'Currencies',
       'Rules',
       'Templates',

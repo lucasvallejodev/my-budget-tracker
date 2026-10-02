@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { addDays, calendarPeriod, daysBetween, periodProgress } from './periods';
+import {
+  addDays,
+  calendarPeriod,
+  daysBetween,
+  periodFor,
+  periodProgress,
+  periodRange,
+  ruleStart,
+} from './periods';
 
 describe('periods', () => {
   it('counts days between dates in UTC', () => {
@@ -42,5 +50,68 @@ describe('periods', () => {
       daysElapsed: 0,
       daysLeft: 31,
     });
+  });
+});
+
+describe('pay-cycle periods', () => {
+  const weekend = [0, 6];
+  const fixed25 = { rule: { day: 25, kind: 'fixed_day' as const }, weekendDays: weekend };
+
+  const lastWorkingDay = {
+    rule: { kind: 'before_month_end' as const, workingDays: 0 },
+    weekendDays: weekend,
+  };
+
+  it('names a period after the month it ends in', () => {
+    expect(ruleStart('2026-10', fixed25)).toBe('2026-09-25');
+    expect(periodRange('2026-10', fixed25)).toEqual({
+      days: 28,
+      from: '2026-09-25',
+      key: '2026-10',
+      to: '2026-10-22',
+    });
+  });
+
+  it('moves a start on the weekend to the working day before', () => {
+    expect(ruleStart('2026-11', fixed25)).toBe('2026-10-23');
+    expect(ruleStart('2026-10', lastWorkingDay)).toBe('2026-09-30');
+    expect(ruleStart('2026-11', lastWorkingDay)).toBe('2026-10-30');
+    expect(
+      ruleStart('2026-11', {
+        rule: { kind: 'before_month_end', workingDays: 2 },
+        weekendDays: weekend,
+      })
+    ).toBe('2026-10-28');
+    expect(ruleStart('2026-11', { ...lastWorkingDay, weekendDays: [5, 6] })).toBe('2026-10-29');
+  });
+
+  it('matches calendar months under the calendar rule and with day 1', () => {
+    const calendar = { rule: { kind: 'calendar' as const }, weekendDays: weekend };
+
+    expect(periodRange('2026-02', calendar)).toEqual(calendarPeriod('2026-02'));
+    expect(
+      periodRange('2026-09', { rule: { day: 1, kind: 'fixed_day' }, weekendDays: [] })
+    ).toEqual(calendarPeriod('2026-09'));
+  });
+
+  it('applies a period moved by hand and shortens the one before', () => {
+    const overrides = { '2026-10': '2026-10-03' };
+
+    expect(periodRange('2026-10', lastWorkingDay, overrides)).toMatchObject({
+      from: '2026-10-03',
+      to: '2026-10-29',
+    });
+    expect(periodRange('2026-09', lastWorkingDay, overrides)).toMatchObject({
+      from: '2026-08-31',
+      to: '2026-10-02',
+    });
+  });
+
+  it('finds the period that contains a day', () => {
+    expect(periodFor('2026-09-28', fixed25).key).toBe('2026-10');
+    expect(periodFor('2026-09-20', fixed25).key).toBe('2026-09');
+    expect(periodFor('2026-09-20', { rule: { kind: 'calendar' }, weekendDays: weekend }).key).toBe(
+      '2026-09'
+    );
   });
 });

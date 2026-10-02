@@ -26,7 +26,7 @@ import type { ColumnMapping, ImportCommitResult, Preview } from '@coinkeeper/sha
 import type { PayeeFormValues, PayeePatchValues, PayeeRow } from '@coinkeeper/shared/schema/payees';
 import type { RecurringFormValues, RecurringSeriesRow } from '@coinkeeper/shared/schema/recurring';
 import type { RuleFormValues, RuleRow } from '@coinkeeper/shared/schema/rules';
-import type { SettingsFormValues, UserSettings } from '@coinkeeper/shared/schema/settings';
+import type { Period, SettingsFormValues, UserSettings } from '@coinkeeper/shared/schema/settings';
 import type { TemplateFormValues, TemplateRow } from '@coinkeeper/shared/schema/templates';
 import type {
   StandardTransactionValues,
@@ -212,3 +212,8 @@ export const linkOccurrence = (seriesId: string, dueOn: string, transactionId: s
 
 export const unlinkOccurrence = (seriesId: string, dueOn: string) =>
   apiRequest<void>('DELETE', `/recurring-series/${seriesId}/occurrences/${dueOn}`);
+
+export const movePeriod = (month: string, startsOn: string) =>
+  apiRequest<Period>('PUT', `/periods/${month}`, { startsOn });
+
+export const resetPeriod = (month: string) => apiRequest<Period>('DELETE', `/periods/${month}`);

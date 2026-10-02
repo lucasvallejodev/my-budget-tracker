@@ -3,7 +3,7 @@ import { Check, CircleAlert, Gauge, LucideIcon } from 'lucide-react';
 import type { BadgeTone, ProgressTone } from '@/components/ui';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
 import { type BudgetPace, budgetPace } from '@coinkeeper/shared/lib/budget-pace';
-import { calendarPeriod } from '@coinkeeper/shared/lib/periods';
+import { type BudgetPeriod, daysBetween } from '@coinkeeper/shared/lib/periods';
 
 import type { BudgetRow } from './use-finance-data';
 
@@ -62,12 +62,19 @@ export type BudgetFigures = {
   state: BudgetState;
 };
 
+export const budgetPeriodOf = (budget: BudgetRow): BudgetPeriod => ({
+  days: daysBetween(budget.periodFrom, budget.periodTo) + 1,
+  from: budget.periodFrom,
+  key: budget.month.slice(0, ISO_MONTH_LENGTH),
+  to: budget.periodTo,
+});
+
 export const budgetFigures = (budget: BudgetRow, today: string): BudgetFigures => {
   const pace = budgetPace({
     billsDueMinor: budget.billsDueMinor,
     fixedSpentMinor: budget.fixedSpentMinor,
     limitMinor: budget.amountMinor,
-    period: calendarPeriod(budget.month.slice(0, ISO_MONTH_LENGTH)),
+    period: budgetPeriodOf(budget),
     spentMinor: budget.spentMinor,
     today,
   });

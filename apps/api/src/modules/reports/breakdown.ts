@@ -6,7 +6,7 @@ import type { CategorySlice, GroupSlice } from '@coinkeeper/shared/schema/report
 import { rowsOf } from '../batch';
 import { Db } from '../db';
 import { categoryLines, spendingWhere } from './predicate';
-import { monthsEndingAt } from './range';
+import { monthsEndingAt, type MonthSpan } from './range';
 
 const UncategorizedLabel = 'Uncategorized';
 const UncategorizedIcon = 'CircleHelp';
@@ -14,6 +14,7 @@ const MonthOfTransaction = sql`to_char(date_trunc('month', t.date), 'YYYY-MM')`;
 
 export type BreakdownOptions = {
   months?: number;
+  span?: MonthSpan;
   split?: boolean;
 };
 
@@ -46,7 +47,7 @@ export const breakdownByCategory = async (
   month: string,
   { currency, ...options }: BreakdownOptions & { currency: string }
 ): Promise<(CategorySlice & MonthColumn)[]> => {
-  const { end, start } = monthsEndingAt(month, options.months);
+  const { end, start } = options.span ?? monthsEndingAt(month, options.months);
   const split = splitClauses(options.split);
 
   const rows = await rowsOf<
@@ -92,7 +93,7 @@ export const breakdownByGroup = async (
   month: string,
   options: BreakdownOptions = {}
 ): Promise<(GroupSlice & MonthColumn)[]> => {
-  const { end, start } = monthsEndingAt(month, options.months);
+  const { end, start } = options.span ?? monthsEndingAt(month, options.months);
   const split = splitClauses(options.split);
 
   const rows = await rowsOf<

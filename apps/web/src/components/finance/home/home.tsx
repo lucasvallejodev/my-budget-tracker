@@ -20,7 +20,7 @@ import {
 import { FALLBACK_CURRENCY } from '@coinkeeper/shared/constants/money';
 import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import { formatCompactMoney, formatMoney } from '@coinkeeper/shared/lib/money';
-import { calendarPeriod, periodProgress } from '@coinkeeper/shared/lib/periods';
+import { type BudgetPeriod, calendarPeriod, periodProgress } from '@coinkeeper/shared/lib/periods';
 
 import { AttentionStrip } from '../attention-strip';
 import { type BudgetFigures, budgetFigures } from '../budget-status';
@@ -63,10 +63,10 @@ const currenciesOf = (summary: Summary | undefined) => [
   ]),
 ];
 
-const homeDescription = (month: string, today: string) => {
+const homeDescription = (month: string, today: string, period?: BudgetPeriod) => {
   if (month !== currentMonth()) return monthLabel(month);
 
-  const daysLeft = periodProgress(calendarPeriod(month), today).daysLeft;
+  const daysLeft = periodProgress(period ?? calendarPeriod(month), today).daysLeft;
 
   return `${longDayLabel(today)} · ${daysLeft} day${daysLeft === 1 ? '' : 's'} left this month`;
 };
@@ -173,7 +173,7 @@ export function Home() {
     <Page>
       <PageHeading
         title="Home"
-        description={homeDescription(month, today)}
+        description={homeDescription(month, today, summary.data?.period)}
         actions={
           <>
             <CurrencySwitch

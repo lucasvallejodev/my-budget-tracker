@@ -1,6 +1,6 @@
 # CoinKeeper
 
-Personal budget and spending tracker: a Next.js client and a Fastify REST API with its own sign-in, on Drizzle ORM and PostgreSQL. It keeps a ledger of every movement of money across your accounts, in the currency of each account, and turns it into balances, net worth, spending breakdowns, budgets and a review inbox.
+Personal budget and spending tracker: a Next.js client and a Fastify REST API with its own sign-in, on Drizzle ORM and PostgreSQL. It keeps a ledger of every movement of money across your accounts, in the currency of each account, and turns it into balances, net worth, spending breakdowns, budgets, a review inbox and a view of the bills, subscriptions and income still to come.
 
 - **Exact money**: signed integer minor units plus a currency code; nothing is stored as a float.
 - **One ledger, many views**: balances, net worth, reports and budgets are all queries over the same table.

@@ -6,6 +6,7 @@ export { AccountDetail } from './account-detail';
 export { AccountPicker } from './account-picker';
 export { AccountsOverview } from './accounts-overview';
 export { allowanceLabel, BudgetLine, leftLabel } from './budget-line';
+export { BudgetPeriodSettings } from './budget-period-settings';
 export { BudgetOverview } from './budget-overview';
 export type { BudgetFigures, BudgetState } from './budget-status';
 export { budgetFigures, budgetState, BudgetStateOrder, BudgetStates } from './budget-status';
