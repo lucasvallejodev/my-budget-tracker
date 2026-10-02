@@ -7,6 +7,7 @@
 [![Quality](https://github.com/lucasvallejodev/my-budget-tracker/actions/workflows/quality.yml/badge.svg)](https://github.com/lucasvallejodev/my-budget-tracker/actions/workflows/quality.yml)
 [![End-to-end tests](https://github.com/lucasvallejodev/my-budget-tracker/actions/workflows/playwright.yml/badge.svg)](https://github.com/lucasvallejodev/my-budget-tracker/actions/workflows/playwright.yml)
 [![CodeQL](https://github.com/lucasvallejodev/my-budget-tracker/actions/workflows/codeql.yml/badge.svg)](https://github.com/lucasvallejodev/my-budget-tracker/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange)
 
 ![A tour of CoinKeeper: Home, Transactions, Budgets, Upcoming, Analytics and Accounts](docs/assets/screenshots/app-tour.gif)
@@ -16,7 +17,7 @@
 CoinKeeper keeps a ledger of every movement of money across your accounts, in the currency of each account, and turns it into balances, net worth, spending breakdowns, budgets, a review inbox and a view of the bills, subscriptions and income still to come. It runs on your own machine or server, with its own sign-in and no third-party services: your financial data stays in your PostgreSQL database.
 
 > [!NOTE]
-> **Work in progress.** I built CoinKeeper for my own homelab and personal use, so its features follow what my household needs and it changes often. Anyone is welcome to run it, but expect rough edges, schema migrations between versions and no stability guarantees yet. Back up your database before you update.
+> **Work in progress.** I built CoinKeeper for my own homelab and personal use, so its features follow what my household needs and it changes often. Anyone is welcome to run it under the [MIT License](LICENSE), but expect rough edges, schema migrations between versions and no stability guarantees yet. Back up your database before you update.
 
 ## Contents
 
@@ -28,6 +29,7 @@ CoinKeeper keeps a ledger of every movement of money across your accounts, in th
 - [Commands](#commands)
 - [Repository layout](#repository-layout)
 - [Documentation](#documentation)
+- [License](#license)
 
 ## Features
 
@@ -175,6 +177,7 @@ The full list with every option is in [Commands](docs/getting-started/commands.m
 | `agents/`, `AGENTS.md`, `CLAUDE.md` | Documentation and operating rules for AI coding agents; start at [agents/README.md](agents/README.md)                                                                               |
 | `temp/`                             | Scratch space for plans and intermediate files, git-ignored except its README                                                                                                       |
 | `docker-compose.yml`, `Dockerfile`  | Local PostgreSQL 17, the hardened `api` and `web` containers and the `backup` profile                                                                                               |
+| `LICENSE`                           | The MIT License                                                                                                                                                                     |
 
 A folder-by-folder tour is in [Project structure](docs/getting-started/project-structure.md).
 
@@ -188,3 +191,7 @@ The full documentation lives in [`docs/`](docs/README.md) and is served as a Doc
 | [agents/](agents/README.md)               | AI agents | condensed architecture and data model, conventions, workflows, code-to-docs map                                                             |
 | [docs/research/](docs/research/README.md) | product   | one report per budgeting app studied, the [ranked feature opportunities](docs/research/feature-opportunities.md) and the UI design research |
 | [docs/legacy/](docs/legacy/README.md)     | history   | the original redesign proposal, research reports and earlier migration notes                                                                |
+
+## License
+
+CoinKeeper is released under the [MIT License](LICENSE). You can use, modify and redistribute it, including for commercial use, as long as you keep the copyright and license notice. It comes with no warranty.
