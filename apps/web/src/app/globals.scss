@@ -114,3 +114,9 @@
     }
   }
 }
+
+:root [data-sonner-toaster][data-sonner-theme='light'] {
+  --info-bg: var(--color-info-soft);
+  --info-border: var(--color-info-soft);
+  --info-text: var(--color-info);
+}

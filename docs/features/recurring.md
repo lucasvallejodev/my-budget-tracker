@@ -27,7 +27,7 @@ Choose **Upcoming** under **Plan** in the sidebar (or open **More** on a phone).
 
 ### Add one from your history
 
-**Found in your history** lists payees you paid at least three times at a regular rhythm in the last 400 days, with an amount that repeats. A suggestion disappears once a series exists for that payee.
+**Found in your history** lists payees you paid at least three times at a regular rhythm in the last 400 days (at least three gaps in four close to the usual one), whose last payment is recent. The amount may vary by up to 75 % for monthly or longer rhythms, such as an energy bill, but a weekly payment must be steady (within 20 %), so habits like a weekly coffee are not mistaken for bills. A suggestion disappears once a series exists for that payee.
 
 - **Add** creates the series straight away, starting at the next due date, marked as detected.
 - **Review** opens the form with the suggestion filled in, so you can change it first.

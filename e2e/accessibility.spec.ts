@@ -11,8 +11,10 @@ const MainScreens = [
   { heading: 'Import transactions', path: '/import' },
   { heading: 'Analytics', path: '/analytics' },
   { heading: 'Budgets', path: '/budgets' },
+  { heading: 'Upcoming', path: '/upcoming' },
   { heading: 'Accounts', path: '/accounts' },
   { heading: 'Settings', path: '/settings' },
+  { heading: 'Transaction templates', path: '/settings/templates' },
 ];
 
 test('the main screens have no detectable WCAG A or AA violations', async ({

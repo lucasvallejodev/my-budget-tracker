@@ -4,7 +4,16 @@ const ReportOnlyHeader = 'content-security-policy-report-only';
 const EnforcedHeader = 'content-security-policy';
 const ViolationMarker = 'Content Security Policy';
 
-const ScreenPaths = ['/', '/transactions', '/analytics', '/budgets', '/accounts', '/settings'];
+const ScreenPaths = [
+  '/',
+  '/transactions',
+  '/analytics',
+  '/budgets',
+  '/upcoming',
+  '/accounts',
+  '/settings',
+  '/settings/templates',
+];
 
 test('pages send the enforced frame policy and the report-only policy', async ({ page }) => {
   const response = await page.goto('/sign-in');

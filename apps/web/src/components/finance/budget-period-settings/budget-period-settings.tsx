@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
   SettingsSection,
+  Stack,
   Text,
 } from '@/components/ui';
 import type { PeriodRuleValues, UserSettings } from '@coinkeeper/shared/schema/settings';
@@ -123,17 +124,21 @@ function RuleForm({ settings }: { settings: UserSettings }) {
       title="When a period starts"
       description="Budgets and Home follow this period. A period is named after the month it ends in; a start on a weekend moves to the working day before."
     >
-      <Choice
-        label="Periods start"
-        options={RuleKindOptions}
-        value={rule.kind}
-        onChange={kind => setRule(ruleFor(kind as RuleKind, rule))}
-      />
-      <RuleDetail rule={rule} onChange={setRule} />
-      <Choice label="Weekend" options={WeekendOptions} value={weekend} onChange={setWeekend} />
-      <Button disabled={save.isPending} onClick={() => save.mutate()}>
-        Save
-      </Button>
+      <Stack gap="medium">
+        <Choice
+          label="Periods start"
+          options={RuleKindOptions}
+          value={rule.kind}
+          onChange={kind => setRule(ruleFor(kind as RuleKind, rule))}
+        />
+        <RuleDetail rule={rule} onChange={setRule} />
+        <Choice label="Weekend" options={WeekendOptions} value={weekend} onChange={setWeekend} />
+        <Cluster>
+          <Button disabled={save.isPending} onClick={() => save.mutate()}>
+            Save
+          </Button>
+        </Cluster>
+      </Stack>
     </SettingsSection>
   );
 }

@@ -108,7 +108,7 @@ Every test signs up a fresh user (`e2e-<uuid>@example.com`). `e2e/fixtures.ts` h
 - soft delete: create an account and a transaction through the API with the page's cookie, delete it from the transactions table, find it in Settings › Deleted items, restore it and see it back in the list;
 - the origin check: a write with `Origin: https://evil.example` answers `403`.
 
-`e2e/accessibility.spec.ts` seeds an account and a transaction, opens the eight main screens (Home, transactions, review, import, analytics, budgets, accounts, settings) in the app's one light theme, waits for each level-one heading and for animations to finish, and runs `@axe-core/playwright` with the WCAG 2.0, 2.1 and 2.2 A and AA tags on each. Any violation fails the test with the screen path, the rule id and the elements. axe finds only part of the WCAG failures; keyboard flow, focus order and wording still need a manual review.
+`e2e/accessibility.spec.ts` seeds an account and a transaction, opens the ten main screens (Home, transactions, review, import, analytics, budgets, upcoming, accounts, settings, transaction templates) in the app's one light theme, waits for each level-one heading and for animations to finish, and runs `@axe-core/playwright` with the WCAG 2.0, 2.1 and 2.2 A and AA tags on each. Any violation fails the test with the screen path, the rule id and the elements. axe finds only part of the WCAG failures; keyboard flow, focus order and wording still need a manual review.
 
 `e2e/demo-account.spec.ts` signs in as the demo user through the form and checks that Home shows the review notice and the seeded accounts.
 

@@ -7,7 +7,7 @@ import {
   monthlyEquivalent,
   nextOccurrence,
 } from '@coinkeeper/shared/lib/recurrence';
-import type { RecurringKind } from '@coinkeeper/shared/schema/enums';
+import type { RecurringCadence, RecurringKind } from '@coinkeeper/shared/schema/enums';
 import type { RecurringSuggestion } from '@coinkeeper/shared/schema/recurring';
 
 import type { DbOrTx } from '../db';
@@ -24,7 +24,9 @@ export type HistoryRow = {
 };
 
 const MIN_HITS = 3;
-const REGULAR_SHARE = 0.66;
+const REGULAR_SHARE = 0.75;
+const MAX_WEEKLY_SPREAD = 0.2;
+const MAX_SPREAD = 0.75;
 const GAP_TOLERANCE = 0.35;
 const FIXED_AMOUNT_SPREAD = 0.05;
 const RECENCY_FACTOR = 1.5;
@@ -58,11 +60,17 @@ const isRegular = (gaps: number[], typical: number): boolean =>
   gaps.filter(gap => Math.abs(gap - typical) <= typical * GAP_TOLERANCE).length >=
   gaps.length * REGULAR_SHARE;
 
-const kindOf = (amounts: number[], typicalMinor: number): RecurringKind => {
-  if (typicalMinor > 0) return 'income';
-
+const spreadOf = (amounts: number[], typicalMinor: number): number => {
   const magnitudes = amounts.map(Math.abs);
-  const spread = (Math.max(...magnitudes) - Math.min(...magnitudes)) / Math.abs(typicalMinor);
+
+  return (Math.max(...magnitudes) - Math.min(...magnitudes)) / Math.abs(typicalMinor);
+};
+
+const steadyEnough = (cadence: RecurringCadence, spread: number): boolean =>
+  spread <= (cadence === 'weekly' ? MAX_WEEKLY_SPREAD : MAX_SPREAD);
+
+const kindOf = (typicalMinor: number, spread: number): RecurringKind => {
+  if (typicalMinor > 0) return 'income';
 
   return spread <= FIXED_AMOUNT_SPREAD ? 'subscription' : 'bill';
 };
@@ -83,7 +91,11 @@ const suggestionOf = (group: HistoryRow[], today: string): null | RecurringSugge
 
   const amounts = rows.map(row => row.amountMinor);
   const typicalMinor = median(amounts);
-  const kind = kindOf(amounts, typicalMinor);
+  const spread = spreadOf(amounts, typicalMinor);
+
+  if (!steadyEnough(detected.cadence, spread)) return null;
+
+  const kind = kindOf(typicalMinor, spread);
   const rule = { anchorDate: last.date, ...detected };
 
   return {
