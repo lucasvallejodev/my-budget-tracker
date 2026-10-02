@@ -1,6 +1,6 @@
 # Transactions
 
-> Summary: recording, editing, duplicating, deleting (soft, with Undo and restore) and finding expenses and income; the category autocomplete; remembered accounts; how the list reads (day groups, payee avatars, transfers, inline category); links that open the page filtered; what the fields mean; statuses.
+> Summary: recording (also from a template), editing, duplicating, saving as a template, deleting (soft, with Undo and restore) and finding expenses and income; the category autocomplete; remembered accounts; how the list reads (day groups, payee avatars, transfers, inline category); links that open the page filtered; what the fields mean; statuses.
 
 A transaction is one movement of money in one account. Expenses are negative, income positive; the form hides the sign behind an Expense/Income choice.
 
@@ -17,6 +17,10 @@ A transaction is one movement of money in one account. Expenses are negative, in
 7. Add a memo and adjust the date, then click **Create**.
 
 <!-- screenshot: "New transaction" dialog in Expense mode with account, amount, payee and category filled (docs/assets/screenshots/transactions-new.png) -->
+
+### Record from a template
+
+The row of chips at the top of **New transaction** lists your [templates](templates.md). Click one to fill the form with its type, account, amount, payee, category and memo, then click **Create**. **Save as template** in the form, or in a row's **⋯** menu, keeps the current values as a new template.
 
 ### Edit a transaction
 

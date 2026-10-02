@@ -300,6 +300,46 @@ export const rules = pgTable(
   columns => [index('rules_user_idx').on(columns.userId)]
 );
 
+export const transactionTemplates = pgTable(
+  'transaction_templates',
+  {
+    id: id(),
+    userId: userId(),
+    name: text('name').notNull(),
+    kind: transactionKind('kind').notNull().default('standard'),
+    accountId: text('account_id').references(() => accounts.id),
+    transferAccountId: text('transfer_account_id').references(() => accounts.id),
+    categoryId: text('category_id').references(() => categories.id),
+    payeeId: text('payee_id').references(() => payees.id),
+    amountMinor: bigint('amount_minor', { mode: 'number' }),
+    memo: text('memo').notNull().default(''),
+    sortOrder: integer('sort_order').notNull().default(0),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    deletedAt: deletedAt(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  columns => [
+    index('transaction_templates_user_idx').on(columns.userId),
+    uniqueIndex('transaction_templates_user_name_key')
+      .on(columns.userId, columns.name)
+      .where(sql`${columns.deletedAt} IS NULL`),
+    check('transaction_templates_kind_check', sql`${columns.kind} IN ('standard', 'transfer')`),
+    check(
+      'transaction_templates_category_kind_check',
+      sql`${columns.kind} = 'standard' OR ${columns.categoryId} IS NULL`
+    ),
+    check(
+      'transaction_templates_transfer_account_check',
+      sql`(${columns.kind} = 'transfer') OR ${columns.transferAccountId} IS NULL`
+    ),
+    check(
+      'transaction_templates_amount_account_check',
+      sql`${columns.amountMinor} IS NULL OR ${columns.accountId} IS NOT NULL`
+    ),
+  ]
+);
+
 export const categoryGroupRelations = relations(categoryGroups, ({ many }) => ({
   categories: many(categories),
 }));
@@ -322,3 +362,4 @@ export type Transaction = typeof transactions.$inferSelect;
 export type ExchangeRate = typeof exchangeRates.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
 export type Rule = typeof rules.$inferSelect;
+export type TransactionTemplate = typeof transactionTemplates.$inferSelect;

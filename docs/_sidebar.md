@@ -22,6 +22,7 @@
   - [Account and security](/features/account-and-security.md)
   - [Accounts](/features/accounts.md)
   - [Transactions](/features/transactions.md)
+  - [Transaction templates](/features/templates.md)
   - [Transfers and credit cards](/features/transfers-and-credit-cards.md)
   - [Categories](/features/categories.md)
   - [Review](/features/review-inbox.md)

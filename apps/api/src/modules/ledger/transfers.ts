@@ -4,6 +4,7 @@ import { accounts, transactions } from '@/db/schema';
 
 import { conflict, notFound, ServiceError } from '../db';
 import type { Db, DbOrTx } from '../db';
+import { markTemplateUsed } from '../templates/service';
 import {
   assertDate,
   assertLinkable,
@@ -142,6 +143,8 @@ export const createTransfer = async (db: Db, userId: string, input: TransferInpu
         currency: to.currency,
       },
     ]);
+
+    await markTemplateUsed(tx, userId, input.templateId);
 
     return getTransfer(tx, userId, transferId);
   });

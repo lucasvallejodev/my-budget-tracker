@@ -13,6 +13,7 @@ import { payeesRoutes } from './payees';
 import { reportsRoutes } from './reports';
 import { rulesRoutes } from './rules';
 import { settingsRoutes } from './settings';
+import { templatesRoutes } from './templates';
 import { transactionsRoutes, transfersRoutes } from './transactions';
 
 export const API_PREFIX = '/api/v1';
@@ -28,6 +29,7 @@ const AuthenticatedRoutes = [
   reportsRoutes,
   rulesRoutes,
   settingsRoutes,
+  templatesRoutes,
   transactionsRoutes,
   transfersRoutes,
 ];

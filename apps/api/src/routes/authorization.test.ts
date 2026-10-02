@@ -25,6 +25,7 @@ type OwnerIds = {
   payeeId: string;
   ruleId: string;
   sessionId: string;
+  templateId: string;
   transactionId: string;
   transferId: string;
 };
@@ -284,6 +285,26 @@ const ForeignCases: ForeignCase[] = [
     path: '/api/v1/rules/{id}/restore',
   },
   {
+    body: () => ({
+      direction: 'expense',
+      kind: 'standard',
+      name: 'Taken over',
+    }),
+    method: 'put',
+    params: owner => ({ id: owner.templateId }),
+    path: '/api/v1/transaction-templates/{id}',
+  },
+  {
+    method: 'delete',
+    params: owner => ({ id: owner.templateId }),
+    path: '/api/v1/transaction-templates/{id}',
+  },
+  {
+    method: 'post',
+    params: owner => ({ id: owner.templateId }),
+    path: '/api/v1/transaction-templates/{id}/restore',
+  },
+  {
     method: 'get',
     params: owner => ({ id: owner.transactionId }),
     path: '/api/v1/transactions/{id}',
@@ -420,6 +441,35 @@ const ForeignBodyCases: ForeignBodyCase[] = [
     path: () => '/rules/order',
   },
   {
+    body: ({ owner }) => ({ ids: [owner.templateId] }),
+    method: 'put',
+    name: 'reordering the owner templates',
+    path: () => '/transaction-templates/order',
+  },
+  {
+    body: ({ owner }) => ({
+      accountId: owner.accountId,
+      amount: '5',
+      direction: 'expense',
+      kind: 'standard',
+      name: 'Planted',
+    }),
+    method: 'post',
+    name: 'a template on the owner account',
+    path: () => '/transaction-templates',
+  },
+  {
+    body: ({ owner }) => ({
+      categoryId: owner.categoryId,
+      direction: 'expense',
+      kind: 'standard',
+      name: 'Planted',
+    }),
+    method: 'post',
+    name: 'a template in the owner category',
+    path: () => '/transaction-templates',
+  },
+  {
     body: ({ owner }) => ({
       groupId: owner.groupId,
       icon: 'Activity',
@@ -478,6 +528,8 @@ const StatePaths = [
   `/budgets?month=${BUDGET_MONTH}&deleted=true`,
   '/exchange-rates',
   '/exchange-rates?deleted=true',
+  '/transaction-templates',
+  '/transaction-templates?deleted=true',
 ];
 
 let context: TestContext;
@@ -567,6 +619,16 @@ const seedOwner = async (owner: TestClient): Promise<OwnerIds> => {
 
   const sessions = await created<{ items: { id: string }[] }>(owner.request('GET', '/me/sessions'));
 
+  const template = await created<{ id: string }>(
+    owner.request('POST', '/transaction-templates', {
+      accountId: checkingId,
+      amount: '2.50',
+      direction: 'expense',
+      kind: 'standard',
+      name: 'Coffee',
+    })
+  );
+
   return {
     accountId: checkingId,
     budgetId: budget.id,
@@ -575,6 +637,7 @@ const seedOwner = async (owner: TestClient): Promise<OwnerIds> => {
     payeeId: payee.id,
     ruleId: rule.id,
     sessionId: sessions.items[0].id,
+    templateId: template.id,
     transactionId,
     transferId: transfer.transferId,
   };

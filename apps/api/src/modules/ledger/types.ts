@@ -33,6 +33,7 @@ export type StandardInput = {
   originalPayee?: string | null;
   payeeId?: string | null;
   status?: TransactionRow['status'];
+  templateId?: string;
 };
 
 export type TransferInput = {
@@ -42,6 +43,7 @@ export type TransferInput = {
   fromAccountId: string;
   memo?: string;
   status?: TransactionRow['status'];
+  templateId?: string;
   toAccountId: string;
 };
 

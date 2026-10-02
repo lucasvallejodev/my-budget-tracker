@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ReactNode, useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { FieldValues, Path, useForm, UseFormReturn, useWatch } from 'react-hook-form';
 
 import {
   createTransaction,
@@ -11,6 +11,7 @@ import {
   updateTransfer,
 } from '@/api/mutations';
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogFormFooter,
@@ -29,6 +30,7 @@ import {
   SelectValue,
   Stack,
 } from '@/components/ui';
+import { useDialogState } from '@/lib/dialog-state';
 import { RememberedFields, rememberValue } from '@/lib/form-memory';
 import {
   standardTransactionSchema,
@@ -37,8 +39,11 @@ import {
   TransferValues,
 } from '@coinkeeper/shared/schema/transaction';
 
+import { draftFromSource, SaveTemplateDialog, TemplateDraft } from '../save-template-dialog';
 import { useEntityMutation } from '../use-entity-mutation';
-import { TransactionRow, useAccounts, usePayees } from '../use-finance-data';
+import { TemplateRow, TransactionRow, useAccounts, usePayees } from '../use-finance-data';
+import { TemplateChips } from './template-chips';
+import { asksForAmount, templatePreset } from './template-preset';
 import {
   Direction,
   Mode,
@@ -57,6 +62,53 @@ import {
   MemoField,
   PayeeField,
 } from './transaction-fields';
+
+type TemplatePick = {
+  askAmount: boolean;
+  id: string;
+  preset: Preset;
+};
+
+type TemplateRequest = {
+  draft: TemplateDraft;
+  suggestedName: string;
+};
+
+type FormProps<Values> = {
+  focusAmount: boolean;
+  onDone: () => void;
+  preset?: Partial<Values>;
+  transaction?: TransactionRow;
+};
+
+function SaveAsTemplateButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button type="button" variant="ghost" onClick={onClick}>
+      Save as template
+    </Button>
+  );
+}
+
+function SaveTemplateFromForm({
+  onClose,
+  request,
+}: {
+  onClose: () => void;
+  request: TemplateRequest | null;
+}) {
+  if (!request) return null;
+
+  return (
+    <SaveTemplateDialog
+      open
+      draft={request.draft}
+      suggestedName={request.suggestedName}
+      onOpenChange={open => {
+        if (!open) onClose();
+      }}
+    />
+  );
+}
 
 type TransactionDialogProps = {
   onOpenChange?: (open: boolean) => void;
@@ -95,6 +147,61 @@ function ModeSelect({
   );
 }
 
+function useTemplatePick() {
+  const [pick, setPick] = useState<TemplatePick | null>(null);
+
+  const pickTemplate = (template: TemplateRow) =>
+    setPick({
+      askAmount: asksForAmount(template),
+      id: template.id,
+      preset: templatePreset(template),
+    });
+
+  return {
+    clear: () => setPick(null),
+    focusAmount: !!pick?.askAmount,
+    pickId: pick?.id ?? 'blank',
+    pickTemplate,
+    presetOr: (fallback?: Preset) => pick?.preset ?? fallback,
+  };
+}
+
+function TransactionForm({
+  mode,
+  pickId,
+  ...formProps
+}: FormProps<StandardTransactionValues & TransferValues> & { mode: Mode; pickId: string }) {
+  const key = `${mode}-${formProps.transaction?.id ?? 'new'}-${pickId}`;
+
+  if (mode === 'transfer') return <TransferForm key={key} {...formProps} />;
+
+  return <StandardForm key={key} direction={mode} {...formProps} />;
+}
+
+function useFocusField<Values extends FieldValues>(
+  form: UseFormReturn<Values>,
+  name: Path<Values>,
+  enabled: boolean
+) {
+  useEffect(() => {
+    if (enabled) form.setFocus(name);
+  }, [enabled, form, name]);
+}
+
+const standardTemplateRequest = (
+  values: StandardTransactionValues,
+  direction: Direction,
+  payees?: { id: string; name: string }[]
+): TemplateRequest => ({
+  draft: draftFromSource({ ...values, mode: direction }),
+  suggestedName: payees?.find(payee => payee.id === values.payeeId)?.name ?? values.memo ?? '',
+});
+
+const transferTemplateRequest = (values: TransferValues): TemplateRequest => ({
+  draft: draftFromSource({ ...values, mode: 'transfer' }),
+  suggestedName: values.memo ?? '',
+});
+
 export function TransactionDialog({
   onOpenChange,
   open: controlledOpen,
@@ -104,18 +211,28 @@ export function TransactionDialog({
 }: TransactionDialogProps) {
   const [localOpen, setLocalOpen] = useState(false);
   const [modeOverride, setModeOverride] = useState<Mode | null>(null);
+  const templates = useTemplatePick();
   const open = controlledOpen ?? localOpen;
 
   const setOpen = (value: boolean) => {
     setLocalOpen(value);
-    if (!value) setModeOverride(null);
+
+    if (!value) {
+      setModeOverride(null);
+      templates.clear();
+    }
+
     onOpenChange?.(value);
   };
 
-  const mode = modeOverride ?? modeOf(transaction, preset);
+  const pickTemplate = (template: TemplateRow) => {
+    setModeOverride(null);
+    templates.pickTemplate(template);
+  };
+
+  const activePreset = templates.presetOr(preset);
+  const mode = modeOverride ?? modeOf(transaction, activePreset);
   const editing = !!transaction;
-  const formKey = `${mode}-${transaction?.id ?? 'new'}`;
-  const close = () => setOpen(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -123,18 +240,16 @@ export function TransactionDialog({
       <DialogContent>
         <DialogTitle>{editing ? 'Edit transaction' : 'New transaction'}</DialogTitle>
         <Stack gap="medium">
+          {!editing && <TemplateChips onPick={pickTemplate} />}
           <ModeSelect value={mode} disabled={editing} onChange={setModeOverride} />
-          {mode === 'transfer' ? (
-            <TransferForm key={formKey} transaction={transaction} preset={preset} onDone={close} />
-          ) : (
-            <StandardForm
-              key={formKey}
-              direction={mode}
-              transaction={transaction}
-              preset={preset}
-              onDone={close}
-            />
-          )}
+          <TransactionForm
+            mode={mode}
+            pickId={templates.pickId}
+            focusAmount={templates.focusAmount}
+            preset={activePreset}
+            transaction={transaction}
+            onDone={() => setOpen(false)}
+          />
         </Stack>
       </DialogContent>
     </Dialog>
@@ -143,17 +258,14 @@ export function TransactionDialog({
 
 function StandardForm({
   direction,
+  focusAmount,
   onDone,
   preset,
   transaction,
-}: {
-  direction: Direction;
-  onDone: () => void;
-  preset?: Partial<StandardTransactionValues>;
-  transaction?: TransactionRow;
-}) {
+}: FormProps<StandardTransactionValues> & { direction: Direction }) {
   const { data: payees } = usePayees();
   const { data: accounts } = useAccounts();
+  const templateRequest = useDialogState<TemplateRequest>();
 
   const form = useForm<StandardTransactionValues>({
     defaultValues: standardDefaults(
@@ -168,6 +280,8 @@ function StandardForm({
     form.setValue('direction', direction);
   }, [direction, form]);
 
+  useFocusField(form, 'amount', focusAmount);
+
   const { isPending, mutate } = useEntityMutation({
     errorMessage: 'Could not save the transaction',
     mutationFn: (values: StandardTransactionValues) =>
@@ -179,6 +293,9 @@ function StandardForm({
     },
     successMessage: transaction ? 'Transaction updated' : 'Transaction created',
   });
+
+  const requestTemplate = () =>
+    templateRequest.open(standardTemplateRequest(form.getValues(), direction, payees));
 
   const applyPayeeDefault = (payeeId: string) => {
     const payee = payees?.find(candidate => candidate.id === payeeId);
@@ -217,24 +334,19 @@ function StandardForm({
         />
         <DialogFormFooter
           isPending={isPending}
+          secondaryAction={<SaveAsTemplateButton onClick={requestTemplate} />}
           submitLabel={saveLabel(!!transaction)}
           onCancel={() => form.reset()}
         />
       </FormStack>
+      <SaveTemplateFromForm request={templateRequest.value} onClose={templateRequest.close} />
     </Form>
   );
 }
 
-function TransferForm({
-  onDone,
-  preset,
-  transaction,
-}: {
-  onDone: () => void;
-  preset?: Partial<TransferValues>;
-  transaction?: TransactionRow;
-}) {
+function TransferForm({ focusAmount, onDone, preset, transaction }: FormProps<TransferValues>) {
   const { data: accounts } = useAccounts();
+  const templateRequest = useDialogState<TemplateRequest>();
 
   const form = useForm<TransferValues>({
     defaultValues: transferDefaults(
@@ -243,6 +355,10 @@ function TransferForm({
     ),
     resolver: zodResolver(transferSchema),
   });
+
+  useFocusField(form, 'amountFrom', focusAmount);
+
+  const requestTemplate = () => templateRequest.open(transferTemplateRequest(form.getValues()));
 
   const [fromId, toId] = useWatch({
     control: form.control,
@@ -302,10 +418,12 @@ function TransferForm({
         <DateField control={form.control} name="date" description="When the money moved." />
         <DialogFormFooter
           isPending={isPending}
+          secondaryAction={<SaveAsTemplateButton onClick={requestTemplate} />}
           submitLabel={saveLabel(!!transaction, 'Record transfer')}
           onCancel={() => form.reset()}
         />
       </FormStack>
+      <SaveTemplateFromForm request={templateRequest.value} onClose={templateRequest.close} />
     </Form>
   );
 }

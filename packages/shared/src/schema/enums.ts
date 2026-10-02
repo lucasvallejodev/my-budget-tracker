@@ -27,3 +27,5 @@ export type CategoryKind = (typeof CategoryKindValues)[number];
 export type TransactionKind = (typeof TransactionKindValues)[number];
 
 export type TransactionStatus = (typeof TransactionStatusValues)[number];
+
+export type TransactionDirection = (typeof TransactionDirectionValues)[number];

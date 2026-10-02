@@ -5518,6 +5518,673 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
         ],
       },
     },
+    "/api/v1/transaction-templates": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "deleted",
+            "required": false,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "accountId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "nullable": true,
+                            "type": "integer",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "currency": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "deletedAt": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "direction": {
+                            "enum": [
+                              "expense",
+                              "income",
+                            ],
+                            "type": "string",
+                          },
+                          "id": {
+                            "type": "string",
+                          },
+                          "kind": {
+                            "enum": [
+                              "standard",
+                              "transfer",
+                            ],
+                            "type": "string",
+                          },
+                          "lastUsedAt": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "memo": {
+                            "type": "string",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                          "payeeId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "sortOrder": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "transferAccountId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "unavailableReason": {
+                            "enum": [
+                              "account_archived",
+                              "category_archived",
+                              "transfer_account_archived",
+                            ],
+                            "nullable": true,
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "accountId",
+                          "amountMinor",
+                          "categoryId",
+                          "currency",
+                          "deletedAt",
+                          "direction",
+                          "id",
+                          "kind",
+                          "lastUsedAt",
+                          "memo",
+                          "name",
+                          "payeeId",
+                          "sortOrder",
+                          "transferAccountId",
+                          "unavailableReason",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "items",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "transaction templates",
+        ],
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                  },
+                  "amount": {
+                    "maxLength": 30,
+                    "type": "string",
+                  },
+                  "categoryId": {
+                    "type": "string",
+                  },
+                  "direction": {
+                    "enum": [
+                      "expense",
+                      "income",
+                    ],
+                    "type": "string",
+                  },
+                  "kind": {
+                    "enum": [
+                      "standard",
+                      "transfer",
+                    ],
+                    "type": "string",
+                  },
+                  "memo": {
+                    "maxLength": 500,
+                    "type": "string",
+                  },
+                  "name": {
+                    "maxLength": 40,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "payeeId": {
+                    "type": "string",
+                  },
+                  "transferAccountId": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "direction",
+                  "kind",
+                  "name",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accountId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "amountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "categoryId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "currency": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "deletedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "direction": {
+                      "enum": [
+                        "expense",
+                        "income",
+                      ],
+                      "type": "string",
+                    },
+                    "id": {
+                      "type": "string",
+                    },
+                    "kind": {
+                      "enum": [
+                        "standard",
+                        "transfer",
+                      ],
+                      "type": "string",
+                    },
+                    "lastUsedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "memo": {
+                      "type": "string",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "payeeId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "sortOrder": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "transferAccountId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "unavailableReason": {
+                      "enum": [
+                        "account_archived",
+                        "category_archived",
+                        "transfer_account_archived",
+                      ],
+                      "nullable": true,
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "accountId",
+                    "amountMinor",
+                    "categoryId",
+                    "currency",
+                    "deletedAt",
+                    "direction",
+                    "id",
+                    "kind",
+                    "lastUsedAt",
+                    "memo",
+                    "name",
+                    "payeeId",
+                    "sortOrder",
+                    "transferAccountId",
+                    "unavailableReason",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "transaction templates",
+        ],
+      },
+    },
+    "/api/v1/transaction-templates/order": {
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ids": {
+                    "items": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string",
+                    },
+                    "maxItems": 1000,
+                    "minItems": 1,
+                    "type": "array",
+                  },
+                },
+                "required": [
+                  "ids",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "204": {
+            "description": "No content",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "transaction templates",
+        ],
+      },
+    },
+    "/api/v1/transaction-templates/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "204": {
+            "description": "No content",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "transaction templates",
+        ],
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                  },
+                  "amount": {
+                    "maxLength": 30,
+                    "type": "string",
+                  },
+                  "categoryId": {
+                    "type": "string",
+                  },
+                  "direction": {
+                    "enum": [
+                      "expense",
+                      "income",
+                    ],
+                    "type": "string",
+                  },
+                  "kind": {
+                    "enum": [
+                      "standard",
+                      "transfer",
+                    ],
+                    "type": "string",
+                  },
+                  "memo": {
+                    "maxLength": 500,
+                    "type": "string",
+                  },
+                  "name": {
+                    "maxLength": 40,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "payeeId": {
+                    "type": "string",
+                  },
+                  "transferAccountId": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "direction",
+                  "kind",
+                  "name",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accountId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "amountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "categoryId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "currency": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "deletedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "direction": {
+                      "enum": [
+                        "expense",
+                        "income",
+                      ],
+                      "type": "string",
+                    },
+                    "id": {
+                      "type": "string",
+                    },
+                    "kind": {
+                      "enum": [
+                        "standard",
+                        "transfer",
+                      ],
+                      "type": "string",
+                    },
+                    "lastUsedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "memo": {
+                      "type": "string",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "payeeId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "sortOrder": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "transferAccountId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "unavailableReason": {
+                      "enum": [
+                        "account_archived",
+                        "category_archived",
+                        "transfer_account_archived",
+                      ],
+                      "nullable": true,
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "accountId",
+                    "amountMinor",
+                    "categoryId",
+                    "currency",
+                    "deletedAt",
+                    "direction",
+                    "id",
+                    "kind",
+                    "lastUsedAt",
+                    "memo",
+                    "name",
+                    "payeeId",
+                    "sortOrder",
+                    "transferAccountId",
+                    "unavailableReason",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "transaction templates",
+        ],
+      },
+    },
+    "/api/v1/transaction-templates/{id}/restore": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accountId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "amountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "categoryId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "currency": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "deletedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "direction": {
+                      "enum": [
+                        "expense",
+                        "income",
+                      ],
+                      "type": "string",
+                    },
+                    "id": {
+                      "type": "string",
+                    },
+                    "kind": {
+                      "enum": [
+                        "standard",
+                        "transfer",
+                      ],
+                      "type": "string",
+                    },
+                    "lastUsedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "memo": {
+                      "type": "string",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "payeeId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "sortOrder": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "transferAccountId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "unavailableReason": {
+                      "enum": [
+                        "account_archived",
+                        "category_archived",
+                        "transfer_account_archived",
+                      ],
+                      "nullable": true,
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "accountId",
+                    "amountMinor",
+                    "categoryId",
+                    "currency",
+                    "deletedAt",
+                    "direction",
+                    "id",
+                    "kind",
+                    "lastUsedAt",
+                    "memo",
+                    "name",
+                    "payeeId",
+                    "sortOrder",
+                    "transferAccountId",
+                    "unavailableReason",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "transaction templates",
+        ],
+      },
+    },
     "/api/v1/transactions": {
       "get": {
         "parameters": [
@@ -5870,6 +6537,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "cleared",
                       "reconciled",
                     ],
+                    "type": "string",
+                  },
+                  "templateId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                     "type": "string",
                   },
                 },
@@ -6785,6 +7457,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "cleared",
                       "reconciled",
                     ],
+                    "type": "string",
+                  },
+                  "templateId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                     "type": "string",
                   },
                   "toAccountId": {
@@ -7784,6 +8461,11 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "cleared",
                       "reconciled",
                     ],
+                    "type": "string",
+                  },
+                  "templateId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                     "type": "string",
                   },
                   "toAccountId": {

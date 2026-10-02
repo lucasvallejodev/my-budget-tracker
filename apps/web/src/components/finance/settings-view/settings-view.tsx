@@ -17,6 +17,7 @@ const Sections = [
   { label: 'Categories', value: 'categories' },
   { label: 'Currencies', value: 'currencies' },
   { label: 'Rules', value: 'rules' },
+  { label: 'Templates', value: 'templates' },
   { label: 'Security', value: 'security' },
   { label: 'Deleted items', value: 'deleted' },
 ];
@@ -61,7 +62,14 @@ const LinkSections = [
   },
   {
     description:
-      'Deleted transactions, transfers, accounts, rules and exchange rates are kept. Review them and bring any of them back.',
+      'Save the transactions you record often, such as coffee, rent or a monthly transfer, and fill the form in one tap.',
+    links: [{ href: '/settings/templates', label: 'Manage templates' }],
+    title: 'Templates',
+    value: 'templates',
+  },
+  {
+    description:
+      'Deleted transactions, transfers, accounts, rules, templates and exchange rates are kept. Review them and bring any of them back.',
     links: [{ href: '/settings/deleted', label: 'Open deleted items' }],
     title: 'Deleted items',
     value: 'deleted',
@@ -93,7 +101,7 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
     <Page>
       <PageHeading
         title="Settings"
-        description="Your profile, categories, currencies, rules and security."
+        description="Your profile, categories, currencies, rules, templates and security."
       />
       {demo && <Notice>Component preview — sample account information.</Notice>}
       <Tabs.Root defaultValue="profile" className="settings-view" orientation="vertical">

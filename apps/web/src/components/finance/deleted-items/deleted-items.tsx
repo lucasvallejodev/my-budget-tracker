@@ -7,6 +7,7 @@ import {
   restoreAccount,
   restoreExchangeRate,
   restoreRule,
+  restoreTemplate,
   restoreTransaction,
 } from '@/api/mutations';
 import {
@@ -30,6 +31,7 @@ import {
   useDeletedAccounts,
   useDeletedExchangeRates,
   useDeletedRules,
+  useDeletedTemplates,
   useDeletedTransactions,
   useRefreshFinance,
 } from '../use-finance-data';
@@ -38,10 +40,11 @@ const Tabs = {
   accounts: 'Accounts',
   rates: 'Exchange rates',
   rules: 'Rules',
+  templates: 'Templates',
   transactions: 'Transactions',
 } as const;
 
-const TabOrder = [Tabs.transactions, Tabs.accounts, Tabs.rules, Tabs.rates];
+const TabOrder = [Tabs.transactions, Tabs.accounts, Tabs.rules, Tabs.templates, Tabs.rates];
 
 const deletedOn = (deletedAt: string | null): string =>
   deletedAt ? `Deleted ${new Date(deletedAt).toLocaleDateString()}` : '';
@@ -169,6 +172,33 @@ function DeletedRules() {
   );
 }
 
+function DeletedTemplates() {
+  const query = useDeletedTemplates();
+  const restore = useRestore(restoreTemplate);
+  const rows = query.data ?? [];
+
+  return (
+    <QueryContent
+      pending={query.isPending}
+      error={query.isError}
+      loading="Loading deleted templates…"
+      empty={!rows.length && <EmptyState title="No deleted templates" />}
+    >
+      {() =>
+        rows.map(row => (
+          <ListRow key={row.id} title={row.name} description={deletedOn(row.deletedAt)}>
+            <RestoreButton
+              label={`Restore ${row.name}`}
+              pending={restore.isPending}
+              onClick={() => restore.mutate(row.id)}
+            />
+          </ListRow>
+        ))
+      }
+    </QueryContent>
+  );
+}
+
 function DeletedExchangeRates() {
   const query = useDeletedExchangeRates();
   const restore = useRestore(restoreExchangeRate);
@@ -228,6 +258,9 @@ export function DeletedItems() {
           </TabPanel>
           <TabPanel value={Tabs.rules}>
             <DeletedRules />
+          </TabPanel>
+          <TabPanel value={Tabs.templates}>
+            <DeletedTemplates />
           </TabPanel>
           <TabPanel value={Tabs.rates}>
             <DeletedExchangeRates />

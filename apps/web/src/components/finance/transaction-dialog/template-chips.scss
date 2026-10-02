@@ -1,0 +1,27 @@
+@use 'abstracts' as *;
+
+.template-chips {
+  @include flex-column(space(2));
+
+  &__list {
+    @include flex-row(space(2));
+
+    overflow-x: auto;
+    padding-bottom: space(1);
+    scroll-snap-type: x proximity;
+  }
+
+  &__chip {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
+
+  &__detail {
+    @include muted-text;
+    @include tabular-figures;
+  }
+
+  &__manage {
+    @include muted-text;
+  }
+}

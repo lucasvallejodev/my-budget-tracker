@@ -26,6 +26,7 @@ import type { ColumnMapping, ImportCommitResult, Preview } from '@coinkeeper/sha
 import type { PayeeFormValues, PayeePatchValues, PayeeRow } from '@coinkeeper/shared/schema/payees';
 import type { RuleFormValues, RuleRow } from '@coinkeeper/shared/schema/rules';
 import type { SettingsFormValues, UserSettings } from '@coinkeeper/shared/schema/settings';
+import type { TemplateFormValues, TemplateRow } from '@coinkeeper/shared/schema/templates';
 import type {
   StandardTransactionValues,
   TransactionRow,
@@ -173,3 +174,18 @@ export const deleteBudget = (id: string) => apiRequest<void>('DELETE', `/budgets
 
 export const copyBudgets = (month: string) =>
   apiRequest<{ copied: number }>('POST', '/budgets/copy-previous-month', { month });
+
+export const createTemplate = (values: TemplateFormValues) =>
+  apiRequest<TemplateRow>('POST', '/transaction-templates', values);
+
+export const updateTemplate = (id: string, values: TemplateFormValues) =>
+  apiRequest<TemplateRow>('PUT', `/transaction-templates/${id}`, values);
+
+export const deleteTemplate = (id: string) =>
+  apiRequest<void>('DELETE', `/transaction-templates/${id}`);
+
+export const restoreTemplate = (id: string) =>
+  apiRequest<TemplateRow>('POST', `/transaction-templates/${id}/restore`);
+
+export const reorderTemplates = (ids: string[]) =>
+  apiRequest<void>('PUT', '/transaction-templates/order', { ids });

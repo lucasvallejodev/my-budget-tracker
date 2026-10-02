@@ -6,6 +6,7 @@ import { conflict, notFound } from '../db';
 import type { Db, DbOrTx } from '../db';
 import { isUniqueViolation } from '../errors';
 import type { createPayeeService } from '../payees/service';
+import { markTemplateUsed } from '../templates/service';
 import {
   assertCategory,
   assertDate,
@@ -177,6 +178,8 @@ export const createStandard = async (
       .insert(transactions)
       .values(standardInsertValues(userId, account, input))
       .returning();
+
+    await markTemplateUsed(tx, userId, input.templateId);
 
     return created;
   });

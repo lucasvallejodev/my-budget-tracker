@@ -1,6 +1,6 @@
 'use client';
 
-import { MouseEventHandler } from 'react';
+import { MouseEventHandler, ReactNode } from 'react';
 
 import { Button } from '../button';
 import { CreateNewButton } from '../create-new-button';
@@ -11,6 +11,7 @@ type DialogFormFooterProps = {
   isPending: boolean;
   onCancel: () => void;
   onSubmit?: MouseEventHandler<HTMLButtonElement>;
+  secondaryAction?: ReactNode;
   submitLabel: string;
 };
 
@@ -29,10 +30,12 @@ export function DialogFormFooter({
   isPending,
   onCancel,
   onSubmit,
+  secondaryAction,
   submitLabel,
 }: DialogFormFooterProps) {
   return (
     <DialogFooter>
+      {secondaryAction}
       <DialogClose asChild>
         <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel

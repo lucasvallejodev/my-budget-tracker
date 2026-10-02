@@ -2,7 +2,9 @@ import { HttpStatus } from '@/constants/http';
 import { ServiceError } from '@/modules/db';
 import type { StandardInput, TransferInput } from '@/modules/ledger/service';
 import type { Services } from '@/modules/services';
+import type { TemplateInput } from '@/modules/templates/service';
 import { parseAmountInput } from '@coinkeeper/shared/lib/money';
+import type { TemplateFormValues } from '@coinkeeper/shared/schema/templates';
 import type { TransactionPatchValues, TransferValues } from '@coinkeeper/shared/schema/transaction';
 import type { StandardTransactionValues } from '@coinkeeper/shared/schema/transaction';
 
@@ -45,6 +47,7 @@ export const toStandardInput = async (
     memo: data.memo,
     payeeId: data.payeeId || null,
     status: data.status,
+    templateId: data.templateId,
   };
 };
 
@@ -97,6 +100,36 @@ export const toTransferInput = async (
     fromAccountId: data.fromAccountId,
     memo: data.memo,
     status: data.status,
+    templateId: data.templateId,
     toAccountId: data.toAccountId,
   };
 };
+
+const templateAmount = async (
+  services: Services,
+  userId: string,
+  data: TemplateFormValues
+): Promise<null | number> => {
+  if (!data.amount?.trim()) return null;
+  if (!data.accountId) throw new ServiceError('Choose an account to save an amount');
+
+  const account = await services.accounts.owned(userId, data.accountId);
+  const magnitude = parseMagnitude(data.amount, account.currency);
+
+  return data.kind === 'standard' && data.direction === 'expense' ? -magnitude : magnitude;
+};
+
+export const toTemplateInput = async (
+  services: Services,
+  userId: string,
+  data: TemplateFormValues
+): Promise<TemplateInput> => ({
+  accountId: data.accountId || null,
+  amountMinor: await templateAmount(services, userId, data),
+  categoryId: data.categoryId || null,
+  kind: data.kind,
+  memo: data.memo ?? '',
+  name: data.name,
+  payeeId: data.payeeId || null,
+  transferAccountId: data.transferAccountId || null,
+});

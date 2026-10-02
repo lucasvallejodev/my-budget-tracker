@@ -17,4 +17,5 @@ export const FieldLengths = {
   personName: 80,
   ruleName: 80,
   rulePattern: 120,
+  templateName: 40,
 } as const;

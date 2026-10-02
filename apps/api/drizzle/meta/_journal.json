@@ -22,6 +22,13 @@
       "when": 1790754806755,
       "tag": "0002_payee_appearance_and_emoji_setting",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790929123475,
+      "tag": "0003_transaction_templates",
+      "breakpoints": true
     }
   ]
 }

@@ -10,7 +10,7 @@ The schema lives in `apps/api/src/db/schema.ts` (the API owns the database); the
 
 - `users` holds the account you sign in with: a unique lower-case `email`, the argon2id `password_hash`, an optional `name` and `last_sign_in_at`. Every other table's `user_id` references `users(id) ON DELETE CASCADE`.
 - `sessions` holds one row per signed-in browser: the SHA-256 `token_hash` of the cookie token (never the token itself), `expires_at`, `last_used_at`, `user_agent` and `ip_address`. These rows are deleted on sign-out, revocation and expiry.
-- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets` and `exchange_rates` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
+- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets`, `exchange_rates` and `transaction_templates` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
 
 ## Relationships
 
@@ -28,6 +28,8 @@ erDiagram
   categories ||--o{ budgets : "category_id"
   categories ||--o{ rules : "category_id"
   payees ||--o{ transactions : "payee_id (nullable)"
+  accounts ||--o{ transaction_templates : "account_id / transfer_account_id (nullable)"
+  categories ||--o{ transaction_templates : "category_id (nullable)"
   transactions ||--o| transactions : "transfer_id (two legs)"
 ```
 
@@ -166,6 +168,24 @@ Unique on `(category_id, month, currency)`.
 | `pattern`     | text         | case-insensitive substring matched against payee, bank description and memo |
 | `category_id` | → categories | category to apply                                                           |
 | `priority`    | int          | lower runs first                                                            |
+
+### `transaction_templates`
+
+| Column                | Type          | Notes                                                                         |
+| --------------------- | ------------- | ----------------------------------------------------------------------------- |
+| `name`                | text          | unique per user among live templates                                          |
+| `kind`                | enum          | `standard` or `transfer` (the `transaction_kind` enum, `opening` refused)     |
+| `account_id`          | → accounts?   | source account; required when `amount_minor` is set                           |
+| `transfer_account_id` | → accounts?   | destination, transfers only                                                   |
+| `category_id`         | → categories? | standard templates only                                                       |
+| `payee_id`            | → payees?     | standard templates only                                                       |
+| `amount_minor`        | bigint?       | signed for standard templates, positive for transfers, `null` = ask each time |
+| `memo`                | text          | copied onto the transaction                                                   |
+| `sort_order`          | int           | manual order in Settings                                                      |
+| `last_used_at`        | timestamptz?  | set when a transaction or transfer is recorded with its `templateId`          |
+| `deleted_at`          | timestamptz?  | soft delete                                                                   |
+
+A template is not part of the ledger: it never counts in balances, reports or budgets.
 
 ## Invariants the services guarantee
 

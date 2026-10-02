@@ -28,6 +28,7 @@ export const standardTransactionSchema = z.object({
   memo: z.string().max(FieldLengths.memo).optional(),
   payeeId: z.string().optional(),
   status: z.enum(TransactionStatusValues).optional(),
+  templateId: z.uuid().optional(),
 });
 
 export type StandardTransactionValues = z.infer<typeof standardTransactionSchema>;
@@ -39,6 +40,7 @@ export const transferSchema = z.object({
   fromAccountId: z.string().min(1, 'Source account is required'),
   memo: z.string().max(FieldLengths.memo).optional(),
   status: z.enum(TransactionStatusValues).optional(),
+  templateId: z.uuid().optional(),
   toAccountId: z.string().min(1, 'Destination account is required'),
 });
 
@@ -81,9 +83,12 @@ export type TransactionRow = z.infer<typeof transactionRowSchema>;
 const SEARCH_MAX_LENGTH = 100;
 const CURSOR_MAX_LENGTH = 200;
 
-export const transactionPatchSchema = standardTransactionSchema.partial().extend({
-  needsReview: z.boolean().optional(),
-});
+export const transactionPatchSchema = standardTransactionSchema
+  .omit({ templateId: true })
+  .partial()
+  .extend({
+    needsReview: z.boolean().optional(),
+  });
 
 export type TransactionPatchValues = z.infer<typeof transactionPatchSchema>;
 

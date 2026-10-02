@@ -25,6 +25,7 @@ import type {
 } from '@coinkeeper/shared/schema/reports';
 import type { RuleRow } from '@coinkeeper/shared/schema/rules';
 import type { UserSettings } from '@coinkeeper/shared/schema/settings';
+import type { TemplateRow } from '@coinkeeper/shared/schema/templates';
 import type { ReviewSuggestion, TransactionRow } from '@coinkeeper/shared/schema/transaction';
 
 export type {
@@ -43,6 +44,7 @@ export type {
   RuleRow,
   Session,
   Summary,
+  TemplateRow,
   TransactionRow,
   User,
 };
@@ -94,6 +96,7 @@ export const QueryKeys = {
   sessions: ['sessions'] as const,
   settings: ['settings'] as const,
   summary: (month?: string) => ['summary', month ?? 'current'] as const,
+  templates: ['templates'] as const,
   transactions: (params: TransactionParams = {}) => ['transactions', params] as const,
 };
 
@@ -151,6 +154,13 @@ export function useRules() {
   return useQuery({
     queryFn: () => apiList<RuleRow>('/rules'),
     queryKey: QueryKeys.rules,
+  });
+}
+
+export function useTemplates() {
+  return useQuery({
+    queryFn: () => apiList<TemplateRow>('/transaction-templates'),
+    queryKey: QueryKeys.templates,
   });
 }
 
@@ -288,6 +298,13 @@ export function useDeletedExchangeRates() {
   });
 }
 
+export function useDeletedTemplates() {
+  return useQuery({
+    queryFn: () => apiList<TemplateRow>('/transaction-templates', { deleted: true }),
+    queryKey: QueryKeys.deleted('templates'),
+  });
+}
+
 export const FinanceKeys = [
   'accounts',
   'budgets',
@@ -298,6 +315,7 @@ export const FinanceKeys = [
   'rules',
   'settings',
   'summary',
+  'templates',
   'transactions',
 ];
 

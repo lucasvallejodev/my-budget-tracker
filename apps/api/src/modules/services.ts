@@ -17,6 +17,7 @@ import { createLedgerService } from './ledger/service';
 import { createPayeeService } from './payees/service';
 import { createReportService } from './reports/service';
 import { createRuleService } from './rules/service';
+import { createTemplateService } from './templates/service';
 
 const DEFAULT_SESSION_DAYS = 30;
 const DEFAULT_SESSION_MAX_AGE_DAYS = 90;
@@ -75,6 +76,7 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
       maxAgeDays: options.sessionMaxAgeDays ?? DEFAULT_SESSION_MAX_AGE_DAYS,
       sessionDays: options.sessionDays ?? DEFAULT_SESSION_DAYS,
     }),
+    templates: createTemplateService(db),
     async updateSettings(
       userId: string,
       data: {
