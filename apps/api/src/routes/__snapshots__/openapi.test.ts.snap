@@ -4075,6 +4075,1660 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
         ],
       },
     },
+    "/api/v1/recurring-series": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "deleted",
+            "required": false,
+            "schema": {
+              "type": "string",
+            },
+          },
+          {
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "accountId": {
+                            "type": "string",
+                          },
+                          "accountName": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "amountMaxMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "amountMinMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "anchorDate": {
+                            "type": "string",
+                          },
+                          "cadence": {
+                            "enum": [
+                              "weekly",
+                              "monthly",
+                              "yearly",
+                            ],
+                            "type": "string",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryName": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "currency": {
+                            "type": "string",
+                          },
+                          "deletedAt": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "endDate": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "id": {
+                            "type": "string",
+                          },
+                          "interval": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "kind": {
+                            "enum": [
+                              "bill",
+                              "subscription",
+                              "income",
+                              "other",
+                            ],
+                            "type": "string",
+                          },
+                          "lastPaidAmountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "nullable": true,
+                            "type": "integer",
+                          },
+                          "lastPaidOn": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "matchWindowDays": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "monthlyEquivalentMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                          "nextDueOn": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "paidCount": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "payeeId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "payeeName": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "previousPaidAmountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "nullable": true,
+                            "type": "integer",
+                          },
+                          "recordMode": {
+                            "enum": [
+                              "match_only",
+                              "create_pending",
+                            ],
+                            "type": "string",
+                          },
+                          "source": {
+                            "enum": [
+                              "manual",
+                              "detected",
+                            ],
+                            "type": "string",
+                          },
+                          "status": {
+                            "enum": [
+                              "active",
+                              "paused",
+                              "ended",
+                            ],
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "accountId",
+                          "accountName",
+                          "amountMaxMinor",
+                          "amountMinMinor",
+                          "amountMinor",
+                          "anchorDate",
+                          "cadence",
+                          "categoryId",
+                          "categoryName",
+                          "currency",
+                          "deletedAt",
+                          "endDate",
+                          "id",
+                          "interval",
+                          "kind",
+                          "lastPaidAmountMinor",
+                          "lastPaidOn",
+                          "matchWindowDays",
+                          "monthlyEquivalentMinor",
+                          "name",
+                          "nextDueOn",
+                          "paidCount",
+                          "payeeId",
+                          "payeeName",
+                          "previousPaidAmountMinor",
+                          "recordMode",
+                          "source",
+                          "status",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "items",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "accountId": {
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "amount": {
+                    "maxLength": 30,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "anchorDate": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string",
+                  },
+                  "cadence": {
+                    "enum": [
+                      "weekly",
+                      "monthly",
+                      "yearly",
+                    ],
+                    "type": "string",
+                  },
+                  "categoryId": {
+                    "type": "string",
+                  },
+                  "endDate": {
+                    "anyOf": [
+                      {
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "type": "string",
+                      },
+                      {
+                        "enum": [
+                          "",
+                        ],
+                        "type": "string",
+                      },
+                    ],
+                  },
+                  "interval": {
+                    "maximum": 52,
+                    "minimum": 1,
+                    "type": "integer",
+                  },
+                  "kind": {
+                    "enum": [
+                      "bill",
+                      "subscription",
+                      "income",
+                      "other",
+                    ],
+                    "type": "string",
+                  },
+                  "matchWindowDays": {
+                    "maximum": 15,
+                    "minimum": 0,
+                    "type": "integer",
+                  },
+                  "name": {
+                    "maxLength": 50,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "payeeId": {
+                    "type": "string",
+                  },
+                  "recordMode": {
+                    "enum": [
+                      "match_only",
+                      "create_pending",
+                    ],
+                    "type": "string",
+                  },
+                  "source": {
+                    "enum": [
+                      "manual",
+                      "detected",
+                    ],
+                    "type": "string",
+                  },
+                  "status": {
+                    "enum": [
+                      "active",
+                      "paused",
+                      "ended",
+                    ],
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "accountId",
+                  "amount",
+                  "anchorDate",
+                  "cadence",
+                  "interval",
+                  "kind",
+                  "name",
+                  "recordMode",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accountId": {
+                      "type": "string",
+                    },
+                    "accountName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "amountMaxMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "amountMinMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "amountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "anchorDate": {
+                      "type": "string",
+                    },
+                    "cadence": {
+                      "enum": [
+                        "weekly",
+                        "monthly",
+                        "yearly",
+                      ],
+                      "type": "string",
+                    },
+                    "categoryId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "categoryName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "currency": {
+                      "type": "string",
+                    },
+                    "deletedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "endDate": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "id": {
+                      "type": "string",
+                    },
+                    "interval": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "kind": {
+                      "enum": [
+                        "bill",
+                        "subscription",
+                        "income",
+                        "other",
+                      ],
+                      "type": "string",
+                    },
+                    "lastPaidAmountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "lastPaidOn": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "matchWindowDays": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "monthlyEquivalentMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "nextDueOn": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "paidCount": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "payeeId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "payeeName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "previousPaidAmountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "recordMode": {
+                      "enum": [
+                        "match_only",
+                        "create_pending",
+                      ],
+                      "type": "string",
+                    },
+                    "source": {
+                      "enum": [
+                        "manual",
+                        "detected",
+                      ],
+                      "type": "string",
+                    },
+                    "status": {
+                      "enum": [
+                        "active",
+                        "paused",
+                        "ended",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "accountId",
+                    "accountName",
+                    "amountMaxMinor",
+                    "amountMinMinor",
+                    "amountMinor",
+                    "anchorDate",
+                    "cadence",
+                    "categoryId",
+                    "categoryName",
+                    "currency",
+                    "deletedAt",
+                    "endDate",
+                    "id",
+                    "interval",
+                    "kind",
+                    "lastPaidAmountMinor",
+                    "lastPaidOn",
+                    "matchWindowDays",
+                    "monthlyEquivalentMinor",
+                    "name",
+                    "nextDueOn",
+                    "paidCount",
+                    "payeeId",
+                    "payeeName",
+                    "previousPaidAmountMinor",
+                    "recordMode",
+                    "source",
+                    "status",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+    },
+    "/api/v1/recurring-series/record-due": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "today": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string",
+                  },
+                },
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "created": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                  },
+                  "required": [
+                    "created",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+    },
+    "/api/v1/recurring-series/suggestions": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "accountId": {
+                            "type": "string",
+                          },
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "anchorDate": {
+                            "type": "string",
+                          },
+                          "cadence": {
+                            "enum": [
+                              "weekly",
+                              "monthly",
+                              "yearly",
+                            ],
+                            "type": "string",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "currency": {
+                            "type": "string",
+                          },
+                          "interval": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "kind": {
+                            "enum": [
+                              "bill",
+                              "subscription",
+                              "income",
+                              "other",
+                            ],
+                            "type": "string",
+                          },
+                          "lastDate": {
+                            "type": "string",
+                          },
+                          "nextDueOn": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "occurrences": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "payeeId": {
+                            "type": "string",
+                          },
+                          "payeeName": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "accountId",
+                          "amountMinor",
+                          "anchorDate",
+                          "cadence",
+                          "categoryId",
+                          "currency",
+                          "interval",
+                          "kind",
+                          "lastDate",
+                          "nextDueOn",
+                          "occurrences",
+                          "payeeId",
+                          "payeeName",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "items",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+    },
+    "/api/v1/recurring-series/upcoming": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "maximum": 92,
+              "minimum": 1,
+              "type": "integer",
+            },
+          },
+          {
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "accountId": {
+                            "type": "string",
+                          },
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "currency": {
+                            "type": "string",
+                          },
+                          "dueOn": {
+                            "type": "string",
+                          },
+                          "kind": {
+                            "enum": [
+                              "bill",
+                              "subscription",
+                              "income",
+                              "other",
+                            ],
+                            "type": "string",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                          "paidAmountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "nullable": true,
+                            "type": "integer",
+                          },
+                          "payeeId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "seriesId": {
+                            "type": "string",
+                          },
+                          "status": {
+                            "enum": [
+                              "paid",
+                              "overdue",
+                              "due",
+                              "upcoming",
+                            ],
+                            "type": "string",
+                          },
+                          "transactionId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "accountId",
+                          "amountMinor",
+                          "categoryId",
+                          "currency",
+                          "dueOn",
+                          "kind",
+                          "name",
+                          "paidAmountMinor",
+                          "payeeId",
+                          "seriesId",
+                          "status",
+                          "transactionId",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "items",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+    },
+    "/api/v1/recurring-series/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "204": {
+            "description": "No content",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "accountId": {
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "amount": {
+                    "maxLength": 30,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "anchorDate": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string",
+                  },
+                  "cadence": {
+                    "enum": [
+                      "weekly",
+                      "monthly",
+                      "yearly",
+                    ],
+                    "type": "string",
+                  },
+                  "categoryId": {
+                    "type": "string",
+                  },
+                  "endDate": {
+                    "anyOf": [
+                      {
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "type": "string",
+                      },
+                      {
+                        "enum": [
+                          "",
+                        ],
+                        "type": "string",
+                      },
+                    ],
+                  },
+                  "interval": {
+                    "maximum": 52,
+                    "minimum": 1,
+                    "type": "integer",
+                  },
+                  "kind": {
+                    "enum": [
+                      "bill",
+                      "subscription",
+                      "income",
+                      "other",
+                    ],
+                    "type": "string",
+                  },
+                  "matchWindowDays": {
+                    "maximum": 15,
+                    "minimum": 0,
+                    "type": "integer",
+                  },
+                  "name": {
+                    "maxLength": 50,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "payeeId": {
+                    "type": "string",
+                  },
+                  "recordMode": {
+                    "enum": [
+                      "match_only",
+                      "create_pending",
+                    ],
+                    "type": "string",
+                  },
+                  "source": {
+                    "enum": [
+                      "manual",
+                      "detected",
+                    ],
+                    "type": "string",
+                  },
+                  "status": {
+                    "enum": [
+                      "active",
+                      "paused",
+                      "ended",
+                    ],
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "accountId",
+                  "amount",
+                  "anchorDate",
+                  "cadence",
+                  "interval",
+                  "kind",
+                  "name",
+                  "recordMode",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accountId": {
+                      "type": "string",
+                    },
+                    "accountName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "amountMaxMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "amountMinMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "amountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "anchorDate": {
+                      "type": "string",
+                    },
+                    "cadence": {
+                      "enum": [
+                        "weekly",
+                        "monthly",
+                        "yearly",
+                      ],
+                      "type": "string",
+                    },
+                    "categoryId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "categoryName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "currency": {
+                      "type": "string",
+                    },
+                    "deletedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "endDate": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "id": {
+                      "type": "string",
+                    },
+                    "interval": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "kind": {
+                      "enum": [
+                        "bill",
+                        "subscription",
+                        "income",
+                        "other",
+                      ],
+                      "type": "string",
+                    },
+                    "lastPaidAmountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "lastPaidOn": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "matchWindowDays": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "monthlyEquivalentMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "nextDueOn": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "paidCount": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "payeeId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "payeeName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "previousPaidAmountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "recordMode": {
+                      "enum": [
+                        "match_only",
+                        "create_pending",
+                      ],
+                      "type": "string",
+                    },
+                    "source": {
+                      "enum": [
+                        "manual",
+                        "detected",
+                      ],
+                      "type": "string",
+                    },
+                    "status": {
+                      "enum": [
+                        "active",
+                        "paused",
+                        "ended",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "accountId",
+                    "accountName",
+                    "amountMaxMinor",
+                    "amountMinMinor",
+                    "amountMinor",
+                    "anchorDate",
+                    "cadence",
+                    "categoryId",
+                    "categoryName",
+                    "currency",
+                    "deletedAt",
+                    "endDate",
+                    "id",
+                    "interval",
+                    "kind",
+                    "lastPaidAmountMinor",
+                    "lastPaidOn",
+                    "matchWindowDays",
+                    "monthlyEquivalentMinor",
+                    "name",
+                    "nextDueOn",
+                    "paidCount",
+                    "payeeId",
+                    "payeeName",
+                    "previousPaidAmountMinor",
+                    "recordMode",
+                    "source",
+                    "status",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+    },
+    "/api/v1/recurring-series/{id}/occurrences/{dueOn}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dueOn",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "204": {
+            "description": "No content",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dueOn",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "transactionId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "transactionId",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accountCurrency": {
+                      "type": "string",
+                    },
+                    "accountId": {
+                      "type": "string",
+                    },
+                    "accountName": {
+                      "type": "string",
+                    },
+                    "amountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "categoryIcon": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "categoryId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "categoryName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "counterpartAccountId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "counterpartAccountName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "currency": {
+                      "type": "string",
+                    },
+                    "date": {
+                      "type": "string",
+                    },
+                    "deletedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "excluded": {
+                      "type": "boolean",
+                    },
+                    "groupColor": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "groupId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "groupKind": {
+                      "enum": [
+                        "income",
+                        "expense",
+                      ],
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "groupName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "id": {
+                      "type": "string",
+                    },
+                    "importId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "kind": {
+                      "enum": [
+                        "standard",
+                        "transfer",
+                        "opening",
+                      ],
+                      "type": "string",
+                    },
+                    "memo": {
+                      "type": "string",
+                    },
+                    "needsReview": {
+                      "type": "boolean",
+                    },
+                    "originalPayee": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "payeeColor": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "payeeIcon": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "payeeId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "payeeName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "recurringSeriesId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "splits": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "categoryIcon": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryName": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "groupColor": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "id": {
+                            "type": "string",
+                          },
+                          "memo": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "amountMinor",
+                          "categoryIcon",
+                          "categoryId",
+                          "categoryName",
+                          "groupColor",
+                          "id",
+                          "memo",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "status": {
+                      "enum": [
+                        "pending",
+                        "cleared",
+                        "reconciled",
+                      ],
+                      "type": "string",
+                    },
+                    "transferId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "accountCurrency",
+                    "accountId",
+                    "accountName",
+                    "amountMinor",
+                    "categoryIcon",
+                    "categoryId",
+                    "categoryName",
+                    "counterpartAccountId",
+                    "counterpartAccountName",
+                    "currency",
+                    "date",
+                    "deletedAt",
+                    "excluded",
+                    "groupColor",
+                    "groupId",
+                    "groupKind",
+                    "groupName",
+                    "id",
+                    "importId",
+                    "kind",
+                    "memo",
+                    "needsReview",
+                    "originalPayee",
+                    "payeeColor",
+                    "payeeIcon",
+                    "payeeId",
+                    "payeeName",
+                    "recurringSeriesId",
+                    "splits",
+                    "status",
+                    "transferId",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+    },
+    "/api/v1/recurring-series/{id}/restore": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accountId": {
+                      "type": "string",
+                    },
+                    "accountName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "amountMaxMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "amountMinMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "amountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "anchorDate": {
+                      "type": "string",
+                    },
+                    "cadence": {
+                      "enum": [
+                        "weekly",
+                        "monthly",
+                        "yearly",
+                      ],
+                      "type": "string",
+                    },
+                    "categoryId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "categoryName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "currency": {
+                      "type": "string",
+                    },
+                    "deletedAt": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "endDate": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "id": {
+                      "type": "string",
+                    },
+                    "interval": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "kind": {
+                      "enum": [
+                        "bill",
+                        "subscription",
+                        "income",
+                        "other",
+                      ],
+                      "type": "string",
+                    },
+                    "lastPaidAmountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "lastPaidOn": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "matchWindowDays": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "monthlyEquivalentMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "nextDueOn": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "paidCount": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer",
+                    },
+                    "payeeId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "payeeName": {
+                      "nullable": true,
+                      "type": "string",
+                    },
+                    "previousPaidAmountMinor": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "nullable": true,
+                      "type": "integer",
+                    },
+                    "recordMode": {
+                      "enum": [
+                        "match_only",
+                        "create_pending",
+                      ],
+                      "type": "string",
+                    },
+                    "source": {
+                      "enum": [
+                        "manual",
+                        "detected",
+                      ],
+                      "type": "string",
+                    },
+                    "status": {
+                      "enum": [
+                        "active",
+                        "paused",
+                        "ended",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "accountId",
+                    "accountName",
+                    "amountMaxMinor",
+                    "amountMinMinor",
+                    "amountMinor",
+                    "anchorDate",
+                    "cadence",
+                    "categoryId",
+                    "categoryName",
+                    "currency",
+                    "deletedAt",
+                    "endDate",
+                    "id",
+                    "interval",
+                    "kind",
+                    "lastPaidAmountMinor",
+                    "lastPaidOn",
+                    "matchWindowDays",
+                    "monthlyEquivalentMinor",
+                    "name",
+                    "nextDueOn",
+                    "paidCount",
+                    "payeeId",
+                    "payeeName",
+                    "previousPaidAmountMinor",
+                    "recordMode",
+                    "source",
+                    "status",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+          "4XX": "ErrorResponse",
+          "5XX": "ErrorResponse",
+        },
+        "tags": [
+          "recurring",
+        ],
+      },
+    },
     "/api/v1/reports/balances": {
       "get": {
         "parameters": [
@@ -6422,6 +8076,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "recurringSeriesId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
                           "splits": {
                             "items": {
                               "additionalProperties": false,
@@ -6508,6 +8166,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "recurringSeriesId",
                           "splits",
                           "status",
                           "transferId",
@@ -6576,6 +8235,24 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                   },
                   "payeeId": {
                     "type": "string",
+                  },
+                  "recurring": {
+                    "properties": {
+                      "dueOn": {
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "type": "string",
+                      },
+                      "seriesId": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string",
+                      },
+                    },
+                    "required": [
+                      "dueOn",
+                      "seriesId",
+                    ],
+                    "type": "object",
                   },
                   "splits": {
                     "items": {
@@ -6744,6 +8421,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "nullable": true,
                       "type": "string",
                     },
+                    "recurringSeriesId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
                     "splits": {
                       "items": {
                         "additionalProperties": false,
@@ -6830,6 +8511,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "payeeIcon",
                     "payeeId",
                     "payeeName",
+                    "recurringSeriesId",
                     "splits",
                     "status",
                     "transferId",
@@ -7055,6 +8737,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "nullable": true,
                       "type": "string",
                     },
+                    "recurringSeriesId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
                     "splits": {
                       "items": {
                         "additionalProperties": false,
@@ -7141,6 +8827,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "payeeIcon",
                     "payeeId",
                     "payeeName",
+                    "recurringSeriesId",
                     "splits",
                     "status",
                     "transferId",
@@ -7368,6 +9055,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "nullable": true,
                       "type": "string",
                     },
+                    "recurringSeriesId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
                     "splits": {
                       "items": {
                         "additionalProperties": false,
@@ -7454,6 +9145,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "payeeIcon",
                     "payeeId",
                     "payeeName",
+                    "recurringSeriesId",
                     "splits",
                     "status",
                     "transferId",
@@ -7601,6 +9293,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "nullable": true,
                       "type": "string",
                     },
+                    "recurringSeriesId": {
+                      "nullable": true,
+                      "type": "string",
+                    },
                     "splits": {
                       "items": {
                         "additionalProperties": false,
@@ -7687,6 +9383,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "payeeIcon",
                     "payeeId",
                     "payeeName",
+                    "recurringSeriesId",
                     "splits",
                     "status",
                     "transferId",
@@ -7882,6 +9579,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "recurringSeriesId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
                           "splits": {
                             "items": {
                               "additionalProperties": false,
@@ -7968,6 +9669,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "recurringSeriesId",
                           "splits",
                           "status",
                           "transferId",
@@ -8145,6 +9847,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "recurringSeriesId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
                           "splits": {
                             "items": {
                               "additionalProperties": false,
@@ -8231,6 +9937,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "recurringSeriesId",
                           "splits",
                           "status",
                           "transferId",
@@ -8496,6 +10203,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "recurringSeriesId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
                           "splits": {
                             "items": {
                               "additionalProperties": false,
@@ -8582,6 +10293,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "recurringSeriesId",
                           "splits",
                           "status",
                           "transferId",
@@ -8767,6 +10479,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "recurringSeriesId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
                           "splits": {
                             "items": {
                               "additionalProperties": false,
@@ -8853,6 +10569,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "recurringSeriesId",
                           "splits",
                           "status",
                           "transferId",
@@ -9070,6 +10787,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "recurringSeriesId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
                           "splits": {
                             "items": {
                               "additionalProperties": false,
@@ -9156,6 +10877,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "recurringSeriesId",
                           "splits",
                           "status",
                           "transferId",
@@ -9319,6 +11041,10 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "recurringSeriesId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
                           "splits": {
                             "items": {
                               "additionalProperties": false,
@@ -9405,6 +11131,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "recurringSeriesId",
                           "splits",
                           "status",
                           "transferId",

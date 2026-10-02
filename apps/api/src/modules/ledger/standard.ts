@@ -1,11 +1,14 @@
 import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 
 import { accounts, categories, transactions } from '@/db/schema';
+import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 
 import { conflict, notFound, ServiceError } from '../db';
 import type { Db, DbOrTx } from '../db';
 import { isUniqueViolation } from '../errors';
 import type { createPayeeService } from '../payees/service';
+import { matchTransactionsToSeries } from '../recurring/matching';
+import { assertOpenOccurrence } from '../recurring/occurrences';
 import { markTemplateUsed } from '../templates/service';
 import {
   assertCategory,
@@ -236,6 +239,19 @@ const applySplitChanges = async (
   return input;
 };
 
+const recurringColumns = async (
+  tx: DbOrTx,
+  userId: string,
+  currency: string,
+  recurring: StandardInput['recurring']
+) => {
+  if (!recurring) return {};
+
+  await assertOpenOccurrence(tx, userId, { currency, ...recurring });
+
+  return { recurringDueOn: recurring.dueOn, recurringSeriesId: recurring.seriesId };
+};
+
 export const createStandard = async (
   context: LedgerContext,
   userId: string,
@@ -257,7 +273,10 @@ export const createStandard = async (
     if (input.payeeId) await assertPayee(tx, userId, input.payeeId);
     if (lines) await assertSplitCategories(tx, userId, lines);
 
-    const values = standardInsertValues(userId, account, input);
+    const values = {
+      ...standardInsertValues(userId, account, input),
+      ...(await recurringColumns(tx, userId, account.currency, input.recurring)),
+    };
 
     const [created] = await tx
       .insert(transactions)
@@ -277,6 +296,13 @@ export const createStandard = async (
 
     return created;
   });
+
+  if (!input.recurring) {
+    await matchTransactionsToSeries(db, userId, {
+      today: toIsoDate(new Date()),
+      transactionIds: [row.id],
+    });
+  }
 
   return learnPayeeCategory(context, userId, row);
 };

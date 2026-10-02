@@ -8,7 +8,6 @@ import {
   index,
   integer,
   numeric,
-  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -17,33 +16,27 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import {
-  AccountClassificationValues,
-  AccountTypeValues,
-  CategoryKindValues,
-  TransactionKindValues,
-  TransactionStatusValues,
-} from '@coinkeeper/shared/schema/enums';
+  accountClassification,
+  accountType,
+  categoryKind,
+  createdAt,
+  deletedAt,
+  id,
+  recurringCadence,
+  recurringKind,
+  recurringRecordMode,
+  recurringSource,
+  recurringStatus,
+  transactionKind,
+  transactionStatus,
+  updatedAt,
+} from './columns';
+
+export * from './columns';
+export type * from './types';
 
 const DEFAULT_MINOR_UNITS = 2;
-
-export const accountType = pgEnum('account_type', AccountTypeValues);
-export const accountClassification = pgEnum('account_classification', AccountClassificationValues);
-export const categoryKind = pgEnum('category_kind', CategoryKindValues);
-export const transactionKind = pgEnum('transaction_kind', TransactionKindValues);
-export const transactionStatus = pgEnum('transaction_status', TransactionStatusValues);
-
-const id = () =>
-  text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID());
-
-const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
-
-const updatedAt = () =>
-  timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date());
+const DEFAULT_MATCH_WINDOW_DAYS = 3;
 
 export const users = pgTable(
   'users',
@@ -63,8 +56,6 @@ const userId = () =>
   text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' });
-
-const deletedAt = () => timestamp('deleted_at', { withTimezone: true });
 
 export const sessions = pgTable(
   'sessions',
@@ -210,6 +201,8 @@ export const transactions = pgTable(
     memo: text('memo').notNull().default(''),
     importId: text('import_id'),
     originalPayee: text('original_payee'),
+    recurringSeriesId: text('recurring_series_id').references(() => recurringSeries.id),
+    recurringDueOn: date('recurring_due_on', { mode: 'string' }),
     deletedAt: deletedAt(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -233,6 +226,51 @@ export const transactions = pgTable(
       'transactions_transfer_kind_check',
       sql`(${columns.kind} = 'transfer') = (${columns.transferId} IS NOT NULL)`
     ),
+    check(
+      'transactions_recurring_pair_check',
+      sql`(${columns.recurringSeriesId} IS NULL) = (${columns.recurringDueOn} IS NULL)`
+    ),
+    uniqueIndex('transactions_recurring_occurrence_key')
+      .on(columns.recurringSeriesId, columns.recurringDueOn)
+      .where(sql`${columns.recurringSeriesId} IS NOT NULL AND ${columns.deletedAt} IS NULL`),
+  ]
+);
+
+export const recurringSeries = pgTable(
+  'recurring_series',
+  {
+    id: id(),
+    userId: userId(),
+    name: text('name').notNull(),
+    kind: recurringKind('kind').notNull().default('bill'),
+    accountId: text('account_id')
+      .notNull()
+      .references(() => accounts.id),
+    payeeId: text('payee_id').references(() => payees.id),
+    categoryId: text('category_id').references(() => categories.id),
+    currency: char('currency', { length: 3 })
+      .notNull()
+      .references(() => currencies.code),
+    amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
+    amountMinMinor: bigint('amount_min_minor', { mode: 'number' }),
+    amountMaxMinor: bigint('amount_max_minor', { mode: 'number' }),
+    cadence: recurringCadence('cadence').notNull().default('monthly'),
+    interval: integer('interval').notNull().default(1),
+    anchorDate: date('anchor_date', { mode: 'string' }).notNull(),
+    endDate: date('end_date', { mode: 'string' }),
+    matchWindowDays: integer('match_window_days').notNull().default(DEFAULT_MATCH_WINDOW_DAYS),
+    recordMode: recurringRecordMode('record_mode').notNull().default('match_only'),
+    source: recurringSource('source').notNull().default('manual'),
+    status: recurringStatus('status').notNull().default('active'),
+    deletedAt: deletedAt(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  columns => [
+    index('recurring_series_user_idx').on(columns.userId),
+    check('recurring_series_amount_check', sql`${columns.amountMinor} <> 0`),
+    check('recurring_series_interval_check', sql`${columns.interval} >= 1`),
+    check('recurring_series_window_check', sql`${columns.matchWindowDays} >= 0`),
   ]
 );
 
@@ -376,16 +414,3 @@ export const transactionRelations = relations(transactions, ({ one }) => ({
   category: one(categories, { fields: [transactions.categoryId], references: [categories.id] }),
   payee: one(payees, { fields: [transactions.payeeId], references: [payees.id] }),
 }));
-
-export type Currency = typeof currencies.$inferSelect;
-export type UserSettings = typeof userSettings.$inferSelect;
-export type Account = typeof accounts.$inferSelect;
-export type CategoryGroup = typeof categoryGroups.$inferSelect;
-export type Category = typeof categories.$inferSelect;
-export type Payee = typeof payees.$inferSelect;
-export type Transaction = typeof transactions.$inferSelect;
-export type ExchangeRate = typeof exchangeRates.$inferSelect;
-export type Budget = typeof budgets.$inferSelect;
-export type Rule = typeof rules.$inferSelect;
-export type TransactionTemplate = typeof transactionTemplates.$inferSelect;
-export type TransactionSplit = typeof transactionSplits.$inferSelect;

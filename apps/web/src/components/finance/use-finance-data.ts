@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiGet, apiList } from '@/api/client';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
-import { localIsoMonth } from '@coinkeeper/shared/lib/date-helpers';
+import { localIsoDate, localIsoMonth } from '@coinkeeper/shared/lib/date-helpers';
 import type { AccountSummary } from '@coinkeeper/shared/schema/accounts';
 import type { Session, User } from '@coinkeeper/shared/schema/auth';
 import type { BudgetRow, BudgetSuggestion } from '@coinkeeper/shared/schema/budgets';
@@ -13,6 +13,11 @@ import type { PageResponse } from '@coinkeeper/shared/schema/common';
 import type { Currency } from '@coinkeeper/shared/schema/currencies';
 import type { ExchangeRateRow } from '@coinkeeper/shared/schema/exchange-rates';
 import type { PayeeRow } from '@coinkeeper/shared/schema/payees';
+import type {
+  Occurrence,
+  RecurringSeriesRow,
+  RecurringSuggestion,
+} from '@coinkeeper/shared/schema/recurring';
 import type {
   BalancePoint,
   CashPoint,
@@ -39,7 +44,10 @@ export type {
   ExchangeRateRow,
   GroupMonthSlice,
   GroupSlice,
+  Occurrence,
   PayeeRow,
+  RecurringSeriesRow,
+  RecurringSuggestion,
   ReviewSuggestion,
   RuleRow,
   Session,
@@ -91,6 +99,8 @@ export const QueryKeys = {
   exchangeRates: ['exchange-rates'] as const,
   me: ['me'] as const,
   payees: ['payees'] as const,
+  recurring: (today: string) => ['recurring', 'series', today] as const,
+  recurringSuggestions: (today: string) => ['recurring', 'suggestions', today] as const,
   reviewSuggestions: ['transactions', 'review-suggestions'] as const,
   rules: ['rules'] as const,
   sessions: ['sessions'] as const,
@@ -98,6 +108,7 @@ export const QueryKeys = {
   summary: (month?: string) => ['summary', month ?? 'current'] as const,
   templates: ['templates'] as const,
   transactions: (params: TransactionParams = {}) => ['transactions', params] as const,
+  upcoming: (today: string, days: number) => ['recurring', 'upcoming', today, days] as const,
 };
 
 export function useAccounts(includeArchived = false) {
@@ -161,6 +172,33 @@ export function useTemplates() {
   return useQuery({
     queryFn: () => apiList<TemplateRow>('/transaction-templates'),
     queryKey: QueryKeys.templates,
+  });
+}
+
+export function useRecurringSeries() {
+  const today = localIsoDate(new Date());
+
+  return useQuery({
+    queryFn: () => apiList<RecurringSeriesRow>('/recurring-series', { today }),
+    queryKey: QueryKeys.recurring(today),
+  });
+}
+
+export function useUpcoming(days: number) {
+  const today = localIsoDate(new Date());
+
+  return useQuery({
+    queryFn: () => apiList<Occurrence>('/recurring-series/upcoming', { days: String(days), today }),
+    queryKey: QueryKeys.upcoming(today, days),
+  });
+}
+
+export function useRecurringSuggestions() {
+  const today = localIsoDate(new Date());
+
+  return useQuery({
+    queryFn: () => apiList<RecurringSuggestion>('/recurring-series/suggestions', { today }),
+    queryKey: QueryKeys.recurringSuggestions(today),
   });
 }
 
@@ -298,6 +336,13 @@ export function useDeletedExchangeRates() {
   });
 }
 
+export function useDeletedSeries() {
+  return useQuery({
+    queryFn: () => apiList<RecurringSeriesRow>('/recurring-series', { deleted: true }),
+    queryKey: QueryKeys.deleted('recurring'),
+  });
+}
+
 export function useDeletedTemplates() {
   return useQuery({
     queryFn: () => apiList<TemplateRow>('/transaction-templates', { deleted: true }),
@@ -312,6 +357,7 @@ export const FinanceKeys = [
   'deleted',
   'exchange-rates',
   'payees',
+  'recurring',
   'rules',
   'settings',
   'summary',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { calendarPeriod, daysBetween, periodProgress } from './periods';
+import { addDays, calendarPeriod, daysBetween, periodProgress } from './periods';
 
 describe('periods', () => {
   it('counts days between dates in UTC', () => {
@@ -8,6 +8,12 @@ describe('periods', () => {
     expect(daysBetween('2026-12-31', '2027-01-01')).toBe(1);
     expect(daysBetween('2026-03-28', '2026-03-30')).toBe(2);
     expect(daysBetween('2026-09-02', '2026-09-01')).toBe(-1);
+  });
+
+  it('moves dates by whole days across months and years', () => {
+    expect(addDays('2026-09-28', 5)).toBe('2026-10-03');
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
   });
 
   it('builds calendar periods, including February in leap years', () => {

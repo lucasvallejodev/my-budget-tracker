@@ -39,6 +39,7 @@ export const standardTransactionSchema = z.object({
   excluded: z.boolean().optional(),
   memo: z.string().max(FieldLengths.memo).optional(),
   payeeId: z.string().optional(),
+  recurring: z.object({ dueOn: isoDateSchema, seriesId: z.uuid() }).optional(),
   splits: z.array(splitLineSchema).max(MAX_SPLIT_LINES).optional(),
   status: z.enum(TransactionStatusValues).optional(),
   templateId: z.uuid().optional(),
@@ -99,6 +100,7 @@ export const transactionRowSchema = z.object({
   payeeIcon: z.string().nullable(),
   payeeId: z.string().nullable(),
   payeeName: z.string().nullable(),
+  recurringSeriesId: z.string().nullable(),
   splits: z.array(transactionSplitSchema),
   status: z.enum(TransactionStatusValues),
   transferId: z.string().nullable(),
@@ -110,7 +112,7 @@ const SEARCH_MAX_LENGTH = 100;
 const CURSOR_MAX_LENGTH = 200;
 
 export const transactionPatchSchema = standardTransactionSchema
-  .omit({ templateId: true })
+  .omit({ recurring: true, templateId: true })
   .partial()
   .extend({
     needsReview: z.boolean().optional(),

@@ -1,9 +1,11 @@
 import { HttpStatus } from '@/constants/http';
 import { ServiceError } from '@/modules/db';
 import type { SplitInput, StandardInput, TransferInput } from '@/modules/ledger/service';
+import type { SeriesInput } from '@/modules/recurring/service';
 import type { Services } from '@/modules/services';
 import type { TemplateInput } from '@/modules/templates/service';
 import { parseAmountInput } from '@coinkeeper/shared/lib/money';
+import type { RecurringFormValues } from '@coinkeeper/shared/schema/recurring';
 import type { TemplateFormValues } from '@coinkeeper/shared/schema/templates';
 import type { TransactionPatchValues, TransferValues } from '@coinkeeper/shared/schema/transaction';
 import type {
@@ -65,6 +67,7 @@ export const toStandardInput = async (
     excluded: data.excluded,
     memo: data.memo,
     payeeId: data.payeeId || null,
+    recurring: data.recurring,
     splits: toSplitInputs(data.splits, account.currency, data.direction),
     status: data.status,
     templateId: data.templateId,
@@ -159,3 +162,29 @@ export const toTemplateInput = async (
   payeeId: data.payeeId || null,
   transferAccountId: data.transferAccountId || null,
 });
+
+export const toSeriesInput = async (
+  services: Services,
+  userId: string,
+  data: RecurringFormValues
+): Promise<SeriesInput> => {
+  const account = await services.accounts.owned(userId, data.accountId);
+  const magnitude = parseMagnitude(data.amount, account.currency);
+
+  return {
+    accountId: data.accountId,
+    amountMinor: signed(magnitude, data.kind === 'income' ? 'income' : 'expense'),
+    anchorDate: data.anchorDate,
+    cadence: data.cadence,
+    categoryId: data.categoryId || null,
+    endDate: data.endDate || null,
+    interval: data.interval,
+    kind: data.kind,
+    matchWindowDays: data.matchWindowDays,
+    name: data.name,
+    payeeId: data.payeeId || null,
+    recordMode: data.recordMode,
+    source: data.source,
+    status: data.status,
+  };
+};

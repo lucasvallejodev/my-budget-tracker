@@ -4,6 +4,7 @@ import { categories, transactions } from '@/db/schema';
 import { MAX_PAGE_SIZE } from '@coinkeeper/shared/constants/pagination';
 import { chunk } from '@coinkeeper/shared/lib/arrays';
 import { parseCsv } from '@coinkeeper/shared/lib/csv';
+import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import type { TransferSuggestion } from '@coinkeeper/shared/schema/imports';
 
 import { createAccountService } from '../accounts/service';
@@ -17,6 +18,7 @@ import {
   payeeNameKey,
   resolvePayeesByName,
 } from '../payees/service';
+import { matchTransactionsToSeries } from '../recurring/matching';
 import { createRuleService } from '../rules/service';
 import {
   buildImportId,
@@ -309,7 +311,7 @@ const commit = async (service: ImportContext, userId: string, input: Preview) =>
 
   assertInsertable(insertable);
 
-  return service.db.transaction(async tx => {
+  const result = await service.db.transaction(async tx => {
     const account = await ownedAccount(tx, userId, input.accountId);
     const matched = await applyMatchedRows(tx, userId, account.id, input.rows.filter(isMatched));
 
@@ -339,6 +341,13 @@ const commit = async (service: ImportContext, userId: string, input: Preview) =>
       matched,
     };
   });
+
+  await matchTransactionsToSeries(service.db, userId, {
+    today: toIsoDate(new Date()),
+    transactionIds: result.insertedIds,
+  });
+
+  return result;
 };
 
 type SuggestionRow = {

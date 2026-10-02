@@ -38,6 +38,7 @@ export type StandardInput = {
   needsReview?: boolean;
   originalPayee?: string | null;
   payeeId?: string | null;
+  recurring?: { dueOn: string; seriesId: string };
   splits?: SplitInput[];
   status?: TransactionRow['status'];
   templateId?: string;

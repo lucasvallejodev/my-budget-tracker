@@ -8,6 +8,7 @@ A transaction is flagged `needs_review` when it is:
 
 - saved without a category;
 - imported from a bank file (always, until you confirm it);
+- created as a pending payment of a [recurring payment](recurring.md#payments-added-to-review-when-due) that is due;
 - left behind when its category was archived without a replacement (a [split](transactions.md#split-a-transaction-between-categories) whose line lost its category lands here too; picking one category for it replaces the split);
 - migrated from the legacy schema, whose categories no longer exist.
 

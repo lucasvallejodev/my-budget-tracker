@@ -10,25 +10,26 @@ export type TemplateSource = Partial<StandardTransactionValues & TransferValues>
   mode?: 'expense' | 'income' | 'transfer';
 };
 
-export const draftFromSource = (source: TemplateSource): TemplateDraft => {
-  if (source.mode === 'transfer') {
-    return {
-      accountId: source.fromAccountId ?? '',
-      amount: source.amountFrom ?? '',
-      direction: 'expense',
-      kind: 'transfer',
-      memo: source.memo ?? '',
-      transferAccountId: source.toAccountId ?? '',
-    };
-  }
+const text = (value?: string): string => value ?? '';
 
-  return {
-    accountId: source.accountId ?? '',
-    amount: source.amount ?? '',
-    categoryId: source.categoryId ?? '',
-    direction: source.mode ?? source.direction ?? 'expense',
-    kind: 'standard',
-    memo: source.memo ?? '',
-    payeeId: source.payeeId ?? '',
-  };
-};
+const transferDraft = (source: TemplateSource): TemplateDraft => ({
+  accountId: text(source.fromAccountId),
+  amount: text(source.amountFrom),
+  direction: 'expense',
+  kind: 'transfer',
+  memo: text(source.memo),
+  transferAccountId: text(source.toAccountId),
+});
+
+const standardDraft = (source: TemplateSource): TemplateDraft => ({
+  accountId: text(source.accountId),
+  amount: text(source.amount),
+  categoryId: text(source.categoryId),
+  direction: (source.mode ?? source.direction) === 'income' ? 'income' : 'expense',
+  kind: 'standard',
+  memo: text(source.memo),
+  payeeId: text(source.payeeId),
+});
+
+export const draftFromSource = (source: TemplateSource): TemplateDraft =>
+  source.mode === 'transfer' ? transferDraft(source) : standardDraft(source);

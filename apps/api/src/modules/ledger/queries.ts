@@ -164,6 +164,7 @@ const listRows = async (
       payeeIcon: payees.icon,
       payeeId: transactions.payeeId,
       payeeName: payees.name,
+      recurringSeriesId: transactions.recurringSeriesId,
       status: transactions.status,
       transferId: transactions.transferId,
     })

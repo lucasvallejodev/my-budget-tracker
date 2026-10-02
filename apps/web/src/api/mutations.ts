@@ -24,6 +24,7 @@ import type {
 } from '@coinkeeper/shared/schema/exchange-rates';
 import type { ColumnMapping, ImportCommitResult, Preview } from '@coinkeeper/shared/schema/imports';
 import type { PayeeFormValues, PayeePatchValues, PayeeRow } from '@coinkeeper/shared/schema/payees';
+import type { RecurringFormValues, RecurringSeriesRow } from '@coinkeeper/shared/schema/recurring';
 import type { RuleFormValues, RuleRow } from '@coinkeeper/shared/schema/rules';
 import type { SettingsFormValues, UserSettings } from '@coinkeeper/shared/schema/settings';
 import type { TemplateFormValues, TemplateRow } from '@coinkeeper/shared/schema/templates';
@@ -189,3 +190,25 @@ export const restoreTemplate = (id: string) =>
 
 export const reorderTemplates = (ids: string[]) =>
   apiRequest<void>('PUT', '/transaction-templates/order', { ids });
+
+export const createSeries = (values: RecurringFormValues) =>
+  apiRequest<RecurringSeriesRow>('POST', '/recurring-series', values);
+
+export const updateSeries = (id: string, values: RecurringFormValues) =>
+  apiRequest<RecurringSeriesRow>('PUT', `/recurring-series/${id}`, values);
+
+export const deleteSeries = (id: string) => apiRequest<void>('DELETE', `/recurring-series/${id}`);
+
+export const restoreSeries = (id: string) =>
+  apiRequest<RecurringSeriesRow>('POST', `/recurring-series/${id}/restore`);
+
+export const recordDuePayments = (today: string) =>
+  apiRequest<{ created: number }>('POST', '/recurring-series/record-due', { today });
+
+export const linkOccurrence = (seriesId: string, dueOn: string, transactionId: string) =>
+  apiRequest<TransactionRow>('PUT', `/recurring-series/${seriesId}/occurrences/${dueOn}`, {
+    transactionId,
+  });
+
+export const unlinkOccurrence = (seriesId: string, dueOn: string) =>
+  apiRequest<void>('DELETE', `/recurring-series/${seriesId}/occurrences/${dueOn}`);

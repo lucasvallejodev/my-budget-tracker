@@ -24,6 +24,7 @@ type OwnerIds = {
   groupId: string;
   payeeId: string;
   ruleId: string;
+  seriesId: string;
   sessionId: string;
   templateId: string;
   transactionId: string;
@@ -35,6 +36,7 @@ type IntruderIds = {
   categoryId: string;
   groupId: string;
   savingsId: string;
+  seriesId: string;
   transactionId: string;
 };
 
@@ -78,6 +80,7 @@ const PublicOperations = new Set([
 const PLACEHOLDER_ID = '00000000-0000-4000-8000-000000000000';
 const PATH_PARAMETER_START = '{';
 const BUDGET_MONTH = '2026-09';
+const SERIES_DUE_ON = '2026-09-15';
 
 const RATE_KEY = {
   base: 'USD',
@@ -285,6 +288,42 @@ const ForeignCases: ForeignCase[] = [
     path: '/api/v1/rules/{id}/restore',
   },
   {
+    body: ({ intruder }) => ({
+      accountId: intruder.accountId,
+      amount: '1',
+      anchorDate: SERIES_DUE_ON,
+      cadence: 'monthly',
+      interval: 1,
+      kind: 'bill',
+      name: 'Planted',
+      recordMode: 'match_only',
+    }),
+    method: 'put',
+    params: owner => ({ id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}',
+  },
+  {
+    method: 'delete',
+    params: owner => ({ id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}',
+  },
+  {
+    method: 'post',
+    params: owner => ({ id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}/restore',
+  },
+  {
+    body: ({ intruder }) => ({ transactionId: intruder.transactionId }),
+    method: 'put',
+    params: owner => ({ dueOn: SERIES_DUE_ON, id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}/occurrences/{dueOn}',
+  },
+  {
+    method: 'delete',
+    params: owner => ({ dueOn: SERIES_DUE_ON, id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}/occurrences/{dueOn}',
+  },
+  {
     body: () => ({
       direction: 'expense',
       kind: 'standard',
@@ -456,6 +495,55 @@ const ForeignBodyCases: ForeignBodyCase[] = [
     path: () => '/transactions',
   },
   {
+    body: ({ owner }) => ({
+      accountId: owner.accountId,
+      amount: '1',
+      anchorDate: SERIES_DUE_ON,
+      cadence: 'monthly',
+      interval: 1,
+      kind: 'bill',
+      name: 'Planted',
+      recordMode: 'match_only',
+    }),
+    method: 'post',
+    name: 'a recurring series on the owner account',
+    path: () => '/recurring-series',
+  },
+  {
+    body: ({ intruder, owner }) => ({
+      accountId: intruder.accountId,
+      amount: '1',
+      anchorDate: SERIES_DUE_ON,
+      cadence: 'monthly',
+      categoryId: owner.categoryId,
+      interval: 1,
+      kind: 'bill',
+      name: 'Planted',
+      recordMode: 'match_only',
+    }),
+    method: 'post',
+    name: 'a recurring series in the owner category',
+    path: () => '/recurring-series',
+  },
+  {
+    body: ({ owner }) => ({ transactionId: owner.transactionId }),
+    method: 'put',
+    name: 'linking an owner transaction to an own series',
+    path: ({ intruder }) => `/recurring-series/${intruder.seriesId}/occurrences/${SERIES_DUE_ON}`,
+  },
+  {
+    body: ({ intruder, owner }) => ({
+      accountId: intruder.accountId,
+      amount: '1',
+      date: SERIES_DUE_ON,
+      direction: 'expense',
+      recurring: { dueOn: SERIES_DUE_ON, seriesId: owner.seriesId },
+    }),
+    method: 'post',
+    name: 'paying an owner series occurrence',
+    path: () => '/transactions',
+  },
+  {
     body: ({ owner }) => ({ ids: [owner.templateId] }),
     method: 'put',
     name: 'reordering the owner templates',
@@ -545,6 +633,8 @@ const StatePaths = [
   '/exchange-rates?deleted=true',
   '/transaction-templates',
   '/transaction-templates?deleted=true',
+  '/recurring-series',
+  '/recurring-series?deleted=true',
 ];
 
 let context: TestContext;
@@ -602,6 +692,22 @@ const createExpense = async (client: TestClient, accountId: string) =>
     )
   ).id;
 
+const createSeries = async (client: TestClient, accountId: string) =>
+  (
+    await created<{ id: string }>(
+      client.request('POST', '/recurring-series', {
+        accountId,
+        amount: '50',
+        anchorDate: SERIES_DUE_ON,
+        cadence: 'monthly',
+        interval: 1,
+        kind: 'bill',
+        name: 'Phone',
+        recordMode: 'match_only',
+      })
+    )
+  ).id;
+
 const seedOwner = async (owner: TestClient): Promise<OwnerIds> => {
   const { checkingId, savingsId } = await createAccounts(owner);
   const { categoryId, groupId } = await firstCategory(owner);
@@ -651,6 +757,7 @@ const seedOwner = async (owner: TestClient): Promise<OwnerIds> => {
     groupId,
     payeeId: payee.id,
     ruleId: rule.id,
+    seriesId: await createSeries(owner, checkingId),
     sessionId: sessions.items[0].id,
     templateId: template.id,
     transactionId,
@@ -668,6 +775,7 @@ const seedIntruder = async (intruder: TestClient): Promise<IntruderIds> => {
     categoryId,
     groupId,
     savingsId,
+    seriesId: await createSeries(intruder, checkingId),
     transactionId,
   };
 };

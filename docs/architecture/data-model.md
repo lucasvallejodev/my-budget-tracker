@@ -10,7 +10,7 @@ The schema lives in `apps/api/src/db/schema.ts` (the API owns the database); the
 
 - `users` holds the account you sign in with: a unique lower-case `email`, the argon2id `password_hash`, an optional `name` and `last_sign_in_at`. Every other table's `user_id` references `users(id) ON DELETE CASCADE`.
 - `sessions` holds one row per signed-in browser: the SHA-256 `token_hash` of the cookie token (never the token itself), `expires_at`, `last_used_at`, `user_agent` and `ip_address`. These rows are deleted on sign-out, revocation and expiry.
-- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets`, `exchange_rates`, `transaction_templates` and `transaction_splits` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
+- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets`, `exchange_rates`, `transaction_templates`, `transaction_splits` and `recurring_series` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
 
 ## Relationships
 
@@ -28,6 +28,8 @@ erDiagram
   categories ||--o{ budgets : "category_id"
   categories ||--o{ rules : "category_id"
   payees ||--o{ transactions : "payee_id (nullable)"
+  recurring_series ||--o{ transactions : "recurring_series_id (paid occurrences)"
+  accounts ||--o{ recurring_series : "account_id"
   transactions ||--o{ transaction_splits : "transaction_id (split lines)"
   categories ||--o{ transaction_splits : "category_id (nullable)"
   accounts ||--o{ transaction_templates : "account_id / transfer_account_id (nullable)"
@@ -170,6 +172,27 @@ Unique on `(category_id, month, currency)`.
 | `pattern`     | text         | case-insensitive substring matched against payee, bank description and memo |
 | `category_id` | → categories | category to apply                                                           |
 | `priority`    | int          | lower runs first                                                            |
+
+### `recurring_series`
+
+| Column                                 | Type          | Notes                                                                  |
+| -------------------------------------- | ------------- | ---------------------------------------------------------------------- |
+| `name`                                 | text          | display name                                                           |
+| `kind`                                 | enum          | `bill`, `subscription`, `income`, `other`                              |
+| `account_id`                           | → accounts    | where it is paid from or into; its currency is copied into `currency`  |
+| `payee_id`                             | → payees?     | matched against new transactions                                       |
+| `category_id`                          | → categories? | used when recording a payment and for budgets                          |
+| `amount_minor`                         | bigint        | expected amount, signed, never 0                                       |
+| `amount_min_minor`, `amount_max_minor` | bigint?       | match range; 7.5 % either side when empty                              |
+| `cadence`, `interval`                  | enum, int     | `weekly`, `monthly` or `yearly`, every `interval` (≥ 1)                |
+| `anchor_date`, `end_date`              | date, date?   | first due date; no occurrence after the end                            |
+| `match_window_days`                    | int           | days either side of a due date that a payment may fall (default 3)     |
+| `record_mode`                          | enum          | `match_only`, or `create_pending` to create the due payment for review |
+| `source`                               | enum          | `manual` or `detected`                                                 |
+| `status`                               | enum          | `active`, `paused`, `ended`                                            |
+| `deleted_at`                           | timestamptz?  | soft delete                                                            |
+
+A paid occurrence is a transaction whose `recurring_series_id` and `recurring_due_on` are set (both or neither, `transactions_recurring_pair_check`); `transactions_recurring_occurrence_key` keeps one live payment per series and due date. Occurrences themselves are computed, never stored.
 
 ### `transaction_splits`
 

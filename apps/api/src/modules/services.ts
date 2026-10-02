@@ -15,6 +15,7 @@ import { createFxService, ManualRateProvider } from './fx/service';
 import { createImportService } from './import/service';
 import { createLedgerService } from './ledger/service';
 import { createPayeeService } from './payees/service';
+import { createRecurringService } from './recurring/service';
 import { createReportService } from './reports/service';
 import { createRuleService } from './rules/service';
 import { createTemplateService } from './templates/service';
@@ -70,6 +71,7 @@ export const createServices = (db: Db, options: ServiceOptions = {}) => {
         .orderBy(asc(currencies.code));
     },
     payees: createPayeeService(db),
+    recurring: createRecurringService(db),
     reports: createReportService(db),
     rules: createRuleService(db),
     sessions: createSessionStore(db, {

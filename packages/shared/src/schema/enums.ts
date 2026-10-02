@@ -18,6 +18,16 @@ export const TransactionStatusValues = ['pending', 'cleared', 'reconciled'] as c
 
 export const TransactionDirectionValues = ['expense', 'income'] as const;
 
+export const RecurringKindValues = ['bill', 'subscription', 'income', 'other'] as const;
+
+export const RecurringCadenceValues = ['weekly', 'monthly', 'yearly'] as const;
+
+export const RecurringRecordModeValues = ['match_only', 'create_pending'] as const;
+
+export const RecurringSourceValues = ['manual', 'detected'] as const;
+
+export const RecurringStatusValues = ['active', 'paused', 'ended'] as const;
+
 export type AccountType = (typeof AccountTypeValues)[number];
 
 export type AccountClassification = (typeof AccountClassificationValues)[number];
@@ -29,3 +39,13 @@ export type TransactionKind = (typeof TransactionKindValues)[number];
 export type TransactionStatus = (typeof TransactionStatusValues)[number];
 
 export type TransactionDirection = (typeof TransactionDirectionValues)[number];
+
+export type RecurringKind = (typeof RecurringKindValues)[number];
+
+export type RecurringCadence = (typeof RecurringCadenceValues)[number];
+
+export type RecurringRecordMode = (typeof RecurringRecordModeValues)[number];
+
+export type RecurringSource = (typeof RecurringSourceValues)[number];
+
+export type RecurringStatus = (typeof RecurringStatusValues)[number];

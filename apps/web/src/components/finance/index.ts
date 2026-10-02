@@ -45,6 +45,7 @@ export { TransactionDialog } from './transaction-dialog';
 export { TransactionExplorer } from './transaction-explorer';
 export { TransactionsPage } from './transactions-page';
 export { TransactionTable } from './transaction-table';
+export { Upcoming } from './upcoming';
 export { exportTransactions, transactionsToCsv } from './export-transactions';
 export { SampleCashFlow, SampleSpending, SampleTransactions } from './sample-data';
 export { categoryLabel, describeTransaction } from './transaction-labels';

@@ -30,6 +30,7 @@
   - [Import](/features/import.md)
   - [Rules](/features/rules.md)
   - [Budgets](/features/budgets.md)
+  - [Upcoming and recurring payments](/features/recurring.md)
   - [Home page](/features/dashboard.md)
   - [Analytics](/features/analytics.md)
   - [Deleted items](/features/deleted-items.md)

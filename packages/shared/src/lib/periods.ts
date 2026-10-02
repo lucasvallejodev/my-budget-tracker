@@ -39,6 +39,25 @@ const dayNumber = (isoDate: string): number =>
 export const daysBetween = (from: string, to: string): number => dayNumber(to) - dayNumber(from);
 
 /**
+ * Moves a date by a number of days.
+ *
+ * @remarks
+ * Works in UTC on `YYYY-MM-DD` strings, so daylight-saving changes never shift the result.
+ *
+ * @param isoDate - The starting date.
+ * @param days - Days to add; negative values go back.
+ * @returns The new date in `YYYY-MM-DD` form.
+ *
+ * @example
+ * ```ts
+ * addDays('2026-09-28', 5); // '2026-10-03'
+ * addDays('2026-03-01', -1); // '2026-02-28'
+ * ```
+ */
+export const addDays = (isoDate: string, days: number): string =>
+  toIsoDate(new Date((dayNumber(isoDate) + days) * MILLISECONDS_PER_DAY));
+
+/**
  * Returns the budget period of a calendar month.
  *
  * @remarks

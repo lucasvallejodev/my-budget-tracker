@@ -10,6 +10,7 @@ import { exchangeRatesRoutes } from './exchange-rates';
 import { healthRoutes } from './health';
 import { importsRoutes } from './imports';
 import { payeesRoutes } from './payees';
+import { recurringRoutes } from './recurring';
 import { reportsRoutes } from './reports';
 import { rulesRoutes } from './rules';
 import { settingsRoutes } from './settings';
@@ -26,6 +27,7 @@ const AuthenticatedRoutes = [
   importsRoutes,
   meRoutes,
   payeesRoutes,
+  recurringRoutes,
   reportsRoutes,
   rulesRoutes,
   settingsRoutes,

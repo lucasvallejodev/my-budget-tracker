@@ -7,6 +7,7 @@ import {
   restoreAccount,
   restoreExchangeRate,
   restoreRule,
+  restoreSeries,
   restoreTemplate,
   restoreTransaction,
 } from '@/api/mutations';
@@ -31,6 +32,7 @@ import {
   useDeletedAccounts,
   useDeletedExchangeRates,
   useDeletedRules,
+  useDeletedSeries,
   useDeletedTemplates,
   useDeletedTransactions,
   useRefreshFinance,
@@ -39,12 +41,20 @@ import {
 const Tabs = {
   accounts: 'Accounts',
   rates: 'Exchange rates',
+  recurring: 'Recurring',
   rules: 'Rules',
   templates: 'Templates',
   transactions: 'Transactions',
 } as const;
 
-const TabOrder = [Tabs.transactions, Tabs.accounts, Tabs.rules, Tabs.templates, Tabs.rates];
+const TabOrder = [
+  Tabs.transactions,
+  Tabs.accounts,
+  Tabs.rules,
+  Tabs.templates,
+  Tabs.recurring,
+  Tabs.rates,
+];
 
 const deletedOn = (deletedAt: string | null): string =>
   deletedAt ? `Deleted ${new Date(deletedAt).toLocaleDateString()}` : '';
@@ -172,30 +182,59 @@ function DeletedRules() {
   );
 }
 
-function DeletedTemplates() {
-  const query = useDeletedTemplates();
-  const restore = useRestore(restoreTemplate);
+type NamedRow = {
+  deletedAt: string | null;
+  id: string;
+  name: string;
+};
+
+function DeletedNamedRows({
+  noun,
+  query,
+  restore,
+}: {
+  noun: string;
+  query: { data?: NamedRow[]; isError: boolean; isPending: boolean };
+  restore: (id: string) => Promise<unknown>;
+}) {
+  const restoring = useRestore(restore);
   const rows = query.data ?? [];
 
   return (
     <QueryContent
       pending={query.isPending}
       error={query.isError}
-      loading="Loading deleted templates…"
-      empty={!rows.length && <EmptyState title="No deleted templates" />}
+      loading={`Loading deleted ${noun}…`}
+      empty={!rows.length && <EmptyState title={`No deleted ${noun}`} />}
     >
       {() =>
         rows.map(row => (
           <ListRow key={row.id} title={row.name} description={deletedOn(row.deletedAt)}>
             <RestoreButton
               label={`Restore ${row.name}`}
-              pending={restore.isPending}
-              onClick={() => restore.mutate(row.id)}
+              pending={restoring.isPending}
+              onClick={() => restoring.mutate(row.id)}
             />
           </ListRow>
         ))
       }
     </QueryContent>
+  );
+}
+
+function DeletedSeries() {
+  return (
+    <DeletedNamedRows
+      noun="recurring payments"
+      query={useDeletedSeries()}
+      restore={restoreSeries}
+    />
+  );
+}
+
+function DeletedTemplates() {
+  return (
+    <DeletedNamedRows noun="templates" query={useDeletedTemplates()} restore={restoreTemplate} />
   );
 }
 
@@ -261,6 +300,9 @@ export function DeletedItems() {
           </TabPanel>
           <TabPanel value={Tabs.templates}>
             <DeletedTemplates />
+          </TabPanel>
+          <TabPanel value={Tabs.recurring}>
+            <DeletedSeries />
           </TabPanel>
           <TabPanel value={Tabs.rates}>
             <DeletedExchangeRates />
