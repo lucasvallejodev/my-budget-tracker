@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ReactNode, useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Control, FieldValues, Path, useForm, UseFormReturn, useWatch } from 'react-hook-form';
 
 import {
   createTransaction,
@@ -29,6 +29,7 @@ import {
   SelectValue,
   Stack,
 } from '@/components/ui';
+import { useDialogState } from '@/lib/dialog-state';
 import { RememberedFields, rememberValue } from '@/lib/form-memory';
 import {
   standardTransactionSchema,
@@ -38,7 +39,17 @@ import {
 } from '@coinkeeper/shared/schema/transaction';
 
 import { useEntityMutation } from '../use-entity-mutation';
-import { TransactionRow, useAccounts, usePayees } from '../use-finance-data';
+import { TemplateRow, TransactionRow, useAccounts, usePayees } from '../use-finance-data';
+import { CategoryOrSplit, useSplitting } from './split-lines';
+import { TemplateChips } from './template-chips';
+import {
+  SaveAsTemplateButton,
+  SaveTemplateFromForm,
+  standardTemplateRequest,
+  TemplateRequest,
+  transferTemplateRequest,
+  useTemplatePick,
+} from './template-request';
 import {
   Direction,
   Mode,
@@ -49,14 +60,14 @@ import {
   standardDefaults,
   transferDefaults,
 } from './transaction-defaults';
-import {
-  AccountField,
-  AmountField,
-  CategoryField,
-  DateField,
-  MemoField,
-  PayeeField,
-} from './transaction-fields';
+import { AccountField, AmountField, DateField, MemoField, PayeeField } from './transaction-fields';
+
+type FormProps<Values> = {
+  focusAmount: boolean;
+  onDone: () => void;
+  preset?: Partial<Values>;
+  transaction?: TransactionRow;
+};
 
 type TransactionDialogProps = {
   onOpenChange?: (open: boolean) => void;
@@ -95,6 +106,28 @@ function ModeSelect({
   );
 }
 
+function TransactionForm({
+  mode,
+  pickId,
+  ...formProps
+}: FormProps<StandardTransactionValues & TransferValues> & { mode: Mode; pickId: string }) {
+  const key = `${mode}-${formProps.transaction?.id ?? 'new'}-${pickId}`;
+
+  if (mode === 'transfer') return <TransferForm key={key} {...formProps} />;
+
+  return <StandardForm key={key} direction={mode} {...formProps} />;
+}
+
+function useFocusField<Values extends FieldValues>(
+  form: UseFormReturn<Values>,
+  name: Path<Values>,
+  enabled: boolean
+) {
+  useEffect(() => {
+    if (enabled) form.setFocus(name);
+  }, [enabled, form, name]);
+}
+
 export function TransactionDialog({
   onOpenChange,
   open: controlledOpen,
@@ -104,18 +137,28 @@ export function TransactionDialog({
 }: TransactionDialogProps) {
   const [localOpen, setLocalOpen] = useState(false);
   const [modeOverride, setModeOverride] = useState<Mode | null>(null);
+  const templates = useTemplatePick();
   const open = controlledOpen ?? localOpen;
 
   const setOpen = (value: boolean) => {
     setLocalOpen(value);
-    if (!value) setModeOverride(null);
+
+    if (!value) {
+      setModeOverride(null);
+      templates.clear();
+    }
+
     onOpenChange?.(value);
   };
 
-  const mode = modeOverride ?? modeOf(transaction, preset);
+  const pickTemplate = (template: TemplateRow) => {
+    setModeOverride(null);
+    templates.pickTemplate(template);
+  };
+
+  const activePreset = templates.presetOr(preset);
+  const mode = modeOverride ?? modeOf(transaction, activePreset);
   const editing = !!transaction;
-  const formKey = `${mode}-${transaction?.id ?? 'new'}`;
-  const close = () => setOpen(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -123,37 +166,70 @@ export function TransactionDialog({
       <DialogContent>
         <DialogTitle>{editing ? 'Edit transaction' : 'New transaction'}</DialogTitle>
         <Stack gap="medium">
+          {!editing && <TemplateChips onPick={pickTemplate} />}
           <ModeSelect value={mode} disabled={editing} onChange={setModeOverride} />
-          {mode === 'transfer' ? (
-            <TransferForm key={formKey} transaction={transaction} preset={preset} onDone={close} />
-          ) : (
-            <StandardForm
-              key={formKey}
-              direction={mode}
-              transaction={transaction}
-              preset={preset}
-              onDone={close}
-            />
-          )}
+          <TransactionForm
+            mode={mode}
+            pickId={templates.pickId}
+            focusAmount={templates.focusAmount}
+            preset={activePreset}
+            transaction={transaction}
+            onDone={() => setOpen(false)}
+          />
         </Stack>
       </DialogContent>
     </Dialog>
   );
 }
 
+function StandardFields({
+  control,
+  direction,
+  onPayee,
+  split,
+}: {
+  control: Control<StandardTransactionValues>;
+  direction: Direction;
+  onPayee: (payeeId: string) => void;
+  split: ReturnType<typeof useSplitting>;
+}) {
+  return (
+    <>
+      <AccountField
+        control={control}
+        name="accountId"
+        label="Account"
+        description={`The account this ${direction} belongs to.`}
+      />
+      <AmountField
+        control={control}
+        name="amount"
+        label="Amount"
+        description="In the account currency. Use a comma or dot for decimals."
+      />
+      <PayeeField control={control} onSelect={onPayee} />
+      <CategoryOrSplit
+        control={control}
+        direction={direction}
+        splitting={split.splitting}
+        onToggle={split.toggle}
+      />
+      <MemoField control={control} name="memo" description="A short note about the transaction." />
+      <DateField control={control} name="date" description="When this transaction occurred." />
+    </>
+  );
+}
+
 function StandardForm({
   direction,
+  focusAmount,
   onDone,
   preset,
   transaction,
-}: {
-  direction: Direction;
-  onDone: () => void;
-  preset?: Partial<StandardTransactionValues>;
-  transaction?: TransactionRow;
-}) {
+}: FormProps<StandardTransactionValues> & { direction: Direction }) {
   const { data: payees } = usePayees();
   const { data: accounts } = useAccounts();
+  const templateRequest = useDialogState<TemplateRequest>();
 
   const form = useForm<StandardTransactionValues>({
     defaultValues: standardDefaults(
@@ -168,10 +244,16 @@ function StandardForm({
     form.setValue('direction', direction);
   }, [direction, form]);
 
+  useFocusField(form, 'amount', focusAmount);
+
+  const split = useSplitting(form, !!transaction?.splits.length);
+
   const { isPending, mutate } = useEntityMutation({
     errorMessage: 'Could not save the transaction',
     mutationFn: (values: StandardTransactionValues) =>
-      transaction ? updateTransaction(transaction.id, values) : createTransaction(values),
+      transaction
+        ? updateTransaction(transaction.id, split.prepare(values))
+        : createTransaction(split.prepare(values)),
     onSuccess: () => {
       rememberValue(RememberedFields.standardAccount, form.getValues('accountId'));
       form.reset();
@@ -179,6 +261,9 @@ function StandardForm({
     },
     successMessage: transaction ? 'Transaction updated' : 'Transaction created',
   });
+
+  const requestTemplate = () =>
+    templateRequest.open(standardTemplateRequest(form.getValues(), direction, payees));
 
   const applyPayeeDefault = (payeeId: string) => {
     const payee = payees?.find(candidate => candidate.id === payeeId);
@@ -191,50 +276,27 @@ function StandardForm({
   return (
     <Form {...form}>
       <FormStack onSubmit={form.handleSubmit(values => mutate(values))}>
-        <AccountField
+        <StandardFields
           control={form.control}
-          name="accountId"
-          label="Account"
-          description={`The account this ${direction} belongs to.`}
-        />
-        <AmountField
-          control={form.control}
-          name="amount"
-          label="Amount"
-          description="In the account currency. Use a comma or dot for decimals."
-        />
-        <PayeeField control={form.control} onSelect={applyPayeeDefault} />
-        <CategoryField control={form.control} kind={direction} />
-        <MemoField
-          control={form.control}
-          name="memo"
-          description="A short note about the transaction."
-        />
-        <DateField
-          control={form.control}
-          name="date"
-          description="When this transaction occurred."
+          direction={direction}
+          split={split}
+          onPayee={applyPayeeDefault}
         />
         <DialogFormFooter
           isPending={isPending}
+          secondaryAction={<SaveAsTemplateButton onClick={requestTemplate} />}
           submitLabel={saveLabel(!!transaction)}
           onCancel={() => form.reset()}
         />
       </FormStack>
+      <SaveTemplateFromForm request={templateRequest.value} onClose={templateRequest.close} />
     </Form>
   );
 }
 
-function TransferForm({
-  onDone,
-  preset,
-  transaction,
-}: {
-  onDone: () => void;
-  preset?: Partial<TransferValues>;
-  transaction?: TransactionRow;
-}) {
+function TransferForm({ focusAmount, onDone, preset, transaction }: FormProps<TransferValues>) {
   const { data: accounts } = useAccounts();
+  const templateRequest = useDialogState<TemplateRequest>();
 
   const form = useForm<TransferValues>({
     defaultValues: transferDefaults(
@@ -243,6 +305,10 @@ function TransferForm({
     ),
     resolver: zodResolver(transferSchema),
   });
+
+  useFocusField(form, 'amountFrom', focusAmount);
+
+  const requestTemplate = () => templateRequest.open(transferTemplateRequest(form.getValues()));
 
   const [fromId, toId] = useWatch({
     control: form.control,
@@ -302,10 +368,12 @@ function TransferForm({
         <DateField control={form.control} name="date" description="When the money moved." />
         <DialogFormFooter
           isPending={isPending}
+          secondaryAction={<SaveAsTemplateButton onClick={requestTemplate} />}
           submitLabel={saveLabel(!!transaction, 'Record transfer')}
           onCancel={() => form.reset()}
         />
       </FormStack>
+      <SaveTemplateFromForm request={templateRequest.value} onClose={templateRequest.close} />
     </Form>
   );
 }

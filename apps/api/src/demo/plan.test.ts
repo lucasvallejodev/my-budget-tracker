@@ -47,35 +47,39 @@ const runningBalances = (account: AccountKey) => {
 };
 
 describe('demo plan', () => {
-  it('covers six full months plus the current month up to today', () => {
-    expect(plan.months).toEqual([
-      '2026-03',
-      '2026-04',
-      '2026-05',
-      '2026-06',
-      '2026-07',
-      '2026-08',
-      '2026-09',
-    ]);
-    expect(plan.openingDate).toBe('2026-02-28');
-    expect(plan.entries.every(entry => entry.date >= '2026-03-01' && entry.date <= Today)).toBe(
+  it('covers twenty-four full months plus the current month up to today', () => {
+    expect(plan.months).toHaveLength(25);
+    expect(plan.months[0]).toBe('2024-09');
+    expect(plan.months.at(-1)).toBe('2026-09');
+    expect(plan.openingDate).toBe('2024-08-31');
+    expect(plan.entries.every(entry => entry.date >= '2024-09-01' && entry.date <= Today)).toBe(
       true
     );
-    expect(new Set(plan.entries.map(entry => monthOf(entry.date))).size).toBe(7);
+    expect(new Set(plan.entries.map(entry => monthOf(entry.date))).size).toBe(25);
   });
 
-  it('pays a 3,000 EUR salary on a working day near the end of every month', () => {
+  it('pays the salary on a working day near month end, with a raise a year ago', () => {
     const salaries = byPayee('Northwind Labs');
 
     expect(salaries.map(entry => monthOf(entry.date))).toEqual(plan.months);
-    expect(salaries.every(entry => entry.amountMinor === 300_000)).toBe(true);
+    expect(
+      salaries
+        .filter(entry => entry.date < '2025-10-01')
+        .every(entry => entry.amountMinor === 285_000)
+    ).toBe(true);
+    expect(
+      salaries
+        .filter(entry => entry.date >= '2025-10-01')
+        .every(entry => entry.amountMinor === 300_000)
+    ).toBe(true);
     expect(salaries.every(entry => Number(entry.date.slice(8)) >= 24)).toBe(true);
     expect(salaries.every(entry => ![0, 6].includes(new Date(entry.date).getUTCDay()))).toBe(true);
   });
 
   it('charges rent and the monthly bills within their ranges', () => {
-    expect(byPayee('Oakwood Lettings')).toHaveLength(7);
-    expect(byPayee('Oakwood Lettings').every(entry => entry.amountMinor === -120_000)).toBe(true);
+    expect(
+      byPayee('Oakwood Lettings').filter(entry => entry.amountMinor === -120_000)
+    ).toHaveLength(25);
     expect(byPayee('FibreNet').every(entry => entry.amountMinor === -2500)).toBe(true);
 
     for (const payee of ['BrightSpark Energy', 'Hearth Gas']) {
@@ -83,46 +87,60 @@ describe('demo plan', () => {
     }
   });
 
-  it('moves 400 to 600 EUR to savings after each payday', () => {
+  it('saves what is above the buffer on payday, up to 600 EUR, in steps of 50', () => {
     const savings = transfers('Monthly savings');
 
-    expect(savings.length).toBeGreaterThanOrEqual(6);
-    expect(savings.every(entry => inRange(entry.amountFromMinor, 40_000, 60_000))).toBe(true);
+    expect(savings.length).toBeGreaterThanOrEqual(20);
+    expect(savings.every(entry => inRange(entry.amountFromMinor, 5000, 60_000))).toBe(true);
     expect(savings.every(entry => entry.amountFromMinor % 5000 === 0)).toBe(true);
+    expect(savings.every(entry => plan.paydays.includes(entry.date))).toBe(true);
   });
 
-  it('sends about 120 EUR a month to the USD account at 1.13', () => {
+  it('keeps the everyday account above 200 EUR and cash above zero with top-ups', () => {
+    expect(Math.min(...runningBalances('everyday'))).toBeGreaterThanOrEqual(20_000);
+    expect(Math.min(...runningBalances('cash'))).toBeGreaterThanOrEqual(0);
+    expect(Math.min(...runningBalances('savings'))).toBeGreaterThan(0);
+    expect(transfers('Top up from savings').every(entry => entry.from === 'savings')).toBe(true);
+    expect(transfers('ATM withdrawal').every(entry => entry.amountFromMinor === 10_000)).toBe(true);
+    expect(openingBalances()).toHaveLength(5);
+  });
+
+  it('sends 120 EUR to the USD account every quarter at 1.13', () => {
     const topUps = transfers('Top up the USD account');
 
-    expect(topUps).toHaveLength(7);
+    expect(topUps.map(entry => monthOf(entry.date))).toEqual(
+      plan.months.filter(month => Number(month.slice(5)) % 3 === 0)
+    );
 
     for (const topUp of topUps) {
-      expect(inRange(topUp.amountFromMinor, 10_000, 14_000)).toBe(true);
-      expect(topUp.amountToMinor).toBe(convertMinor(topUp.amountFromMinor, 'EUR', 'USD', 1.13));
+      expect(topUp.amountFromMinor).toBe(12_000);
+      expect(topUp.amountToMinor).toBe(convertMinor(12_000, 'EUR', 'USD', 1.13));
     }
   });
 
   it('receives 200 to 340 USD of royalties and pays the adviser from the USD account', () => {
     const royalties = byPayee('Lumen Stock');
 
-    expect(royalties).toHaveLength(7);
+    expect(royalties).toHaveLength(25);
     expect(royalties.every(entry => entry.account === 'usd')).toBe(true);
     expect(royalties.every(entry => inRange(entry.amountMinor, 20_000, 34_000))).toBe(true);
     expect(byPayee('Harbor Financial Advice').every(entry => entry.account === 'usd')).toBe(true);
   });
 
-  it('raises the Spotify price for the last three months', () => {
-    const prices = byPayee('Spotify').map(entry => [monthOf(entry.date), -entry.amountMinor]);
+  it('raises the Spotify price three months ago and the Netflix price on its latest charge', () => {
+    const spotify = byPayee('Spotify');
+    const netflix = byPayee('Netflix').map(entry => -entry.amountMinor);
 
-    expect(prices).toEqual([
-      ['2026-03', 1099],
-      ['2026-04', 1099],
-      ['2026-05', 1099],
-      ['2026-06', 1199],
-      ['2026-07', 1199],
-      ['2026-08', 1199],
-      ['2026-09', 1199],
-    ]);
+    expect(
+      spotify.filter(entry => entry.date < '2026-06-01').every(entry => entry.amountMinor === -1099)
+    ).toBe(true);
+    expect(
+      spotify
+        .filter(entry => entry.date >= '2026-06-01')
+        .every(entry => entry.amountMinor === -1199)
+    ).toBe(true);
+    expect(netflix.at(-1)).toBe(1399);
+    expect(netflix.slice(0, -1).every(amount => amount === 1299)).toBe(true);
   });
 
   it('pays off the previous month of credit card spending', () => {
@@ -130,22 +148,52 @@ describe('demo plan', () => {
       const previousMonth = plan.months[plan.months.indexOf(monthOf(payment.date)) - 1];
 
       const spent = standards()
+        .filter(entry => !entry.deleted)
         .filter(entry => entry.account === 'creditCard' && monthOf(entry.date) === previousMonth)
         .reduce((total, entry) => total - entry.amountMinor, 0);
 
       expect(payment.amountFromMinor).toBe(spent);
     }
 
-    expect(transfers('Credit card payment')).toHaveLength(6);
+    expect(transfers('Credit card payment')).toHaveLength(24);
   });
 
-  it('never lets the everyday or cash accounts go below zero', () => {
-    expect(Math.min(...runningBalances('everyday'))).toBeGreaterThan(0);
-    expect(Math.min(...runningBalances('cash'))).toBeGreaterThanOrEqual(0);
-    expect(openingBalances()).toHaveLength(5);
+  it('adds yearly events: home insurance, a summer holiday and Christmas', () => {
+    expect(byPayee('SafeNest Insurance').map(entry => entry.date)).toEqual([
+      '2025-03-15',
+      '2026-03-15',
+    ]);
+    expect(byPayee('Seaside Villas')).toHaveLength(2);
+    expect(byPayee('Giftology').filter(entry => entry.memo === 'Christmas presents')).toHaveLength(
+      2
+    );
+    expect(byPayee('BoxDrop Prime').map(entry => entry.date)).toEqual(['2024-10-09', '2025-10-09']);
   });
 
-  it('leaves two recent purchases for the review inbox and marks recent card rows pending', () => {
+  it('splits the monthly big shop into lines that add up to the amount', () => {
+    const shops = byPayee('Greenleaf Market').filter(entry => entry.splits);
+
+    expect(shops).toHaveLength(25);
+
+    for (const shop of shops) {
+      expect(shop.splits!.map(line => line.category)).toEqual(['Groceries', 'Home & garden']);
+      expect(shop.splits!.reduce((total, line) => total + line.amountMinor, 0)).toBe(
+        shop.amountMinor
+      );
+    }
+  });
+
+  it('pays the cleaner every other Friday and the water bill every quarter but the last', () => {
+    const cleaning = byPayee('Sparkle Cleaning').map(entry => entry.date);
+    const water = byPayee('Clearwater Utilities').map(entry => entry.date);
+
+    expect(cleaning[0]).toBe(plan.cleanerFirstDate);
+    expect(cleaning.every(date => new Date(date).getUTCDay() === 5)).toBe(true);
+    expect(water.length).toBeGreaterThanOrEqual(7);
+    expect(water.every(date => date < '2026-09-19')).toBe(true);
+  });
+
+  it('leaves two recent purchases for the review inbox, one deleted duplicate, and pending card rows', () => {
     const unreviewed = standards().filter(entry => entry.category === null);
 
     expect(unreviewed.map(entry => entry.bankDescription)).toEqual([
@@ -154,13 +202,18 @@ describe('demo plan', () => {
     ]);
     expect(
       standards()
+        .filter(entry => entry.deleted)
+        .map(entry => entry.memo)
+    ).toEqual(['Charged twice by mistake']);
+    expect(
+      standards()
         .filter(entry => entry.status === 'pending')
         .every(entry => entry.account === 'creditCard' && entry.date >= '2026-09-27')
     ).toBe(true);
   });
 
-  it('plans eight budgets for every month', () => {
-    expect(plan.budgets).toHaveLength(8 * 7);
+  it('plans nine budgets for every month', () => {
+    expect(plan.budgets).toHaveLength(9 * 25);
   });
 
   it('is deterministic, and everyday spending in past months does not change over time', () => {
@@ -169,7 +222,7 @@ describe('demo plan', () => {
     const pastMonths = (entries: DemoEntry[]) =>
       standards(entries).filter(
         entry =>
-          entry.category === 'Groceries' && entry.date >= '2026-04-01' && entry.date < '2026-09-01'
+          entry.category === 'Groceries' && entry.date >= '2025-04-01' && entry.date < '2026-09-01'
       );
 
     expect(buildDemoPlan(Today)).toEqual(plan);

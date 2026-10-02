@@ -4,6 +4,7 @@ import { accounts, transactions } from '@/db/schema';
 
 import { conflict, notFound, ServiceError } from '../db';
 import type { Db, DbOrTx } from '../db';
+import { markTemplateUsed } from '../templates/service';
 import {
   assertDate,
   assertLinkable,
@@ -12,6 +13,7 @@ import {
   ownedTransaction,
 } from './guards';
 import { list } from './queries';
+import { removeSplits } from './splits';
 import type { TransactionRecord, Transfer, TransferInput, TransferPatch } from './types';
 
 type Account = Awaited<ReturnType<typeof ownedAccount>>;
@@ -143,6 +145,8 @@ export const createTransfer = async (db: Db, userId: string, input: TransferInpu
       },
     ]);
 
+    await markTemplateUsed(tx, userId, input.templateId);
+
     return getTransfer(tx, userId, transferId);
   });
 };
@@ -259,6 +263,8 @@ export const linkAsTransfer = async (db: Db, userId: string, outId: string, inId
     }
 
     const transferId = crypto.randomUUID();
+
+    await removeSplits(tx, [outId, inId]);
 
     for (const legId of [outId, inId]) {
       await tx

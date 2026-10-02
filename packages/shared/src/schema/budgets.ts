@@ -15,16 +15,20 @@ export type BudgetFormValues = z.infer<typeof budgetFormSchema>;
 
 export const budgetRowSchema = z.object({
   amountMinor: z.number().int(),
+  billsDueMinor: z.number().int(),
   categoryId: z.string(),
   categoryName: z.string(),
   color: z.string(),
   currency: z.string(),
   deletedAt: z.string().nullable(),
+  fixedSpentMinor: z.number().int(),
   groupId: z.string(),
   groupName: z.string(),
   icon: z.string(),
   id: z.string(),
   month: z.string(),
+  periodFrom: z.string(),
+  periodTo: z.string(),
   spentMinor: z.number().int(),
 });
 

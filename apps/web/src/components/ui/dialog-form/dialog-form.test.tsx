@@ -30,4 +30,24 @@ describe('DialogFormFooter', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
+
+  it('renders a secondary action before the buttons', () => {
+    render(
+      <Dialog open>
+        <DialogContent>
+          <DialogTitle>Transaction</DialogTitle>
+          <DialogFormFooter
+            isPending={false}
+            onCancel={vi.fn()}
+            secondaryAction={<button type="button">Save as template</button>}
+            submitLabel="Create"
+          />
+        </DialogContent>
+      </Dialog>
+    );
+
+    const names = screen.getAllByRole('button').map(button => button.textContent);
+
+    expect(names.indexOf('Save as template')).toBeLessThan(names.indexOf('Cancel'));
+  });
 });

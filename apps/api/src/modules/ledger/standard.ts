@@ -1,11 +1,15 @@
 import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 
 import { accounts, categories, transactions } from '@/db/schema';
+import { toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 
-import { conflict, notFound } from '../db';
+import { conflict, notFound, ServiceError } from '../db';
 import type { Db, DbOrTx } from '../db';
 import { isUniqueViolation } from '../errors';
 import type { createPayeeService } from '../payees/service';
+import { matchTransactionsToSeries } from '../recurring/matching';
+import { assertOpenOccurrence } from '../recurring/occurrences';
+import { markTemplateUsed } from '../templates/service';
 import {
   assertCategory,
   assertDate,
@@ -16,7 +20,21 @@ import {
   ownedTransaction,
 } from './guards';
 import { get } from './queries';
-import type { StandardInput, TransactionPatch, TransactionRecord, TransactionRow } from './types';
+import {
+  assertSplitCategories,
+  assertSplitLines,
+  hasLiveSplits,
+  removeSplits,
+  replaceSplits,
+  uncategorizeArchivedLines,
+} from './splits';
+import type {
+  SplitInput,
+  StandardInput,
+  TransactionPatch,
+  TransactionRecord,
+  TransactionRow,
+} from './types';
 
 type PayeeService = ReturnType<typeof createPayeeService>;
 
@@ -157,6 +175,83 @@ const restoredCategoryPatch = async (
   return category ? {} : { categoryId: null, needsReview: true };
 };
 
+const splitPatch = (lines: SplitInput[], input: Partial<StandardInput>) => ({
+  ...input,
+  categoryId: null,
+  needsReview: false,
+  splits: lines,
+});
+
+const applyNewSplits = async (
+  tx: DbOrTx,
+  userId: string,
+  existing: TransactionRecord,
+  input: Partial<StandardInput>
+): Promise<Partial<StandardInput>> => {
+  const lines = input.splits ?? [];
+
+  if (!lines.length) {
+    await removeSplits(tx, [existing.id]);
+
+    return { ...input, categoryId: input.categoryId ?? null };
+  }
+
+  assertSplitLines(input.amountMinor ?? Number(existing.amountMinor), lines);
+  await assertSplitCategories(tx, userId, lines);
+  await replaceSplits(tx, userId, existing.id, lines);
+
+  return splitPatch(lines, input);
+};
+
+const keepExistingSplit = async (
+  tx: DbOrTx,
+  existing: TransactionRecord,
+  input: Partial<StandardInput>
+): Promise<Partial<StandardInput>> => {
+  if (input.categoryId) {
+    await removeSplits(tx, [existing.id]);
+
+    return input;
+  }
+
+  if (input.amountMinor !== undefined && input.amountMinor !== Number(existing.amountMinor)) {
+    throw new ServiceError('Change the split lines together with the amount');
+  }
+
+  if (input.categoryId !== null) return input;
+
+  return {
+    ...input,
+    categoryId: undefined,
+    needsReview: undefined,
+  };
+};
+
+const applySplitChanges = async (
+  tx: DbOrTx,
+  userId: string,
+  existing: TransactionRecord,
+  input: Partial<StandardInput>
+): Promise<Partial<StandardInput>> => {
+  if (input.splits !== undefined) return applyNewSplits(tx, userId, existing, input);
+  if (await hasLiveSplits(tx, existing.id)) return keepExistingSplit(tx, existing, input);
+
+  return input;
+};
+
+const recurringColumns = async (
+  tx: DbOrTx,
+  userId: string,
+  currency: string,
+  recurring: StandardInput['recurring']
+) => {
+  if (!recurring) return {};
+
+  await assertOpenOccurrence(tx, userId, { currency, ...recurring });
+
+  return { recurringDueOn: recurring.dueOn, recurringSeriesId: recurring.seriesId };
+};
+
 export const createStandard = async (
   context: LedgerContext,
   userId: string,
@@ -167,19 +262,47 @@ export const createStandard = async (
   assertDate(input.date);
   assertNonZeroAmount(input.amountMinor);
 
+  const lines = input.splits?.length ? input.splits : undefined;
+
+  if (lines) assertSplitLines(input.amountMinor, lines);
+
   const row = await db.transaction(async tx => {
     const account = await ownedAccount(tx, userId, input.accountId);
 
-    if (input.categoryId) await assertCategory(tx, userId, input.categoryId);
+    if (input.categoryId && !lines) await assertCategory(tx, userId, input.categoryId);
     if (input.payeeId) await assertPayee(tx, userId, input.payeeId);
+    if (lines) await assertSplitCategories(tx, userId, lines);
+
+    const values = {
+      ...standardInsertValues(userId, account, input),
+      ...(await recurringColumns(tx, userId, account.currency, input.recurring)),
+    };
 
     const [created] = await tx
       .insert(transactions)
-      .values(standardInsertValues(userId, account, input))
+      .values(
+        lines
+          ? {
+              ...values,
+              categoryId: null,
+              needsReview: false,
+            }
+          : values
+      )
       .returning();
+
+    if (lines) await replaceSplits(tx, userId, created.id, lines);
+    await markTemplateUsed(tx, userId, input.templateId);
 
     return created;
   });
+
+  if (!input.recurring) {
+    await matchTransactionsToSeries(db, userId, {
+      today: toIsoDate(new Date()),
+      transactionIds: [row.id],
+    });
+  }
 
   return learnPayeeCategory(context, userId, row);
 };
@@ -200,7 +323,10 @@ export const updateStandard = async (
 
     assertEditable(existing, input);
 
-    const patch = await ownedPatch(tx, userId, existing, input);
+    const effective = await applySplitChanges(tx, userId, existing, input);
+    const patch = await ownedPatch(tx, userId, existing, effective);
+
+    if (!Object.keys(patch).length) return existing;
 
     const [updated] = await tx
       .update(transactions)
@@ -231,9 +357,15 @@ export const restore = async (db: Db, userId: string, id: string): Promise<Trans
       assertNotTransferLeg(existing);
       await liveAccount(tx, userId, existing.accountId);
 
+      const linesCleared = await uncategorizeArchivedLines(tx, id);
+
       await tx
         .update(transactions)
-        .set({ ...(await restoredCategoryPatch(tx, existing)), deletedAt: null })
+        .set({
+          ...(await restoredCategoryPatch(tx, existing)),
+          ...(linesCleared ? { needsReview: true } : {}),
+          deletedAt: null,
+        })
         .where(eq(transactions.id, id));
     });
   } catch (error) {

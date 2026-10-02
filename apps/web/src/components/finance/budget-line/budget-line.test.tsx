@@ -5,7 +5,7 @@ import { formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { budgetFigures } from '../budget-status';
 import type { BudgetRow as Row } from '../use-finance-data';
-import { allowanceLabel, BudgetLine, leftLabel } from './budget-line';
+import { allowanceLabel, billsNote, BudgetLine, leftLabel } from './budget-line';
 
 afterEach(cleanup);
 
@@ -19,6 +19,8 @@ const groceries = (spentMinor: number) =>
     groupName: 'Food & Dining',
     icon: 'ShoppingCart',
     month: '2026-09-01',
+    periodFrom: '2026-09-01',
+    periodTo: '2026-09-30',
     spentMinor,
   }) as Row;
 
@@ -110,5 +112,12 @@ describe('BudgetLine', () => {
     expect(leftLabel(figures, format)).toBe('€250.00 left');
     expect(allowanceLabel(figures, format)).toBe('€83.33 a day');
     expect(allowanceLabel(budgetFigures(groceries(10000), '2026-10-02'), format)).toBe('');
+  });
+
+  it('keeps bills still due out of the daily allowance and says how much they are', () => {
+    const figures = budgetFigures({ ...groceries(10000), billsDueMinor: 4000 }, '2026-09-28');
+
+    expect(allowanceLabel(figures, format)).toBe('€70.00 a day');
+    expect(billsNote(figures, format)).toBe(' · €40.00 in bills to come');
   });
 });

@@ -1,6 +1,6 @@
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 
-import { categories, categoryGroups, payees, transactions } from '@/db/schema';
+import { categories, categoryGroups, payees, transactions, transactionSplits } from '@/db/schema';
 import type { Category, CategoryGroup, CategoryTree } from '@coinkeeper/shared/schema/categories';
 
 import { assertAllFound, assertDistinctIds, positionedIds, rowsOf } from '../batch';
@@ -33,6 +33,23 @@ export const ownedActiveCategory = async (db: Db, userId: string, id: string) =>
     .limit(1);
 
   return category ?? notFound('Category');
+};
+
+const flagSplitLinesForReview = async (
+  tx: DbOrTx,
+  userId: string,
+  categoryId: string
+): Promise<void> => {
+  await tx.execute(sql`
+    UPDATE transactions AS parent
+    SET needs_review = true, updated_at = now()
+    WHERE parent.user_id = ${userId} AND parent.id IN (
+      SELECT line.transaction_id FROM transaction_splits line
+      WHERE line.category_id = ${categoryId} AND line.user_id = ${userId} AND line.deleted_at IS NULL)`);
+  await tx
+    .update(transactionSplits)
+    .set({ categoryId: null })
+    .where(and(eq(transactionSplits.categoryId, categoryId), eq(transactionSplits.userId, userId)));
 };
 
 const moveCategories = (tx: DbOrTx, userId: string, groupId: string, orderedIds: string[]) =>
@@ -94,6 +111,10 @@ export const createCategoryService = (db: Db) => {
             .set({ categoryId: moveToId })
             .where(and(eq(transactions.categoryId, id), eq(transactions.userId, userId)));
           await tx
+            .update(transactionSplits)
+            .set({ categoryId: moveToId })
+            .where(and(eq(transactionSplits.categoryId, id), eq(transactionSplits.userId, userId)));
+          await tx
             .update(payees)
             .set({ defaultCategoryId: moveToId })
             .where(and(eq(payees.defaultCategoryId, id), eq(payees.userId, userId)));
@@ -102,6 +123,7 @@ export const createCategoryService = (db: Db) => {
             .update(transactions)
             .set({ categoryId: null, needsReview: true })
             .where(and(eq(transactions.categoryId, id), eq(transactions.userId, userId)));
+          await flagSplitLinesForReview(tx, userId, id);
           await tx
             .update(payees)
             .set({ defaultCategoryId: null })
@@ -223,7 +245,10 @@ export const createCategoryService = (db: Db) => {
           sortOrder: categories.sortOrder,
           transactionCount: sql<number>`(
             SELECT count(*)::int FROM ${transactions} t
-            WHERE t.category_id = "categories"."id" AND t.deleted_at IS NULL)`,
+            WHERE t.category_id = "categories"."id" AND t.deleted_at IS NULL) + (
+            SELECT count(DISTINCT s.transaction_id)::int FROM ${transactionSplits} s
+            JOIN ${transactions} t ON t.id = s.transaction_id
+            WHERE s.category_id = "categories"."id" AND s.deleted_at IS NULL AND t.deleted_at IS NULL)`,
         })
         .from(categories)
         .where(

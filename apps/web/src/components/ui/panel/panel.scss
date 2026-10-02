@@ -5,9 +5,16 @@
     @include surface;
 
     &__head {
-      @include flex-between(space(3), flex-start);
+      @include flex-column(space(3));
 
+      align-items: flex-start;
       margin-bottom: space(4);
+
+      @include media-up(tablet) {
+        @include flex-between(space(3), flex-start);
+
+        flex-direction: row;
+      }
     }
 
     &__title {

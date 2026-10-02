@@ -25,8 +25,9 @@ const expense = {
   kind: 'standard',
   memo: 'Lunch',
   payeeId: 'payee-cafe',
+  splits: [],
   status: 'pending',
-} as TransactionRow;
+} as unknown as TransactionRow;
 
 const transferOut = {
   accountId: 'acc-everyday',
@@ -51,7 +52,42 @@ describe('transaction defaults', () => {
       memo: 'Lunch',
       mode: 'expense',
       payeeId: 'payee-cafe',
+      splits: [],
       status: 'cleared',
+    });
+  });
+
+  it('copies split lines as magnitudes when duplicating a split expense', () => {
+    const split = {
+      ...expense,
+      categoryId: null,
+      splits: [
+        {
+          amountMinor: -1000,
+          categoryId: 'cat-food',
+          memo: 'Lunch',
+        },
+        {
+          amountMinor: -250,
+          categoryId: null,
+          memo: '',
+        },
+      ],
+    } as unknown as TransactionRow;
+
+    expect(duplicatePreset(split)).toMatchObject({
+      splits: [
+        {
+          amount: '10.00',
+          categoryId: 'cat-food',
+          memo: 'Lunch',
+        },
+        {
+          amount: '2.50',
+          categoryId: '',
+          memo: '',
+        },
+      ],
     });
   });
 

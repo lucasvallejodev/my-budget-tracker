@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { HttpStatus } from '@/constants/http';
 import { userIdOf } from '@/plugins/context';
 import { toIsoMonth } from '@coinkeeper/shared/lib/date-helpers';
+import { addDays } from '@coinkeeper/shared/lib/periods';
 import { listOf } from '@coinkeeper/shared/schema/common';
 import {
   balancePointSchema,
@@ -16,6 +17,8 @@ import {
   currencyTotalsSchema,
   groupMonthSliceSchema,
   groupSliceSchema,
+  leftToSpendQuerySchema,
+  leftToSpendSchema,
   monthQuerySchema,
   netWorthBucketSchema,
   rankingSliceSchema,
@@ -29,7 +32,19 @@ const Tags = ['reports'];
 const DEFAULT_CASH_FLOW_MONTHS = 8;
 
 export const reportsRoutes: FastifyPluginAsyncZod = async app => {
-  const { accounts, ledger, reports } = app.services;
+  const { accounts, forecast, ledger, periods, reports } = app.services;
+
+  app.get(
+    '/reports/left-to-spend',
+    {
+      schema: {
+        querystring: leftToSpendQuerySchema,
+        response: withErrors({ [HttpStatus.ok]: leftToSpendSchema }),
+        tags: Tags,
+      },
+    },
+    async request => forecast.leftToSpend(userIdOf(request), request.query)
+  );
 
   app.get(
     '/reports/summary',
@@ -44,11 +59,13 @@ export const reportsRoutes: FastifyPluginAsyncZod = async app => {
       const userId = userIdOf(request);
       const month = request.query.month ?? toIsoMonth(new Date());
       const cashFlowMonths = request.query.cashFlowMonths ?? DEFAULT_CASH_FLOW_MONTHS;
+      const period = await periods.range(userId, month);
+      const span = { end: addDays(period.to, 1), start: period.from };
 
       const [totals, breakdown, netWorth, cashFlow, needsReviewCount, accountList, settings] =
         await Promise.all([
-          reports.monthlyTotals(userId, month),
-          reports.breakdownByGroup(userId, month),
+          reports.monthlyTotals(userId, month, span),
+          reports.breakdownByGroup(userId, month, { span }),
           reports.netWorth(userId),
           reports.cashFlow(userId, month, cashFlowMonths),
           ledger.needsReviewCount(userId),
@@ -68,6 +85,7 @@ export const reportsRoutes: FastifyPluginAsyncZod = async app => {
         month,
         needsReviewCount,
         netWorth,
+        period,
         totals,
       };
     }

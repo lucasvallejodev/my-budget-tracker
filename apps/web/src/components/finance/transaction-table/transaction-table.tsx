@@ -4,6 +4,7 @@ import './transaction-table.scss';
 
 import { useMutation } from '@tanstack/react-query';
 import { ArrowLeftRight } from 'lucide-react';
+import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
 import { categorizeTransaction } from '@/api/mutations';
@@ -17,6 +18,7 @@ import { PayeeAvatar } from '../payee-avatar';
 import { TransactionActions } from '../transaction-actions';
 import { dayLabel, describeTransaction } from '../transaction-labels';
 import { TransactionRow, useRefreshFinance } from '../use-finance-data';
+import { SplitLines, SplitToggle } from './split-categories';
 import { collapseTransfers, groupByDay, ListedTransaction } from './transaction-groups';
 
 const YearLength = 4;
@@ -47,6 +49,8 @@ const secondLine = (transaction: ListedTransaction) => {
     return transaction.originalPayee;
   }
 
+  if (transaction.splits.length) return null;
+
   return transaction.needsReview && !transaction.categoryId ? 'Bank text kept as imported' : null;
 };
 
@@ -70,9 +74,11 @@ function RowAvatar({ transaction }: { transaction: ListedTransaction }) {
 
 function CategoryCell({
   onCategorize,
+  split,
   transaction,
 }: {
   onCategorize: (categoryId: string | undefined) => void;
+  split: { controls: string; expanded: boolean; onToggle: () => void };
   transaction: ListedTransaction;
 }) {
   if (transaction.kind === 'transfer') {
@@ -82,6 +88,8 @@ function CategoryCell({
   if (transaction.kind === 'opening') {
     return <span className="transaction-table__chip">Opening balance</span>;
   }
+
+  if (transaction.splits.length) return <SplitToggle {...split} transaction={transaction} />;
 
   if (!transaction.categoryId) {
     return (
@@ -141,6 +149,8 @@ function TransactionListRow({
   transaction: ListedTransaction;
 }) {
   const isTransfer = transaction.kind === 'transfer';
+  const [expanded, setExpanded] = useState(false);
+  const linesId = useId();
 
   return (
     <li className="transaction-table__row">
@@ -153,6 +163,11 @@ function TransactionListRow({
       </div>
       <div className="transaction-table__category">
         <CategoryCell
+          split={{
+            controls: linesId,
+            expanded,
+            onToggle: () => setExpanded(open => !open),
+          }}
           transaction={transaction}
           onCategorize={categoryId => onCategorize(transaction.id, categoryId)}
         />
@@ -175,6 +190,9 @@ function TransactionListRow({
         <div className="transaction-table__actions">
           <TransactionActions transaction={transaction} />
         </div>
+      )}
+      {transaction.splits.length > 0 && (
+        <SplitLines id={linesId} hidden={!expanded} transaction={transaction} />
       )}
     </li>
   );

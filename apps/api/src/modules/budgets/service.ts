@@ -2,13 +2,16 @@ import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 
 import { budgets, categories, categoryGroups } from '@/db/schema';
 import { ISO_MONTH_LENGTH } from '@coinkeeper/shared/constants/time';
-import { isoDateOfMonthStart } from '@coinkeeper/shared/lib/date-helpers';
+import { isoDateOfMonthStart, toIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import { roundUpToWholeUnits } from '@coinkeeper/shared/lib/money';
+import type { BudgetPeriod } from '@coinkeeper/shared/lib/periods';
 import type { BudgetRow, BudgetSuggestion } from '@coinkeeper/shared/schema/budgets';
 
 import { ownedActiveCategory } from '../categories/service';
 import { Db, notFound, ServiceError, toIsoTimestamp } from '../db';
 import { monthRange } from '../ledger/service';
+import { periodOf, spanOf, userPeriods } from '../periods/service';
+import { unpaidSpendingBetween } from '../recurring/occurrences';
 import { createReportService } from '../reports/service';
 
 type BudgetInput = {
@@ -34,10 +37,30 @@ const spentKey = (currency: string, categoryId: string): string => `${currency}:
 export const createBudgetService = (db: Db) => {
   const reports = createReportService(db);
 
-  const spentByCategory = async (userId: string, month: string, currencies: string[]) => {
-    const rows = await reports.categorySpending(userId, month, currencies);
+  const spentByCategory = async (userId: string, period: BudgetPeriod, currencies: string[]) => {
+    const rows = await reports.categorySpending(userId, spanOf(period), currencies);
 
-    return new Map(rows.map(row => [spentKey(row.currency, row.categoryId), row.spentMinor]));
+    return new Map(rows.map(row => [spentKey(row.currency, row.categoryId), row]));
+  };
+
+  const billsDueByCategory = async (userId: string, period: BudgetPeriod) => {
+    const due = await unpaidSpendingBetween(db, userId, {
+      from: period.from,
+      to: period.to,
+      today: toIsoDate(new Date()),
+    });
+
+    const totals = new Map<string, number>();
+
+    for (const occurrence of due) {
+      if (!occurrence.categoryId) continue;
+
+      const key = spentKey(occurrence.currency, occurrence.categoryId);
+
+      totals.set(key, (totals.get(key) ?? 0) - occurrence.amountMinor);
+    }
+
+    return totals;
   };
 
   const list = async (
@@ -73,15 +96,29 @@ export const createBudgetService = (db: Db) => {
         )
       );
 
-    const spent = await spentByCategory(userId, month, [...new Set(rows.map(row => row.currency))]);
+    const period = periodOf(await userPeriods(db, userId), month);
+
+    const spent = await spentByCategory(userId, period, [
+      ...new Set(rows.map(row => row.currency)),
+    ]);
+
+    const bills = await billsDueByCategory(userId, period);
 
     return rows
-      .map(row => ({
-        ...row,
-        amountMinor: Number(row.amountMinor),
-        deletedAt: toIsoTimestamp(row.deletedAt),
-        spentMinor: spent.get(spentKey(row.currency, row.categoryId)) ?? 0,
-      }))
+      .map(row => {
+        const key = spentKey(row.currency, row.categoryId);
+
+        return {
+          ...row,
+          amountMinor: Number(row.amountMinor),
+          billsDueMinor: bills.get(key) ?? 0,
+          deletedAt: toIsoTimestamp(row.deletedAt),
+          fixedSpentMinor: spent.get(key)?.fixedMinor ?? 0,
+          periodFrom: period.from,
+          periodTo: period.to,
+          spentMinor: spent.get(key)?.spentMinor ?? 0,
+        };
+      })
       .sort(byGroupThenCategory);
   };
 

@@ -90,4 +90,19 @@ describe('budget pace', () => {
       perDayLeftMinor: 967,
     });
   });
+
+  it('does not extrapolate fixed payments and counts the bills still due', () => {
+    const pace = budgetPace({
+      billsDueMinor: 5000,
+      fixedSpentMinor: 20000,
+      limitMinor: 60000,
+      period: calendarPeriod('2026-09'),
+      spentMinor: 29000,
+      today: '2026-09-10',
+    });
+
+    expect(pace.projectedMinor).toBe(52000);
+    expect(pace.perDayLeftMinor).toBe(1238);
+    expect(pace.tooFast).toBe(false);
+  });
 });

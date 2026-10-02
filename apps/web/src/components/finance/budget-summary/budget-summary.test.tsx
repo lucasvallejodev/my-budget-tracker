@@ -15,6 +15,8 @@ const row = (spentMinor: number, amountMinor: number) =>
   ({
     amountMinor,
     month: '2026-09-01',
+    periodFrom: '2026-09-01',
+    periodTo: '2026-09-30',
     spentMinor,
   }) as BudgetRow;
 

@@ -9,23 +9,42 @@
 
   &__row {
     display: grid;
-    grid-template-columns: size(avatar-small) minmax(0, 1fr) auto auto;
+    grid-template-columns: size(avatar-small) minmax(0, 1fr) auto;
+    grid-template-areas: 'avatar name amount' 'avatar action action';
     align-items: center;
     gap: space(3);
     min-height: size(row-height);
     padding: space(1) size(card-padding);
     border-top: border(divider);
+
+    @include media-up(phone-landscape) {
+      grid-template-columns: size(avatar-small) minmax(0, 1fr) auto auto;
+      grid-template-areas: 'avatar name amount action';
+    }
+  }
+
+  &__avatar {
+    grid-area: avatar;
   }
 
   &__name {
-    @include truncate;
-
+    grid-area: name;
     font-weight: font-weight(medium);
+
+    @include media-up(phone-landscape) {
+      @include truncate;
+    }
   }
 
   &__amount {
     @include tabular-figures;
 
+    grid-area: amount;
     font-weight: font-weight(semibold);
+  }
+
+  &__action {
+    grid-area: action;
+    justify-self: end;
   }
 }

@@ -10,7 +10,7 @@ The schema lives in `apps/api/src/db/schema.ts` (the API owns the database); the
 
 - `users` holds the account you sign in with: a unique lower-case `email`, the argon2id `password_hash`, an optional `name` and `last_sign_in_at`. Every other table's `user_id` references `users(id) ON DELETE CASCADE`.
 - `sessions` holds one row per signed-in browser: the SHA-256 `token_hash` of the cookie token (never the token itself), `expires_at`, `last_used_at`, `user_agent` and `ip_address`. These rows are deleted on sign-out, revocation and expiry.
-- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets` and `exchange_rates` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
+- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets`, `exchange_rates`, `transaction_templates`, `transaction_splits`, `recurring_series` and `budget_period_starts` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
 
 ## Relationships
 
@@ -28,6 +28,12 @@ erDiagram
   categories ||--o{ budgets : "category_id"
   categories ||--o{ rules : "category_id"
   payees ||--o{ transactions : "payee_id (nullable)"
+  recurring_series ||--o{ transactions : "recurring_series_id (paid occurrences)"
+  accounts ||--o{ recurring_series : "account_id"
+  transactions ||--o{ transaction_splits : "transaction_id (split lines)"
+  categories ||--o{ transaction_splits : "category_id (nullable)"
+  accounts ||--o{ transaction_templates : "account_id / transfer_account_id (nullable)"
+  categories ||--o{ transaction_templates : "category_id (nullable)"
   transactions ||--o| transactions : "transfer_id (two legs)"
 ```
 
@@ -49,14 +55,16 @@ Seeded by migration with 27 currencies. Not scoped by user.
 
 One row per user, created at sign-up in the same transaction as the user.
 
-| Column                  | Type                 | Notes                                                                                                            |
-| ----------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `user_id`               | text PK → users      | the owner                                                                                                        |
-| `primary_currency`      | char(3) → currencies | default for new accounts and for converted totals                                                                |
-| `locale`                | text                 | reserved for number and date formatting                                                                          |
-| `seeded_version`        | int, nullable        | version of the default taxonomy that was seeded; null until seeding completes                                    |
-| `show_converted_totals` | bool                 | Home toggle                                                                                                      |
-| `allow_emoji`           | bool, default false  | lets the web app offer emoji next to the curated icons in icon pickers; a UI preference the API does not enforce |
+| Column                  | Type                   | Notes                                                                                                                                                            |
+| ----------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_id`               | text PK → users        | the owner                                                                                                                                                        |
+| `primary_currency`      | char(3) → currencies   | default for new accounts and for converted totals                                                                                                                |
+| `locale`                | text                   | reserved for number and date formatting                                                                                                                          |
+| `seeded_version`        | int, nullable          | version of the default taxonomy that was seeded; null until seeding completes                                                                                    |
+| `show_converted_totals` | bool                   | Home toggle                                                                                                                                                      |
+| `allow_emoji`           | bool, default false    | lets the web app offer emoji next to the curated icons in icon pickers; a UI preference the API does not enforce                                                 |
+| `period_rule`           | jsonb                  | the budget period rule: `{ kind: calendar }` (default), `{ kind: fixed_day, day }` or `{ kind: before_month_end, workingDays }`, validated by `periodRuleSchema` |
+| `weekend_days`          | int[], default `{0,6}` | days a period start moves away from (0 is Sunday)                                                                                                                |
 
 ### `accounts`
 
@@ -167,13 +175,76 @@ Unique on `(category_id, month, currency)`.
 | `category_id` | → categories | category to apply                                                           |
 | `priority`    | int          | lower runs first                                                            |
 
+### `budget_period_starts`
+
+| Column       | Type         | Notes                                                                       |
+| ------------ | ------------ | --------------------------------------------------------------------------- |
+| `period_key` | text         | the month that names the period, `YYYY-MM`; unique per user among live rows |
+| `starts_on`  | date         | the start moved by hand; the period before ends the day before              |
+| `deleted_at` | timestamptz? | soft delete; **Use the rule again** sets it                                 |
+
+Periods themselves are computed (`periodRange` in `packages/shared/src/lib/periods.ts`), never stored.
+
+### `recurring_series`
+
+| Column                                 | Type          | Notes                                                                  |
+| -------------------------------------- | ------------- | ---------------------------------------------------------------------- |
+| `name`                                 | text          | display name                                                           |
+| `kind`                                 | enum          | `bill`, `subscription`, `income`, `other`                              |
+| `account_id`                           | → accounts    | where it is paid from or into; its currency is copied into `currency`  |
+| `payee_id`                             | → payees?     | matched against new transactions                                       |
+| `category_id`                          | → categories? | used when recording a payment and for budgets                          |
+| `amount_minor`                         | bigint        | expected amount, signed, never 0                                       |
+| `amount_min_minor`, `amount_max_minor` | bigint?       | match range; 7.5 % either side when empty                              |
+| `cadence`, `interval`                  | enum, int     | `weekly`, `monthly` or `yearly`, every `interval` (≥ 1)                |
+| `anchor_date`, `end_date`              | date, date?   | first due date; no occurrence after the end                            |
+| `match_window_days`                    | int           | days either side of a due date that a payment may fall (default 3)     |
+| `record_mode`                          | enum          | `match_only`, or `create_pending` to create the due payment for review |
+| `source`                               | enum          | `manual` or `detected`                                                 |
+| `status`                               | enum          | `active`, `paused`, `ended`                                            |
+| `deleted_at`                           | timestamptz?  | soft delete                                                            |
+
+A paid occurrence is a transaction whose `recurring_series_id` and `recurring_due_on` are set (both or neither, `transactions_recurring_pair_check`); `transactions_recurring_occurrence_key` keeps one live payment per series and due date. Occurrences themselves are computed, never stored.
+
+### `transaction_splits`
+
+| Column           | Type           | Notes                                                                  |
+| ---------------- | -------------- | ---------------------------------------------------------------------- |
+| `transaction_id` | → transactions | the split transaction (standard only; its own `category_id` is `NULL`) |
+| `category_id`    | → categories?  | `NULL` only when its category was archived without a replacement       |
+| `amount_minor`   | bigint         | signed like the parent, never 0; the live lines add up to the parent   |
+| `memo`           | text           | optional note for the line                                             |
+| `sort_order`     | int            | display order                                                          |
+| `deleted_at`     | timestamptz?   | lines are replaced by soft-deleting the old ones                       |
+
+Reports read one row per live line through `categoryLines` (a transaction without lines reads as itself), so a split counts in several categories while balances still use the parent.
+
+### `transaction_templates`
+
+| Column                | Type          | Notes                                                                         |
+| --------------------- | ------------- | ----------------------------------------------------------------------------- |
+| `name`                | text          | unique per user among live templates                                          |
+| `kind`                | enum          | `standard` or `transfer` (the `transaction_kind` enum, `opening` refused)     |
+| `account_id`          | → accounts?   | source account; required when `amount_minor` is set                           |
+| `transfer_account_id` | → accounts?   | destination, transfers only                                                   |
+| `category_id`         | → categories? | standard templates only                                                       |
+| `payee_id`            | → payees?     | standard templates only                                                       |
+| `amount_minor`        | bigint?       | signed for standard templates, positive for transfers, `null` = ask each time |
+| `memo`                | text          | copied onto the transaction                                                   |
+| `sort_order`          | int           | manual order in Settings                                                      |
+| `last_used_at`        | timestamptz?  | set when a transaction or transfer is recorded with its `templateId`          |
+| `deleted_at`          | timestamptz?  | soft delete                                                                   |
+
+A template is not part of the ledger: it never counts in balances, reports or budgets.
+
 ## Invariants the services guarantee
 
 - Every row a user can see carries their `user_id`; cross-user ids resolve to "not found".
 - A transfer always has exactly two live legs with opposite signs in different accounts, the same `transfer_id`, no category and no payee.
 - Deleting one transfer leg soft-deletes both; editing one edits both.
 - An account with live transactions cannot change currency and cannot be deleted, only archived.
-- Archiving a category either moves its transactions to another category or leaves them uncategorised with `needs_review = true`.
+- Archiving a category either moves its transactions and split lines to another category or leaves them uncategorised with `needs_review = true` on the transaction.
+- The live lines of a split transaction add up to its amount, share its sign and number at least two; changing the amount without new lines is refused.
 - `import_id` is deterministic for a given file row (external id, or date + amount + occurrence + payee hash), so re-importing a file is a no-op. The import commit inserts with `ON CONFLICT DO NOTHING` on `transactions_account_import_key`, so committing the same preview twice also imports once.
 
 ## Legacy data

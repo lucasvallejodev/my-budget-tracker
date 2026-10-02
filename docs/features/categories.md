@@ -55,7 +55,7 @@ Turning the switch off hides the field again; categories and payees that already
 2. If it has transactions, choose what to do with them:
    - **Move transactions to** another category, or
    - **Keep uncategorized (review later)**: the rows lose their category and reappear on the [Review](review-inbox.md) page.
-3. Confirm. Archived categories disappear from pickers; **Show archived** reveals them with a **Restore** button.
+3. Confirm. Split lines follow the same choice: they move to the new category, or lose their category and send their transaction to the Review page. Archived categories disappear from pickers; **Show archived** reveals them with a **Restore** button.
 
 Groups can only be archived once they have no live categories.
 

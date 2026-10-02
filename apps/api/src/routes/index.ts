@@ -10,9 +10,11 @@ import { exchangeRatesRoutes } from './exchange-rates';
 import { healthRoutes } from './health';
 import { importsRoutes } from './imports';
 import { payeesRoutes } from './payees';
+import { recurringRoutes } from './recurring';
 import { reportsRoutes } from './reports';
 import { rulesRoutes } from './rules';
 import { settingsRoutes } from './settings';
+import { templatesRoutes } from './templates';
 import { transactionsRoutes, transfersRoutes } from './transactions';
 
 export const API_PREFIX = '/api/v1';
@@ -25,9 +27,11 @@ const AuthenticatedRoutes = [
   importsRoutes,
   meRoutes,
   payeesRoutes,
+  recurringRoutes,
   reportsRoutes,
   rulesRoutes,
   settingsRoutes,
+  templatesRoutes,
   transactionsRoutes,
   transfersRoutes,
 ];

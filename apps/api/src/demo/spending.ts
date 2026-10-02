@@ -41,6 +41,7 @@ export const MonthlyBills: readonly MonthlyItem[] = [
     amountMinor: [1299, 1299],
     category: 'Streaming',
     day: 5,
+    latestChargeMinor: 1399,
     memo: 'Standard plan',
     payee: 'Netflix',
   },
@@ -209,6 +210,42 @@ export const VariableSpending: readonly VariableItem[] = [
 export const OneOffPurchases: readonly OneOffItem[] = [
   {
     account: 'creditCard',
+    amountMinor: -109_900,
+    category: 'Electronics',
+    day: 6,
+    memo: 'New laptop',
+    monthOffset: -21,
+    payee: 'TechNest',
+  },
+  {
+    account: 'everyday',
+    amountMinor: -64_900,
+    category: 'Furniture & decor',
+    day: 18,
+    memo: 'Sofa',
+    monthOffset: -16,
+    payee: 'Nordic Home',
+  },
+  {
+    account: 'everyday',
+    amountMinor: 12_000,
+    category: 'Refunds & reimbursements',
+    day: 23,
+    memo: 'Deposit returned from the old flat',
+    monthOffset: -15,
+    payee: 'Oakwood Lettings',
+  },
+  {
+    account: 'everyday',
+    amountMinor: -9500,
+    category: 'Education',
+    day: 8,
+    memo: 'Photography workshop',
+    monthOffset: -10,
+    payee: 'City Photo School',
+  },
+  {
+    account: 'creditCard',
     amountMinor: -21_900,
     category: 'Electronics',
     day: 11,
@@ -288,6 +325,7 @@ export const UnreviewedPurchases: readonly UnreviewedItem[] = [
 ];
 
 export const MonthlyBudgets: readonly { amountMinor: number; category: string }[] = [
+  { amountMinor: 6000, category: 'Home & garden' },
   { amountMinor: 35_000, category: 'Groceries' },
   { amountMinor: 15_000, category: 'Restaurants & bars' },
   { amountMinor: 6000, category: 'Takeout & delivery' },

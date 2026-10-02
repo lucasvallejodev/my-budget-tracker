@@ -18,9 +18,14 @@ export function describeTransaction(transaction: TransactionRow) {
   );
 }
 
+export function splitLabel(transaction: TransactionRow) {
+  return `Split into ${transaction.splits.length}`;
+}
+
 export function categoryLabel(transaction: TransactionRow) {
   if (transaction.kind === 'transfer') return 'Transfer';
   if (transaction.kind === 'opening') return 'Opening balance';
+  if (transaction.splits.length) return splitLabel(transaction);
 
   return transaction.categoryName ?? 'Uncategorized';
 }

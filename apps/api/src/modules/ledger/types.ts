@@ -21,6 +21,12 @@ export type ListFilters = {
   transferId?: string;
 };
 
+export type SplitInput = {
+  amountMinor: number;
+  categoryId: string;
+  memo: string;
+};
+
 export type StandardInput = {
   accountId: string;
   amountMinor: number;
@@ -32,7 +38,10 @@ export type StandardInput = {
   needsReview?: boolean;
   originalPayee?: string | null;
   payeeId?: string | null;
+  recurring?: { dueOn: string; seriesId: string };
+  splits?: SplitInput[];
   status?: TransactionRow['status'];
+  templateId?: string;
 };
 
 export type TransferInput = {
@@ -42,6 +51,7 @@ export type TransferInput = {
   fromAccountId: string;
   memo?: string;
   status?: TransactionRow['status'];
+  templateId?: string;
   toAccountId: string;
 };
 

@@ -25,7 +25,8 @@ const main = async () => {
 
     console.log(
       `Demo account ready: ${result.email} (password from DEMO_USER_PASSWORD) with ${result.accounts} accounts, ` +
-        `${result.transactions} entries and ${result.budgets} budgets up to today.`
+        `${result.transactions} entries, ${result.budgets} budgets, ${result.series} recurring payments ` +
+        `and ${result.templates} templates up to today.`
     );
   } finally {
     await close();

@@ -1,6 +1,6 @@
 # Budgets
 
-> Summary: monthly spending limits per category and currency, compared with what the ledger recorded; the Budgets page (currency switch, summary card, category rows, spending without a budget); status that follows the pace of the month; limits suggested from recent months; deleting a limit and bringing it back.
+> Summary: monthly spending limits per category and currency, compared with what the ledger recorded; the Budgets page (currency switch, summary card, category rows, spending without a budget); status that follows the pace of the month; budget periods that start on payday and moving one period; limits suggested from recent months; deleting a limit and bringing it back.
 
 ## What a budget is
 
@@ -56,7 +56,27 @@ Status follows the pace of the month, not a fixed percentage. A budget has one o
 | **Spending too fast** | the limit is not passed yet, but today's daily rate carried to the end of the month passes it; only in the current month and from day 5 onwards |
 | **On track**          | every other case, including past months that stayed within the limit                                                                            |
 
+Recurring payments change the pace. Payments linked to a [recurring series](recurring.md) are fixed costs, so they are not extended day by day: the projection carries only the other spending forward, then adds the fixed payments already made and the recurring bills of that category still due this month. The daily allowance also keeps those bills aside, and a row with bills to come says so under its bar: "120.00 EUR of 300.00 EUR · 40% · 40.00 EUR in bills to come".
+
 Spending exactly the limit is still **On track**. Past months show no pace marker, projection or daily allowance.
+
+## Budget period
+
+Budgets follow your budget period, which can start on payday instead of the 1st. Choose the rule in **Settings › Budget period**:
+
+| Rule                                      | The period starts                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| On the 1st (calendar months), the default | on the 1st of each month                                              |
+| On a fixed day of the month               | on that day (1 to 28); on a weekend, the working day before           |
+| On the last working days of the month     | on the last working day, or a chosen number of working days before it |
+
+A period is named after the month it ends in, with its dates: with the rule "the 25th", the October budget covers 25 September to 24 October (or a day less when the 25th of October falls on a weekend). The **Weekend** choice (Saturday and Sunday, Friday and Saturday, Sunday only, or none) says which days a start moves away from.
+
+Paid on another day this time? Under **Move this period**, pick a new start for the current period only. The period before it ends the day before, so there are never gaps or overlaps, and the rule still decides the next period. **Use the rule again** undoes the move. Changing the rule recalculates every period from the ledger; nothing is deleted.
+
+The period drives the spending, pace, projection and daily allowance of every budget, the hero card, the figures and spending by group on Home, and left to spend. Analytics, the cash flow chart and the month filter of the Transactions page keep using calendar months.
+
+<!-- screenshot: Settings › Budget period with "On a fixed day of the month", Day 25, the weekend choice and the Move this period section showing October: 25 Sep to 22 Oct (docs/assets/screenshots/budget-period.png) -->
 
 ## Spending without a budget
 
@@ -65,15 +85,16 @@ Next to the category budgets, a panel lists the expense categories with spending
 - Each row has **Add** with an amount ("Add 112.00 €"), which opens the budget dialog pre-filled with that category, the currency and the amount: the three-month suggestion when there is one, otherwise this month's spending.
 - Uncategorized spending shows **Review** instead, which opens the [Review inbox](review-inbox.md).
 - The first six rows are shown; **Show N more** reveals the rest.
+- On a phone the category and the amount share the first line and the button sits below them.
 
 ## How it works
 
 - Table `budgets` with a unique key on category, month and currency; the service is `apps/api/src/modules/budgets/service.ts`.
 - Deleting (`DELETE /api/v1/budgets/:id`) sets `deleted_at`. `PUT /api/v1/budgets/:month/:categoryId/:currency` upserts by that key and revives a deleted row; `POST /api/v1/budgets/:id/restore` restores one without changing the limit. Budgets have no tab in [Deleted items](deleted-items.md).
-- `budgets.list` joins the category and group, then reads the month's spending for every currency present in one grouped query (`reports.categorySpending`, with the same `spendingWhere` predicate as the reports), keyed by currency and category. Nothing is summed across currencies, so a JPY limit is compared with JPY spending and a KWD limit with KWD spending, each in its own minor units.
+- `budgets.list` joins the category and group, then reads the month's spending for every currency present in one grouped query (`reports.categorySpending`, with the same `spendingWhere` predicate as the reports), keyed by currency and category. A [split transaction](transactions.md#split-a-transaction-between-categories) counts each line in its own category. Nothing is summed across currencies, so a JPY limit is compared with JPY spending and a KWD limit with KWD spending, each in its own minor units.
 - `copyFromPreviousMonth` copies last month's live rows into the target month, skipping archived categories and limits that already exist.
-- Pace is calculated in the browser with the user's local date, by `budgetPace` in `packages/shared/src/lib/budget-pace.ts`: the expected amount is the limit spread evenly over the days elapsed (today included, rounded down), the projection extends today's daily rate to the end of the month, and the daily allowance divides what is left by the days left (today included, rounded down). **Spending too fast** needs at least five days of data (`MIN_DAYS_FOR_PROJECTION`) so the first days of a month do not raise alarms.
+- Pace is calculated in the browser with the user's local date, by `budgetPace` in `packages/shared/src/lib/budget-pace.ts`: the expected amount is the limit spread evenly over the days elapsed (today included, rounded down), the projection extends today's daily rate of non-recurring spending to the end of the month and adds the recurring payments made and still due (`fixedSpentMinor` and `billsDueMinor` on each `BudgetRow`), and the daily allowance divides what is left after the bills still due by the days left (today included, rounded down). **Spending too fast** needs at least five days of data (`MIN_DAYS_FOR_PROJECTION`) so the first days of a month do not raise alarms.
 - The state comes from `budgetFigures(budget, today)` in `apps/web/src/components/finance/budget-status.ts`, which returns the pace, what is left and the state. `BudgetStates` holds the label, badge tone, bar tone and fill color of each state, and `BudgetStateOrder` their order; the summary card, the rows, Home and its attention strip all read them from there.
 - **Spending without a budget** reads `GET /api/v1/reports/breakdown?by=category&month=&currency=` (`useCategoryBreakdown`) and drops the categories that have a budget in that currency; the **Add** amount comes from the same suggestions as the dialog.
-- The month comes from `calendarPeriod` in `packages/shared/src/lib/periods.ts`. Budget periods that follow payday will replace it there ([Pay-cycle periods](../research/feature-opportunities.md#pay-cycle-periods)).
+- The period comes from `periodRange` in `packages/shared/src/lib/periods.ts`, applied by `apps/api/src/modules/periods/service.ts` to the rule in `user_settings.period_rule`, the `user_settings.weekend_days` and the moves in `budget_period_starts`. `budgets.list` returns `periodFrom` and `periodTo` on each row, and the web app builds the pace from them (`budgetPeriodOf` in `finance/budget-status.ts`). Endpoints: `GET`, `PUT` and `DELETE /api/v1/periods/:month`.
 - Suggestions come from `GET /api/v1/budgets/suggestions?month=`: `budgets.suggestions` asks `reports.categorySpendingBetween` for each expense category's spending in the three months before, divides by the months that had spending in that category, and rounds up to whole units (`roundUpToWholeUnits` in `packages/shared/src/lib/money.ts`). Archived categories are skipped.

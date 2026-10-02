@@ -61,8 +61,10 @@ describe('sign-up and sign-in', () => {
     expect((await client.request('GET', '/settings')).json()).toEqual({
       allowEmoji: false,
       locale: 'en-US',
+      periodRule: { kind: 'calendar' },
       primaryCurrency: 'EUR',
       showConvertedTotals: false,
+      weekendDays: [0, 6],
     });
     expect((await client.request('GET', '/category-groups')).json().items.length).toBeGreaterThan(
       0

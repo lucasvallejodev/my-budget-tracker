@@ -7,7 +7,13 @@ import { getPercentage } from '@/lib/math';
 import { budgetPace } from '@coinkeeper/shared/lib/budget-pace';
 import { calendarPeriod, periodProgress } from '@coinkeeper/shared/lib/periods';
 
-import { type BudgetFigures, budgetState, BudgetStateOrder, BudgetStates } from '../budget-status';
+import {
+  type BudgetFigures,
+  budgetPeriodOf,
+  budgetState,
+  BudgetStateOrder,
+  BudgetStates,
+} from '../budget-status';
 import { dayMonthLabel } from '../transaction-labels';
 import { monthLabel } from '../use-finance-data';
 
@@ -21,9 +27,11 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
 export const monthTotals = (figures: BudgetFigures[], month: string, today: string) => {
   const limitMinor = sumOf(figures, item => item.budget.amountMinor);
   const spentMinor = sumOf(figures, item => item.budget.spentMinor);
-  const period = calendarPeriod(month);
+  const period = figures[0] ? budgetPeriodOf(figures[0].budget) : calendarPeriod(month);
 
   const pace = budgetPace({
+    billsDueMinor: sumOf(figures, item => item.budget.billsDueMinor),
+    fixedSpentMinor: sumOf(figures, item => item.budget.fixedSpentMinor),
     limitMinor,
     period,
     spentMinor,

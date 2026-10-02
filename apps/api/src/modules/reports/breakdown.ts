@@ -5,8 +5,8 @@ import type { CategorySlice, GroupSlice } from '@coinkeeper/shared/schema/report
 
 import { rowsOf } from '../batch';
 import { Db } from '../db';
-import { spendingWhere } from './predicate';
-import { monthsEndingAt } from './range';
+import { categoryLines, spendingWhere } from './predicate';
+import { monthsEndingAt, type MonthSpan } from './range';
 
 const UncategorizedLabel = 'Uncategorized';
 const UncategorizedIcon = 'CircleHelp';
@@ -14,6 +14,7 @@ const MonthOfTransaction = sql`to_char(date_trunc('month', t.date), 'YYYY-MM')`;
 
 export type BreakdownOptions = {
   months?: number;
+  span?: MonthSpan;
   split?: boolean;
 };
 
@@ -46,7 +47,7 @@ export const breakdownByCategory = async (
   month: string,
   { currency, ...options }: BreakdownOptions & { currency: string }
 ): Promise<(CategorySlice & MonthColumn)[]> => {
-  const { end, start } = monthsEndingAt(month, options.months);
+  const { end, start } = options.span ?? monthsEndingAt(month, options.months);
   const split = splitClauses(options.split);
 
   const rows = await rowsOf<
@@ -63,7 +64,7 @@ export const breakdownByCategory = async (
     db,
     sql`
     SELECT ${split.select}c.id AS category_id, c.name AS category_name, c.icon, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
-    FROM transactions t
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     LEFT JOIN categories c ON c.id = t.category_id
     LEFT JOIN category_groups g ON g.id = c.group_id
@@ -92,7 +93,7 @@ export const breakdownByGroup = async (
   month: string,
   options: BreakdownOptions = {}
 ): Promise<(GroupSlice & MonthColumn)[]> => {
-  const { end, start } = monthsEndingAt(month, options.months);
+  const { end, start } = options.span ?? monthsEndingAt(month, options.months);
   const split = splitClauses(options.split);
 
   const rows = await rowsOf<
@@ -107,7 +108,7 @@ export const breakdownByGroup = async (
     db,
     sql`
     SELECT ${split.select}t.currency, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
-    FROM transactions t
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     LEFT JOIN categories c ON c.id = t.category_id
     LEFT JOIN category_groups g ON g.id = c.group_id

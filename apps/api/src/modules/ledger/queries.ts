@@ -11,6 +11,7 @@ import type { PageResponse } from '@coinkeeper/shared/schema/common';
 
 import { notFound, ServiceError, toIsoTimestamp } from '../db';
 import type { Db, DbOrTx } from '../db';
+import { splitsByTransaction } from './splits';
 import type { ListFilters, TransactionRow } from './types';
 
 type CursorKey = {
@@ -68,6 +69,9 @@ const dateConditions = (filters: ListFilters): SQL[] => {
   return conditions;
 };
 
+const splitLineMatches = (condition: SQL): SQL =>
+  sql`EXISTS (SELECT 1 FROM transaction_splits split_line LEFT JOIN categories split_category ON split_category.id = split_line.category_id WHERE split_line.transaction_id = ${transactions.id} AND split_line.deleted_at IS NULL AND ${condition})`;
+
 const searchCondition = (search: string): SQL | undefined => {
   const term = `%${escapeLike(search)}%`;
 
@@ -75,9 +79,16 @@ const searchCondition = (search: string): SQL | undefined => {
     ilike(transactions.memo, term),
     ilike(payees.name, term),
     ilike(transactions.originalPayee, term),
-    ilike(categories.name, term)
+    ilike(categories.name, term),
+    splitLineMatches(sql`(split_category.name ILIKE ${term} OR split_line.memo ILIKE ${term})`)
   );
 };
+
+const categoryCondition = (categoryId: string): SQL | undefined =>
+  or(
+    eq(transactions.categoryId, categoryId),
+    splitLineMatches(sql`split_line.category_id = ${categoryId}`)
+  );
 
 const deletionCondition = (filters: ListFilters): SQL | undefined => {
   if (filters.includeDeleted) return undefined;
@@ -99,7 +110,7 @@ const buildListWhere = (userId: string, filters: ListFilters): SQL | undefined =
   ];
 
   if (filters.accountId) conditions.push(eq(transactions.accountId, filters.accountId));
-  if (filters.categoryId) conditions.push(eq(transactions.categoryId, filters.categoryId));
+  if (filters.categoryId) conditions.push(categoryCondition(filters.categoryId));
   if (filters.currency) conditions.push(eq(transactions.currency, filters.currency));
   if (filters.needsReview) conditions.push(eq(transactions.needsReview, true));
   if (filters.kind) conditions.push(eq(transactions.kind, filters.kind));
@@ -153,6 +164,7 @@ const listRows = async (
       payeeIcon: payees.icon,
       payeeId: transactions.payeeId,
       payeeName: payees.name,
+      recurringSeriesId: transactions.recurringSeriesId,
       status: transactions.status,
       transferId: transactions.transferId,
     })
@@ -170,10 +182,17 @@ const listRows = async (
     .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
     .limit(limit);
 
+  const lines = await splitsByTransaction(
+    db,
+    userId,
+    rows.map(row => row.id)
+  );
+
   return rows.map(row => ({
     ...row,
     amountMinor: Number(row.amountMinor),
     deletedAt: toIsoTimestamp(row.deletedAt),
+    splits: lines.get(row.id) ?? [],
   }));
 };
 

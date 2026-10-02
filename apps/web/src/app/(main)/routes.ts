@@ -1,4 +1,5 @@
 import {
+  CalendarClock,
   ChartNoAxesColumn,
   House,
   Inbox,
@@ -53,6 +54,12 @@ export const NavigationSections: RouteSection[] = [
         id: 5,
         name: 'Budgets',
         path: '/budgets',
+      },
+      {
+        icon: CalendarClock,
+        id: 9,
+        name: 'Upcoming',
+        path: '/upcoming',
       },
       {
         icon: ChartNoAxesColumn,

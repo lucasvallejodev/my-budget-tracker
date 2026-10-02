@@ -15,8 +15,8 @@ import { createFxService } from '../fx/service';
 import { monthRange } from '../ledger/service';
 import { monthEndBalances } from './balances';
 import { breakdownByCategory, breakdownByGroup, type BreakdownOptions } from './breakdown';
-import { spendingWhere } from './predicate';
-import { monthsEndingAt } from './range';
+import { categoryLines, spendingWhere } from './predicate';
+import { monthsEndingAt, type MonthSpan } from './range';
 import { spendingByAccount, spendingByPayee } from './rankings';
 
 const DEFAULT_CASH_FLOW_MONTHS = 8;
@@ -24,24 +24,29 @@ const DEFAULT_CASH_FLOW_MONTHS = 8;
 type CategorySpending = {
   categoryId: string;
   currency: string;
+  fixedMinor: number;
   spentMinor: number;
 };
 
 const categorySpending = async (
   db: Db,
   userId: string,
-  month: string,
+  { end, start }: MonthSpan,
   currencies: string[]
 ): Promise<CategorySpending[]> => {
   if (!currencies.length) return [];
 
-  const { end, start } = monthRange(month);
-
-  const rows = await rowsOf<{ category_id: string; currency: string; spent_minor: string }>(
+  const rows = await rowsOf<{
+    category_id: string;
+    currency: string;
+    fixed_minor: string;
+    spent_minor: string;
+  }>(
     db,
     sql`
-    SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor
-    FROM transactions t
+    SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor,
+      COALESCE(-SUM(t.amount_minor) FILTER (WHERE t.recurring_series_id IS NOT NULL), 0) AS fixed_minor
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     JOIN categories c ON c.id = t.category_id
     JOIN category_groups g ON g.id = c.group_id
@@ -54,11 +59,12 @@ const categorySpending = async (
   return rows.map(row => ({
     categoryId: row.category_id,
     currency: row.currency,
+    fixedMinor: Number(row.fixed_minor),
     spentMinor: Number(row.spent_minor),
   }));
 };
 
-type CategorySpendingOverMonths = CategorySpending & { months: number };
+type CategorySpendingOverMonths = Omit<CategorySpending, 'fixedMinor'> & { months: number };
 
 const categorySpendingBetween = async (
   db: Db,
@@ -76,7 +82,7 @@ const categorySpendingBetween = async (
     sql`
     SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor,
       COUNT(DISTINCT date_trunc('month', t.date)) AS months
-    FROM transactions t
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     JOIN categories c ON c.id = t.category_id
     JOIN category_groups g ON g.id = c.group_id
@@ -126,7 +132,7 @@ export const createReportService = (db: Db) => {
         SELECT to_char(date_trunc('month', t.date), 'YYYY-MM') AS month, t.currency,
           COALESCE(SUM(t.amount_minor) FILTER (WHERE g.kind = 'income' OR (g.kind IS NULL AND t.amount_minor > 0)), 0) AS income_minor,
           COALESCE(-SUM(t.amount_minor) FILTER (WHERE g.kind = 'expense' OR (g.kind IS NULL AND t.amount_minor < 0)), 0) AS spending_minor
-        FROM transactions t
+        FROM ${categoryLines} t
         JOIN accounts a ON a.id = t.account_id
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN category_groups g ON g.id = c.group_id
@@ -143,8 +149,8 @@ export const createReportService = (db: Db) => {
       }));
     },
 
-    categorySpending: (userId: string, month: string, currencies: string[]) =>
-      categorySpending(db, userId, month, currencies),
+    categorySpending: (userId: string, span: MonthSpan, currencies: string[]) =>
+      categorySpending(db, userId, span, currencies),
 
     categorySpendingBetween: (userId: string, from: string, to: string) =>
       categorySpendingBetween(db, userId, from, to),
@@ -208,8 +214,12 @@ export const createReportService = (db: Db) => {
     monthEndBalances: (userId: string, month: string, months?: number) =>
       monthEndBalances(db, userId, month, months),
 
-    async monthlyTotals(userId: string, month: string): Promise<CurrencyTotals[]> {
-      const { end, start } = monthRange(month);
+    async monthlyTotals(
+      userId: string,
+      month: string,
+      span?: MonthSpan
+    ): Promise<CurrencyTotals[]> {
+      const { end, start } = span ?? monthRange(month);
 
       const rows = await rowsOf<{
         currency: string;
@@ -221,7 +231,7 @@ export const createReportService = (db: Db) => {
         SELECT t.currency,
           COALESCE(SUM(t.amount_minor) FILTER (WHERE g.kind = 'income' OR (g.kind IS NULL AND t.amount_minor > 0)), 0) AS income_minor,
           COALESCE(-SUM(t.amount_minor) FILTER (WHERE g.kind = 'expense' OR (g.kind IS NULL AND t.amount_minor < 0)), 0) AS spending_minor
-        FROM transactions t
+        FROM ${categoryLines} t
         JOIN accounts a ON a.id = t.account_id
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN category_groups g ON g.id = c.group_id

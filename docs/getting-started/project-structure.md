@@ -37,7 +37,7 @@ apps/api/src/
 ├─ plugins/                security.ts, authentication.ts, error-handler.ts, openapi.ts, context.ts
 ├─ routes/                 One Fastify plugin per resource, index.ts (public and authenticated scopes), inputs.ts, responses.ts, *.test.ts
 ├─ modules/                Domain services (business rules and SQL), one folder per domain
-│  ├─ accounts/ budgets/ categories/ fx/ import/ ledger/ payees/ reports/ rules/
+│  ├─ accounts/ budgets/ categories/ fx/ import/ ledger/ payees/ recurring/ reports/ rules/ templates/
 │  ├─ services.ts          createServices(db): builds every service on one database handle
 │  ├─ db.ts                Db type, ServiceError, notFound(), conflict()
 │  ├─ errors.ts            PostgreSQL unique and foreign-key violation checks

@@ -24,8 +24,10 @@ import type {
 } from '@coinkeeper/shared/schema/exchange-rates';
 import type { ColumnMapping, ImportCommitResult, Preview } from '@coinkeeper/shared/schema/imports';
 import type { PayeeFormValues, PayeePatchValues, PayeeRow } from '@coinkeeper/shared/schema/payees';
+import type { RecurringFormValues, RecurringSeriesRow } from '@coinkeeper/shared/schema/recurring';
 import type { RuleFormValues, RuleRow } from '@coinkeeper/shared/schema/rules';
-import type { SettingsFormValues, UserSettings } from '@coinkeeper/shared/schema/settings';
+import type { Period, SettingsFormValues, UserSettings } from '@coinkeeper/shared/schema/settings';
+import type { TemplateFormValues, TemplateRow } from '@coinkeeper/shared/schema/templates';
 import type {
   StandardTransactionValues,
   TransactionRow,
@@ -173,3 +175,45 @@ export const deleteBudget = (id: string) => apiRequest<void>('DELETE', `/budgets
 
 export const copyBudgets = (month: string) =>
   apiRequest<{ copied: number }>('POST', '/budgets/copy-previous-month', { month });
+
+export const createTemplate = (values: TemplateFormValues) =>
+  apiRequest<TemplateRow>('POST', '/transaction-templates', values);
+
+export const updateTemplate = (id: string, values: TemplateFormValues) =>
+  apiRequest<TemplateRow>('PUT', `/transaction-templates/${id}`, values);
+
+export const deleteTemplate = (id: string) =>
+  apiRequest<void>('DELETE', `/transaction-templates/${id}`);
+
+export const restoreTemplate = (id: string) =>
+  apiRequest<TemplateRow>('POST', `/transaction-templates/${id}/restore`);
+
+export const reorderTemplates = (ids: string[]) =>
+  apiRequest<void>('PUT', '/transaction-templates/order', { ids });
+
+export const createSeries = (values: RecurringFormValues) =>
+  apiRequest<RecurringSeriesRow>('POST', '/recurring-series', values);
+
+export const updateSeries = (id: string, values: RecurringFormValues) =>
+  apiRequest<RecurringSeriesRow>('PUT', `/recurring-series/${id}`, values);
+
+export const deleteSeries = (id: string) => apiRequest<void>('DELETE', `/recurring-series/${id}`);
+
+export const restoreSeries = (id: string) =>
+  apiRequest<RecurringSeriesRow>('POST', `/recurring-series/${id}/restore`);
+
+export const recordDuePayments = (today: string) =>
+  apiRequest<{ created: number }>('POST', '/recurring-series/record-due', { today });
+
+export const linkOccurrence = (seriesId: string, dueOn: string, transactionId: string) =>
+  apiRequest<TransactionRow>('PUT', `/recurring-series/${seriesId}/occurrences/${dueOn}`, {
+    transactionId,
+  });
+
+export const unlinkOccurrence = (seriesId: string, dueOn: string) =>
+  apiRequest<void>('DELETE', `/recurring-series/${seriesId}/occurrences/${dueOn}`);
+
+export const movePeriod = (month: string, startsOn: string) =>
+  apiRequest<Period>('PUT', `/periods/${month}`, { startsOn });
+
+export const resetPeriod = (month: string) => apiRequest<Period>('DELETE', `/periods/${month}`);

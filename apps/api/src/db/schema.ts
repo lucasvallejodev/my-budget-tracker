@@ -7,8 +7,8 @@ import {
   date,
   index,
   integer,
+  jsonb,
   numeric,
-  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -16,34 +16,27 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
+import { DefaultWeekendDays, type PeriodRuleValues } from '@coinkeeper/shared/schema/settings';
+
 import {
-  AccountClassificationValues,
-  AccountTypeValues,
-  CategoryKindValues,
-  TransactionKindValues,
-  TransactionStatusValues,
-} from '@coinkeeper/shared/schema/enums';
+  accountClassification,
+  accountType,
+  categoryKind,
+  createdAt,
+  deletedAt,
+  id,
+  transactionKind,
+  transactionStatus,
+  updatedAt,
+  userId,
+} from './columns';
+import { recurringSeries } from './planning';
+
+export * from './columns';
+export * from './planning';
+export type * from './types';
 
 const DEFAULT_MINOR_UNITS = 2;
-
-export const accountType = pgEnum('account_type', AccountTypeValues);
-export const accountClassification = pgEnum('account_classification', AccountClassificationValues);
-export const categoryKind = pgEnum('category_kind', CategoryKindValues);
-export const transactionKind = pgEnum('transaction_kind', TransactionKindValues);
-export const transactionStatus = pgEnum('transaction_status', TransactionStatusValues);
-
-const id = () =>
-  text('id')
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID());
-
-const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
-
-const updatedAt = () =>
-  timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date());
 
 export const users = pgTable(
   'users',
@@ -58,13 +51,6 @@ export const users = pgTable(
   },
   columns => [uniqueIndex('users_email_key').on(columns.email)]
 );
-
-const userId = () =>
-  text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' });
-
-const deletedAt = () => timestamp('deleted_at', { withTimezone: true });
 
 export const sessions = pgTable(
   'sessions',
@@ -102,6 +88,11 @@ export const userSettings = pgTable('user_settings', {
     .references(() => currencies.code),
   allowEmoji: boolean('allow_emoji').notNull().default(false),
   locale: text('locale').notNull().default('en-US'),
+  periodRule: jsonb('period_rule')
+    .$type<PeriodRuleValues>()
+    .notNull()
+    .default({ kind: 'calendar' }),
+  weekendDays: integer('weekend_days').array().notNull().default(DefaultWeekendDays),
   seededVersion: integer('seeded_version'),
   showConvertedTotals: boolean('show_converted_totals').notNull().default(false),
   createdAt: createdAt(),
@@ -210,6 +201,8 @@ export const transactions = pgTable(
     memo: text('memo').notNull().default(''),
     importId: text('import_id'),
     originalPayee: text('original_payee'),
+    recurringSeriesId: text('recurring_series_id').references(() => recurringSeries.id),
+    recurringDueOn: date('recurring_due_on', { mode: 'string' }),
     deletedAt: deletedAt(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -233,6 +226,13 @@ export const transactions = pgTable(
       'transactions_transfer_kind_check',
       sql`(${columns.kind} = 'transfer') = (${columns.transferId} IS NOT NULL)`
     ),
+    check(
+      'transactions_recurring_pair_check',
+      sql`(${columns.recurringSeriesId} IS NULL) = (${columns.recurringDueOn} IS NULL)`
+    ),
+    uniqueIndex('transactions_recurring_occurrence_key')
+      .on(columns.recurringSeriesId, columns.recurringDueOn)
+      .where(sql`${columns.recurringSeriesId} IS NOT NULL AND ${columns.deletedAt} IS NULL`),
   ]
 );
 
@@ -311,14 +311,3 @@ export const transactionRelations = relations(transactions, ({ one }) => ({
   category: one(categories, { fields: [transactions.categoryId], references: [categories.id] }),
   payee: one(payees, { fields: [transactions.payeeId], references: [payees.id] }),
 }));
-
-export type Currency = typeof currencies.$inferSelect;
-export type UserSettings = typeof userSettings.$inferSelect;
-export type Account = typeof accounts.$inferSelect;
-export type CategoryGroup = typeof categoryGroups.$inferSelect;
-export type Category = typeof categories.$inferSelect;
-export type Payee = typeof payees.$inferSelect;
-export type Transaction = typeof transactions.$inferSelect;
-export type ExchangeRate = typeof exchangeRates.$inferSelect;
-export type Budget = typeof budgets.$inferSelect;
-export type Rule = typeof rules.$inferSelect;

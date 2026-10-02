@@ -60,3 +60,24 @@ export const accountPatchSchema = accountFormSchema
 export type AccountPatchValues = z.infer<typeof accountPatchSchema>;
 
 export const accountListQuerySchema = includeArchivedQuerySchema.extend(deletedQuerySchema.shape);
+
+export const DEFAULT_PROJECTION_DAYS = 30;
+export const MAX_PROJECTION_DAYS = 92;
+
+export const projectionQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(MAX_PROJECTION_DAYS).optional(),
+  today: isoDateSchema.optional(),
+});
+
+export const accountProjectionSchema = z.object({
+  accountId: z.string(),
+  balanceMinor: z.number().int(),
+  currency: z.string(),
+  lowestMinor: z.number().int(),
+  lowestOn: z.string().nullable(),
+  projectedMinor: z.number().int(),
+  scheduledCount: z.number().int(),
+  until: z.string(),
+});
+
+export type AccountProjection = z.infer<typeof accountProjectionSchema>;

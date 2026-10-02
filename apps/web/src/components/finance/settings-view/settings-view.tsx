@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Button, Cluster, Notice, Page, PageHeading, Panel, Text } from '@/components/ui';
 import { useHydrated } from '@/lib/hydration';
 
+import { BudgetPeriodSettings } from '../budget-period-settings';
 import { useCurrentUser } from '../use-finance-data';
 import { EmojiPreference, ProfileSettings, SecuritySettings } from './settings-panels';
 
@@ -15,8 +16,10 @@ const Sections = [
   // keep order
   { label: 'Profile', value: 'profile' },
   { label: 'Categories', value: 'categories' },
+  { label: 'Budget period', value: 'period' },
   { label: 'Currencies', value: 'currencies' },
   { label: 'Rules', value: 'rules' },
+  { label: 'Templates', value: 'templates' },
   { label: 'Security', value: 'security' },
   { label: 'Deleted items', value: 'deleted' },
 ];
@@ -61,7 +64,14 @@ const LinkSections = [
   },
   {
     description:
-      'Deleted transactions, transfers, accounts, rules and exchange rates are kept. Review them and bring any of them back.',
+      'Save the transactions you record often, such as coffee, rent or a monthly transfer, and fill the form in one tap.',
+    links: [{ href: '/settings/templates', label: 'Manage templates' }],
+    title: 'Templates',
+    value: 'templates',
+  },
+  {
+    description:
+      'Deleted transactions, transfers, accounts, rules, templates and exchange rates are kept. Review them and bring any of them back.',
     links: [{ href: '/settings/deleted', label: 'Open deleted items' }],
     title: 'Deleted items',
     value: 'deleted',
@@ -93,7 +103,7 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
     <Page>
       <PageHeading
         title="Settings"
-        description="Your profile, categories, currencies, rules and security."
+        description="Your profile, categories, budget period, currencies, rules, templates and security."
       />
       {demo && <Notice>Component preview — sample account information.</Notice>}
       <Tabs.Root defaultValue="profile" className="settings-view" orientation="vertical">
@@ -112,6 +122,13 @@ export function SettingsView({ demo = false }: { demo?: boolean }) {
           {LinkSections.map(section => (
             <LinkSection key={section.title} demo={demo} section={section} />
           ))}
+          <Tabs.Content value="period">
+            {demo ? (
+              <Notice>Component preview — no budget period.</Notice>
+            ) : (
+              <BudgetPeriodSettings />
+            )}
+          </Tabs.Content>
           <Tabs.Content value="security">
             <SecuritySettings demo={demo} />
           </Tabs.Content>

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { SampleTransactions } from '../sample-data';
@@ -113,5 +113,50 @@ describe('TransactionTable', () => {
     expect(
       screen.getByRole('button', { name: 'Category for MKTPLACE*7731: Categorize' })
     ).toBeTruthy();
+  });
+
+  it('folds split lines into a sub-list that opens with their categories and amounts', () => {
+    renderTable([
+      {
+        ...SampleTransactions[0],
+        categoryId: null,
+        id: 'split',
+        needsReview: false,
+        splits: [
+          {
+            amountMinor: -500,
+            categoryIcon: null,
+            categoryId: 'food',
+            categoryName: 'Groceries',
+            groupColor: null,
+            id: 'line-1',
+            memo: '',
+          },
+          {
+            amountMinor: -250,
+            categoryIcon: null,
+            categoryId: 'home',
+            categoryName: 'Household',
+            groupColor: null,
+            id: 'line-2',
+            memo: '',
+          },
+        ],
+      },
+    ]);
+
+    const toggle = screen.getByRole('button', { name: 'Split into 2' });
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('list', { name: 'Split into 2 categories' })).toBeNull();
+
+    fireEvent.click(toggle);
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('list', { name: 'Split into 2 categories' })).toBeTruthy();
+
+    expect(screen.getByText('Groceries').closest('li')?.textContent).toBe('Groceries-$5.00');
+    expect(screen.getByText('Household').closest('li')?.textContent).toBe('Household-$2.50');
+    expect(screen.queryByRole('button', { name: /Categorize/ })).toBeNull();
   });
 });

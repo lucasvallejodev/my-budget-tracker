@@ -1,6 +1,6 @@
 'use client';
 
-import { Control, FieldValues } from 'react-hook-form';
+import { Control, FieldValues, Path } from 'react-hook-form';
 
 import {
   FormControl,
@@ -11,7 +11,6 @@ import {
   FormLabel,
   TextField,
 } from '@/components/ui';
-import { StandardTransactionValues } from '@coinkeeper/shared/schema/transaction';
 
 import { AccountPicker } from '../account-picker';
 import { CategoryPicker } from '../category-picker';
@@ -50,16 +49,24 @@ export function AccountField<T extends FieldValues>({
   );
 }
 
-type StandardFieldProps = { control: Control<StandardTransactionValues> };
+type ReferenceValues = FieldValues & {
+  categoryId?: string;
+  payeeId?: string;
+};
 
-export function PayeeField({
+type StandardFieldProps<T extends ReferenceValues> = { control: Control<T> };
+
+const PayeeName = 'payeeId';
+const CategoryName = 'categoryId';
+
+export function PayeeField<T extends ReferenceValues>({
   control,
   onSelect,
-}: StandardFieldProps & { onSelect: (payeeId: string) => void }) {
+}: StandardFieldProps<T> & { onSelect: (payeeId: string) => void }) {
   return (
     <FormField
       control={control}
-      name="payeeId"
+      name={PayeeName as Path<T>}
       render={({ field }) => (
         <FormItem>
           <FormLabel>Payee</FormLabel>
@@ -79,14 +86,14 @@ export function PayeeField({
   );
 }
 
-export function CategoryField({
+export function CategoryField<T extends ReferenceValues>({
   control,
   kind,
-}: StandardFieldProps & { kind: 'expense' | 'income' }) {
+}: StandardFieldProps<T> & { kind: 'expense' | 'income' }) {
   return (
     <FormField
       control={control}
-      name="categoryId"
+      name={CategoryName as Path<T>}
       render={({ field }) => (
         <FormItem>
           <FormLabel>Category</FormLabel>

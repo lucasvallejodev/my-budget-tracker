@@ -39,6 +39,7 @@ import {
 import { BalanceSummary } from './balance-summary';
 import { CurrencyTotals } from './currency-totals';
 import { NetWorthTrend } from './net-worth-trend';
+import { ProjectedBalances } from './projected-balances';
 
 const BalanceHistoryMonths = 13;
 
@@ -75,6 +76,7 @@ function AccountsContent({
       </Stack>
       <Stack>
         <BalanceSummary accounts={active} currency={currency} />
+        <ProjectedBalances accounts={active} />
         <CurrencyTotals accounts={active} converted={summary?.converted} />
       </Stack>
     </Columns>

@@ -24,7 +24,9 @@ type OwnerIds = {
   groupId: string;
   payeeId: string;
   ruleId: string;
+  seriesId: string;
   sessionId: string;
+  templateId: string;
   transactionId: string;
   transferId: string;
 };
@@ -34,6 +36,7 @@ type IntruderIds = {
   categoryId: string;
   groupId: string;
   savingsId: string;
+  seriesId: string;
   transactionId: string;
 };
 
@@ -77,6 +80,7 @@ const PublicOperations = new Set([
 const PLACEHOLDER_ID = '00000000-0000-4000-8000-000000000000';
 const PATH_PARAMETER_START = '{';
 const BUDGET_MONTH = '2026-09';
+const SERIES_DUE_ON = '2026-09-15';
 
 const RATE_KEY = {
   base: 'USD',
@@ -284,6 +288,62 @@ const ForeignCases: ForeignCase[] = [
     path: '/api/v1/rules/{id}/restore',
   },
   {
+    body: ({ intruder }) => ({
+      accountId: intruder.accountId,
+      amount: '1',
+      anchorDate: SERIES_DUE_ON,
+      cadence: 'monthly',
+      interval: 1,
+      kind: 'bill',
+      name: 'Planted',
+      recordMode: 'match_only',
+    }),
+    method: 'put',
+    params: owner => ({ id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}',
+  },
+  {
+    method: 'delete',
+    params: owner => ({ id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}',
+  },
+  {
+    method: 'post',
+    params: owner => ({ id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}/restore',
+  },
+  {
+    body: ({ intruder }) => ({ transactionId: intruder.transactionId }),
+    method: 'put',
+    params: owner => ({ dueOn: SERIES_DUE_ON, id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}/occurrences/{dueOn}',
+  },
+  {
+    method: 'delete',
+    params: owner => ({ dueOn: SERIES_DUE_ON, id: owner.seriesId }),
+    path: '/api/v1/recurring-series/{id}/occurrences/{dueOn}',
+  },
+  {
+    body: () => ({
+      direction: 'expense',
+      kind: 'standard',
+      name: 'Taken over',
+    }),
+    method: 'put',
+    params: owner => ({ id: owner.templateId }),
+    path: '/api/v1/transaction-templates/{id}',
+  },
+  {
+    method: 'delete',
+    params: owner => ({ id: owner.templateId }),
+    path: '/api/v1/transaction-templates/{id}',
+  },
+  {
+    method: 'post',
+    params: owner => ({ id: owner.templateId }),
+    path: '/api/v1/transaction-templates/{id}/restore',
+  },
+  {
     method: 'get',
     params: owner => ({ id: owner.transactionId }),
     path: '/api/v1/transactions/{id}',
@@ -343,6 +403,13 @@ const ForeignIdExemptions = new Map([
     'put /api/v1/exchange-rates/{base}/{quote}/{date}',
     'an upsert by natural key; "keeps upserts by natural key private" below covers it',
   ],
+  ...['get', 'put', 'delete'].map(
+    method =>
+      [
+        `${method} /api/v1/periods/{month}`,
+        'a month, not an id: each user only ever reads and moves their own periods; "keeps moved periods private" below covers it',
+      ] as const
+  ),
 ]);
 
 const ForeignBodyCases: ForeignBodyCase[] = [
@@ -420,6 +487,99 @@ const ForeignBodyCases: ForeignBodyCase[] = [
     path: () => '/rules/order',
   },
   {
+    body: ({ intruder, owner }) => ({
+      accountId: intruder.accountId,
+      amount: '10',
+      date: '2026-09-10',
+      direction: 'expense',
+      splits: [
+        { amount: '5', categoryId: intruder.categoryId },
+        { amount: '5', categoryId: owner.categoryId },
+      ],
+    }),
+    method: 'post',
+    name: 'a split line in the owner category',
+    path: () => '/transactions',
+  },
+  {
+    body: ({ owner }) => ({
+      accountId: owner.accountId,
+      amount: '1',
+      anchorDate: SERIES_DUE_ON,
+      cadence: 'monthly',
+      interval: 1,
+      kind: 'bill',
+      name: 'Planted',
+      recordMode: 'match_only',
+    }),
+    method: 'post',
+    name: 'a recurring series on the owner account',
+    path: () => '/recurring-series',
+  },
+  {
+    body: ({ intruder, owner }) => ({
+      accountId: intruder.accountId,
+      amount: '1',
+      anchorDate: SERIES_DUE_ON,
+      cadence: 'monthly',
+      categoryId: owner.categoryId,
+      interval: 1,
+      kind: 'bill',
+      name: 'Planted',
+      recordMode: 'match_only',
+    }),
+    method: 'post',
+    name: 'a recurring series in the owner category',
+    path: () => '/recurring-series',
+  },
+  {
+    body: ({ owner }) => ({ transactionId: owner.transactionId }),
+    method: 'put',
+    name: 'linking an owner transaction to an own series',
+    path: ({ intruder }) => `/recurring-series/${intruder.seriesId}/occurrences/${SERIES_DUE_ON}`,
+  },
+  {
+    body: ({ intruder, owner }) => ({
+      accountId: intruder.accountId,
+      amount: '1',
+      date: SERIES_DUE_ON,
+      direction: 'expense',
+      recurring: { dueOn: SERIES_DUE_ON, seriesId: owner.seriesId },
+    }),
+    method: 'post',
+    name: 'paying an owner series occurrence',
+    path: () => '/transactions',
+  },
+  {
+    body: ({ owner }) => ({ ids: [owner.templateId] }),
+    method: 'put',
+    name: 'reordering the owner templates',
+    path: () => '/transaction-templates/order',
+  },
+  {
+    body: ({ owner }) => ({
+      accountId: owner.accountId,
+      amount: '5',
+      direction: 'expense',
+      kind: 'standard',
+      name: 'Planted',
+    }),
+    method: 'post',
+    name: 'a template on the owner account',
+    path: () => '/transaction-templates',
+  },
+  {
+    body: ({ owner }) => ({
+      categoryId: owner.categoryId,
+      direction: 'expense',
+      kind: 'standard',
+      name: 'Planted',
+    }),
+    method: 'post',
+    name: 'a template in the owner category',
+    path: () => '/transaction-templates',
+  },
+  {
     body: ({ owner }) => ({
       groupId: owner.groupId,
       icon: 'Activity',
@@ -478,6 +638,11 @@ const StatePaths = [
   `/budgets?month=${BUDGET_MONTH}&deleted=true`,
   '/exchange-rates',
   '/exchange-rates?deleted=true',
+  '/transaction-templates',
+  '/transaction-templates?deleted=true',
+  '/recurring-series',
+  '/recurring-series?deleted=true',
+  '/periods/2026-10',
 ];
 
 let context: TestContext;
@@ -535,6 +700,22 @@ const createExpense = async (client: TestClient, accountId: string) =>
     )
   ).id;
 
+const createSeries = async (client: TestClient, accountId: string) =>
+  (
+    await created<{ id: string }>(
+      client.request('POST', '/recurring-series', {
+        accountId,
+        amount: '50',
+        anchorDate: SERIES_DUE_ON,
+        cadence: 'monthly',
+        interval: 1,
+        kind: 'bill',
+        name: 'Phone',
+        recordMode: 'match_only',
+      })
+    )
+  ).id;
+
 const seedOwner = async (owner: TestClient): Promise<OwnerIds> => {
   const { checkingId, savingsId } = await createAccounts(owner);
   const { categoryId, groupId } = await firstCategory(owner);
@@ -567,6 +748,16 @@ const seedOwner = async (owner: TestClient): Promise<OwnerIds> => {
 
   const sessions = await created<{ items: { id: string }[] }>(owner.request('GET', '/me/sessions'));
 
+  const template = await created<{ id: string }>(
+    owner.request('POST', '/transaction-templates', {
+      accountId: checkingId,
+      amount: '2.50',
+      direction: 'expense',
+      kind: 'standard',
+      name: 'Coffee',
+    })
+  );
+
   return {
     accountId: checkingId,
     budgetId: budget.id,
@@ -574,7 +765,9 @@ const seedOwner = async (owner: TestClient): Promise<OwnerIds> => {
     groupId,
     payeeId: payee.id,
     ruleId: rule.id,
+    seriesId: await createSeries(owner, checkingId),
     sessionId: sessions.items[0].id,
+    templateId: template.id,
     transactionId,
     transferId: transfer.transferId,
   };
@@ -590,6 +783,7 @@ const seedIntruder = async (intruder: TestClient): Promise<IntruderIds> => {
     categoryId,
     groupId,
     savingsId,
+    seriesId: await createSeries(intruder, checkingId),
     transactionId,
   };
 };
@@ -733,6 +927,14 @@ describe('foreign ids', () => {
     expect(byAccount.json().items).toEqual([]);
     expect(byCategory.json().items).toEqual([]);
     expect(suggestions.json().items).toEqual([]);
+  });
+
+  it('keeps moved periods private', async () => {
+    const ownerBefore = await stateOf(ada);
+    const moved = await bob.request('PUT', '/periods/2026-10', { startsOn: '2026-10-03' });
+
+    expect(moved.json().moved).toBe(true);
+    expect(await stateOf(ada)).toEqual(ownerBefore);
   });
 
   it('keeps upserts by natural key private', async () => {

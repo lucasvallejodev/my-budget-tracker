@@ -20,6 +20,7 @@ import {
 } from '@/components/ui';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 
+import { draftFromSource, SaveTemplateDialog } from '../save-template-dialog';
 import { duplicatePreset, TransactionDialog } from '../transaction-dialog';
 import { categoryLabel, describeTransaction } from '../transaction-labels';
 import { TransactionRow, useRefreshFinance } from '../use-finance-data';
@@ -105,6 +106,8 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
   const [editing, setEditing] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const recordable = transaction.kind !== 'opening';
 
   return (
     <>
@@ -120,11 +123,10 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
         </MenuTrigger>
         <MenuContent align="end">
           <MenuItem onSelect={() => setDetails(true)}>View details</MenuItem>
-          {transaction.kind !== 'opening' && (
-            <MenuItem onSelect={() => setEditing(true)}>Edit</MenuItem>
-          )}
-          {transaction.kind !== 'opening' && (
-            <MenuItem onSelect={() => setDuplicating(true)}>Duplicate</MenuItem>
+          {recordable && <MenuItem onSelect={() => setEditing(true)}>Edit</MenuItem>}
+          {recordable && <MenuItem onSelect={() => setDuplicating(true)}>Duplicate</MenuItem>}
+          {recordable && (
+            <MenuItem onSelect={() => setSavingTemplate(true)}>Save as template</MenuItem>
           )}
           <MenuItem onSelect={() => setDeleting(true)}>Delete</MenuItem>
         </MenuContent>
@@ -143,6 +145,14 @@ export function TransactionActions({ transaction }: { transaction: TransactionRo
           open={duplicating}
           onOpenChange={setDuplicating}
           preset={duplicatePreset(transaction)}
+        />
+      )}
+      {savingTemplate && (
+        <SaveTemplateDialog
+          open={savingTemplate}
+          onOpenChange={setSavingTemplate}
+          draft={draftFromSource(duplicatePreset(transaction))}
+          suggestedName={transaction.payeeName ?? transaction.memo}
         />
       )}
       <DeleteTransactionDialog

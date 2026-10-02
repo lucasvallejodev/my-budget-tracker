@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { formatMoney } from '@coinkeeper/shared/lib/money';
+import { calendarPeriod } from '@coinkeeper/shared/lib/periods';
 
 import { type BudgetRow, type CategorySlice, currentMonth, QueryKeys } from '../use-finance-data';
 import { BudgetOverview } from './budget-overview';
@@ -30,30 +31,38 @@ const month = currentMonth();
 const rows: BudgetRow[] = [
   {
     amountMinor: 40000,
+    billsDueMinor: 0,
     categoryId: 'c-groceries',
     categoryName: 'Groceries',
     color: '#DC2626',
     currency: 'EUR',
     deletedAt: null,
+    fixedSpentMinor: 0,
     groupId: 'g-food',
     groupName: 'Food & Dining',
     icon: 'ShoppingCart',
     id: 'b-groceries',
     month,
+    periodFrom: calendarPeriod(month).from,
+    periodTo: calendarPeriod(month).to,
     spentMinor: 12000,
   },
   {
     amountMinor: 5000,
+    billsDueMinor: 0,
     categoryId: 'c-coffee',
     categoryName: 'Coffee',
     color: '#DC2626',
     currency: 'EUR',
     deletedAt: null,
+    fixedSpentMinor: 0,
     groupId: 'g-food',
     groupName: 'Food & Dining',
     icon: 'Coffee',
     id: 'b-coffee',
     month,
+    periodFrom: calendarPeriod(month).from,
+    periodTo: calendarPeriod(month).to,
     spentMinor: 6500,
   },
 ];
@@ -71,6 +80,7 @@ function renderBudgets(data: BudgetRow[] = rows, breakdown: CategorySlice[] = []
   client.setQueryData(QueryKeys.budgetSuggestions(month), [
     {
       amountMinor: 4100,
+      billsDueMinor: 0,
       categoryId: 'c-groceries',
       currency: 'EUR',
       months: 3,

@@ -1,0 +1,43 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .section-tabs {
+    @include flex-row(space(6));
+
+    overflow: auto hidden;
+    border-bottom: border(divider);
+
+    &__tab {
+      @include flex-row(space(2));
+
+      margin-bottom: calc(-1 * var(--border-width));
+      padding: space(3) 0;
+      border-bottom: var(--border-width-focus) solid transparent;
+      color: var(--color-text-muted);
+      font-weight: font-weight(semibold);
+      white-space: nowrap;
+
+      &:hover {
+        color: var(--color-text);
+      }
+
+      &:focus-visible {
+        @include focus-ring;
+      }
+
+      &[aria-current='page'] {
+        border-bottom-color: var(--color-brand);
+        color: var(--color-text);
+      }
+    }
+
+    &__count {
+      padding: 0 space(2);
+      border-radius: radius(pill);
+      background: var(--color-surface-sunken);
+      color: var(--color-text-body);
+      font-size: font-size(meta);
+      font-weight: font-weight(medium);
+    }
+  }
+}

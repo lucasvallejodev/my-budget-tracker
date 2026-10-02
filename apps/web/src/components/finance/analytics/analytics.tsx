@@ -1,12 +1,9 @@
 'use client';
 
-import './analytics.scss';
-
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
-import { Page, PageHeading } from '@/components/ui';
+import { Page, PageHeading, SectionTabs } from '@/components/ui';
 import {
   type AnalyticsFilters,
   analyticsHref,
@@ -56,18 +53,14 @@ const pathOf = (view: AnalyticsView) =>
 
 function AnalyticsTabs({ filters, view }: { filters: AnalyticsFilters; view: AnalyticsView }) {
   return (
-    <nav className="analytics__tabs" aria-label="Analytics sections">
-      {AnalyticsViews.map(item => (
-        <Link
-          key={item.view}
-          className="analytics__tab"
-          href={analyticsHref(item.path, filters)}
-          aria-current={item.view === view ? 'page' : undefined}
-        >
-          {item.label}
-        </Link>
-      ))}
-    </nav>
+    <SectionTabs
+      label="Analytics sections"
+      items={AnalyticsViews.map(item => ({
+        current: item.view === view,
+        href: analyticsHref(item.path, filters),
+        label: item.label,
+      }))}
+    />
   );
 }
 

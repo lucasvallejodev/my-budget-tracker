@@ -73,6 +73,9 @@ export {
   SelectTrigger,
   SelectValue,
 } from './select';
+export { SectionIntro } from './section-intro';
+export type { SectionTab } from './section-tabs';
+export { SectionTabs } from './section-tabs';
 export { SettingsSection } from './settings-section';
 export { Spinner } from './spinner';
 export type { StackProps } from './stack';

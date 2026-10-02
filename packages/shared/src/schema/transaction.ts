@@ -18,6 +18,18 @@ const decimalAmountString = z
   .min(1, 'Amount is required')
   .max(FieldLengths.amountInput);
 
+export const MIN_SPLIT_LINES = 2;
+
+export const MAX_SPLIT_LINES = 20;
+
+export const splitLineSchema = z.object({
+  amount: decimalAmountString,
+  categoryId: z.string().min(1, 'Choose a category'),
+  memo: z.string().max(FieldLengths.memo).optional(),
+});
+
+export type SplitLineValues = z.infer<typeof splitLineSchema>;
+
 export const standardTransactionSchema = z.object({
   accountId: z.string().min(1, 'Account is required'),
   amount: decimalAmountString,
@@ -27,7 +39,10 @@ export const standardTransactionSchema = z.object({
   excluded: z.boolean().optional(),
   memo: z.string().max(FieldLengths.memo).optional(),
   payeeId: z.string().optional(),
+  recurring: z.object({ dueOn: isoDateSchema, seriesId: z.uuid() }).optional(),
+  splits: z.array(splitLineSchema).max(MAX_SPLIT_LINES).optional(),
   status: z.enum(TransactionStatusValues).optional(),
+  templateId: z.uuid().optional(),
 });
 
 export type StandardTransactionValues = z.infer<typeof standardTransactionSchema>;
@@ -39,10 +54,23 @@ export const transferSchema = z.object({
   fromAccountId: z.string().min(1, 'Source account is required'),
   memo: z.string().max(FieldLengths.memo).optional(),
   status: z.enum(TransactionStatusValues).optional(),
+  templateId: z.uuid().optional(),
   toAccountId: z.string().min(1, 'Destination account is required'),
 });
 
 export type TransferValues = z.infer<typeof transferSchema>;
+
+export const transactionSplitSchema = z.object({
+  amountMinor: z.number().int(),
+  categoryIcon: z.string().nullable(),
+  categoryId: z.string().nullable(),
+  categoryName: z.string().nullable(),
+  groupColor: z.string().nullable(),
+  id: z.string(),
+  memo: z.string(),
+});
+
+export type TransactionSplit = z.infer<typeof transactionSplitSchema>;
 
 export const transactionRowSchema = z.object({
   accountCurrency: z.string(),
@@ -72,6 +100,8 @@ export const transactionRowSchema = z.object({
   payeeIcon: z.string().nullable(),
   payeeId: z.string().nullable(),
   payeeName: z.string().nullable(),
+  recurringSeriesId: z.string().nullable(),
+  splits: z.array(transactionSplitSchema),
   status: z.enum(TransactionStatusValues),
   transferId: z.string().nullable(),
 });
@@ -81,9 +111,12 @@ export type TransactionRow = z.infer<typeof transactionRowSchema>;
 const SEARCH_MAX_LENGTH = 100;
 const CURSOR_MAX_LENGTH = 200;
 
-export const transactionPatchSchema = standardTransactionSchema.partial().extend({
-  needsReview: z.boolean().optional(),
-});
+export const transactionPatchSchema = standardTransactionSchema
+  .omit({ recurring: true, templateId: true })
+  .partial()
+  .extend({
+    needsReview: z.boolean().optional(),
+  });
 
 export type TransactionPatchValues = z.infer<typeof transactionPatchSchema>;
 

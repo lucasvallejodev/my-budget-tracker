@@ -115,6 +115,28 @@ const renderOverview = (data: AccountSummary[] = accounts) => {
   client.setQueryData(QueryKeys.balances(BalanceHistoryMonths), balances);
   client.setQueryData(QueryKeys.summary(), summary);
   client.setQueryData(QueryKeys.settings, { primaryCurrency: 'EUR' });
+  client.setQueryData(QueryKeys.projections('2026-09-20', 30), [
+    {
+      accountId: 'checking',
+      balanceMinor: 10000,
+      currency: 'EUR',
+      lowestMinor: -5000,
+      lowestOn: '2026-10-01',
+      projectedMinor: 40000,
+      scheduledCount: 2,
+      until: '2026-10-20',
+    },
+    {
+      accountId: 'usd',
+      balanceMinor: 7000,
+      currency: 'USD',
+      lowestMinor: 7000,
+      lowestOn: null,
+      projectedMinor: 7000,
+      scheduledCount: 0,
+      until: '2026-10-20',
+    },
+  ]);
 
   render(
     <QueryClientProvider client={client}>
@@ -211,5 +233,17 @@ describe('AccountsOverview', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show archived' }));
 
     expect(screen.getByRole('button', { name: 'Hide archived' })).toBeTruthy();
+  });
+
+  it('projects the balances of accounts with payments still due and warns before zero', () => {
+    renderOverview();
+
+    const projected = screen.getByText('Next 30 days').closest('section')!;
+
+    expect(
+      within(projected).getByText(`${euros(10000)} now → ${euros(40000)} by 20 Oct · 2 payments`)
+    ).toBeTruthy();
+    expect(within(projected).getByText('Below zero on 1 Oct')).toBeTruthy();
+    expect(within(projected).queryByText('Dollars')).toBeNull();
   });
 });

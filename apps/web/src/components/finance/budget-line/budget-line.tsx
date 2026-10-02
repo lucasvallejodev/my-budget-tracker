@@ -28,7 +28,12 @@ type Format = (value: number) => string;
 export const leftLabel = ({ leftMinor }: BudgetFigures, format: Format): string =>
   leftMinor < 0 ? `${format(-leftMinor)} over` : `${format(leftMinor)} left`;
 
-export const allowanceLabel = ({ leftMinor, pace }: BudgetFigures, format: Format): string => {
+export const billsNote = ({ budget }: BudgetFigures, format: Format): string =>
+  budget.billsDueMinor > 0 ? ` · ${format(budget.billsDueMinor)} in bills to come` : '';
+
+export const allowanceLabel = (figures: BudgetFigures, format: Format): string => {
+  const { leftMinor, pace } = figures;
+
   if (!pace.isCurrent) return '';
   if (leftMinor <= 0) return 'Nothing left this month';
 
@@ -131,6 +136,7 @@ export function BudgetLine({
         />
         <span className="budget-line__meta">
           {format(budget.spentMinor)} of {format(budget.amountMinor)} · {percent}%
+          {billsNote(figures, format)}
         </span>
       </div>
       <div className="budget-line__left">

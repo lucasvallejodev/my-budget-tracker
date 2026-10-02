@@ -20,13 +20,14 @@ import {
 import { FALLBACK_CURRENCY } from '@coinkeeper/shared/constants/money';
 import { localIsoDate } from '@coinkeeper/shared/lib/date-helpers';
 import { formatCompactMoney, formatMoney } from '@coinkeeper/shared/lib/money';
-import { calendarPeriod, periodProgress } from '@coinkeeper/shared/lib/periods';
+import { type BudgetPeriod, calendarPeriod, periodProgress } from '@coinkeeper/shared/lib/periods';
 
 import { AttentionStrip } from '../attention-strip';
 import { type BudgetFigures, budgetFigures } from '../budget-status';
 import { CashFlowChart } from '../cash-flow-chart';
 import { describeConversion } from '../conversion';
 import { ConvertedView, CurrencySwitch, useCurrencyView } from '../currency-switch';
+import { LeftToSpend } from '../left-to-spend';
 import { MonthPicker } from '../month-picker';
 import { netWorthAt } from '../net-worth';
 import { groupSpendingSlices, hasSpendingIn, SpendingBars } from '../spending-bars';
@@ -62,10 +63,10 @@ const currenciesOf = (summary: Summary | undefined) => [
   ]),
 ];
 
-const homeDescription = (month: string, today: string) => {
+const homeDescription = (month: string, today: string, period?: BudgetPeriod) => {
   if (month !== currentMonth()) return monthLabel(month);
 
-  const daysLeft = periodProgress(calendarPeriod(month), today).daysLeft;
+  const daysLeft = periodProgress(period ?? calendarPeriod(month), today).daysLeft;
 
   return `${longDayLabel(today)} · ${daysLeft} day${daysLeft === 1 ? '' : 's'} left this month`;
 };
@@ -172,7 +173,7 @@ export function Home() {
     <Page>
       <PageHeading
         title="Home"
-        description={homeDescription(month, today)}
+        description={homeDescription(month, today, summary.data?.period)}
         actions={
           <>
             <CurrencySwitch
@@ -354,6 +355,7 @@ function HomeContent({
         <HomeNetWorth balances={balances} currency={currency} month={month} summary={summary} />
       </div>
       <AttentionStrip items={attentionItems(summary.needsReviewCount, figures, format)} />
+      {!converted && month === currentMonth() && <LeftToSpend currency={currency} month={month} />}
       {!converted && (
         <HomeSpending
           currency={currency}

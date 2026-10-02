@@ -1,0 +1,66 @@
+@use 'abstracts' as *;
+
+.split-categories {
+  @include reset-list;
+
+  grid-column: 2 / -1;
+  margin-top: space(1);
+  border-left: border(divider);
+
+  &__toggle {
+    @include reset-button;
+    @include flex-row(space(2));
+
+    display: inline-flex;
+    max-width: 100%;
+    border-radius: radius(control);
+    color: var(--color-text-body);
+    font-size: font-size(meta);
+    font-weight: font-weight(medium);
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  &__chevron {
+    @include icon-size(size(icon-small));
+    @include transition(transform);
+
+    flex-shrink: 0;
+    color: var(--color-text-faint);
+  }
+
+  &__toggle[aria-expanded='true'] &__chevron {
+    transform: rotate(180deg);
+  }
+
+  &__line {
+    @include flex-row(space(2));
+
+    min-width: 0;
+    padding: space(2) 0 space(2) space(3);
+    color: var(--color-text-body);
+    font-size: font-size(meta);
+
+    & + & {
+      border-top: border(divider);
+    }
+  }
+
+  &__name {
+    @include truncate;
+
+    min-width: 0;
+  }
+
+  &__amount {
+    @include tabular-figures;
+
+    flex-shrink: 0;
+    margin-left: auto;
+    color: var(--color-text-muted);
+  }
+}

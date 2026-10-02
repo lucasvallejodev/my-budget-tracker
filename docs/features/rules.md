@@ -22,7 +22,7 @@
 - On demand: **Apply to uncategorized** on the rules page.
 - On the [Review](review-inbox.md) page: the first matching rule is shown as the suggested category of an uncategorized row, which you accept with one click.
 
-Rules do not run when you type a transaction by hand; the payee's usual category covers that case.
+**Apply to uncategorized** skips split transactions, whose parent has no category of its own. Rules do not run when you type a transaction by hand; the payee's usual category covers that case.
 
 ## How it works
 
