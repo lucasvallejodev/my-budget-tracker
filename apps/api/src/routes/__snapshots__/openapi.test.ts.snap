@@ -6422,6 +6422,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "splits": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "amountMinor": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer",
+                                },
+                                "categoryIcon": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryId": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryName": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "groupColor": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "id": {
+                                  "type": "string",
+                                },
+                                "memo": {
+                                  "type": "string",
+                                },
+                              },
+                              "required": [
+                                "amountMinor",
+                                "categoryIcon",
+                                "categoryId",
+                                "categoryName",
+                                "groupColor",
+                                "id",
+                                "memo",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
                           "status": {
                             "enum": [
                               "pending",
@@ -6463,6 +6508,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "splits",
                           "status",
                           "transferId",
                         ],
@@ -6530,6 +6576,32 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                   },
                   "payeeId": {
                     "type": "string",
+                  },
+                  "splits": {
+                    "items": {
+                      "properties": {
+                        "amount": {
+                          "maxLength": 30,
+                          "minLength": 1,
+                          "type": "string",
+                        },
+                        "categoryId": {
+                          "minLength": 1,
+                          "type": "string",
+                        },
+                        "memo": {
+                          "maxLength": 500,
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "amount",
+                        "categoryId",
+                      ],
+                      "type": "object",
+                    },
+                    "maxItems": 20,
+                    "type": "array",
                   },
                   "status": {
                     "enum": [
@@ -6672,6 +6744,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "nullable": true,
                       "type": "string",
                     },
+                    "splits": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "categoryIcon": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryName": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "groupColor": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "id": {
+                            "type": "string",
+                          },
+                          "memo": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "amountMinor",
+                          "categoryIcon",
+                          "categoryId",
+                          "categoryName",
+                          "groupColor",
+                          "id",
+                          "memo",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
                     "status": {
                       "enum": [
                         "pending",
@@ -6713,6 +6830,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "payeeIcon",
                     "payeeId",
                     "payeeName",
+                    "splits",
                     "status",
                     "transferId",
                   ],
@@ -6937,6 +7055,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "nullable": true,
                       "type": "string",
                     },
+                    "splits": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "categoryIcon": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryName": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "groupColor": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "id": {
+                            "type": "string",
+                          },
+                          "memo": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "amountMinor",
+                          "categoryIcon",
+                          "categoryId",
+                          "categoryName",
+                          "groupColor",
+                          "id",
+                          "memo",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
                     "status": {
                       "enum": [
                         "pending",
@@ -6978,6 +7141,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "payeeIcon",
                     "payeeId",
                     "payeeName",
+                    "splits",
                     "status",
                     "transferId",
                   ],
@@ -7047,6 +7211,32 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                   },
                   "payeeId": {
                     "type": "string",
+                  },
+                  "splits": {
+                    "items": {
+                      "properties": {
+                        "amount": {
+                          "maxLength": 30,
+                          "minLength": 1,
+                          "type": "string",
+                        },
+                        "categoryId": {
+                          "minLength": 1,
+                          "type": "string",
+                        },
+                        "memo": {
+                          "maxLength": 500,
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "amount",
+                        "categoryId",
+                      ],
+                      "type": "object",
+                    },
+                    "maxItems": 20,
+                    "type": "array",
                   },
                   "status": {
                     "enum": [
@@ -7178,6 +7368,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "nullable": true,
                       "type": "string",
                     },
+                    "splits": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "categoryIcon": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryName": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "groupColor": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "id": {
+                            "type": "string",
+                          },
+                          "memo": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "amountMinor",
+                          "categoryIcon",
+                          "categoryId",
+                          "categoryName",
+                          "groupColor",
+                          "id",
+                          "memo",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
                     "status": {
                       "enum": [
                         "pending",
@@ -7219,6 +7454,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "payeeIcon",
                     "payeeId",
                     "payeeName",
+                    "splits",
                     "status",
                     "transferId",
                   ],
@@ -7365,6 +7601,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                       "nullable": true,
                       "type": "string",
                     },
+                    "splits": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "amountMinor": {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer",
+                          },
+                          "categoryIcon": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryId": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "categoryName": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "groupColor": {
+                            "nullable": true,
+                            "type": "string",
+                          },
+                          "id": {
+                            "type": "string",
+                          },
+                          "memo": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "amountMinor",
+                          "categoryIcon",
+                          "categoryId",
+                          "categoryName",
+                          "groupColor",
+                          "id",
+                          "memo",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
                     "status": {
                       "enum": [
                         "pending",
@@ -7406,6 +7687,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                     "payeeIcon",
                     "payeeId",
                     "payeeName",
+                    "splits",
                     "status",
                     "transferId",
                   ],
@@ -7600,6 +7882,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "splits": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "amountMinor": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer",
+                                },
+                                "categoryIcon": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryId": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryName": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "groupColor": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "id": {
+                                  "type": "string",
+                                },
+                                "memo": {
+                                  "type": "string",
+                                },
+                              },
+                              "required": [
+                                "amountMinor",
+                                "categoryIcon",
+                                "categoryId",
+                                "categoryName",
+                                "groupColor",
+                                "id",
+                                "memo",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
                           "status": {
                             "enum": [
                               "pending",
@@ -7641,6 +7968,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "splits",
                           "status",
                           "transferId",
                         ],
@@ -7817,6 +8145,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "splits": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "amountMinor": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer",
+                                },
+                                "categoryIcon": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryId": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryName": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "groupColor": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "id": {
+                                  "type": "string",
+                                },
+                                "memo": {
+                                  "type": "string",
+                                },
+                              },
+                              "required": [
+                                "amountMinor",
+                                "categoryIcon",
+                                "categoryId",
+                                "categoryName",
+                                "groupColor",
+                                "id",
+                                "memo",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
                           "status": {
                             "enum": [
                               "pending",
@@ -7858,6 +8231,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "splits",
                           "status",
                           "transferId",
                         ],
@@ -8122,6 +8496,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "splits": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "amountMinor": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer",
+                                },
+                                "categoryIcon": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryId": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryName": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "groupColor": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "id": {
+                                  "type": "string",
+                                },
+                                "memo": {
+                                  "type": "string",
+                                },
+                              },
+                              "required": [
+                                "amountMinor",
+                                "categoryIcon",
+                                "categoryId",
+                                "categoryName",
+                                "groupColor",
+                                "id",
+                                "memo",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
                           "status": {
                             "enum": [
                               "pending",
@@ -8163,6 +8582,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "splits",
                           "status",
                           "transferId",
                         ],
@@ -8347,6 +8767,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "splits": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "amountMinor": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer",
+                                },
+                                "categoryIcon": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryId": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryName": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "groupColor": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "id": {
+                                  "type": "string",
+                                },
+                                "memo": {
+                                  "type": "string",
+                                },
+                              },
+                              "required": [
+                                "amountMinor",
+                                "categoryIcon",
+                                "categoryId",
+                                "categoryName",
+                                "groupColor",
+                                "id",
+                                "memo",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
                           "status": {
                             "enum": [
                               "pending",
@@ -8388,6 +8853,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "splits",
                           "status",
                           "transferId",
                         ],
@@ -8604,6 +9070,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "splits": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "amountMinor": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer",
+                                },
+                                "categoryIcon": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryId": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryName": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "groupColor": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "id": {
+                                  "type": "string",
+                                },
+                                "memo": {
+                                  "type": "string",
+                                },
+                              },
+                              "required": [
+                                "amountMinor",
+                                "categoryIcon",
+                                "categoryId",
+                                "categoryName",
+                                "groupColor",
+                                "id",
+                                "memo",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
                           "status": {
                             "enum": [
                               "pending",
@@ -8645,6 +9156,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "splits",
                           "status",
                           "transferId",
                         ],
@@ -8807,6 +9319,51 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                             "nullable": true,
                             "type": "string",
                           },
+                          "splits": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "amountMinor": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": -9007199254740991,
+                                  "type": "integer",
+                                },
+                                "categoryIcon": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryId": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "categoryName": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "groupColor": {
+                                  "nullable": true,
+                                  "type": "string",
+                                },
+                                "id": {
+                                  "type": "string",
+                                },
+                                "memo": {
+                                  "type": "string",
+                                },
+                              },
+                              "required": [
+                                "amountMinor",
+                                "categoryIcon",
+                                "categoryId",
+                                "categoryName",
+                                "groupColor",
+                                "id",
+                                "memo",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
                           "status": {
                             "enum": [
                               "pending",
@@ -8848,6 +9405,7 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
                           "payeeIcon",
                           "payeeId",
                           "payeeName",
+                          "splits",
                           "status",
                           "transferId",
                         ],

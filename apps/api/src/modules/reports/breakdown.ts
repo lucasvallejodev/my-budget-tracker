@@ -5,7 +5,7 @@ import type { CategorySlice, GroupSlice } from '@coinkeeper/shared/schema/report
 
 import { rowsOf } from '../batch';
 import { Db } from '../db';
-import { spendingWhere } from './predicate';
+import { categoryLines, spendingWhere } from './predicate';
 import { monthsEndingAt } from './range';
 
 const UncategorizedLabel = 'Uncategorized';
@@ -63,7 +63,7 @@ export const breakdownByCategory = async (
     db,
     sql`
     SELECT ${split.select}c.id AS category_id, c.name AS category_name, c.icon, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
-    FROM transactions t
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     LEFT JOIN categories c ON c.id = t.category_id
     LEFT JOIN category_groups g ON g.id = c.group_id
@@ -107,7 +107,7 @@ export const breakdownByGroup = async (
     db,
     sql`
     SELECT ${split.select}t.currency, g.id AS group_id, g.name AS group_name, g.color, -SUM(t.amount_minor) AS spent_minor
-    FROM transactions t
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     LEFT JOIN categories c ON c.id = t.category_id
     LEFT JOIN category_groups g ON g.id = c.group_id

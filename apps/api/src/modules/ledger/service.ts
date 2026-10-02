@@ -15,6 +15,7 @@ import type { ListFilters, StandardInput, TransferInput, TransferPatch } from '.
 
 export type {
   ListFilters,
+  SplitInput,
   StandardInput,
   TransactionRow,
   Transfer,

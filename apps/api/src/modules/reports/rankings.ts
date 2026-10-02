@@ -4,7 +4,7 @@ import type { RankingSlice } from '@coinkeeper/shared/schema/reports';
 
 import { rowsOf } from '../batch';
 import { Db } from '../db';
-import { spendingWhere } from './predicate';
+import { categoryLines, spendingWhere } from './predicate';
 import { monthsEndingAt, type MonthSpan } from './range';
 
 const NoPayeeLabel = 'No payee';
@@ -27,8 +27,8 @@ const ranking = async (
     db,
     sql`
     SELECT t.currency, ${dimension.id} AS id, ${dimension.name} AS name,
-      -SUM(t.amount_minor) AS spent_minor, COUNT(*) AS transactions
-    FROM transactions t
+      -SUM(t.amount_minor) AS spent_minor, COUNT(DISTINCT t.id) AS transactions
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     LEFT JOIN payees p ON p.id = t.payee_id
     LEFT JOIN categories c ON c.id = t.category_id

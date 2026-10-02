@@ -1,6 +1,6 @@
 # Transactions
 
-> Summary: recording (also from a template), editing, duplicating, saving as a template, deleting (soft, with Undo and restore) and finding expenses and income; the category autocomplete; remembered accounts; how the list reads (day groups, payee avatars, transfers, inline category); links that open the page filtered; what the fields mean; statuses.
+> Summary: recording (also from a template), splitting between categories, editing, duplicating, saving as a template, deleting (soft, with Undo and restore) and finding expenses and income; the category autocomplete; remembered accounts; how the list reads (day groups, payee avatars, transfers, inline category); links that open the page filtered; what the fields mean; statuses.
 
 A transaction is one movement of money in one account. Expenses are negative, income positive; the form hides the sign behind an Expense/Income choice.
 
@@ -21,6 +21,21 @@ A transaction is one movement of money in one account. Expenses are negative, in
 ### Record from a template
 
 The row of chips at the top of **New transaction** lists your [templates](templates.md). Click one to fill the form with its type, account, amount, payee, category and memo, then click **Create**. **Save as template** in the form, or in a row's **⋯** menu, keeps the current values as a new template.
+
+### Split a transaction between categories
+
+One receipt can cover several categories, such as a supermarket bill with food and household items. Split it so each part counts in its own category:
+
+1. In the transaction form, turn on **Split between categories**. Two lines appear: the first carries the amount and category you had entered, the second is empty.
+2. Pick a category and type an amount on each line. **Add line** adds more (up to 20); the bin removes a line (a split keeps at least two).
+3. The status under the lines says how much is **left to assign**, or that **everything is assigned**. The lines must add up to the amount exactly; otherwise saving fails with "The split lines must add up to the transaction amount".
+4. Click **Create** or **Save**.
+
+In the list, a split row shows **Split into 2** (hover it to see the categories) instead of one category. Each line counts in its own category on Budgets, Analytics and Home, and filtering the list by a category also finds splits with a line in that category. The amount of a split can only change together with its lines: edit both in the form.
+
+To undo a split, turn the switch off and save; the transaction keeps its amount and waits for a category on the Review page unless you pick one. Choosing a single category for a split row (for example on the Review page) also replaces the split with that category.
+
+<!-- screenshot: transaction form with Split between categories on, three lines and "Everything is assigned" (docs/assets/screenshots/transactions-split.png) -->
 
 ### Edit a transaction
 
@@ -86,8 +101,10 @@ A flagged row without a category shows the **Choose category** chip instead of a
 
 - `ledger.createStandard` validates the account, category and payee belong to the user, copies the account currency, writes the row and then updates the payee's default category (see [Categories › payee memory](categories.md#payee-memory)).
 - `ledger.updateStandard` refuses to edit transfer legs (they have their own editor) and locks reconciled rows.
+- Split lines live in `transaction_splits` (`transaction_id`, `category_id?`, signed `amount_minor`, `memo`, `sort_order`, `deleted_at`); the parent keeps account, date, payee, currency and the full amount, with `category_id = NULL`. `apps/api/src/modules/ledger/splits.ts` checks the rules (at least two and at most 20 lines, every line non-zero with the parent's sign, the lines add up to the parent, categories active and owned) and replaces lines by soft-deleting the old ones. `POST` and `PATCH /api/v1/transactions` take `splits: [{ categoryId, amount, memo? }]` with positive amounts in the account currency; `PATCH` with `splits: []` removes the split, a `PATCH` that changes only the amount of a split row answers `422`, and a `PATCH` with a `categoryId` collapses the split into that category. Linking a split row as a transfer leg drops its lines.
+- Every report reads category lines instead of whole transactions: `categoryLines` in `apps/api/src/modules/reports/predicate.ts` yields one row per split line (or the transaction itself when it has no lines), so budgets, breakdowns, rankings, monthly totals and cash flow count each line in its category. Balances still read `transactions` directly.
 - `ledger.remove` sets `deleted_at` on the row (`DELETE /api/v1/transactions/:id`); a transfer leg is refused there with `409`, and the client sends it to `DELETE /api/v1/transfers/:transferId`, which marks both legs. Nothing is removed from the database.
 - `ledger.restore` (`POST /api/v1/transactions/:id/restore`) clears `deleted_at` after checking that the account is not deleted and that the same bank row has not been imported again; if the category was archived meanwhile, the row comes back uncategorised and flagged for review.
-- The list endpoint (`GET /api/v1/transactions`) joins account, category, group, payee and the counterpart leg of a transfer, returns newest first with a `nextCursor`, and supports `month`, `from`, `to`, `accountId`, `categoryId`, `needsReview`, `kind`, `q`, `deleted`, `limit` (up to 2,000) and `cursor`. See the [REST API reference](../reference/rest-api.md#transactions).
+- The list endpoint (`GET /api/v1/transactions`) joins account, category, group, payee and the counterpart leg of a transfer, returns newest first with a `nextCursor`, and supports `month`, `from`, `to`, `accountId`, `categoryId`, `needsReview`, `kind`, `q`, `deleted`, `limit` (up to 2,000) and `cursor`; each row carries its `splits`, and `categoryId` and `q` also match split lines. See the [REST API reference](../reference/rest-api.md#transactions).
 - The list is `TransactionExplorer` (filters, summary line, 50-row pages) around `TransactionTable` in `apps/web/src/components/finance/`. `collapseTransfers` in `transaction-table/transaction-groups.ts` folds the two legs of a listed transfer into one row, and `groupByDay` builds the day groups and their per-currency totals; `dayLabel` in `transaction-labels.ts` formats the heading. Choosing a category inline calls `categorizeTransaction` (`PATCH /api/v1/transactions/:id`).
 - Avatars come from `PayeeAvatar` (`finance/payee-avatar/`), which uses the helpers in `apps/web/src/lib/payee-avatar.ts` and the bundled brand list in `apps/web/src/constants/brands.ts`; see [Components and styles › Brand logos](../architecture/components.md#brand-logos).

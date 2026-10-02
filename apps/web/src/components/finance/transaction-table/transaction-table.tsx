@@ -3,7 +3,7 @@
 import './transaction-table.scss';
 
 import { useMutation } from '@tanstack/react-query';
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight, Split } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { categorizeTransaction } from '@/api/mutations';
@@ -15,7 +15,7 @@ import { formatMoney } from '@coinkeeper/shared/lib/money';
 import { CategoryPicker } from '../category-picker';
 import { PayeeAvatar } from '../payee-avatar';
 import { TransactionActions } from '../transaction-actions';
-import { dayLabel, describeTransaction } from '../transaction-labels';
+import { dayLabel, describeTransaction, splitLabel } from '../transaction-labels';
 import { TransactionRow, useRefreshFinance } from '../use-finance-data';
 import { collapseTransfers, groupByDay, ListedTransaction } from './transaction-groups';
 
@@ -46,6 +46,8 @@ const secondLine = (transaction: ListedTransaction) => {
   if (transaction.payeeName && transaction.originalPayee !== transaction.payeeName) {
     return transaction.originalPayee;
   }
+
+  if (transaction.splits.length) return null;
 
   return transaction.needsReview && !transaction.categoryId ? 'Bank text kept as imported' : null;
 };
@@ -81,6 +83,20 @@ function CategoryCell({
 
   if (transaction.kind === 'opening') {
     return <span className="transaction-table__chip">Opening balance</span>;
+  }
+
+  if (transaction.splits.length) {
+    return (
+      <span
+        className="transaction-table__chip"
+        title={transaction.splits.map(line => line.categoryName ?? 'Uncategorized').join(', ')}
+      >
+        <Avatar size="small">
+          <Split />
+        </Avatar>
+        {splitLabel(transaction)}
+      </span>
+    );
   }
 
   if (!transaction.categoryId) {

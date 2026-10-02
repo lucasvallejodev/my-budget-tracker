@@ -114,4 +114,39 @@ describe('TransactionTable', () => {
       screen.getByRole('button', { name: 'Category for MKTPLACE*7731: Categorize' })
     ).toBeTruthy();
   });
+
+  it('shows a split row with its line count instead of a category picker', () => {
+    renderTable([
+      {
+        ...SampleTransactions[0],
+        categoryId: null,
+        id: 'split',
+        needsReview: false,
+        splits: [
+          {
+            amountMinor: -500,
+            categoryIcon: null,
+            categoryId: 'food',
+            categoryName: 'Groceries',
+            groupColor: null,
+            id: 'line-1',
+            memo: '',
+          },
+          {
+            amountMinor: -500,
+            categoryIcon: null,
+            categoryId: 'home',
+            categoryName: 'Household',
+            groupColor: null,
+            id: 'line-2',
+            memo: '',
+          },
+        ],
+      },
+    ]);
+
+    expect(screen.getByText('Split into 2')).toBeTruthy();
+    expect(screen.getByTitle('Groceries, Household')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Categorize/ })).toBeNull();
+  });
 });

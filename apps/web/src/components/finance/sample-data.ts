@@ -33,6 +33,7 @@ const SampleBase: Omit<
   payeeColor: null,
   payeeIcon: null,
   payeeId: 'demo-payee',
+  splits: [],
   transferId: null,
 };
 

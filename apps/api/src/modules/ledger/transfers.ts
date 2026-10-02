@@ -13,6 +13,7 @@ import {
   ownedTransaction,
 } from './guards';
 import { list } from './queries';
+import { removeSplits } from './splits';
 import type { TransactionRecord, Transfer, TransferInput, TransferPatch } from './types';
 
 type Account = Awaited<ReturnType<typeof ownedAccount>>;
@@ -262,6 +263,8 @@ export const linkAsTransfer = async (db: Db, userId: string, outId: string, inId
     }
 
     const transferId = crypto.randomUUID();
+
+    await removeSplits(tx, [outId, inId]);
 
     for (const legId of [outId, inId]) {
       await tx

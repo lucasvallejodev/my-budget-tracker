@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createTransaction } from '@/api/mutations';
+import { createTransaction, updateTransaction } from '@/api/mutations';
 import type { TemplateRow } from '@coinkeeper/shared/schema/templates';
 
 import { SampleTransactions } from '../sample-data';
@@ -133,5 +133,116 @@ describe('TransactionDialog', () => {
 
     expect(screen.getByRole('dialog', { name: 'Edit transaction' })).toBeTruthy();
     expect(screen.queryByRole('group', { name: 'Templates' })).toBeNull();
+  });
+
+  it('opens a split transaction with its lines and saves them', async () => {
+    const split = {
+      ...SampleTransactions[0],
+      accountId: 'account-1',
+      amountMinor: -3000,
+      categoryId: null,
+      currency: 'EUR',
+      splits: [
+        {
+          amountMinor: -2000,
+          categoryIcon: null,
+          categoryId: 'food',
+          categoryName: 'Groceries',
+          groupColor: null,
+          id: 'line-1',
+          memo: '',
+        },
+        {
+          amountMinor: -1000,
+          categoryIcon: null,
+          categoryId: 'home',
+          categoryName: 'Household',
+          groupColor: null,
+          id: 'line-2',
+          memo: '',
+        },
+      ],
+    };
+
+    renderWith(withTemplates([]), <TransactionDialog open transaction={split} />);
+
+    expect(screen.getByRole('switch')).toHaveProperty('ariaChecked', 'true');
+    expect(screen.getByRole('textbox', { name: 'Amount of line 1' })).toHaveProperty(
+      'value',
+      '20.00'
+    );
+    expect(screen.getByRole('status').textContent).toBe('Everything is assigned');
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Amount of line 2' }), {
+      target: { value: '5' },
+    });
+    expect(screen.getByRole('status').textContent).toBe('€5.00 left to assign');
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Amount of line 2' }), {
+      target: { value: '10' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(updateTransaction).toHaveBeenCalledWith(
+        split.id,
+        expect.objectContaining({
+          categoryId: '',
+          splits: [
+            {
+              amount: '20.00',
+              categoryId: 'food',
+              memo: '',
+            },
+            {
+              amount: '10',
+              categoryId: 'home',
+              memo: '',
+            },
+          ],
+        })
+      )
+    );
+  });
+
+  it('sends an empty split list when a split is turned off', async () => {
+    const split = {
+      ...SampleTransactions[0],
+      accountId: 'account-1',
+      categoryId: null,
+      splits: [
+        {
+          amountMinor: -1,
+          categoryIcon: null,
+          categoryId: 'food',
+          categoryName: 'Groceries',
+          groupColor: null,
+          id: 'line-1',
+          memo: '',
+        },
+        {
+          amountMinor: SampleTransactions[0].amountMinor + 1,
+          categoryIcon: null,
+          categoryId: 'home',
+          categoryName: 'Household',
+          groupColor: null,
+          id: 'line-2',
+          memo: '',
+        },
+      ],
+    };
+
+    renderWith(withTemplates([]), <TransactionDialog open transaction={split} />);
+
+    fireEvent.click(screen.getByRole('switch'));
+    expect(screen.queryByRole('group', { name: 'Split between categories' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(updateTransaction).toHaveBeenCalledWith(
+        split.id,
+        expect.objectContaining({ splits: [] })
+      )
+    );
   });
 });

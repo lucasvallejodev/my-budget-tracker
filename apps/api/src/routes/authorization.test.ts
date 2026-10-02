@@ -441,6 +441,21 @@ const ForeignBodyCases: ForeignBodyCase[] = [
     path: () => '/rules/order',
   },
   {
+    body: ({ intruder, owner }) => ({
+      accountId: intruder.accountId,
+      amount: '10',
+      date: '2026-09-10',
+      direction: 'expense',
+      splits: [
+        { amount: '5', categoryId: intruder.categoryId },
+        { amount: '5', categoryId: owner.categoryId },
+      ],
+    }),
+    method: 'post',
+    name: 'a split line in the owner category',
+    path: () => '/transactions',
+  },
+  {
     body: ({ owner }) => ({ ids: [owner.templateId] }),
     method: 'put',
     name: 'reordering the owner templates',

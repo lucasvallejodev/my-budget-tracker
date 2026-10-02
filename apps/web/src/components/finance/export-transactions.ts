@@ -24,24 +24,48 @@ const ExportColumns = [
   'ID',
 ];
 
+const csvRow = (
+  transaction: TransactionRow,
+  line: { amountMinor: number; category: string; group: string; memo: string }
+) => [
+  transaction.date,
+  describeTransaction(transaction),
+  transaction.payeeName ?? '',
+  line.category,
+  line.group,
+  transaction.accountName,
+  minorToDecimalString(line.amountMinor, transaction.currency),
+  transaction.currency,
+  transaction.kind,
+  transaction.status,
+  line.memo,
+  transaction.id,
+];
+
+const csvRowsOf = (transaction: TransactionRow): string[][] => {
+  if (!transaction.splits.length) {
+    return [
+      csvRow(transaction, {
+        amountMinor: transaction.amountMinor,
+        category: categoryLabel(transaction),
+        group: transaction.groupName ?? '',
+        memo: transaction.memo,
+      }),
+    ];
+  }
+
+  return transaction.splits.map(line =>
+    csvRow(transaction, {
+      amountMinor: line.amountMinor,
+      category: line.categoryName ?? 'Uncategorized',
+      group: '',
+      memo: line.memo || transaction.memo,
+    })
+  );
+};
+
 export function transactionsToCsv(rows: TransactionRow[]) {
-  return [
-    ExportColumns,
-    ...rows.map(transaction => [
-      transaction.date,
-      describeTransaction(transaction),
-      transaction.payeeName ?? '',
-      categoryLabel(transaction),
-      transaction.groupName ?? '',
-      transaction.accountName,
-      minorToDecimalString(transaction.amountMinor, transaction.currency),
-      transaction.currency,
-      transaction.kind,
-      transaction.status,
-      transaction.memo,
-      transaction.id,
-    ]),
-  ]
+  return [ExportColumns, ...rows.flatMap(csvRowsOf)]
     .map(row => row.map(toCsvCell).join(','))
     .join(CsvLineBreak);
 }

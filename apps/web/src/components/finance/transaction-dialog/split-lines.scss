@@ -1,0 +1,47 @@
+@use 'abstracts' as *;
+
+.split-lines {
+  @include flex-column(space(2));
+
+  border: border(card);
+  border-radius: radius(card);
+  padding: space(3);
+
+  &__toggle {
+    @include flex-row(space(2));
+
+    font-size: font-size(meta);
+  }
+
+  &__legend {
+    @include muted-text;
+
+    padding: 0 space(1);
+  }
+
+  &__line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) size(amount-input) auto;
+    gap: space(2);
+    align-items: center;
+  }
+
+  &__amount {
+    @include tabular-figures;
+
+    text-align: right;
+  }
+
+  &__footer {
+    @include flex-between(space(2));
+  }
+
+  &__remaining {
+    @include muted-text;
+    @include tabular-figures;
+  }
+
+  &__remaining--open {
+    color: var(--color-warning);
+  }
+}

@@ -36,6 +36,7 @@ export const standardDefaults = (
       excluded: false,
       memo: '',
       payeeId: '',
+      splits: [],
       status: 'cleared',
       ...preset,
     };
@@ -50,6 +51,11 @@ export const standardDefaults = (
     excluded: transaction.excluded,
     memo: transaction.memo,
     payeeId: transaction.payeeId ?? '',
+    splits: transaction.splits.map(line => ({
+      amount: minorToDecimalString(Math.abs(line.amountMinor), transaction.currency),
+      categoryId: line.categoryId ?? '',
+      memo: line.memo,
+    })),
     status: transaction.status,
   };
 };

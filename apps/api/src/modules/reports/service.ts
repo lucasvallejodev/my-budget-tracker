@@ -15,7 +15,7 @@ import { createFxService } from '../fx/service';
 import { monthRange } from '../ledger/service';
 import { monthEndBalances } from './balances';
 import { breakdownByCategory, breakdownByGroup, type BreakdownOptions } from './breakdown';
-import { spendingWhere } from './predicate';
+import { categoryLines, spendingWhere } from './predicate';
 import { monthsEndingAt } from './range';
 import { spendingByAccount, spendingByPayee } from './rankings';
 
@@ -41,7 +41,7 @@ const categorySpending = async (
     db,
     sql`
     SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor
-    FROM transactions t
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     JOIN categories c ON c.id = t.category_id
     JOIN category_groups g ON g.id = c.group_id
@@ -76,7 +76,7 @@ const categorySpendingBetween = async (
     sql`
     SELECT t.currency, t.category_id, -SUM(t.amount_minor) AS spent_minor,
       COUNT(DISTINCT date_trunc('month', t.date)) AS months
-    FROM transactions t
+    FROM ${categoryLines} t
     JOIN accounts a ON a.id = t.account_id
     JOIN categories c ON c.id = t.category_id
     JOIN category_groups g ON g.id = c.group_id
@@ -126,7 +126,7 @@ export const createReportService = (db: Db) => {
         SELECT to_char(date_trunc('month', t.date), 'YYYY-MM') AS month, t.currency,
           COALESCE(SUM(t.amount_minor) FILTER (WHERE g.kind = 'income' OR (g.kind IS NULL AND t.amount_minor > 0)), 0) AS income_minor,
           COALESCE(-SUM(t.amount_minor) FILTER (WHERE g.kind = 'expense' OR (g.kind IS NULL AND t.amount_minor < 0)), 0) AS spending_minor
-        FROM transactions t
+        FROM ${categoryLines} t
         JOIN accounts a ON a.id = t.account_id
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN category_groups g ON g.id = c.group_id
@@ -221,7 +221,7 @@ export const createReportService = (db: Db) => {
         SELECT t.currency,
           COALESCE(SUM(t.amount_minor) FILTER (WHERE g.kind = 'income' OR (g.kind IS NULL AND t.amount_minor > 0)), 0) AS income_minor,
           COALESCE(-SUM(t.amount_minor) FILTER (WHERE g.kind = 'expense' OR (g.kind IS NULL AND t.amount_minor < 0)), 0) AS spending_minor
-        FROM transactions t
+        FROM ${categoryLines} t
         JOIN accounts a ON a.id = t.account_id
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN category_groups g ON g.id = c.group_id

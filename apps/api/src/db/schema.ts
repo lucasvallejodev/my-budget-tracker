@@ -300,6 +300,31 @@ export const rules = pgTable(
   columns => [index('rules_user_idx').on(columns.userId)]
 );
 
+export const transactionSplits = pgTable(
+  'transaction_splits',
+  {
+    id: id(),
+    userId: userId(),
+    transactionId: text('transaction_id')
+      .notNull()
+      .references(() => transactions.id),
+    categoryId: text('category_id').references(() => categories.id),
+    amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
+    memo: text('memo').notNull().default(''),
+    sortOrder: integer('sort_order').notNull().default(0),
+    deletedAt: deletedAt(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  columns => [
+    index('transaction_splits_transaction_idx')
+      .on(columns.transactionId)
+      .where(sql`${columns.deletedAt} IS NULL`),
+    index('transaction_splits_user_category_idx').on(columns.userId, columns.categoryId),
+    check('transaction_splits_amount_check', sql`${columns.amountMinor} <> 0`),
+  ]
+);
+
 export const transactionTemplates = pgTable(
   'transaction_templates',
   {
@@ -363,3 +388,4 @@ export type ExchangeRate = typeof exchangeRates.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
 export type Rule = typeof rules.$inferSelect;
 export type TransactionTemplate = typeof transactionTemplates.$inferSelect;
+export type TransactionSplit = typeof transactionSplits.$inferSelect;

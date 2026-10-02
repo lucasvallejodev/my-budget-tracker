@@ -10,7 +10,7 @@ The schema lives in `apps/api/src/db/schema.ts` (the API owns the database); the
 
 - `users` holds the account you sign in with: a unique lower-case `email`, the argon2id `password_hash`, an optional `name` and `last_sign_in_at`. Every other table's `user_id` references `users(id) ON DELETE CASCADE`.
 - `sessions` holds one row per signed-in browser: the SHA-256 `token_hash` of the cookie token (never the token itself), `expires_at`, `last_used_at`, `user_agent` and `ip_address`. These rows are deleted on sign-out, revocation and expiry.
-- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets`, `exchange_rates` and `transaction_templates` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
+- Financial rows are never deleted: `transactions`, `accounts`, `rules`, `budgets`, `exchange_rates`, `transaction_templates` and `transaction_splits` have a `deleted_at` timestamp that hides them from lists, balances and reports until they are restored. Categories, groups and payees are archived with `archived_at`. See [API service › Soft deletes](api.md#soft-deletes).
 
 ## Relationships
 
@@ -28,6 +28,8 @@ erDiagram
   categories ||--o{ budgets : "category_id"
   categories ||--o{ rules : "category_id"
   payees ||--o{ transactions : "payee_id (nullable)"
+  transactions ||--o{ transaction_splits : "transaction_id (split lines)"
+  categories ||--o{ transaction_splits : "category_id (nullable)"
   accounts ||--o{ transaction_templates : "account_id / transfer_account_id (nullable)"
   categories ||--o{ transaction_templates : "category_id (nullable)"
   transactions ||--o| transactions : "transfer_id (two legs)"
@@ -169,6 +171,19 @@ Unique on `(category_id, month, currency)`.
 | `category_id` | → categories | category to apply                                                           |
 | `priority`    | int          | lower runs first                                                            |
 
+### `transaction_splits`
+
+| Column           | Type           | Notes                                                                  |
+| ---------------- | -------------- | ---------------------------------------------------------------------- |
+| `transaction_id` | → transactions | the split transaction (standard only; its own `category_id` is `NULL`) |
+| `category_id`    | → categories?  | `NULL` only when its category was archived without a replacement       |
+| `amount_minor`   | bigint         | signed like the parent, never 0; the live lines add up to the parent   |
+| `memo`           | text           | optional note for the line                                             |
+| `sort_order`     | int            | display order                                                          |
+| `deleted_at`     | timestamptz?   | lines are replaced by soft-deleting the old ones                       |
+
+Reports read one row per live line through `categoryLines` (a transaction without lines reads as itself), so a split counts in several categories while balances still use the parent.
+
 ### `transaction_templates`
 
 | Column                | Type          | Notes                                                                         |
@@ -193,7 +208,8 @@ A template is not part of the ledger: it never counts in balances, reports or bu
 - A transfer always has exactly two live legs with opposite signs in different accounts, the same `transfer_id`, no category and no payee.
 - Deleting one transfer leg soft-deletes both; editing one edits both.
 - An account with live transactions cannot change currency and cannot be deleted, only archived.
-- Archiving a category either moves its transactions to another category or leaves them uncategorised with `needs_review = true`.
+- Archiving a category either moves its transactions and split lines to another category or leaves them uncategorised with `needs_review = true` on the transaction.
+- The live lines of a split transaction add up to its amount, share its sign and number at least two; changing the amount without new lines is refused.
 - `import_id` is deterministic for a given file row (external id, or date + amount + occurrence + payee hash), so re-importing a file is a no-op. The import commit inserts with `ON CONFLICT DO NOTHING` on `transactions_account_import_key`, so committing the same preview twice also imports once.
 
 ## Legacy data

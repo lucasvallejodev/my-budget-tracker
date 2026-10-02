@@ -208,7 +208,8 @@ export const createRuleService = (db: Db) => {
               eq(transactions.userId, userId),
               eq(transactions.kind, 'standard'),
               isNull(transactions.categoryId),
-              isNull(transactions.deletedAt)
+              isNull(transactions.deletedAt),
+              sql`NOT EXISTS (SELECT 1 FROM transaction_splits line WHERE line.transaction_id = ${transactions.id} AND line.deleted_at IS NULL)`
             )
           );
 
