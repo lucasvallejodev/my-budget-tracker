@@ -20,7 +20,7 @@ A transaction is one movement of money in one account. Expenses are negative, in
 
 ### Record from a template
 
-The row of chips at the top of **New transaction** lists your [templates](templates.md). Click one to fill the form with its type, account, amount, payee, category and memo, then click **Create**. **Save as template** in the form, or in a row's **⋯** menu, keeps the current values as a new template.
+The chips at the top of **New transaction** show your four most recently used [templates](templates.md), and **All templates** lists the rest with a search. Click one to fill the form with its type, account, amount, payee, category and memo, then click **Create**. **Save as template** in the form, or in a row's **⋯** menu, keeps the current values as a new template.
 
 ### Split a transaction between categories
 

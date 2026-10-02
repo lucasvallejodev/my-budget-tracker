@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { createSeries } from '@/api/mutations';
-import { Button, Cluster, ListRow, Panel } from '@/components/ui';
+import { Button, Cluster, EmptyState, ListRow, Panel } from '@/components/ui';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 import type { RecurringFormValues } from '@coinkeeper/shared/schema/recurring';
 
@@ -43,13 +43,17 @@ export function SuggestionsPanel({
     },
   });
 
-  if (!items.length) return null;
+  if (!items.length) {
+    return (
+      <EmptyState
+        title="Nothing new found"
+        description="Every payment that repeats at a regular rhythm is already followed, or there is not enough history yet."
+      />
+    );
+  }
 
   return (
-    <Panel
-      title="Found in your history"
-      description="Payments that repeat at a regular rhythm. Add them to follow what is due and to find forgotten subscriptions."
-    >
+    <Panel>
       {items.map(suggestion => (
         <ListRow
           key={`${suggestion.payeeId}-${suggestion.currency}-${suggestion.kind}`}

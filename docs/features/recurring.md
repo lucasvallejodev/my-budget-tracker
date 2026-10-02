@@ -1,6 +1,6 @@
 # Upcoming and recurring payments
 
-> Summary: recurring payments (bills, subscriptions, income) and the Upcoming page: adding a series by hand or from payments found in your history, how payments are matched to what is due, the paid, due soon, overdue and upcoming states, recording or linking a payment, payments added to Review when due, the subscription review with monthly and yearly costs and price changes, pausing and deleting, and how it works.
+> Summary: recurring payments (bills, subscriptions, income) and the Upcoming page with its four sections: adding a series by hand or from payments found in your history, how payments are matched to what is due, the paid, due soon, overdue and upcoming states, recording or linking a payment, payments added to Review when due, the subscription review with monthly and yearly costs and price changes, pausing and deleting, and how it works.
 
 A recurring payment, or series, is something that happens on a rhythm: rent on the 1st, a streaming subscription every month, a salary, a yearly insurance premium. CoinKeeper uses series to show what is coming and what is still to pay. A series never changes a balance by itself: only real transactions do.
 
@@ -8,13 +8,18 @@ A recurring payment, or series, is something that happens on a rhythm: rent on t
 
 ### Open Upcoming
 
-Choose **Upcoming** under **Plan** in the sidebar (or open **More** on a phone). The page has three parts:
+Choose **Upcoming** under **Plan** in the sidebar (or open **More** on a phone). Like Analytics, the page is split into sections with tabs at the top; each section starts with a short explanation of what it shows and what you can do there. **New recurring payment** is available in every section.
 
-- **Next 30 days**: every occurrence from the last five weeks to 30 days ahead, grouped as **Overdue**, **Due soon**, **Upcoming** and **Paid**, with the total **Still to pay** per currency.
-- **Recurring payments**: your series with their rhythm, amount and next due date.
-- **Found in your history**: payments that repeat at a regular rhythm but are not a series yet.
+| Section               | Address                   | What it shows                                                                                                                                                                                                            |
+| --------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| What is due           | `/upcoming`               | Every occurrence from the last five weeks to 30 days ahead, grouped under **Overdue**, **Due soon**, **Upcoming** and **Paid**, and the total **Still to pay** per currency. The tab counts what is overdue or due soon. |
+| Recurring payments    | `/upcoming/recurring`     | Your series grouped under **Income**, **Bills**, **Subscriptions** and **Other**, with their rhythm, amount and next due date.                                                                                           |
+| Subscription review   | `/upcoming/subscriptions` | What each charge costs a month and a year, and price changes (see [Review your subscriptions](#review-your-subscriptions)).                                                                                              |
+| Found in your history | `/upcoming/suggestions`   | Payments that repeat at a regular rhythm but are not a series yet. The tab counts the suggestions.                                                                                                                       |
 
-<!-- screenshot: Upcoming page with an overdue phone bill, two items due soon, a paid rent and the Still to pay total (docs/assets/screenshots/upcoming.png) -->
+Every group has a heading with its count and a one-line hint (for example, Overdue: "The due date has passed and no matching payment was found"), and every item is separated from the next by a line.
+
+<!-- screenshot: Upcoming › What is due with the section tabs, the explanation, an overdue water bill, items due soon and the Still to pay total (docs/assets/screenshots/upcoming.png) -->
 
 ### Add a recurring payment
 
@@ -36,8 +41,8 @@ Choose **Upcoming** under **Plan** in the sidebar (or open **More** on a phone).
 
 Payments are matched automatically (see [How payments are matched](#how-payments-are-matched)). When one was missed:
 
-- **Record** opens **New transaction** with the account, amount, payee, category and due date of the occurrence. Saving it marks the occurrence paid.
-- **Link** lists transactions within 10 days of the due date in the same currency that are not linked yet; pick one to mark the occurrence paid with it.
+- **Record** (you paid it but have not entered it yet) opens **New transaction** with the account, amount, payee, category and due date of the occurrence. Saving it marks the occurrence paid.
+- **Link** (you entered it but it was not matched, for example because the amount changed) lists transactions within 10 days of the due date in the same currency that are not linked yet; pick one to mark the occurrence paid with it.
 - **Not paid** on a paid occurrence removes the link. The transaction itself is not changed.
 
 ### Payments added to Review when due
@@ -46,7 +51,7 @@ A series with **Add it to Review when it is due** creates its due payment as a *
 
 ### Review your subscriptions
 
-**Subscription review** on Upcoming lists every series that takes money out, most expensive first, with what it costs a month and a year (a weekly or yearly payment is spread over the months) and when it was last paid. The line at the top adds up the active ones per currency. When the last two payments differ, a badge says **Up 8 %** or **Down 5 %**, which is how price rises show up. **Pause** keeps the series without counting its future payments; cancel the subscription with the provider yourself.
+**Subscription review** (`/upcoming/subscriptions`) lists every series that takes money out, most expensive first, with what it costs a month and a year (a weekly or yearly payment is spread over the months) and when it was last paid. The line at the top adds up the active ones per currency. When the last two payments differ, a badge says **Up 8 %** or **Down 5 %**, which is how price rises show up. **Pause** keeps the series without counting its future payments; cancel the subscription with the provider yourself.
 
 ### Pause, edit or delete
 
@@ -78,4 +83,4 @@ The nearest open due date wins, and each occurrence takes at most one payment. W
 - A paid occurrence is a transaction with `recurring_series_id` and `recurring_due_on`. A partial unique index on the pair (live rows only) guarantees one payment per due date, even when two requests race.
 - Occurrence dates, monthly equivalents, the match range and cadence detection are pure helpers in `packages/shared/src/lib/recurrence.ts` (`occurrencesBetween`, `nextOccurrence`, `monthlyEquivalent`, `amountRange`, `cadenceFromGap`).
 - Service `apps/api/src/modules/recurring/`: `service.ts` (create, update, delete, restore, list with payment statistics), `occurrences.ts` (upcoming list, record due, link and unlink), `matching.ts` (`matchTransactionsToSeries`, called by `ledger.createStandard`, the import commit and series writes), `detection.ts` (suggestions). Endpoints: [REST API › Recurring payments](../reference/rest-api.md#recurring-payments). Requests carry the user's `today` so dates follow the browser's day.
-- Web: `Upcoming` in `apps/web/src/components/finance/upcoming/` at `/upcoming`, reading `useUpcoming`, `useRecurringSeries` and `useRecurringSuggestions`; labels and the transaction preset in `finance/recurring-labels.ts`.
+- Web: `Upcoming` in `apps/web/src/components/finance/upcoming/` with a `view` (`due`, `recurring`, `subscriptions`, `suggestions`) rendered by `/upcoming`, `/upcoming/recurring`, `/upcoming/subscriptions` and `/upcoming/suggestions`; the section names, explanations and steps are in `upcoming-sections.ts`, the tabs are the `ui` `SectionTabs` and the explanation is `SectionIntro`. It reads `useUpcoming`, `useRecurringSeries` and `useRecurringSuggestions`; labels and the transaction preset in `finance/recurring-labels.ts`.

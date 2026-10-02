@@ -2,8 +2,14 @@
 
 @layer ui {
   .list-row {
-    @include flex-between(space(5), flex-start);
+    @include flex-column(space(3));
     @include divided;
+
+    @include media-up(tablet) {
+      @include flex-between(space(5), flex-start);
+
+      flex-direction: row;
+    }
 
     @include media-up(tablet-landscape) {
       align-items: center;
@@ -25,7 +31,11 @@
       @include flex-row(space(2) + 2px);
 
       flex-wrap: wrap;
-      justify-content: flex-end;
+
+      @include media-up(tablet) {
+        flex-shrink: 0;
+        justify-content: flex-end;
+      }
     }
   }
 }

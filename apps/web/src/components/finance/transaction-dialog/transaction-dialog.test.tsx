@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -122,7 +122,9 @@ describe('TransactionDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(screen.getByRole('button', { name: /Old card/ })).toHaveProperty('disabled', true);
-    expect(screen.getByRole('link', { name: 'Fix templates in Settings' })).toBeTruthy();
+    expect(
+      screen.getByRole('link', { name: 'Some templates need fixing: manage templates' })
+    ).toBeTruthy();
   });
 
   it('hides the template chips while editing', () => {
@@ -244,5 +246,29 @@ describe('TransactionDialog', () => {
         expect.objectContaining({ splits: [] })
       )
     );
+  });
+
+  it('shows the four most recent templates and finds the others in All templates', async () => {
+    const many = ['Rent', 'Bus', 'Lunch', 'Gym', 'Coffee'].map((name, index) => ({
+      ...Coffee,
+      id: `00000000-0000-4000-8000-00000000000${index}`,
+      lastUsedAt: `2026-09-0${5 - index}T08:00:00Z`,
+      name,
+    }));
+
+    renderWith(withTemplates(many), <TransactionDialog trigger={<button>Add</button>} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+    const chips = screen.getByRole('group', { name: 'Templates' });
+
+    expect(within(chips).queryByRole('button', { name: /^Coffee/ })).toBeNull();
+
+    fireEvent.click(
+      within(chips).getByRole('button', { name: 'Choose a template: All templates (5)' })
+    );
+    fireEvent.click(await screen.findByRole('option', { name: /Coffee/ }));
+
+    expect(screen.getByRole('textbox', { name: 'Amount' })).toHaveProperty('value', '2.50');
   });
 });

@@ -4,12 +4,13 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { unlinkOccurrence } from '@/api/mutations';
-import { Amount, Badge, Button, Cluster, EmptyState, ListRow, Stack, Text } from '@/components/ui';
+import { Amount, Button, EmptyState, ListRow, Stack, Text } from '@/components/ui';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { OccurrenceStates, OccurrenceStatusOrder, RecurringKindLabels } from '../recurring-labels';
 import { longDayLabel } from '../transaction-labels';
 import { Occurrence, useRefreshFinance } from '../use-finance-data';
+import { ListGroup } from './list-group';
 import { stillToPay } from './upcoming-figures';
 
 type OccurrenceActions = {
@@ -23,7 +24,6 @@ function OccurrenceRow({
   onRecord,
 }: OccurrenceActions & { occurrence: Occurrence }) {
   const refresh = useRefreshFinance();
-  const state = OccurrenceStates[occurrence.status];
 
   const unlink = useMutation({
     mutationFn: () => unlinkOccurrence(occurrence.seriesId, occurrence.dueOn),
@@ -36,7 +36,6 @@ function OccurrenceRow({
       title={occurrence.name}
       description={`${longDayLabel(occurrence.dueOn)} · ${RecurringKindLabels[occurrence.kind]}`}
     >
-      <Badge tone={state.tone}>{state.label}</Badge>
       <Amount
         amountMinor={occurrence.paidAmountMinor ?? occurrence.amountMinor}
         currency={occurrence.currency}
@@ -46,20 +45,31 @@ function OccurrenceRow({
         <Button
           size="sm"
           variant="ghost"
+          aria-label={`Not paid: ${occurrence.name} on ${occurrence.dueOn}`}
           disabled={unlink.isPending}
           onClick={() => unlink.mutate()}
         >
           Not paid
         </Button>
       ) : (
-        <Cluster>
-          <Button size="sm" variant="outline" onClick={() => onRecord(occurrence)}>
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label={`Record payment: ${occurrence.name} on ${occurrence.dueOn}`}
+            onClick={() => onRecord(occurrence)}
+          >
             Record
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onLink(occurrence)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={`Link a transaction: ${occurrence.name} on ${occurrence.dueOn}`}
+            onClick={() => onLink(occurrence)}
+          >
             Link
           </Button>
-        </Cluster>
+        </>
       )}
     </ListRow>
   );
@@ -72,8 +82,8 @@ export function OccurrenceList({
   if (!occurrences.length) {
     return (
       <EmptyState
-        title="Nothing due in the next 30 days"
-        description="Add your bills, subscriptions and income below, or pick them from your history."
+        title="Nothing expected in the next 30 days"
+        description="Add your rent, salary and subscriptions under Recurring payments, or start from Found in your history."
       />
     );
   }
@@ -83,8 +93,8 @@ export function OccurrenceList({
   return (
     <Stack gap="medium">
       {totals.length > 0 && (
-        <Text tone="muted">
-          Still to pay:{' '}
+        <Text>
+          <strong>Still to pay:</strong>{' '}
           {totals.map(total => formatMoney(total.amountMinor, total.currency)).join(' · ')}
         </Text>
       )}
@@ -93,7 +103,12 @@ export function OccurrenceList({
 
         return (
           group.length > 0 && (
-            <section key={status} aria-label={OccurrenceStates[status].label}>
+            <ListGroup
+              key={status}
+              count={group.length}
+              hint={OccurrenceStates[status].hint}
+              label={OccurrenceStates[status].label}
+            >
               {group.map(occurrence => (
                 <OccurrenceRow
                   key={`${occurrence.seriesId}-${occurrence.dueOn}`}
@@ -101,7 +116,7 @@ export function OccurrenceList({
                   {...actions}
                 />
               ))}
-            </section>
+            </ListGroup>
           )
         );
       })}

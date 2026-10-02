@@ -56,7 +56,7 @@ Status follows the pace of the month, not a fixed percentage. A budget has one o
 | **Spending too fast** | the limit is not passed yet, but today's daily rate carried to the end of the month passes it; only in the current month and from day 5 onwards |
 | **On track**          | every other case, including past months that stayed within the limit                                                                            |
 
-Recurring payments change the pace. Payments linked to a [recurring series](recurring.md) are fixed costs, so they are not extended day by day: the projection carries only the other spending forward, then adds the fixed payments already made and the recurring bills of that category still due this month. The daily allowance also keeps those bills aside, and a row with bills to come says so: "7.00 EUR a day · 40.00 EUR in bills to come".
+Recurring payments change the pace. Payments linked to a [recurring series](recurring.md) are fixed costs, so they are not extended day by day: the projection carries only the other spending forward, then adds the fixed payments already made and the recurring bills of that category still due this month. The daily allowance also keeps those bills aside, and a row with bills to come says so under its bar: "120.00 EUR of 300.00 EUR · 40% · 40.00 EUR in bills to come".
 
 Spending exactly the limit is still **On track**. Past months show no pace marker, projection or daily allowance.
 
@@ -85,6 +85,7 @@ Next to the category budgets, a panel lists the expense categories with spending
 - Each row has **Add** with an amount ("Add 112.00 €"), which opens the budget dialog pre-filled with that category, the currency and the amount: the three-month suggestion when there is one, otherwise this month's spending.
 - Uncategorized spending shows **Review** instead, which opens the [Review inbox](review-inbox.md).
 - The first six rows are shown; **Show N more** reveals the rest.
+- On a phone the category and the amount share the first line and the button sits below them.
 
 ## How it works
 

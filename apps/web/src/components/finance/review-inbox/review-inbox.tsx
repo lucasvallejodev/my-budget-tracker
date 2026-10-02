@@ -3,7 +3,7 @@
 import './review-inbox.scss';
 
 import { useMutation } from '@tanstack/react-query';
-import { Check, Sparkles, Undo2 } from 'lucide-react';
+import { Sparkles, Undo2 } from 'lucide-react';
 import { KeyboardEvent, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -11,7 +11,6 @@ import { categorizeTransaction, reopenReview } from '@/api/mutations';
 import {
   Amount,
   Avatar,
-  Badge,
   Button,
   EmptyState,
   Icon,
@@ -34,6 +33,7 @@ import {
   useReviewSuggestions,
   useTransactions,
 } from '../use-finance-data';
+import { actionKind, CategoryNote, ReviewAction } from './review-action';
 import { addReviewed, removeReviewed, ReviewedItem, reviewedToday } from './reviewed-today';
 
 const ReviewLimit = '500';
@@ -127,27 +127,22 @@ function useRowFocus(onDecide: (decision: Decision) => void) {
   };
 }
 
-function ReviewAction({
-  onConfirm,
-  suggested,
-  title,
-}: {
-  onConfirm: () => void;
-  suggested: boolean;
-  title: string;
-}) {
-  return (
-    <Button
-      className="review-inbox__action"
-      size="sm"
-      variant={suggested ? 'default' : 'outline'}
-      aria-label={`${suggested ? 'Accept' : 'Mark as reviewed'}: ${title}`}
-      onClick={onConfirm}
-    >
-      <Check aria-hidden /> {suggested ? 'Accept' : 'Done'}
-    </Button>
-  );
-}
+const decisionFor = (
+  transaction: TransactionRow,
+  chosen: null | string | undefined,
+  suggestion?: ReviewSuggestion
+): Decision =>
+  chosen === undefined
+    ? {
+        categoryId: suggestion?.categoryId ?? transaction.categoryId,
+        row: transaction,
+        source: suggestion?.source ?? 'manual',
+      }
+    : {
+        categoryId: chosen,
+        row: transaction,
+        source: 'manual',
+      };
 
 function ReviewRow({
   currentYear,
@@ -166,14 +161,11 @@ function ReviewRow({
 }) {
   const title = describeTransaction(transaction);
   const suggested = suggestion?.categoryId;
+  const [chosen, setChosen] = useState<null | string | undefined>(undefined);
   const { closeAutoFocus, decide, openFromRow, restoreFocus, rowRef } = useRowFocus(onDecide);
+  const hasChoice = chosen !== undefined;
 
-  const confirm = () =>
-    decide({
-      categoryId: suggested ?? transaction.categoryId,
-      row: transaction,
-      source: suggestion?.source ?? 'manual',
-    });
+  const confirm = () => decide(decisionFor(transaction, chosen, suggestion));
 
   const onKeyDown = (event: KeyboardEvent<HTMLLIElement>) =>
     handleRowKey(event, {
@@ -204,29 +196,24 @@ function ReviewRow({
         <CategoryPicker
           label={`Category for ${title}`}
           kind={transaction.amountMinor < 0 ? 'expense' : 'income'}
-          value={suggested ?? transaction.categoryId ?? undefined}
+          value={(hasChoice ? chosen : (suggested ?? transaction.categoryId)) ?? undefined}
           suggestedId={suggested}
           open={open}
           onOpenChange={onOpenChange}
           onCloseAutoFocus={closeAutoFocus}
-          onChange={categoryId =>
-            decide({
-              categoryId: categoryId ?? null,
-              row: transaction,
-              source: 'manual',
-            })
-          }
+          onChange={categoryId => setChosen(categoryId ?? null)}
         />
-        {suggested && (
-          <Badge tone="info" icon={<Sparkles aria-hidden />}>
-            Suggested
-          </Badge>
-        )}
+        <CategoryNote chosen={hasChoice} suggested={!!suggested} />
       </div>
       <span className="review-inbox__amount">
         <Amount amountMinor={transaction.amountMinor} currency={transaction.currency} signed />
       </span>
-      <ReviewAction suggested={!!suggested} title={title} onConfirm={confirm} />
+      <ReviewAction
+        className="review-inbox__action"
+        kind={actionKind(hasChoice, !!suggested)}
+        title={title}
+        onConfirm={confirm}
+      />
     </li>
   );
 }
@@ -371,7 +358,7 @@ export function ReviewInbox() {
     <Page>
       <PageHeading
         title="Review"
-        description="New and imported transactions that still need a category. Confirm each one to clear it."
+        description="New and imported transactions that still need a category. Pick a category or accept the suggestion, then press Done or Accept to save it; nothing changes until you do."
         actions={
           withSuggestion.length > 0 && (
             <Button variant="outline" onClick={() => void acceptAll()} disabled={decide.isPending}>

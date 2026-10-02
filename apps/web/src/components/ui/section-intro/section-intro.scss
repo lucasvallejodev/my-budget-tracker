@@ -1,0 +1,27 @@
+@use 'abstracts' as *;
+
+@layer ui {
+  .section-intro {
+    @include flex-column(space(2));
+
+    padding: space(4);
+    border-radius: radius(card);
+    background: var(--color-surface-sunken);
+    color: var(--color-text-body);
+
+    &__lead {
+      margin: 0;
+    }
+
+    &__steps {
+      @include flex-column(space(1));
+
+      margin: 0;
+      padding-left: space(5);
+    }
+
+    &__step {
+      @include muted-text;
+    }
+  }
+}

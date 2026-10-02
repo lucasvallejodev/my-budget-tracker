@@ -9,7 +9,12 @@ import { cn } from '@/lib/styles';
 
 import { layerZIndex, PopoverZIndex, useDialogDepth } from '../dialog';
 
-export const Popover = RadixPopover.Root;
+export function Popover(props: ComponentProps<typeof RadixPopover.Root>) {
+  const insideDialog = useDialogDepth() > 0;
+
+  return <RadixPopover.Root modal={insideDialog} {...props} />;
+}
+
 export const PopoverTrigger = RadixPopover.Trigger;
 
 export function PopoverContent({

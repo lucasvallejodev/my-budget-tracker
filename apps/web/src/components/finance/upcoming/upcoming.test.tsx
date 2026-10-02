@@ -12,6 +12,7 @@ import type {
 
 import { QueryKeys } from '../use-finance-data';
 import { Upcoming } from './upcoming';
+import type { UpcomingView } from './upcoming-sections';
 
 vi.mock('@/api/mutations', () => ({
   createSeries: vi.fn(async (values: { name: string }) => ({ ...values, id: 'new-series' })),
@@ -89,7 +90,7 @@ const Music: RecurringSuggestion = {
   payeeName: 'MusicCo',
 };
 
-const renderUpcoming = () => {
+const renderUpcoming = (view: UpcomingView = 'due') => {
   const client = new QueryClient();
 
   client.setQueryData(QueryKeys.upcoming(today, 30), [
@@ -114,7 +115,7 @@ const renderUpcoming = () => {
 
   return render(
     <QueryClientProvider client={client}>
-      <Upcoming />
+      <Upcoming view={view} />
     </QueryClientProvider>
   );
 };
@@ -138,24 +139,41 @@ afterEach(() => {
 });
 
 describe('Upcoming', () => {
-  it('groups what is due by status and totals what is still to pay', async () => {
+  it('splits the page into sections with counts and explains the current one', async () => {
     renderUpcoming();
 
-    expect(screen.getByText('Still to pay: €25.98')).toBeTruthy();
-    expect(within(screen.getByRole('region', { name: 'Overdue' })).getByText('Phone')).toBeTruthy();
+    const tabs = screen.getByRole('navigation', { name: 'Upcoming sections' });
+
+    expect(
+      within(tabs).getByRole('link', { name: 'What is due 2' }).getAttribute('aria-current')
+    ).toBe('page');
+    expect(within(tabs).getByRole('link', { name: 'Found in your history 1' })).toBeTruthy();
+    expect(screen.getByText(/matched and marked paid automatically/)).toBeTruthy();
+    expect(screen.getByText(/Record: you paid it/)).toBeTruthy();
+    await waitFor(() => expect(recordDuePayments).toHaveBeenCalledWith(today));
+  });
+
+  it('groups what is due under headed groups and totals what is still to pay', () => {
+    renderUpcoming();
+
+    expect(screen.getByText('€25.98')).toBeTruthy();
+
+    const overdue = screen.getByRole('region', { name: 'Overdue' });
+
+    expect(within(overdue).getByText('Phone')).toBeTruthy();
+    expect(within(overdue).getByText(/no matching payment was found/)).toBeTruthy();
     expect(
       within(screen.getByRole('region', { name: 'Due soon' })).getByText('Streaming')
     ).toBeTruthy();
     expect(within(screen.getByRole('region', { name: 'Paid' })).getByText('Rent')).toBeTruthy();
-    await waitFor(() => expect(recordDuePayments).toHaveBeenCalledWith(today));
   });
 
   it('records an occurrence through a prefilled transaction', () => {
     renderUpcoming();
 
-    const due = within(screen.getByRole('region', { name: 'Due soon' }));
-
-    fireEvent.click(due.getByRole('button', { name: 'Record' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Record payment: Streaming on 2026-10-15' })
+    );
 
     expect(screen.getByRole('dialog', { name: 'New transaction' })).toBeTruthy();
     expect(screen.getByRole('textbox', { name: 'Amount' })).toHaveProperty('value', '12.99');
@@ -164,15 +182,22 @@ describe('Upcoming', () => {
   it('marks a paid occurrence as not paid', async () => {
     renderUpcoming();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Not paid' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Not paid: Rent on 2026-10-01' }));
 
     await waitFor(() => expect(unlinkOccurrence).toHaveBeenCalledWith('series-rent', '2026-10-01'));
   });
 
-  it('lists recurring payments and adds a suggestion found in history', async () => {
-    renderUpcoming();
+  it('lists recurring payments grouped by kind', () => {
+    renderUpcoming('recurring');
 
-    expect(screen.getByText('Bill · Monthly · €1,000.00 · next 1 Nov')).toBeTruthy();
+    const bills = screen.getByRole('region', { name: 'Bills' });
+
+    expect(within(bills).getByText('Monthly · €1,000.00 · next 1 Nov')).toBeTruthy();
+    expect(screen.getByText(/Each one knows how often it happens/)).toBeTruthy();
+  });
+
+  it('adds a suggestion found in history', async () => {
+    renderUpcoming('suggestions');
 
     fireEvent.click(screen.getByRole('button', { name: 'Add MusicCo' }));
 
@@ -190,8 +215,8 @@ describe('Upcoming', () => {
     );
   });
 
-  it('opens the recurring payment form', () => {
-    renderUpcoming();
+  it('opens the recurring payment form from any section', () => {
+    renderUpcoming('subscriptions');
 
     fireEvent.click(screen.getByRole('button', { name: 'New recurring payment' }));
 
@@ -200,14 +225,12 @@ describe('Upcoming', () => {
   });
 
   it('reviews recurring charges with their yearly cost and price change, and pauses one', async () => {
-    renderUpcoming();
+    renderUpcoming('subscriptions');
 
-    const review = screen.getByText('Subscription review').closest('section')!;
+    expect(screen.getByText('€1,000.00 a month, €12,000.00 a year')).toBeTruthy();
+    expect(screen.getByText('Up 5 %')).toBeTruthy();
 
-    expect(within(review).getByText('€1,000.00 a month, €12,000.00 a year')).toBeTruthy();
-    expect(within(review).getByText('Up 5 %')).toBeTruthy();
-
-    fireEvent.click(within(review).getByRole('button', { name: 'Pause Rent' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pause Rent' }));
 
     await waitFor(() =>
       expect(updateSeries).toHaveBeenCalledWith(

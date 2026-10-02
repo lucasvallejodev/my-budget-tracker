@@ -1,6 +1,6 @@
 # Transaction templates
 
-> Summary: saving the transactions you record often as templates, recording one in two taps from the chips at the top of the transaction form, templates that ask for the amount each time, transfer templates, managing and restoring templates, and how they work.
+> Summary: saving the transactions you record often as templates, recording one in two taps from the chips (or the All templates list) at the top of the transaction form, templates that ask for the amount each time, transfer templates, managing and restoring templates, and how they work.
 
 A template is a saved transaction without a date: a name, a type (expense, income or transfer) and any of account, destination account, amount, payee, category and memo. Picking it fills the transaction form with those values and today's date. Nothing is recorded until you click **Create**, so you can change any field first.
 
@@ -11,11 +11,11 @@ A template never touches balances, reports or budgets. Only the transaction you 
 ### Record a transaction from a template
 
 1. Open **New transaction** (header button, or the round add button on a phone).
-2. Click a template chip in the row at the top of the dialog. On a phone the row scrolls sideways. The most recently used templates come first.
+2. At the top of the dialog, under "Start from a template", click one of the chips: they show your four most recently used templates and wrap onto a second line when needed. With more than four templates, **All templates (n)** opens a searchable list of every usable template with its amount; picking one works like a chip. **Manage templates** opens Settings › Templates.
 3. The form switches to the template's type and fills its fields. When the template has no amount, the cursor waits in the **Amount** field.
 4. Change anything that differs and click **Create** (or **Record transfer**).
 
-<!-- screenshot: New transaction dialog with three template chips above the Type field, one of them showing "…" for an amount asked each time (docs/assets/screenshots/templates-chips.png) -->
+<!-- screenshot: New transaction dialog with four template chips, the All templates picker and Manage templates link above the Type field, one of them showing "…" for an amount asked each time (docs/assets/screenshots/templates-chips.png) -->
 
 ### Save a template
 
@@ -45,7 +45,7 @@ You can keep up to 50 templates, and two live templates cannot share a name.
 
 ## When a template points at something archived
 
-A chip is greyed out when its account, destination account or category has been archived, and the dialog shows a **Fix templates in Settings** link. The settings list shows the reason as a badge. Edit the template to pick another account or category. An archived payee is dropped from the form instead: the rest of the template still works.
+A chip is greyed out when its account, destination account or category has been archived, and the link under the chips reads **Some templates need fixing: manage templates**. The settings list shows the reason as a badge. Edit the template to pick another account or category. An archived payee is dropped from the form instead: the rest of the template still works.
 
 ## How it works
 
@@ -53,4 +53,4 @@ A chip is greyed out when its account, destination account or category has been 
 - The template's direction is the sign of its amount, else the kind of its category's group, else expense.
 - Service `apps/api/src/modules/templates/service.ts` (`list`, `create`, `update`, `remove`, `restore`, `reorder`) validates ownership of every referenced account, category and payee, and answers `404` for another user's ids. Endpoints: [REST API › Transaction templates](../reference/rest-api.md#transaction-templates).
 - `POST /transactions` and `POST /transfers` accept an optional `templateId`; the ledger sets that template's `last_used_at` in the same database transaction. A template of another user is ignored.
-- Web: chips in `components/finance/transaction-dialog/template-chips.tsx` (order and preset in `template-preset.ts`), `SaveTemplateDialog` in `components/finance/save-template-dialog/`, the settings screen `TemplatesSettings` in `components/finance/templates-settings/`, read through `useTemplates()`.
+- Web: chips and the **All templates** combobox in `components/finance/transaction-dialog/template-chips.tsx` (`QUICK_TEMPLATES` chips; order and preset in `template-preset.ts`), `SaveTemplateDialog` in `components/finance/save-template-dialog/`, the settings screen `TemplatesSettings` in `components/finance/templates-settings/`, read through `useTemplates()`.

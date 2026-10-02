@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { updateSeries } from '@/api/mutations';
-import { Badge, Button, ListRow, Panel, Text } from '@/components/ui';
+import { Badge, Button, EmptyState, ListRow, Panel, Text } from '@/components/ui';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 
 import { dayMonthLabel } from '../transaction-labels';
@@ -52,14 +52,19 @@ export function SubscriptionReview({ series }: { series: RecurringSeriesRow[] })
     },
   });
 
-  if (!items.length) return null;
+  if (!items.length) {
+    return (
+      <EmptyState
+        title="No recurring charges to review"
+        description="Recurring payments that take money out appear here once you add them."
+      />
+    );
+  }
 
   return (
-    <Panel
-      title="Subscription review"
-      description="Every recurring charge, most expensive first. Pause what you no longer use and cancel it with the provider."
-    >
-      <Text tone="muted">
+    <Panel>
+      <Text>
+        <strong>All active charges:</strong>{' '}
         {totals
           .map(
             total =>

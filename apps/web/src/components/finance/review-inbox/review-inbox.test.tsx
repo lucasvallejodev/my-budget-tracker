@@ -108,6 +108,11 @@ describe('ReviewInbox', () => {
     fireEvent.keyDown(row, { key: 'c' });
     fireEvent.click(await screen.findByRole('option', { name: 'Groceries' }));
 
+    expect(await screen.findByText('Not saved yet')).toBeTruthy();
+    expect(categorizeTransaction).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save the category of: Farmers stall' }));
+
     await waitFor(() =>
       expect(categorizeTransaction).toHaveBeenCalledWith('unsorted', 'groceries')
     );

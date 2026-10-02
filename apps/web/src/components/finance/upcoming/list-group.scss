@@ -1,0 +1,39 @@
+@use 'abstracts' as *;
+
+.list-group {
+  @include flex-column(space(1));
+
+  &__head {
+    @include flex-column(space(1));
+
+    padding: space(3);
+    border-radius: radius(control);
+    background: var(--color-surface-sunken);
+  }
+
+  &__title {
+    @include flex-row(space(2));
+
+    font-size: font-size(body);
+    font-weight: font-weight(semibold);
+  }
+
+  &__count {
+    padding: 0 space(2);
+    border-radius: radius(pill);
+    background: var(--color-surface);
+    color: var(--color-text-body);
+    font-size: font-size(meta);
+    font-weight: font-weight(medium);
+  }
+
+  &__hint {
+    @include muted-text;
+
+    margin: 0;
+  }
+
+  &__rows {
+    padding: 0 space(3);
+  }
+}

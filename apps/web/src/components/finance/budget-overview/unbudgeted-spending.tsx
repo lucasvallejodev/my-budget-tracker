@@ -44,13 +44,16 @@ function UnbudgetedRow({
 
   return (
     <li className="unbudgeted-spending__row">
-      <Avatar color={slice.color} size="small">
-        <Icon icon={slice.icon} />
-      </Avatar>
+      <span className="unbudgeted-spending__avatar">
+        <Avatar color={slice.color} size="small">
+          <Icon icon={slice.icon} />
+        </Avatar>
+      </span>
       <span className="unbudgeted-spending__name">{slice.categoryName}</span>
       <span className="unbudgeted-spending__amount">{format(slice.spentMinor)}</span>
       {slice.categoryId ? (
         <Button
+          className="unbudgeted-spending__action"
           variant="ghost"
           size="sm"
           aria-label={`Add a ${format(addAmount)} budget for ${slice.categoryName}`}
@@ -59,7 +62,7 @@ function UnbudgetedRow({
           Add {format(addAmount)}
         </Button>
       ) : (
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild className="unbudgeted-spending__action" variant="ghost" size="sm">
           <Link href="/review">Review</Link>
         </Button>
       )}

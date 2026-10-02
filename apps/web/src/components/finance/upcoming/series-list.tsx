@@ -5,18 +5,18 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { deleteSeries, restoreSeries } from '@/api/mutations';
-import { Badge, Button, EmptyState, ListRow } from '@/components/ui';
+import { Badge, Button, EmptyState, ListRow, Stack } from '@/components/ui';
 import { formatMoney } from '@coinkeeper/shared/lib/money';
 
-import { cadenceLabel, RecurringKindLabels } from '../recurring-labels';
+import { cadenceLabel, RecurringKindGroups } from '../recurring-labels';
 import { dayMonthLabel } from '../transaction-labels';
 import { RecurringSeriesRow, useRefreshFinance } from '../use-finance-data';
+import { ListGroup } from './list-group';
 
 const ActionIconSize = 16;
 
 const describeSeries = (series: RecurringSeriesRow): string =>
   [
-    RecurringKindLabels[series.kind],
     cadenceLabel(series.cadence, series.interval),
     formatMoney(Math.abs(series.amountMinor), series.currency),
     series.nextDueOn ? `next ${dayMonthLabel(series.nextDueOn)}` : null,
@@ -48,36 +48,55 @@ export function SeriesList({
     return (
       <EmptyState
         title="No recurring payments yet"
-        description="Add rent, salary or a subscription to see what is coming."
+        description="Add rent, salary or a subscription with New recurring payment, or start from Found in your history."
       />
     );
   }
 
   return (
-    <>
-      {series.map(item => (
-        <ListRow key={item.id} title={item.name} description={describeSeries(item)}>
-          {item.status !== 'active' && (
-            <Badge tone="neutral">{item.status === 'paused' ? 'Paused' : 'Ended'}</Badge>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Edit ${item.name}`}
-            onClick={() => onEdit(item)}
-          >
-            <Pencil size={ActionIconSize} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Delete ${item.name}`}
-            onClick={() => remove.mutate(item)}
-          >
-            <Trash2 size={ActionIconSize} />
-          </Button>
-        </ListRow>
-      ))}
-    </>
+    <Stack gap="medium">
+      {RecurringKindGroups.map(group => {
+        const items = series.filter(item => item.kind === group.kind);
+
+        return (
+          items.length > 0 && (
+            <ListGroup key={group.kind} count={items.length} hint={group.hint} label={group.label}>
+              {items.map(item => (
+                <SeriesRow
+                  key={item.id}
+                  series={item}
+                  onDelete={() => remove.mutate(item)}
+                  onEdit={() => onEdit(item)}
+                />
+              ))}
+            </ListGroup>
+          )
+        );
+      })}
+    </Stack>
+  );
+}
+
+function SeriesRow({
+  onDelete,
+  onEdit,
+  series,
+}: {
+  onDelete: () => void;
+  onEdit: () => void;
+  series: RecurringSeriesRow;
+}) {
+  return (
+    <ListRow title={series.name} description={describeSeries(series)}>
+      {series.status !== 'active' && (
+        <Badge tone="neutral">{series.status === 'paused' ? 'Paused' : 'Ended'}</Badge>
+      )}
+      <Button variant="ghost" size="icon" aria-label={`Edit ${series.name}`} onClick={onEdit}>
+        <Pencil size={ActionIconSize} />
+      </Button>
+      <Button variant="ghost" size="icon" aria-label={`Delete ${series.name}`} onClick={onDelete}>
+        <Trash2 size={ActionIconSize} />
+      </Button>
+    </ListRow>
   );
 }

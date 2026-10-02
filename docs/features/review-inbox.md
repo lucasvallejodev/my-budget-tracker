@@ -1,6 +1,6 @@
 # Review
 
-> Summary: the Review page, where uncategorized and imported transactions wait; suggested categories and accepting them; keyboard use; undoing a review the same day.
+> Summary: the Review page, where uncategorized and imported transactions wait; picking a category and saving it with Done; suggested categories and accepting them; keyboard use; undoing a review the same day.
 
 ## What lands here
 
@@ -20,7 +20,7 @@ Home shows a notice with the count and a link; the **Review** entry in the sideb
 
 1. Open **Review** in the sidebar.
 2. Each row shows the payee avatar (logo, chosen icon or initials, as in the [transactions list](transactions.md#read-the-list)), the payee or bank text, then the account, the day and **Pending** for unconfirmed imports, the category field, the amount and a button.
-3. Click the category field (or press `C` on a focused row) and type part of a category or group name. Only expense or income categories are offered, depending on the sign. Choosing one saves immediately and clears the flag.
+3. Click the category field (or press `C` on a focused row) and type part of a category or group name. Only expense or income categories are offered, depending on the sign. Choosing one does not save it yet: the row shows **Not saved yet** and the button reads **Done**. Click **Done** (or press `Enter` on the row) to save the category and clear the flag; until then nothing changes.
 4. When CoinKeeper has a suggestion, the category is already filled in with a **Suggested** tag and the button reads **Accept**. Click it to confirm the suggestion.
 5. If the current category is right and there is no suggestion, click **Done** to clear the flag without changing anything.
 6. **Accept N suggestions** in the page header accepts every suggestion on the page at once.
@@ -30,12 +30,12 @@ Home shows a notice with the count and a link; the **Review** entry in the sideb
 
 ### Use the keyboard
 
-| Key         | What it does                                                       |
-| ----------- | ------------------------------------------------------------------ |
-| Up and down | move between rows                                                  |
-| `C`         | open the category autocomplete of the focused row                  |
-| `Enter`     | confirm the focused row (accepts the suggestion, or marks it done) |
-| `Esc`       | close the autocomplete without changing the category               |
+| Key         | What it does                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| Up and down | move between rows                                                                                 |
+| `C`         | open the category autocomplete of the focused row                                                 |
+| `Enter`     | confirm the focused row (saves the category you picked, accepts the suggestion, or marks it done) |
+| `Esc`       | close the autocomplete without changing the category                                              |
 
 ### Undo a review
 
@@ -53,6 +53,6 @@ For each flagged row without a category, the first [rule](rules.md) that matches
 ## How it works
 
 - The page (`ReviewInbox` in `apps/web/src/components/finance/review-inbox/`) lists `GET /api/v1/transactions?needsReview=1` and reads suggestions with `useReviewSuggestions` from `GET /api/v1/transactions/review-suggestions` (`rules.reviewSuggestions` in the API; see the [REST API reference](../reference/rest-api.md#transactions)).
-- Choosing, accepting or confirming calls `categorizeTransaction` from `apps/web/src/api/mutations.ts`, which sends `PATCH /api/v1/transactions/:id` with the category and `needsReview: false`; the API applies it through `ledger.updateStandard`.
+- Picking a category only keeps it in the row's state; **Done**, **Accept** or `Enter` calls `categorizeTransaction` from `apps/web/src/api/mutations.ts`, which sends `PATCH /api/v1/transactions/:id` with the category and `needsReview: false`; the API applies it through `ledger.updateStandard`.
 - **Reviewed today** is kept in `localStorage` by `reviewed-today.ts`, keyed by the local date, so it survives a reload but not another browser or the next day. **Undo** calls `reopenReview`, which sends the previous category and `needsReview: true`.
 - The count on Home and on the sidebar badge (`useNeedsReviewCount`) comes from `ledger.needsReviewCount` inside the summary endpoint.
