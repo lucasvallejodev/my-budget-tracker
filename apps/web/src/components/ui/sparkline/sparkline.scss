@@ -7,6 +7,10 @@
     height: space(10);
     overflow: visible;
 
+    &__area {
+      fill: color-mix(in srgb, var(--sparkline-color) var(--color-tint-amount), transparent);
+    }
+
     &__line {
       fill: none;
       stroke: var(--sparkline-color);

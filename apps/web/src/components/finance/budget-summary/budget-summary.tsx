@@ -136,7 +136,7 @@ export function BudgetSummary({
   return (
     <section className="budget-summary" aria-label={`Budget summary for ${monthLabel(month)}`}>
       <div className="budget-summary__main">
-        <p className="budget-summary__eyebrow">Left to spend in {monthName}</p>
+        <p className="budget-summary__eyebrow">Budget left in {monthName}</p>
         <div className="budget-summary__hero">
           <span className="budget-summary__hero-value">{format(limitMinor - spentMinor)}</span>
           <span className="budget-summary__hero-total">of {format(limitMinor)}</span>

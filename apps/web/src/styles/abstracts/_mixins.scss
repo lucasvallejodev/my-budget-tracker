@@ -84,9 +84,10 @@
   min-height: size(control-height);
   padding: space(2) space(3);
   border: border(control);
-  border-radius: radius(pill);
+  border-radius: radius(control);
   background: var(--color-surface);
-  color: var(--color-text);
+  color: var(--color-text-body);
+  box-shadow: shadow(control);
 }
 
 @mixin icon-size($size) {
@@ -102,6 +103,13 @@
   border-radius: radius(control);
   background: var(--color-surface);
   color: var(--color-text);
+  box-shadow: shadow(control);
+
+  &:focus-visible {
+    border-color: var(--color-brand);
+    outline: none;
+    box-shadow: shadow(focus);
+  }
 
   &[aria-invalid='true'] {
     border-color: var(--color-negative);
@@ -115,7 +123,7 @@
 @mixin floating-panel($width: 360px) {
   padding: space(2);
   border: border(card);
-  border-radius: radius(card);
+  border-radius: radius(dialog);
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: shadow(pop);
@@ -129,12 +137,14 @@
 
   min-height: size(control-height-small);
   padding: space(2) space(3);
-  border-radius: radius(small);
+  border-radius: radius(control);
+  color: var(--color-text-body);
   cursor: pointer;
   outline: none;
 
   &#{$highlight-selector} {
-    @include accent-highlight;
+    background: var(--color-surface-sunken);
+    color: var(--color-text);
   }
 }
 
@@ -154,6 +164,12 @@
   font-weight: font-weight(semibold);
   letter-spacing: letter-spacing(eyebrow);
   text-transform: uppercase;
+}
+
+@mixin card-label {
+  color: var(--color-text-muted);
+  font-size: font-size(body);
+  font-weight: font-weight(medium);
 }
 
 @mixin tinted($color, $amount: var(--color-tint-amount)) {

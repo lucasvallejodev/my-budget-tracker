@@ -17,12 +17,15 @@ import { ChartStyle, Colors } from '@/styles/theme';
 import { ChartFrame } from '../chart-frame';
 
 const AxisWidth = 64;
-const BarRadius = 4;
+const BarRadius = 6;
+const LegendIconSize = 10;
 const MaxBarSize = 28;
 const StackId = 'groups';
-const StackedBarSize = 56;
+const StackedBarSize = 40;
 
 type Format = (value: number) => string;
+
+const legendLabel = (value: string) => <span style={{ color: Colors.textMuted }}>{value}</span>;
 
 export type MonthlyBar = {
   expense: number;
@@ -79,7 +82,12 @@ export function MonthlyBars({
             tickFormatter={value => formatTick(Number(value))}
           />
           <Tooltip formatter={value => format(Number(value))} contentStyle={ChartStyle.tooltip} />
-          <Legend />
+          <Legend
+            iconType="circle"
+            iconSize={LegendIconSize}
+            wrapperStyle={ChartStyle.legend}
+            formatter={legendLabel}
+          />
           <Bar
             name="Income"
             dataKey="income"
@@ -140,7 +148,12 @@ export function StackedGroups({
             tickFormatter={value => formatTick(Number(value))}
           />
           <Tooltip formatter={value => format(Number(value))} contentStyle={ChartStyle.tooltip} />
-          <Legend />
+          <Legend
+            iconType="circle"
+            iconSize={LegendIconSize}
+            wrapperStyle={ChartStyle.legend}
+            formatter={legendLabel}
+          />
           {series.map(item => (
             <Bar
               key={item.key}

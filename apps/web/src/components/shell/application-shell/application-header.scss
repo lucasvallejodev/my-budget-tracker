@@ -12,7 +12,7 @@
   border-bottom: border(divider);
 
   @include media-up(laptop) {
-    padding: 0 space(8);
+    padding: 0 space(6);
     gap: space(5);
   }
 
@@ -25,12 +25,13 @@
 
     flex: 1;
     min-width: 0;
-    height: size(control-height);
-    padding: 0 space(3);
+    height: size(control-height-large);
+    padding: 0 space(4);
     border: border(card);
     border-radius: radius(control);
-    background: var(--color-surface-soft);
+    background: var(--color-surface);
     color: var(--color-text-faint);
+    box-shadow: shadow(control);
 
     &:focus-within {
       border-color: var(--color-brand);
@@ -38,7 +39,7 @@
     }
 
     @include media-up(laptop) {
-      flex: 0 1 360px;
+      flex: 0 1 430px;
     }
   }
 
@@ -68,10 +69,10 @@
 
   &__shortcut {
     display: none;
-    padding: 0 space(2);
+    padding: space(1) space(2);
     border: border(card);
     border-radius: radius(small);
-    background: var(--color-surface);
+    background: var(--color-surface-soft);
     color: var(--color-text-muted);
     font-family: var(--font-sans);
     font-size: font-size(micro);

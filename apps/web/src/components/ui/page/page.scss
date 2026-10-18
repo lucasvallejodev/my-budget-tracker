@@ -10,7 +10,8 @@
     padding: space(5) size(page-padding) space(10);
 
     @include media-up(tablet-landscape) {
-      padding: space(7) size(page-padding-wide) space(12);
+      gap: space(6);
+      padding: space(6) size(page-padding-wide) space(12);
     }
   }
 }

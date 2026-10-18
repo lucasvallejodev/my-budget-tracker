@@ -15,8 +15,8 @@
   }
 
   &__label {
-    padding: space(3) space(3) space(1);
-    color: var(--color-text-muted);
+    padding: space(4) space(3) space(2);
+    color: var(--color-text-faint);
     font-size: font-size(micro);
     font-weight: font-weight(semibold);
     letter-spacing: letter-spacing(eyebrow);
@@ -30,10 +30,14 @@
     padding: 0 space(3);
     border-radius: radius(control);
     color: var(--color-text-body);
+    font-size: font-size(body);
     font-weight: font-weight(medium);
 
+    @include transition(background, color);
+
     &:hover {
-      background: var(--color-surface-soft);
+      background: var(--color-surface-sunken);
+      color: var(--color-text);
     }
 
     &[aria-current='page'] {
@@ -45,6 +49,10 @@
       @include icon-size(size(icon));
 
       color: var(--color-text-muted);
+    }
+
+    &:hover svg {
+      color: var(--color-text-body);
     }
 
     &[aria-current='page'] svg {

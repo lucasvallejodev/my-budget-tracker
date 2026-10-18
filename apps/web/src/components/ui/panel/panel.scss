@@ -20,8 +20,10 @@
     &__title {
       @include display-type;
 
+      color: var(--color-text);
       font-size: font-size(card-title);
-      font-weight: font-weight(bold);
+      font-weight: font-weight(semibold);
+      line-height: line-height(heading);
     }
 
     &__description {
