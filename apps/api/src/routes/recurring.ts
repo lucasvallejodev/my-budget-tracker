@@ -86,6 +86,7 @@ export const recurringRoutes: FastifyPluginAsyncZod = async app => {
     {
       schema: {
         body: recurringFormSchema,
+        querystring: todaySchema,
         response: withErrors({ [HttpStatus.created]: recurringSeriesRowSchema }),
         tags: Tags,
       },
@@ -96,7 +97,7 @@ export const recurringRoutes: FastifyPluginAsyncZod = async app => {
 
       return reply
         .status(HttpStatus.created)
-        .send(await app.services.recurring.create(userId, input));
+        .send(await app.services.recurring.create(userId, input, request.query));
     }
   );
 
@@ -106,6 +107,7 @@ export const recurringRoutes: FastifyPluginAsyncZod = async app => {
       schema: {
         body: recurringFormSchema,
         params: idParamsSchema,
+        querystring: todaySchema,
         response: series,
         tags: Tags,
       },
@@ -114,7 +116,7 @@ export const recurringRoutes: FastifyPluginAsyncZod = async app => {
       const userId = userIdOf(request);
       const input = await toSeriesInput(app.services, userId, request.body);
 
-      return app.services.recurring.update(userId, request.params.id, input);
+      return app.services.recurring.update(userId, request.params.id, input, request.query);
     }
   );
 

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { eq } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { users } from '@/db/schema';
 import type { Db } from '@/modules/db';
@@ -12,6 +12,7 @@ import { DemoUser } from './persona';
 import { seedDemoAccount } from './seed';
 
 const Today = '2026-09-29';
+const TodayNoon = `${Today}T12:00:00`;
 const SEED_TIMEOUT_MS = 300_000;
 const Credentials = { email: 'demo@example.com', password: TestPassword };
 
@@ -23,6 +24,8 @@ let userId: string;
 const byName = (left: string[], right: string[]) => left[0].localeCompare(right[0]);
 
 beforeAll(async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(TodayNoon));
   database = await createTestDatabase();
   db = database.db;
   services = createServices(db);
@@ -30,6 +33,7 @@ beforeAll(async () => {
 }, SEED_TIMEOUT_MS);
 
 afterAll(async () => {
+  vi.useRealTimers();
   await database.close();
 });
 
