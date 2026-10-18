@@ -8,6 +8,10 @@
 
       text-align: left;
 
+      &:focus-visible {
+        @include field-focus;
+      }
+
       &--pill {
         @include pill-control;
 

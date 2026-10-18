@@ -1,16 +1,23 @@
 @use 'sass:color';
 @use 'theme/colors' as *;
 
+$shadow-ink: #101828 !default;
+
 $shadows: (
   'card': none,
-  'raised': 0 2px 6px color.change($color-text, $alpha: 0.06),
-  'pop': (
-    0 8px 24px color.change($color-text, $alpha: 0.12),
-    0 2px 6px color.change($color-text, $alpha: 0.06),
+  'control': 0 1px 2px color.change($shadow-ink, $alpha: 0.05),
+  'raised': (
+    0 1px 3px color.change($shadow-ink, $alpha: 0.1),
+    0 1px 2px color.change($shadow-ink, $alpha: 0.06),
   ),
-  'focus': 0 0 0 3px color.change($color-brand, $alpha: 0.18),
+  'pop': (
+    0 12px 16px -4px color.change($shadow-ink, $alpha: 0.08),
+    0 4px 6px -2px color.change($shadow-ink, $alpha: 0.03),
+  ),
+  'focus': 0 0 0 4px color.change($color-brand, $alpha: 0.12),
   'selected': (
-    0 0 0 1px $color-border-strong,
+    0 1px 3px color.change($shadow-ink, $alpha: 0.1),
+    0 1px 2px color.change($shadow-ink, $alpha: 0.06),
   ),
 ) !default;
 

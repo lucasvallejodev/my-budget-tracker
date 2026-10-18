@@ -104,7 +104,7 @@ describe('BudgetOverview', () => {
   it('leads with the month summary and groups budgets by status', () => {
     renderBudgets();
     expect(screen.getByRole('heading', { name: 'Budgets' })).toBeTruthy();
-    expect(screen.getByText(/Left to spend in/)).toBeTruthy();
+    expect(screen.getByText(/Budget left in/)).toBeTruthy();
     expect(screen.getAllByText(formatMoney(45000, 'EUR')).length).toBeGreaterThan(0);
     expect(screen.getByRole('region', { name: 'Over budget' })).toBeTruthy();
     expect(screen.getByRole('region', { name: 'On track' })).toBeTruthy();

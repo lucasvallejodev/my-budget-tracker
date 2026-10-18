@@ -50,6 +50,13 @@
       "when": 1790934052125,
       "tag": "0006_pay_cycle_periods",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792334685394,
+      "tag": "0007_group_palette_refresh",
+      "breakpoints": true
     }
   ]
 }

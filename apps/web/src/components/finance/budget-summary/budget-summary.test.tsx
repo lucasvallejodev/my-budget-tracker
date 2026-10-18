@@ -32,7 +32,7 @@ describe('BudgetSummary', () => {
   it('leads with what is left, the month bar and four labelled figures', () => {
     render(<BudgetSummary figures={figures} format={format} month="2026-09" today={Today} />);
 
-    expect(screen.getByText('Left to spend in September')).toBeTruthy();
+    expect(screen.getByText('Budget left in September')).toBeTruthy();
     expect(screen.getAllByText('€92.87')).toHaveLength(2);
     expect(screen.getByText('of €850.00')).toBeTruthy();
     expect(screen.getByText('Today · 28 of 30 days')).toBeTruthy();

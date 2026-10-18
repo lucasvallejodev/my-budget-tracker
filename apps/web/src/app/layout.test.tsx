@@ -4,15 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 import RootLayout from './layout';
 
 vi.mock('next/font/google', () => ({
-  Inter: () => ({ variable: 'inter-variable' }),
-  Source_Serif_4: () => ({ variable: 'source-serif-variable' }),
+  Outfit: () => ({ variable: 'outfit-variable' }),
 }));
 
 describe('RootLayout', () => {
-  it('exposes the text and display font variables on the html element', () => {
+  it('exposes the Outfit font variable on the html element', () => {
     const page = RootLayout({ children: null });
 
     expect(isValidElement<{ className: string }>(page)).toBe(true);
-    expect(page.props.className.split(' ')).toEqual(['inter-variable', 'source-serif-variable']);
+    expect(page.props.className).toBe('outfit-variable');
   });
 });

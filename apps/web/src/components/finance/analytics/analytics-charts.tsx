@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import {
   Bar,
   BarChart,
@@ -14,15 +15,70 @@ import {
 
 import { ChartStyle, Colors } from '@/styles/theme';
 
-import { ChartFrame } from '../chart-frame';
+import { ChartFrame, type ChartTable } from '../chart-frame';
 
 const AxisWidth = 64;
-const BarRadius = 4;
+const BarRadius = 6;
+const LegendIconSize = 10;
 const MaxBarSize = 28;
 const StackId = 'groups';
-const StackedBarSize = 56;
+const StackedBarSize = 40;
 
 type Format = (value: number) => string;
+
+const legendLabel = (value: string) => <span style={{ color: Colors.textMuted }}>{value}</span>;
+
+const barChartFrame = (format: Format, formatTick: Format) => [
+  <CartesianGrid key="grid" vertical={false} stroke={ChartStyle.grid} />,
+  <XAxis key="x" dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />,
+  <YAxis
+    key="y"
+    width={AxisWidth}
+    axisLine={false}
+    tickLine={false}
+    tick={ChartStyle.axisTick}
+    tickFormatter={value => formatTick(Number(value))}
+  />,
+  <Tooltip
+    key="tooltip"
+    formatter={value => format(Number(value))}
+    contentStyle={ChartStyle.tooltip}
+  />,
+  <Legend
+    key="legend"
+    iconType="circle"
+    iconSize={LegendIconSize}
+    wrapperStyle={ChartStyle.legend}
+    formatter={legendLabel}
+  />,
+];
+
+function BarFrame({
+  children,
+  data,
+  format,
+  formatTick,
+  label,
+  table,
+}: Readonly<{
+  children: ReactNode;
+  data: object[];
+  format: Format;
+  formatTick: Format;
+  label: string;
+  table: ChartTable;
+}>) {
+  return (
+    <ChartFrame label={label} data={table}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} accessibilityLayer={false}>
+          {barChartFrame(format, formatTick)}
+          {children}
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartFrame>
+  );
+}
 
 export type MonthlyBar = {
   expense: number;
@@ -57,9 +113,12 @@ export function MonthlyBars({
   onSelect?: (month: string) => void;
 }) {
   return (
-    <ChartFrame
+    <BarFrame
+      data={data}
+      format={format}
+      formatTick={formatTick}
       label={label}
-      data={{
+      table={{
         columns: ['Month', 'Income', 'Spending'],
         rows: data.map(row => ({
           label: row.label,
@@ -67,40 +126,25 @@ export function MonthlyBars({
         })),
       }}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} accessibilityLayer={false}>
-          <CartesianGrid vertical={false} stroke={ChartStyle.grid} />
-          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
-          <YAxis
-            width={AxisWidth}
-            axisLine={false}
-            tickLine={false}
-            tick={ChartStyle.axisTick}
-            tickFormatter={value => formatTick(Number(value))}
-          />
-          <Tooltip formatter={value => format(Number(value))} contentStyle={ChartStyle.tooltip} />
-          <Legend />
-          <Bar
-            name="Income"
-            dataKey="income"
-            cursor={onSelect ? 'pointer' : undefined}
-            onClick={bar => selectBar(bar, onSelect)}
-            fill={Colors.chart.income}
-            radius={[BarRadius, BarRadius, 0, 0]}
-            maxBarSize={MaxBarSize}
-          />
-          <Bar
-            name="Spending"
-            dataKey="expense"
-            cursor={onSelect ? 'pointer' : undefined}
-            onClick={bar => selectBar(bar, onSelect)}
-            fill={Colors.chart.expense}
-            radius={[BarRadius, BarRadius, 0, 0]}
-            maxBarSize={MaxBarSize}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </ChartFrame>
+      <Bar
+        name="Income"
+        dataKey="income"
+        cursor={onSelect ? 'pointer' : undefined}
+        onClick={bar => selectBar(bar, onSelect)}
+        fill={Colors.chart.income}
+        radius={[BarRadius, BarRadius, 0, 0]}
+        maxBarSize={MaxBarSize}
+      />
+      <Bar
+        name="Spending"
+        dataKey="expense"
+        cursor={onSelect ? 'pointer' : undefined}
+        onClick={bar => selectBar(bar, onSelect)}
+        fill={Colors.chart.expense}
+        radius={[BarRadius, BarRadius, 0, 0]}
+        maxBarSize={MaxBarSize}
+      />
+    </BarFrame>
   );
 }
 
@@ -118,9 +162,12 @@ export function StackedGroups({
   series: StackSeries[];
 }) {
   return (
-    <ChartFrame
+    <BarFrame
+      data={data}
+      format={format}
+      formatTick={formatTick}
       label={label}
-      data={{
+      table={{
         columns: ['Month', ...series.map(item => item.name)],
         rows: data.map(row => ({
           label: String(row.label),
@@ -128,31 +175,16 @@ export function StackedGroups({
         })),
       }}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} accessibilityLayer={false}>
-          <CartesianGrid vertical={false} stroke={ChartStyle.grid} />
-          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={ChartStyle.axisTick} />
-          <YAxis
-            width={AxisWidth}
-            axisLine={false}
-            tickLine={false}
-            tick={ChartStyle.axisTick}
-            tickFormatter={value => formatTick(Number(value))}
-          />
-          <Tooltip formatter={value => format(Number(value))} contentStyle={ChartStyle.tooltip} />
-          <Legend />
-          {series.map(item => (
-            <Bar
-              key={item.key}
-              name={item.name}
-              dataKey={item.key}
-              stackId={StackId}
-              fill={item.color}
-              maxBarSize={StackedBarSize}
-            />
-          ))}
-        </BarChart>
-      </ResponsiveContainer>
-    </ChartFrame>
+      {series.map(item => (
+        <Bar
+          key={item.key}
+          name={item.name}
+          dataKey={item.key}
+          stackId={StackId}
+          fill={item.color}
+          maxBarSize={StackedBarSize}
+        />
+      ))}
+    </BarFrame>
   );
 }

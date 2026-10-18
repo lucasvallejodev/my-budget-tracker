@@ -23,7 +23,7 @@ A limit for one category, one month and one currency. Spending against it is wha
 
 The card adds up every budget of the chosen currency and month:
 
-- **Left to spend in September** (the month shown): what is left of all limits, "of" the total budgeted, and a status tag with the most important news first: **Over budget** when the totals are over, **2 over budget** (in amber) when the totals are fine but some budgets are over, **Within budget** for a finished month, then **Spending too fast** or **On pace** from the totals' pace.
+- **Budget left in September** (the month shown): what is left of all limits, "of" the total budgeted, and a status tag with the most important news first: **Over budget** when the totals are over, **2 over budget** (in amber) when the totals are fine but some budgets are over, **Within budget** for a finished month, then **Spending too fast** or **On pace** from the totals' pace.
 - One bar for the month, colored by that status. In the current month a marker labeled "Today · 18 of 30 days" shows where spending would be at an even pace.
 - Four figures:
 

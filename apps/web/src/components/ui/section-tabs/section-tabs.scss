@@ -14,7 +14,7 @@
       padding: space(3) 0;
       border-bottom: var(--border-width-focus) solid transparent;
       color: var(--color-text-muted);
-      font-weight: font-weight(semibold);
+      font-weight: font-weight(medium);
       white-space: nowrap;
 
       &:hover {
@@ -27,7 +27,7 @@
 
       &[aria-current='page'] {
         border-bottom-color: var(--color-brand);
-        color: var(--color-text);
+        color: var(--color-brand-text);
       }
     }
 

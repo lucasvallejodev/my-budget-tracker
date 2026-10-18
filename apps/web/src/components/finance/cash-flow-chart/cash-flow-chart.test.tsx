@@ -21,12 +21,15 @@ const ChartHeight = 300;
 afterEach(cleanup);
 
 describe('CashFlowChart', () => {
-  it('renders the panel with its description and legend note', () => {
+  it('renders the panel with its description and legend', () => {
     render(<CashFlowChart description="Income vs spending · EUR" data={[]} />);
 
     expect(screen.getByRole('heading', { name: 'Cash flow' })).toBeTruthy();
     expect(screen.getByText('Income vs spending · EUR')).toBeTruthy();
-    expect(screen.getByText('Solid green line: income · Dashed line: spending')).toBeTruthy();
+    expect(screen.getAllByRole('listitem').map(item => item.textContent)).toEqual([
+      'Income',
+      'Spending',
+    ]);
   });
 
   it('labels the value axis with the tick formatter', () => {

@@ -17,6 +17,8 @@ export { CategoryManager } from './category-manager';
 export type { CategoryPickerVariant, FlatCategory } from './category-picker';
 export { CategoryPicker, flattenCategories } from './category-picker';
 export { ChartFrame } from './chart-frame';
+export type { LegendItem } from './chart-legend';
+export { ChartLegend } from './chart-legend';
 export { ComponentGallery } from './component-gallery';
 export { CreateAccountDialog } from './create-account-dialog';
 export { CreatePayeeDialog } from './create-payee-dialog';

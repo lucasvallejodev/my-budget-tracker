@@ -18,7 +18,7 @@
   }
 
   &__eyebrow {
-    @include eyebrow;
+    @include card-label;
   }
 
   &__hero {

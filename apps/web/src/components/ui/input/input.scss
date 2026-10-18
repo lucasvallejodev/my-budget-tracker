@@ -3,5 +3,9 @@
 @layer ui.base {
   .input {
     @include text-field;
+
+    &:focus-visible {
+      @include field-focus;
+    }
   }
 }

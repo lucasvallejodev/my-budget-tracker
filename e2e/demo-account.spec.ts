@@ -15,7 +15,7 @@ test('signs in to the seeded demo account and shows its history', async ({ page 
   await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
 
   await page.goto('/budgets');
-  await expect(page.getByText(/Left to spend in/)).toBeVisible();
+  await expect(page.getByText(/Budget left in/)).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Category budgets' })).toBeVisible();
 
   await page.goto('/analytics/payees');

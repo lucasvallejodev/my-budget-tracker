@@ -1,19 +1,14 @@
 import './globals.scss';
 
 import type { Metadata } from 'next';
-import { Inter, Source_Serif_4 } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 import { Toaster } from 'sonner';
 
 import RootProvider from '@/providers/root-provider';
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-inter',
-});
-
-const sourceSerif = Source_Serif_4({
-  subsets: ['latin'],
-  variable: '--font-source-serif',
+  variable: '--font-outfit',
 });
 
 export const metadata: Metadata = {
@@ -23,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${sourceSerif.variable}`}>
+    <html lang="en" className={outfit.variable}>
       <body>
         <RootProvider>
           <Toaster richColors position="bottom-right" />
