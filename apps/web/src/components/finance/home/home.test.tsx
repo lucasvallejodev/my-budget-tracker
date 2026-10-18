@@ -153,7 +153,7 @@ describe('Home', () => {
     renderHome();
 
     expect(screen.getByRole('heading', { level: 1, name: 'Home' })).toBeTruthy();
-    expect(screen.getByText(/Left to spend in/)).toBeTruthy();
+    expect(screen.getByText(/Budget left in/)).toBeTruthy();
     expect(screen.getByText(`of ${formatMoney(30000, 'EUR')} budgeted`)).toBeTruthy();
     expect(screen.getByText('20%', { selector: '.stat__delta' })).toBeTruthy();
     expect(screen.getByText(formatMoney(180000, 'EUR'))).toBeTruthy();

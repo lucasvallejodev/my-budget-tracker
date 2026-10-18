@@ -1,5 +1,7 @@
 'use client';
 
+import './left-to-spend.scss';
+
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -48,7 +50,7 @@ export function LeftToSpend({ currency, month }: { currency: string; month: stri
       >
         {() =>
           query.data && (
-            <>
+            <div className="left-to-spend">
               <Stat
                 size="large"
                 label="Free to spend"
@@ -56,7 +58,7 @@ export function LeftToSpend({ currency, month }: { currency: string; month: stri
                 meta={allowanceText(query.data, format)}
               />
               <DescriptionList items={breakdown(query.data, format)} />
-            </>
+            </div>
           )
         }
       </QueryContent>

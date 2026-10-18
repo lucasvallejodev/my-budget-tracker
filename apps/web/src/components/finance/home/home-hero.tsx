@@ -120,7 +120,7 @@ export function HomeHero({
     <section className="home-hero" aria-label="This month">
       <div className="home-hero__head">
         <p className="home-hero__eyebrow">
-          {figures.length ? `Left to spend in ${monthLabel(month).split(' ')[0]}` : 'This month'}
+          {figures.length ? `Budget left in ${monthLabel(month).split(' ')[0]}` : 'This month'}
         </p>
         <Button asChild variant="ghost" size="sm">
           <Link href="/budgets">

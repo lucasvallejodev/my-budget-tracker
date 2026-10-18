@@ -1,0 +1,12 @@
+@use 'abstracts' as *;
+
+.left-to-spend {
+  @include flex-column(space(4));
+
+  @include media-up(tablet-landscape) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: center;
+    gap: space(8);
+  }
+}

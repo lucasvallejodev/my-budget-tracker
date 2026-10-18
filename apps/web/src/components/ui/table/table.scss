@@ -19,9 +19,10 @@
 
     &__header-cell {
       padding: space(3);
+      background: var(--color-surface-soft);
       color: var(--color-text-muted);
       font-size: font-size(caption);
-      font-weight: font-weight(semibold);
+      font-weight: font-weight(medium);
       text-align: left;
 
       &:first-child {

@@ -4681,6 +4681,17 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
         ],
       },
       "post": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -5301,6 +5312,15 @@ exports[`OpenAPI contract > matches the reviewed snapshot of every path, paramet
       },
       "put": {
         "parameters": [
+          {
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string",
+            },
+          },
           {
             "in": "path",
             "name": "id",

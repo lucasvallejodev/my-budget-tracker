@@ -3,7 +3,7 @@
 @layer ui.base {
   .button {
     @include flex-row(space(2));
-    @include transition(background, border-color, color);
+    @include transition(background, border-color, color, box-shadow);
 
     display: inline-flex;
     justify-content: center;
@@ -13,7 +13,9 @@
     border-radius: radius(control);
     background: var(--color-brand);
     color: var(--color-on-brand);
-    font-weight: font-weight(semibold);
+    font-size: font-size(body);
+    font-weight: font-weight(medium);
+    box-shadow: shadow(control);
     white-space: nowrap;
 
     svg {
@@ -34,6 +36,7 @@
       &:hover {
         border-color: var(--color-border-strong);
         background: var(--color-surface-soft);
+        color: var(--color-text);
       }
     }
 
@@ -41,6 +44,7 @@
       border-color: transparent;
       background: transparent;
       color: var(--color-text-body);
+      box-shadow: none;
 
       &:hover {
         border-color: transparent;

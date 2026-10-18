@@ -1,0 +1,20 @@
+@use 'abstracts' as *;
+
+.chart-legend {
+  @include reset-list;
+  @include flex-row(space(4));
+
+  flex-wrap: wrap;
+  color: var(--color-text-muted);
+  font-size: font-size(meta);
+
+  &__item {
+    @include flex-row(space(2));
+  }
+
+  &__dot {
+    @include icon-size(space(2) + 2px);
+
+    border-radius: radius(round);
+  }
+}

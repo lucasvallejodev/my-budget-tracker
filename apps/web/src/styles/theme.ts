@@ -28,6 +28,11 @@ export const DefaultPickerColor = GroupPalette.blue;
 export const ChartStyle = {
   axisTick: { fill: Colors.chart.axis, fontSize: cssVariable('font-size-micro') },
   grid: Colors.chart.grid,
+  legend: {
+    color: Colors.textMuted,
+    fontSize: cssVariable('font-size-meta'),
+    paddingTop: cssVariable('space-3'),
+  },
   tooltip: {
     background: Colors.surface,
     border: cssVariable('border-card'),
@@ -35,5 +40,6 @@ export const ChartStyle = {
     boxShadow: cssVariable('shadow-raised'),
     color: Colors.text,
     fontSize: cssVariable('font-size-meta'),
+    padding: cssVariable('space-3'),
   },
 } as const;

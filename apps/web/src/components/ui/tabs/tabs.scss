@@ -5,18 +5,18 @@
     @include flex-row(space(1));
 
     flex-wrap: wrap;
-    padding: space(1) * 0.75;
-    border-radius: radius(control) + 1px;
+    padding: space(1) * 0.5;
+    border-radius: radius(control);
     background: var(--color-surface-sunken);
 
     &__trigger {
       @include reset-button;
 
       padding: space(1) space(3);
-      border-radius: radius(small) + 1px;
+      border-radius: radius(small);
       color: var(--color-text-muted);
       font-size: font-size(meta);
-      font-weight: font-weight(semibold);
+      font-weight: font-weight(medium);
       text-align: left;
 
       &[data-state='active'] {

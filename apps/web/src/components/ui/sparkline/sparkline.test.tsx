@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Sparkline, sparklinePath } from './sparkline';
+import { Sparkline, sparklineArea, sparklinePath } from './sparkline';
 
 afterEach(cleanup);
 
@@ -11,6 +11,13 @@ describe('Sparkline', () => {
 
     expect(screen.getByRole('img', { name: 'Net worth, last 6 months' })).toBeTruthy();
     expect(sparklinePath([10, 20, 15])).toBe('M0.00 30.00 L50.00 2.00 L100.00 16.00');
+  });
+
+  it('closes the line down to the baseline for the shaded area', () => {
+    expect(sparklineArea('M0.00 30.00 L100.00 2.00')).toBe(
+      'M0.00 30.00 L100.00 2.00 L100 32 L0 32 Z'
+    );
+    expect(sparklineArea('')).toBe('');
   });
 
   it('draws a flat line for equal points and nothing for fewer than two', () => {

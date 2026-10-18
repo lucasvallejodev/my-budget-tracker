@@ -32,7 +32,7 @@ export const humanizeIdentifier = (identifier: string): string => {
  *
  * @example
  * ```ts
- * paletteColorName('#9a7442'); // 'Amber'
+ * paletteColorName('#dc6803'); // 'Amber'
  * paletteColorName('#123456'); // '#123456'
  * ```
  */

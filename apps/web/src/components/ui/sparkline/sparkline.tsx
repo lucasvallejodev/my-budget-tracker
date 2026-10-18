@@ -26,6 +26,9 @@ export const sparklinePath = (points: number[]): string => {
     .join(' ');
 };
 
+export const sparklineArea = (path: string): string =>
+  path ? `${path} L${Width} ${Height} L0 ${Height} Z` : '';
+
 export function Sparkline({
   color = 'var(--color-brand)',
   label,
@@ -48,6 +51,7 @@ export function Sparkline({
       aria-label={label}
       style={{ '--sparkline-color': color } as CSSProperties}
     >
+      <path className="sparkline__area" d={sparklineArea(path)} />
       <path className="sparkline__line" d={path} vectorEffect="non-scaling-stroke" />
     </svg>
   );
