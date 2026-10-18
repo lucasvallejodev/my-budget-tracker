@@ -9,13 +9,9 @@
     cursor: pointer;
     text-align: left;
 
-    &:focus-visible {
-      @include focus-ring;
-    }
-
+    &:focus-visible,
     &[aria-expanded='true'] {
-      border-color: var(--color-brand);
-      box-shadow: shadow(focus);
+      @include field-focus;
     }
 
     &--empty {

@@ -5,7 +5,7 @@ export type LegendItem = {
   label: string;
 };
 
-export function ChartLegend({ items }: { items: LegendItem[] }) {
+export function ChartLegend({ items }: Readonly<{ items: LegendItem[] }>) {
   return (
     <ul className="chart-legend">
       {items.map(item => (

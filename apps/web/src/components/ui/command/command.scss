@@ -6,6 +6,10 @@
 
     &__input {
       @include text-field;
+
+      &:focus-visible {
+        @include field-focus;
+      }
     }
 
     &__list {

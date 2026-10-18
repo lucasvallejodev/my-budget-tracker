@@ -95,6 +95,12 @@
   height: $size;
 }
 
+@mixin field-focus {
+  border-color: var(--color-brand);
+  outline: none;
+  box-shadow: shadow(focus);
+}
+
 @mixin text-field {
   width: 100%;
   min-height: size(control-height);
@@ -104,12 +110,6 @@
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: shadow(control);
-
-  &:focus-visible {
-    border-color: var(--color-brand);
-    outline: none;
-    box-shadow: shadow(focus);
-  }
 
   &[aria-invalid='true'] {
     border-color: var(--color-negative);
