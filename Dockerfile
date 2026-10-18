@@ -1,8 +1,8 @@
 # One Dockerfile, two images: `--target api` (Fastify) and `--target web` (Next.js).
 # tini is PID 1 in both, so SIGTERM reaches node and zombies are reaped.
 # Pinned by digest (multi-arch index); Dependabot bumps the tag and digest together.
-FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS base
-RUN apk add --no-cache libc6-compat tini
+FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS base
+RUN apk add --no-cache --upgrade zlib libc6-compat tini
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
