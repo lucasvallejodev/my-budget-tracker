@@ -33,7 +33,7 @@ const renderMenu = () => {
 };
 
 const openMenu = () =>
-  fireEvent.pointerDown(screen.getByRole('button', { name: 'Account menu' }), {
+  fireEvent.pointerDown(screen.getByRole('button', { name: /Account menu/ }), {
     button: 0,
     ctrlKey: false,
   });
@@ -50,6 +50,17 @@ describe('UserMenu', () => {
     expect(screen.getByRole('menuitem', { name: 'Deleted items' }).getAttribute('href')).toBe(
       '/settings/deleted'
     );
+  });
+
+  it('names the trigger with the visible name and email followed by the menu purpose', () => {
+    renderMenu();
+
+    const isNamedWithVisibleText = (name: string) =>
+      name.startsWith('Ada Lovelace') &&
+      name.includes('ada@example.com') &&
+      name.endsWith('Account menu');
+
+    expect(screen.getByRole('button', { name: isNamedWithVisibleText })).toBeTruthy();
   });
 
   it('signs out and returns to the sign-in page', async () => {

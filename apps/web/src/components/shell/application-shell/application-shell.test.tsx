@@ -50,7 +50,7 @@ describe('ApplicationShell', () => {
 
     expect(mainNavigation().getByRole('link', { name: /Review/ }).textContent).toContain('2');
     expect(screen.queryByRole('link', { name: /Visa/ })).toBeNull();
-    expect(screen.getAllByRole('button', { name: 'Account menu' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Account menu/ })).toHaveLength(1);
   });
 
   it('searches transactions from the header and focuses search with Ctrl+K', () => {

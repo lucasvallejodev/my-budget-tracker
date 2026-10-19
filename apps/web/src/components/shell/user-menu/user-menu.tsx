@@ -14,6 +14,7 @@ import { Button, Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/u
 import { initialsOf } from '@/lib/payee-avatar';
 import { cn } from '@/lib/styles';
 
+const ACCOUNT_MENU_LABEL = 'Account menu';
 const SIGN_IN_PATH = '/sign-in';
 const MenuIconSize = 16;
 
@@ -42,7 +43,6 @@ export function UserMenu({ showName = false }: { showName?: boolean }) {
         <Button
           variant="ghost"
           className={cn('user-menu__trigger', { 'user-menu__trigger--full': showName })}
-          aria-label="Account menu"
         >
           <span className="user-menu__avatar" aria-hidden>
             {userInitials(user)}
@@ -56,6 +56,7 @@ export function UserMenu({ showName = false }: { showName?: boolean }) {
               <ChevronsUpDown className="user-menu__chevron" aria-hidden />
             </>
           )}
+          <span className="user-menu__label">{ACCOUNT_MENU_LABEL}</span>
         </Button>
       </MenuTrigger>
       <MenuContent align="end">
