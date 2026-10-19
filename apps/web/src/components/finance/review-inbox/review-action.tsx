@@ -6,8 +6,8 @@ type ActionKind = 'accept' | 'confirm' | 'save';
 
 const ActionLabels: Record<ActionKind, { button: string; name: string }> = {
   accept: { button: 'Accept', name: 'Accept' },
-  confirm: { button: 'Done', name: 'Mark as reviewed' },
-  save: { button: 'Done', name: 'Save the category of' },
+  confirm: { button: 'Done', name: 'Done, mark as reviewed' },
+  save: { button: 'Done', name: 'Done, save the category of' },
 };
 
 export const actionKind = (chosen: boolean, suggested: boolean): ActionKind => {

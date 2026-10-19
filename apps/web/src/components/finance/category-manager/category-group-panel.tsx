@@ -95,7 +95,7 @@ function GroupActions({
       <Button
         variant="outline"
         size="sm"
-        aria-label={`Add a category to ${group.name}`}
+        aria-label={`Category: add one to ${group.name}`}
         onClick={onAddCategory}
       >
         <Plus size={ActionIconSize} /> Category

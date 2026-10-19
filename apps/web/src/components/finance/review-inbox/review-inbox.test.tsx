@@ -68,7 +68,7 @@ describe('ReviewInbox', () => {
     renderInbox([transaction]);
 
     expect(screen.getByRole('heading', { name: '1 to review' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Mark as reviewed/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Done, mark as reviewed/ }));
 
     await waitFor(() =>
       expect(categorizeTransaction).toHaveBeenCalledWith(transaction.id, transaction.categoryId)
@@ -111,7 +111,9 @@ describe('ReviewInbox', () => {
     expect(await screen.findByText('Not saved yet')).toBeTruthy();
     expect(categorizeTransaction).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save the category of: Farmers stall' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Done, save the category of: Farmers stall' })
+    );
 
     await waitFor(() =>
       expect(categorizeTransaction).toHaveBeenCalledWith('unsorted', 'groceries')
