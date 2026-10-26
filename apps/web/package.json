@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@coinkeeper/shared": "*",
-    "@hookform/resolvers": "^5.9.1",
+    "@hookform/resolvers": "^6.0.0",
     "@next/env": "^16.4.0",
     "@radix-ui/react-dialog": "^1.2.0",
     "@radix-ui/react-dropdown-menu": "^2.1.25",
